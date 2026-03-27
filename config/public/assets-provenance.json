@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "path": "docs/assets/sourceharbor-hero.svg",
+      "asset_kind": "svg",
+      "surface_role": "hero",
+      "public_surfaces": [
+        "README.md",
+        "docs/see-it-fast.md"
+      ],
+      "provenance_status": "repository-tracked-source-file",
+      "rights_basis": "maintainer-assertion-required",
+      "sanitization_status": "non-runtime-illustration",
+      "public_distribution_status": "currently-published-in-repo",
+      "follow_up_required": true,
+      "notes": "Public presentation asset for the README and the no-boot tour."
+    },
+    {
+      "path": "docs/assets/sourceharbor-architecture.svg",
+      "asset_kind": "svg",
+      "surface_role": "architecture-diagram",
+      "public_surfaces": [
+        "docs/architecture.md"
+      ],
+      "provenance_status": "repository-tracked-source-file",
+      "rights_basis": "maintainer-assertion-required",
+      "sanitization_status": "non-runtime-illustration",
+      "public_distribution_status": "currently-published-in-repo",
+      "follow_up_required": true,
+      "notes": "Public system-map illustration for architecture docs."
+    },
+    {
+      "path": "docs/assets/sourceharbor-social-preview.svg",
+      "asset_kind": "svg",
+      "surface_role": "social-preview-source",
+      "public_surfaces": [
+        "config/public/github-profile.json"
+      ],
+      "provenance_status": "repository-tracked-source-file",
+      "rights_basis": "maintainer-assertion-required",
+      "sanitization_status": "non-runtime-illustration",
+      "public_distribution_status": "repository-declared-profile-asset-source",
+      "follow_up_required": true,
+      "notes": "Source illustration for the social preview asset family."
+    },
+    {
+      "path": "docs/assets/sourceharbor-social-preview.png",
+      "asset_kind": "png",
+      "surface_role": "social-preview-upload",
+      "public_surfaces": [
+        "config/public/github-profile.json"
+      ],
+      "provenance_status": "repository-tracked-derived-file",
+      "rights_basis": "maintainer-assertion-required",
+      "sanitization_status": "non-runtime-illustration",
+      "public_distribution_status": "repository-declared-profile-asset",
+      "follow_up_required": true,
+      "notes": "PNG upload target referenced by the GitHub profile manifest for social preview."
+    }
+  ]
+}

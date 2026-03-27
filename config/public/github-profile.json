@@ -1,0 +1,20 @@
+{
+  "description": "Turn YouTube, Bilibili, and RSS sources into readable digests, traceable job runs, and searchable knowledge for operators and agents.",
+  "homepage": "https://github.com/xiaojiou176-open/sourceharbor?tab=readme-ov-file#see-it-in-30-seconds",
+  "topics": [
+    "sourceharbor",
+    "knowledge-pipeline",
+    "digest",
+    "retrieval",
+    "mcp",
+    "ai-agents",
+    "youtube",
+    "bilibili",
+    "rss",
+    "fastapi",
+    "nextjs",
+    "temporal"
+  ],
+  "enable_discussions": true,
+  "social_preview_asset": "docs/assets/sourceharbor-social-preview.png"
+}
