@@ -1,0 +1,161 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _script_path() -> Path:
+    return _repo_root() / "scripts" / "release" / "generate_release_prechecks.py"
+
+
+def _load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _run_prechecks(tmp_path: Path, *extra_args: str) -> dict[str, object]:
+    output_path = tmp_path / "prechecks.json"
+    cmd = [
+        sys.executable,
+        str(_script_path()),
+        "--repo-root",
+        str(_repo_root()),
+        "--output",
+        str(output_path),
+        *extra_args,
+    ]
+    completed = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    assert completed.returncode == 0, completed.stderr
+    return json.loads(output_path.read_text(encoding="utf-8"))
+
+
+def test_release_prechecks_include_observability_checks_by_default(tmp_path: Path) -> None:
+    payload = _run_prechecks(tmp_path)
+    checks = payload.get("checks")
+    assert isinstance(checks, list)
+
+    checks_by_name = {item["name"]: item for item in checks if isinstance(item, dict)}
+    assert "api_red_metrics_minimum" in checks_by_name
+    assert "api_trace_header_echo" in checks_by_name
+    assert "slo_thresholds_documented" in checks_by_name
+
+    assert checks_by_name["api_red_metrics_minimum"]["required"] is True
+    assert checks_by_name["api_trace_header_echo"]["required"] is True
+    assert checks_by_name["slo_thresholds_documented"]["required"] is True
+
+
+def test_release_prechecks_can_skip_runtime_observability_checks(tmp_path: Path) -> None:
+    payload = _run_prechecks(tmp_path, "--skip-observability-checks")
+    checks = payload.get("checks")
+    assert isinstance(checks, list)
+
+    check_names = {item["name"] for item in checks if isinstance(item, dict)}
+    assert "api_red_metrics_minimum" not in check_names
+    assert "api_trace_header_echo" not in check_names
+    assert "slo_thresholds_documented" in check_names
+
+
+def test_verify_db_rollback_readiness_rejects_pending_drill_template(tmp_path: Path) -> None:
+    module = _load_module(
+        _repo_root() / "scripts" / "release" / "verify_db_rollback_readiness.py",
+        "verify_db_rollback_readiness_test",
+    )
+    drill_path = tmp_path / "drill.json"
+    drill_path.write_text(
+        json.dumps(
+            {
+                "release_tag": "v-test",
+                "executed_at": "",
+                "executor": "",
+                "strategy": "sql_down_or_n_minus_1_restore",
+                "result": "pending",
+                "migrations_checked": [],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    valid, errors = module._validate_drill_evidence(drill_path)
+
+    assert valid is False
+    assert "executed_at must be non-empty" in errors
+    assert "executor must be non-empty" in errors
+    assert "result must not be `pending`" in errors
+    assert "migrations_checked must record at least one migration" in errors
+
+
+def test_release_attest_readiness_evaluator_rejects_failed_required_prechecks(
+    tmp_path: Path,
+) -> None:
+    module = _load_module(
+        _repo_root() / "scripts" / "release" / "check_release_evidence_attest_readiness.py",
+        "check_release_evidence_attest_readiness_test",
+    )
+    release_dir = tmp_path / "artifacts" / "releases" / "v-test"
+    rollback_dir = release_dir / "rollback"
+    rollback_dir.mkdir(parents=True)
+    (release_dir / "manifest.json").write_text("{}", encoding="utf-8")
+    (release_dir / "checksums.sha256").write_text("abc  manifest.json\n", encoding="utf-8")
+    (rollback_dir / "db-rollback-readiness.json").write_text(
+        json.dumps(
+            {
+                "summary": {"gate_status": "pass"},
+                "drill_evidence": {"valid": True, "errors": []},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (rollback_dir / "drill.json").write_text(
+        json.dumps(
+            {
+                "release_tag": "v-test",
+                "executed_at": "2026-03-26T12:00:00Z",
+                "executor": "operator",
+                "strategy": "sql_down_or_n_minus_1_restore",
+                "result": "success",
+                "migrations_checked": ["20260308_000016_content_type.sql"],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    prechecks_path = (
+        tmp_path / ".runtime-cache" / "reports" / "release-readiness" / "prechecks.json"
+    )
+    prechecks_path.parent.mkdir(parents=True)
+    prechecks_path.write_text(
+        json.dumps(
+            {
+                "checks": [
+                    {"name": "release_tag_exists", "required": True, "status": "pass"},
+                    {
+                        "name": "db_rollback_drill_evidence_present",
+                        "required": True,
+                        "status": "fail",
+                    },
+                ]
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    state, errors = module._evaluate_release_readiness(release_dir, prechecks_path)
+
+    assert state["rollback_gate_status"] == "pass"
+    assert state["rollback_drill_valid"] is True
+    assert state["failed_required_prechecks"] == ["db_rollback_drill_evidence_present"]
+    assert errors == ["required release prechecks failing: db_rollback_drill_evidence_present"]
