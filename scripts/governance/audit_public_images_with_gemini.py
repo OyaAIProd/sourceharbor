@@ -30,6 +30,17 @@ PROMPT = (
     "Each issue should have fields severity, category, note."
 )
 MODEL_CANDIDATES = ("gemini-2.5-flash", "gemini-1.5-flash")
+ALLOWED_VERDICTS = {"pass", "warn", "fail", "unknown"}
+ALLOWED_SEVERITIES = {"error", "warning", "info"}
+ALLOWED_CATEGORIES = {
+    "text-clipping",
+    "alignment-drift",
+    "overlap",
+    "tiny-unreadable-text",
+    "cropped-edge-elements",
+    "overall-professionalism",
+    "other",
+}
 
 
 def load_asset_config() -> list[dict[str, Any]]:
@@ -149,6 +160,60 @@ def audit_one(client: httpx.Client, key: str, model: str, image_path: Path) -> d
         return {"raw": text}
 
 
+def _normalize_verdict(raw: Any) -> str:
+    text = str(raw or "").strip().lower()
+    if text in {"pass", "passed", "ok"}:
+        return "pass"
+    if text in {"warn", "warning"}:
+        return "warn"
+    if text in {"fail", "failed", "error"}:
+        return "fail"
+    return "unknown"
+
+
+def _normalize_severity(raw: Any) -> str:
+    text = str(raw or "").strip().lower()
+    if text in {"error", "fatal", "fail", "failed"}:
+        return "error"
+    if text in {"warning", "warn"}:
+        return "warning"
+    if text in {"info", "note"}:
+        return "info"
+    return "info"
+
+
+def _normalize_category(raw: Any) -> str:
+    text = str(raw or "").strip().lower().replace("_", "-").replace(" ", "-")
+    if text in ALLOWED_CATEGORIES:
+        return text
+    return "other"
+
+
+def summarize_audit_result(raw: Any) -> dict[str, Any]:
+    issues: list[dict[str, str]] = []
+    strengths = raw.get("strengths") if isinstance(raw, dict) else []
+    raw_issues = raw.get("issues") if isinstance(raw, dict) else []
+    if isinstance(raw_issues, list):
+        for item in raw_issues:
+            if not isinstance(item, dict):
+                continue
+            issues.append(
+                {
+                    "severity": _normalize_severity(item.get("severity")),
+                    "category": _normalize_category(item.get("category")),
+                }
+            )
+
+    return {
+        "verdict": _normalize_verdict(raw.get("verdict") if isinstance(raw, dict) else None),
+        "issue_count": len(issues),
+        "blocking_issue_count": sum(1 for item in issues if item["severity"] == "error"),
+        "strength_count": len(strengths) if isinstance(strengths, list) else 0,
+        "issues": issues,
+        "raw_output_discarded": bool(isinstance(raw, dict) and "raw" in raw),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -249,7 +314,9 @@ def main() -> int:
         report["status"] = "completed"
         report["skip_reason"] = ""
         for entry, rendered_path in rendered_assets:
-            entry["result"] = audit_one(client, key, model, rendered_path)
+            entry["result_summary"] = summarize_audit_result(
+                audit_one(client, key, model, rendered_path)
+            )
 
     write_json_artifact(
         report_path,

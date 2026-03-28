@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -36,3 +37,42 @@ def test_resolve_report_path_rejects_escape(candidate: str) -> None:
 
     with pytest.raises(ValueError, match="repo root"):
         module.resolve_report_path(candidate)
+
+
+def test_summarize_audit_result_discards_freeform_content_and_keeps_safe_summary() -> None:
+    module = _load_module()
+
+    summary = module.summarize_audit_result(
+        {
+            "verdict": "Warning",
+            "issues": [
+                {
+                    "severity": "ERROR",
+                    "category": "text clipping",
+                    "note": "password=super-secret-123",
+                },
+                {
+                    "severity": "note",
+                    "category": "unknown category",
+                    "note": "token=abc",
+                },
+            ],
+            "strengths": ["looks polished", "key=secret"],
+            "raw": "password=should-never-hit-disk",
+        }
+    )
+
+    assert summary == {
+        "verdict": "warn",
+        "issue_count": 2,
+        "blocking_issue_count": 1,
+        "strength_count": 2,
+        "issues": [
+            {"severity": "error", "category": "text-clipping"},
+            {"severity": "info", "category": "other"},
+        ],
+        "raw_output_discarded": True,
+    }
+    assert "super-secret-123" not in json.dumps(summary, sort_keys=True)
+    assert "password" not in json.dumps(summary, sort_keys=True)
+    assert "token=abc" not in json.dumps(summary, sort_keys=True)
