@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 
 
 def _load_module():
+    original = sys.dont_write_bytecode
     script_path = (
         Path(__file__).resolve().parents[3]
         / "scripts"
@@ -14,8 +16,12 @@ def _load_module():
     spec = importlib.util.spec_from_file_location("clean_source_runtime_residue", script_path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    try:
+        sys.dont_write_bytecode = True
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        sys.dont_write_bytecode = original
 
 
 def test_remove_path_ignores_file_not_found_race_for_directories(
