@@ -26,7 +26,7 @@ vi.mock("next/link", () => ({
 vi.mock("@/components/theme-toggle", () => ({
 	ThemeToggle: () => (
 		<button type="button" data-slot="button">
-			切换主题
+			Switch theme
 		</button>
 	),
 }));
@@ -64,10 +64,12 @@ function mockMatchMedia(matches: boolean) {
 function SidebarSheetHarness() {
 	return (
 		<Sheet>
-			<SheetTrigger>打开导航</SheetTrigger>
+			<SheetTrigger>Open navigation</SheetTrigger>
 			<SheetContent side="left">
-				<SheetTitle>移动端导航</SheetTitle>
-				<SheetDescription>用于移动端的侧边栏抽屉导航。</SheetDescription>
+				<SheetTitle>Mobile navigation</SheetTitle>
+				<SheetDescription>
+					Sidebar drawer navigation for mobile.
+				</SheetDescription>
 				<Sidebar
 					subscriptions={[
 						{
@@ -89,7 +91,7 @@ function SidebarSheetHarness() {
 					]}
 					apiHealthState="healthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="正常"
+					apiHealthLabel="Healthy"
 				/>
 			</SheetContent>
 		</Sheet>
@@ -149,14 +151,14 @@ describe("Sidebar + Sheet contract", () => {
 					]}
 					apiHealthState="healthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="正常"
+					apiHealthLabel="Healthy"
 				/>,
 			);
 
 			expect(
-				screen.getByRole("complementary", { name: "侧边栏导航" }),
+				screen.getByRole("complementary", { name: "Sidebar navigation" }),
 			).toBeInTheDocument();
-			expect(screen.getByRole("link", { name: "科技" })).toHaveAttribute(
+			expect(screen.getByRole("link", { name: "Tech" })).toHaveAttribute(
 				"aria-current",
 				"page",
 			);
@@ -168,15 +170,14 @@ describe("Sidebar + Sheet contract", () => {
 				screen.queryByRole("link", { name: "Disabled Source" }),
 			).toBeNull();
 			expect(
-				screen.getByRole("link", { name: "API 状态：正常" }),
+				screen.getByRole("link", { name: "API health: Healthy" }),
 			).toHaveAttribute("href", "http://127.0.0.1:9000/healthz");
 			expect(
-				screen.getByRole("button", { name: "切换主题" }),
+				screen.getByRole("button", { name: "Switch theme" }),
 			).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "切换主题" })).toHaveAttribute(
-				"data-slot",
-				"button",
-			);
+			expect(
+				screen.getByRole("button", { name: "Switch theme" }),
+			).toHaveAttribute("data-slot", "button");
 		},
 		SIDEBAR_TIMEOUT_MS,
 	);
@@ -186,14 +187,14 @@ describe("Sidebar + Sheet contract", () => {
 		() => {
 			render(<SidebarSheetHarness />);
 
-			fireEvent.click(screen.getByRole("button", { name: "打开导航" }));
+			fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
 
 			expect(screen.getByRole("dialog")).toBeInTheDocument();
 			expect(
-				screen.getByRole("heading", { name: "移动端导航" }),
+				screen.getByRole("heading", { name: "Mobile navigation" }),
 			).toBeInTheDocument();
 			expect(
-				screen.getByRole("complementary", { name: "侧边栏导航" }),
+				screen.getByRole("complementary", { name: "Sidebar navigation" }),
 			).toBeInTheDocument();
 		},
 		SIDEBAR_TIMEOUT_MS,
@@ -208,15 +209,17 @@ describe("Sidebar + Sheet contract", () => {
 					subscriptions={[]}
 					apiHealthState="healthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="正常"
+					apiHealthLabel="Healthy"
 				/>,
 			);
 
-			fireEvent.click(screen.getByRole("button", { name: "展开导航面板" }));
+			fireEvent.click(
+				screen.getByRole("button", { name: "Open navigation panel" }),
+			);
 
 			expect(screen.getByRole("dialog")).toBeInTheDocument();
 			expect(
-				screen.getByRole("complementary", { name: "侧边栏导航" }),
+				screen.getByRole("complementary", { name: "Sidebar navigation" }),
 			).toBeInTheDocument();
 		},
 		SIDEBAR_TIMEOUT_MS,
@@ -235,14 +238,14 @@ describe("Sidebar + Sheet contract", () => {
 					subscriptions={[]}
 					apiHealthState="healthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="正常"
+					apiHealthLabel="Healthy"
 				/>,
 			);
 
-			const toggle = screen.getByRole("button", { name: "折叠侧边栏" });
+			const toggle = screen.getByRole("button", { name: "Collapse sidebar" });
 			fireEvent.click(toggle);
 			expect(
-				screen.getByRole("button", { name: "展开导航面板" }),
+				screen.getByRole("button", { name: "Open navigation panel" }),
 			).toBeInTheDocument();
 		},
 		SIDEBAR_TIMEOUT_MS,
@@ -276,17 +279,17 @@ describe("Sidebar + Sheet contract", () => {
 					]}
 					apiHealthState="healthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="正常"
+					apiHealthLabel="Healthy"
 				/>,
 			);
 
-			expect(screen.getByRole("link", { name: "首页" })).toHaveAttribute(
+			expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute(
 				"aria-current",
 				"page",
 			);
-			expect(screen.queryByRole("link", { name: "科技" })).toBeNull();
+			expect(screen.queryByRole("link", { name: "Tech" })).toBeNull();
 			expect(
-				screen.queryByRole("link", { name: "AI 摘要" }),
+				screen.queryByRole("link", { name: "Digest feed" }),
 			).not.toHaveAttribute("aria-current");
 		},
 		SIDEBAR_TIMEOUT_MS,
@@ -301,15 +304,17 @@ describe("Sidebar + Sheet contract", () => {
 					subscriptionsLoadError
 					apiHealthState="unhealthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="异常"
+					apiHealthLabel="Unhealthy"
 				/>,
 			);
 
 			expect(
-				screen.getByText("订阅列表加载失败，可在订阅管理中重试。"),
+				screen.getByText(
+					"Subscriptions failed to load. Retry from Subscriptions.",
+				),
 			).toBeInTheDocument();
 			expect(
-				screen.getByRole("link", { name: "前往订阅管理" }),
+				screen.getByRole("link", { name: "Open Subscriptions" }),
 			).toHaveAttribute("href", "/subscriptions");
 		},
 		SIDEBAR_TIMEOUT_MS,
@@ -361,16 +366,18 @@ describe("Sidebar + Sheet contract", () => {
 					]}
 					apiHealthState="timeout_or_unknown"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="超时/未知"
+					apiHealthLabel="Timeout / Unknown"
 				/>,
 			);
 
 			expect(
 				screen.getByRole("link", { name: "https://example.com/source" }),
 			).toHaveAttribute("aria-current", "page");
-			expect(screen.getByRole("link", { name: "未命名" })).toBeInTheDocument();
 			expect(
-				screen.getByRole("link", { name: "API 状态：超时/未知" }),
+				screen.getByRole("link", { name: "Untitled" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("link", { name: "API health: Timeout / Unknown" }),
 			).toBeInTheDocument();
 		},
 		SIDEBAR_TIMEOUT_MS,
@@ -387,17 +394,17 @@ describe("Sidebar + Sheet contract", () => {
 					subscriptions={[]}
 					apiHealthState="healthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="正常"
+					apiHealthLabel="Healthy"
 				/>,
 			);
 
-			expect(screen.getByRole("link", { name: "任务" })).toHaveAttribute(
+			expect(screen.getByRole("link", { name: "Jobs" })).toHaveAttribute(
 				"aria-current",
 				"page",
 			);
-			expect(screen.getByRole("link", { name: "AI 摘要" })).not.toHaveAttribute(
-				"aria-current",
-			);
+			expect(
+				screen.getByRole("link", { name: "Digest feed" }),
+			).not.toHaveAttribute("aria-current");
 
 			usePathnameMock.mockReturnValue("/settings/profile");
 			rerender(
@@ -405,11 +412,11 @@ describe("Sidebar + Sheet contract", () => {
 					subscriptions={[]}
 					apiHealthState="healthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="正常"
+					apiHealthLabel="Healthy"
 				/>,
 			);
 
-			expect(screen.getByRole("link", { name: "设置" })).toHaveAttribute(
+			expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
 				"aria-current",
 				"page",
 			);
@@ -428,16 +435,16 @@ describe("Sidebar + Sheet contract", () => {
 					subscriptions={[]}
 					apiHealthState="unhealthy"
 					apiHealthUrl="http://127.0.0.1:9000/healthz"
-					apiHealthLabel="异常"
+					apiHealthLabel="Unhealthy"
 				/>,
 			);
 
-			expect(screen.getByRole("link", { name: "AI 摘要" })).toHaveAttribute(
+			expect(screen.getByRole("link", { name: "Digest feed" })).toHaveAttribute(
 				"aria-current",
 				"page",
 			);
 			expect(
-				screen.getByRole("link", { name: "API 状态：异常" }),
+				screen.getByRole("link", { name: "API health: Unhealthy" }),
 			).toBeInTheDocument();
 		},
 		SIDEBAR_TIMEOUT_MS,

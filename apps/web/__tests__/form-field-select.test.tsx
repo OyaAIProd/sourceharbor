@@ -11,15 +11,15 @@ describe("FormSelectField", () => {
 	it("falls back to generated field id when name is omitted", () => {
 		render(
 			<FormSelectField
-				label="分类"
+				label="Category"
 				options={[
-					{ value: "", label: "全部分类" },
-					{ value: "tech", label: "科技" },
+					{ value: "", label: "All categories" },
+					{ value: "tech", label: "Tech" },
 				]}
 			/>,
 		);
 
-		const trigger = screen.getByRole("combobox", { name: "分类" });
+		const trigger = screen.getByRole("combobox", { name: "Category" });
 		expect(trigger.id).toMatch(/^field-/);
 		expect(trigger).toHaveAttribute("data-slot", "select-trigger");
 		expect(screen.getByDisplayValue("")).toBeInTheDocument();
@@ -28,31 +28,31 @@ describe("FormSelectField", () => {
 	it("maps empty option through the shadcn select and hidden input", () => {
 		render(
 			<FormSelectField
-				label="来源"
+				label="Source"
 				name="source"
 				defaultValue="tech"
 				options={[
-					{ value: "", label: "全部来源" },
-					{ value: "tech", label: "科技" },
+					{ value: "", label: "All sources" },
+					{ value: "tech", label: "Tech" },
 				]}
 			/>,
 		);
 
 		expect(screen.getByDisplayValue("tech")).toBeInTheDocument();
-		fireEvent.click(screen.getByRole("combobox", { name: "来源" }));
-		fireEvent.click(screen.getByRole("option", { name: "全部来源" }));
+		fireEvent.click(screen.getByRole("combobox", { name: "Source" }));
+		fireEvent.click(screen.getByRole("option", { name: "All sources" }));
 		expect(screen.getByDisplayValue("")).toBeInTheDocument();
 	});
 
 	it("supports controlled select values and non-string labels", () => {
 		render(
 			<FormSelectField
-				label={<span>模式</span>}
+				label={<span>Mode</span>}
 				name="mode"
 				value="creator"
 				options={[
-					{ value: "", label: "全部模式" },
-					{ value: "creator", label: <strong>创作者</strong> },
+					{ value: "", label: "All modes" },
+					{ value: "creator", label: <strong>Creator</strong> },
 				]}
 			/>,
 		);
@@ -160,25 +160,25 @@ describe("FormSelectField advanced branches", () => {
 	it("merges external aria-describedby with hint and error ids", () => {
 		render(
 			<FormSelectField
-				label="状态"
+				label="Status"
 				name="status"
 				aria-describedby="external-desc"
-				hint="可选择任务状态"
-				error="请选择有效状态"
+				hint="Choose a job status"
+				error="Select a valid status"
 				options={[
-					{ value: "", label: "全部状态" },
-					{ value: "queued", label: "排队中", disabled: true },
+					{ value: "", label: "All statuses" },
+					{ value: "queued", label: "Queued", disabled: true },
 				]}
 			/>,
 		);
 
-		const trigger = screen.getByRole("combobox", { name: "状态" });
+		const trigger = screen.getByRole("combobox", { name: "Status" });
 		const describedBy = trigger.getAttribute("aria-describedby") ?? "";
 		expect(describedBy).toContain("external-desc");
 		expect(describedBy).toContain("hint");
 		expect(describedBy).toContain("error");
 		fireEvent.click(trigger);
-		expect(screen.getByRole("option", { name: "排队中" })).toHaveAttribute(
+		expect(screen.getByRole("option", { name: "Queued" })).toHaveAttribute(
 			"aria-disabled",
 			"true",
 		);
@@ -212,21 +212,21 @@ describe("FormCheckboxField advanced branches", () => {
 	it("updates uncontrolled select to a non-empty option and uses string aria-label", () => {
 		render(
 			<FormSelectField
-				label="分类"
+				label="Category"
 				name="category"
 				defaultValue=""
 				options={[
-					{ value: "", label: "全部分类" },
-					{ value: "ops", label: "运维" },
+					{ value: "", label: "All categories" },
+					{ value: "ops", label: "Operations" },
 				]}
 			/>,
 		);
 
-		const trigger = screen.getByRole("combobox", { name: "分类" });
+		const trigger = screen.getByRole("combobox", { name: "Category" });
 		fireEvent.click(trigger);
-		fireEvent.click(screen.getByRole("option", { name: "运维" }));
+		fireEvent.click(screen.getByRole("option", { name: "Operations" }));
 		expect(screen.getByDisplayValue("ops")).toBeInTheDocument();
-		expect(trigger).toHaveAttribute("aria-label", "分类");
+		expect(trigger).toHaveAttribute("aria-label", "Category");
 	});
 
 	it("mirrors false checkbox state into hidden input and renders checkbox error", () => {

@@ -45,13 +45,13 @@ export function ErrorStateCard({
 				</CardDescription>
 				{digest ? (
 					<p className="text-sm text-muted-foreground">
-						错误编号：<code>{digest}</code>
+						Error code: <code>{digest}</code>
 					</p>
 				) : null}
 			</CardHeader>
 			<CardContent>
 				<Button type="button" onClick={onRetry} data-interaction="control">
-					重试页面
+					Retry page
 				</Button>
 			</CardContent>
 		</Card>

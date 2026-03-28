@@ -427,7 +427,7 @@ describe("feed/jobs/artifacts pages", () => {
 			render(await FeedPage({ searchParams: {} }));
 
 			expect(screen.getByRole("alert")).toHaveTextContent(
-				"输入参数不合法，请检查后重试。",
+				"The input is invalid. Review the fields and try again.",
 			);
 			expect(
 				screen.getByRole("link", { name: "Retry current page" }),
@@ -530,10 +530,10 @@ describe("feed/jobs/artifacts pages", () => {
 				within(overviewSection as HTMLElement).getByText("Updated at"),
 			).toBeInTheDocument();
 			expect(
-				within(overviewSection as HTMLElement).getByText("运行中"),
+				within(overviewSection as HTMLElement).getByText("Running"),
 			).toBeInTheDocument();
 			expect(
-				within(overviewSection as HTMLElement).getByText("已降级"),
+				within(overviewSection as HTMLElement).getByText("Degraded"),
 			).toBeInTheDocument();
 			expect(
 				screen.getByRole("link", { name: "recent videos on the home page" }),
@@ -547,7 +547,7 @@ describe("feed/jobs/artifacts pages", () => {
 			).not.toBeNull();
 			expect(screen.getByText("fetch_video")).toBeInTheDocument();
 			expect(screen.getByText("llm_digest")).toBeInTheDocument();
-			expect(screen.getByText("已完成")).toBeInTheDocument();
+			expect(screen.getByText("Succeeded")).toBeInTheDocument();
 			expect(screen.getByText("Artifact index")).toBeInTheDocument();
 			expect(
 				screen.getByText("(opens in a new tab)", { exact: false }),
@@ -571,7 +571,7 @@ describe("feed/jobs/artifacts pages", () => {
 			render(await JobsPage({ searchParams: { job_id: "job-missing" } }));
 
 			expect(screen.getByRole("alert")).toHaveTextContent(
-				"请求失败，请稍后重试。",
+				"The request failed. Please try again later.",
 			);
 			expect(
 				screen.getByRole("link", { name: "Retry current page" }),

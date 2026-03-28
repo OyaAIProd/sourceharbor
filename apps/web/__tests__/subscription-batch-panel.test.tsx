@@ -97,7 +97,9 @@ describe("SubscriptionBatchPanel", () => {
 		"renders empty message when no subscriptions",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={[]} />);
-			expect(screen.getByText("暂无订阅数据。")).toBeInTheDocument();
+			expect(
+				screen.getByText("No subscriptions available."),
+			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -106,14 +108,14 @@ describe("SubscriptionBatchPanel", () => {
 		"renders all subscriptions rows",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			expect(screen.getByText("当前订阅列表")).toBeInTheDocument();
+			expect(screen.getByText("Current subscriptions")).toBeInTheDocument();
 			expect(
-				screen.getByRole("columnheader", { name: "来源" }),
+				screen.getByRole("columnheader", { name: "Source" }),
 			).toHaveAttribute("scope", "col");
 			expect(screen.getByText("Tech Channel")).toBeInTheDocument();
 			expect(screen.getByText("Finance Blog")).toBeInTheDocument();
-			expect(screen.getByText("科技")).toBeInTheDocument();
-			expect(screen.getByText("宏观")).toBeInTheDocument();
+			expect(screen.getByText("Tech")).toBeInTheDocument();
+			expect(screen.getByText("Macro")).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -125,17 +127,17 @@ describe("SubscriptionBatchPanel", () => {
 
 			const techRow = screen.getByText("Tech Channel").closest("tr");
 			const disabledRow = screen
-				.getByLabelText("选择 订阅 sub-3")
+				.getByLabelText("Select Subscription sub-3")
 				.closest("tr");
 			expect(techRow).not.toBeNull();
 			expect(disabledRow).not.toBeNull();
 
-			const techBadge = within(techRow as HTMLElement).getByText("科技");
+			const techBadge = within(techRow as HTMLElement).getByText("Tech");
 			expect(techBadge).toHaveClass("sub-category-badge");
 			expect(techBadge).toHaveAttribute("data-category", "tech");
-			const enabledBadge = within(techRow as HTMLElement).getByText("启用");
+			const enabledBadge = within(techRow as HTMLElement).getByText("Enabled");
 			const disabledBadge = within(disabledRow as HTMLElement).getByText(
-				"停用",
+				"Disabled",
 			);
 			expect(enabledBadge).toHaveAttribute("data-slot", "badge");
 			expect(disabledBadge).toHaveAttribute("data-slot", "badge");
@@ -149,13 +151,13 @@ describe("SubscriptionBatchPanel", () => {
 		"renders localized category labels in batch select while preserving english enum values",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			fireEvent.click(screen.getByLabelText(/^全选/));
-			const combo = screen.getByRole("combobox", { name: "批量设分类" });
+			fireEvent.click(screen.getByLabelText(/^Select all/));
+			const combo = screen.getByRole("combobox", { name: "Bulk category" });
 			expect(combo).toBeInTheDocument();
-			expect(combo).toHaveTextContent("其他");
+			expect(combo).toHaveTextContent("Other");
 			fireEvent.click(combo);
 			expect(
-				screen.getByRole("option", { name: "创作者" }),
+				screen.getByRole("option", { name: "Creator" }),
 			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
@@ -165,7 +167,7 @@ describe("SubscriptionBatchPanel", () => {
 		"select-all checkbox selects all rows",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			const allCheckbox = screen.getByLabelText(/^全选/);
+			const allCheckbox = screen.getByLabelText(/^Select all/);
 			fireEvent.click(allCheckbox);
 			const rowCheckboxes = screen
 				.getAllByRole("checkbox")
@@ -181,11 +183,11 @@ describe("SubscriptionBatchPanel", () => {
 		"select-all checkbox clears selection on second toggle",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			const allCheckbox = screen.getByLabelText(/^全选/);
+			const allCheckbox = screen.getByLabelText(/^Select all/);
 			fireEvent.click(allCheckbox);
-			expect(screen.getByText(/已选/)).toBeInTheDocument();
+			expect(document.body).toHaveTextContent(/Selected\s+3\s+subscriptions/);
 			fireEvent.click(allCheckbox);
-			expect(screen.queryByText(/已选/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Selected/)).not.toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -194,11 +196,11 @@ describe("SubscriptionBatchPanel", () => {
 		"shows batch action bar when items are selected",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			fireEvent.click(screen.getByLabelText(/^全选/));
+			fireEvent.click(screen.getByLabelText(/^Select all/));
 
-			expect(screen.getByText(/已选/)).toBeInTheDocument();
+			expect(document.body).toHaveTextContent(/Selected\s+3\s+subscriptions/);
 			expect(
-				screen.getByRole("button", { name: "应用分类" }),
+				screen.getByRole("button", { name: "Apply category" }),
 			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
@@ -215,10 +217,10 @@ describe("SubscriptionBatchPanel", () => {
 			);
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			fireEvent.click(screen.getByLabelText(/^全选/));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText(/^Select all/));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
-			const pendingButton = screen.getByRole("button", { name: "应用分类中…" });
+			const pendingButton = screen.getByRole("button", { name: "Applying..." });
 			expect(pendingButton).toHaveAttribute("data-feedback-state", "pending");
 			expect(pendingButton).toHaveAttribute("data-feedback-state", "pending");
 			expect(pendingButton).toHaveAttribute("aria-busy", "true");
@@ -227,7 +229,7 @@ describe("SubscriptionBatchPanel", () => {
 			resolveBatch?.({ updated: 3 });
 			await waitFor(() => {
 				expect(
-					screen.queryByRole("button", { name: "应用分类中…" }),
+					screen.queryByRole("button", { name: "Applying..." }),
 				).not.toBeInTheDocument();
 			});
 		},
@@ -238,13 +240,13 @@ describe("SubscriptionBatchPanel", () => {
 		"toggles single row selection on and off",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			const oneCheckbox = screen.getByLabelText("选择 Tech Channel");
+			const oneCheckbox = screen.getByLabelText("Select Tech Channel");
 			fireEvent.click(oneCheckbox);
-			expect(screen.getByText(/已选/)).toBeInTheDocument();
+			expect(document.body).toHaveTextContent(/Selected\s+1\s+subscriptions/);
 			expect(screen.getByText("1")).toBeInTheDocument();
 
 			fireEvent.click(oneCheckbox);
-			expect(screen.queryByText(/已选/)).not.toBeInTheDocument();
+			expect(screen.queryByText(/Selected/)).not.toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -255,10 +257,10 @@ describe("SubscriptionBatchPanel", () => {
 			mockBatchUpdate.mockResolvedValue({ updated: 2 });
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			fireEvent.click(screen.getByLabelText(/^全选/));
-			fireEvent.click(screen.getByRole("combobox", { name: "批量设分类" }));
-			fireEvent.click(screen.getByRole("option", { name: "创作者" }));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText(/^Select all/));
+			fireEvent.click(screen.getByRole("combobox", { name: "Bulk category" }));
+			fireEvent.click(screen.getByRole("option", { name: "Creator" }));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
 			await waitFor(() => {
 				expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
@@ -269,7 +271,7 @@ describe("SubscriptionBatchPanel", () => {
 			});
 			await waitFor(() => {
 				expect(
-					screen.getByText("已将 2 条订阅移至分类「创作者」"),
+					screen.getByText('Moved 2 subscriptions to "Creator".'),
 				).toBeInTheDocument();
 			});
 			expect(mockRefresh).toHaveBeenCalledTimes(1);
@@ -283,15 +285,17 @@ describe("SubscriptionBatchPanel", () => {
 			mockBatchUpdate.mockRejectedValue(new Error("Server error"));
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			fireEvent.click(screen.getByLabelText(/^全选/));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText(/^Select all/));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
 			await waitFor(() => {
 				expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
 			});
 			await waitFor(() => {
 				expect(
-					screen.getByText("操作失败：请求失败，请稍后重试。"),
+					screen.getByText(
+						"Action failed: The request failed. Please try again later.",
+					),
 				).toBeInTheDocument();
 			});
 			expect(mockRefresh).not.toHaveBeenCalled();
@@ -312,8 +316,8 @@ describe("SubscriptionBatchPanel", () => {
 				/>,
 			);
 
-			fireEvent.click(screen.getByLabelText("选择 Tech Channel"));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText("Select Tech Channel"));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
 			await waitFor(() => {
 				expect(mockBatchUpdate).toHaveBeenCalledTimes(2);
@@ -342,14 +346,16 @@ describe("SubscriptionBatchPanel", () => {
 				/>,
 			);
 
-			fireEvent.click(screen.getByLabelText("选择 Tech Channel"));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText("Select Tech Channel"));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
 			await waitFor(() => {
 				expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
 			});
 			expect(
-				screen.getByText("操作失败：输入参数不合法，请检查后重试。"),
+				screen.getByText(
+					"Action failed: The input is invalid. Review the fields and try again.",
+				),
 			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
@@ -362,15 +368,15 @@ describe("SubscriptionBatchPanel", () => {
 			mockBatchUpdate.mockResolvedValue({ updated: 1 });
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			fireEvent.click(screen.getByLabelText("选择 Tech Channel"));
-			fireEvent.click(screen.getByLabelText("选择 Finance Blog"));
-			fireEvent.click(screen.getByRole("combobox", { name: "批量设分类" }));
-			fireEvent.click(screen.getByRole("option", { name: "创作者" }));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText("Select Tech Channel"));
+			fireEvent.click(screen.getByLabelText("Select Finance Blog"));
+			fireEvent.click(screen.getByRole("combobox", { name: "Bulk category" }));
+			fireEvent.click(screen.getByRole("option", { name: "Creator" }));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
 			await waitFor(() => {
 				expect(
-					screen.getByRole("button", { name: "撤销" }),
+					screen.getByRole("button", { name: "Undo" }),
 				).toBeInTheDocument();
 			});
 
@@ -379,13 +385,13 @@ describe("SubscriptionBatchPanel", () => {
 			expect(techRow).not.toBeNull();
 			expect(financeRow).not.toBeNull();
 			expect(
-				within(techRow as HTMLElement).getByText("创作者"),
+				within(techRow as HTMLElement).getByText("Creator"),
 			).toBeInTheDocument();
 			expect(
-				within(financeRow as HTMLElement).getByText("创作者"),
+				within(financeRow as HTMLElement).getByText("Creator"),
 			).toBeInTheDocument();
 
-			fireEvent.click(screen.getByRole("button", { name: "撤销" }));
+			fireEvent.click(screen.getByRole("button", { name: "Undo" }));
 
 			await waitFor(() => {
 				expect(mockBatchUpdate).toHaveBeenCalledWith({
@@ -399,16 +405,22 @@ describe("SubscriptionBatchPanel", () => {
 			});
 			await waitFor(() => {
 				expect(
-					within(techRow as HTMLElement).getByText("科技"),
+					within(techRow as HTMLElement).getByText("Tech"),
 				).toBeInTheDocument();
 				expect(
-					within(financeRow as HTMLElement).getByText("宏观"),
+					within(financeRow as HTMLElement).getByText("Macro"),
 				).toBeInTheDocument();
 			});
 			expect(
-				screen.getByText("已撤销分类变更，恢复 2 条订阅至原分类。"),
+				screen.getByText(
+					"Category change undone. Restored 2 subscriptions to their previous categories.",
+				),
 			).toBeInTheDocument();
-			expect(screen.getByText("已恢复 2 条订阅至原分类。")).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					"Restored 2 subscriptions to their previous categories.",
+				),
+			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -420,30 +432,36 @@ describe("SubscriptionBatchPanel", () => {
 			mockBatchUpdate.mockResolvedValueOnce({ updated: 2 });
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			fireEvent.click(screen.getByLabelText("选择 Tech Channel"));
-			fireEvent.click(screen.getByLabelText("选择 Finance Blog"));
-			fireEvent.click(screen.getByRole("combobox", { name: "批量设分类" }));
-			fireEvent.click(screen.getByRole("option", { name: "创作者" }));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText("Select Tech Channel"));
+			fireEvent.click(screen.getByLabelText("Select Finance Blog"));
+			fireEvent.click(screen.getByRole("combobox", { name: "Bulk category" }));
+			fireEvent.click(screen.getByRole("option", { name: "Creator" }));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
 			await act(async () => {
 				await Promise.resolve();
 			});
-			expect(screen.getByRole("button", { name: "撤销" })).toBeInTheDocument();
-			expect(screen.getByText(/可在 10 秒内撤销/)).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Undo" })).toBeInTheDocument();
+			expect(
+				screen.getByText(/Undo available for 10 seconds/),
+			).toBeInTheDocument();
 
 			act(() => {
 				vi.advanceTimersByTime(1000);
 			});
-			expect(screen.getByText(/可在 9 秒内撤销/)).toBeInTheDocument();
+			expect(
+				screen.getByText(/Undo available for 9 seconds/),
+			).toBeInTheDocument();
 
 			act(() => {
 				vi.advanceTimersByTime(9000);
 			});
 			expect(
-				screen.queryByRole("button", { name: "撤销" }),
+				screen.queryByRole("button", { name: "Undo" }),
 			).not.toBeInTheDocument();
-			expect(screen.getByText("批量分类撤销窗口已结束。")).toBeInTheDocument();
+			expect(
+				screen.getByText("The bulk category undo window expired."),
+			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -455,28 +473,30 @@ describe("SubscriptionBatchPanel", () => {
 			mockBatchUpdate.mockRejectedValueOnce(new Error("undo failed"));
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			fireEvent.click(screen.getByLabelText("选择 Tech Channel"));
-			fireEvent.click(screen.getByLabelText("选择 Finance Blog"));
-			fireEvent.click(screen.getByRole("combobox", { name: "批量设分类" }));
-			fireEvent.click(screen.getByRole("option", { name: "创作者" }));
-			fireEvent.click(screen.getByRole("button", { name: "应用分类" }));
+			fireEvent.click(screen.getByLabelText("Select Tech Channel"));
+			fireEvent.click(screen.getByLabelText("Select Finance Blog"));
+			fireEvent.click(screen.getByRole("combobox", { name: "Bulk category" }));
+			fireEvent.click(screen.getByRole("option", { name: "Creator" }));
+			fireEvent.click(screen.getByRole("button", { name: "Apply category" }));
 
 			await waitFor(() => {
 				expect(
-					screen.getByRole("button", { name: "撤销" }),
+					screen.getByRole("button", { name: "Undo" }),
 				).toBeInTheDocument();
 			});
-			fireEvent.click(screen.getByRole("button", { name: "撤销" }));
+			fireEvent.click(screen.getByRole("button", { name: "Undo" }));
 
 			await waitFor(() => {
 				expect(
-					screen.getByText("撤销失败：请求失败，请稍后重试。"),
+					screen.getByText(
+						"Undo failed: The request failed. Please try again later.",
+					),
 				).toBeInTheDocument();
 			});
 			expect(
-				screen.getByText("上次撤销失败，请稍后重试。"),
+				screen.getByText("Undo failed. Please try again."),
 			).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "撤销" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Undo" })).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -485,13 +505,13 @@ describe("SubscriptionBatchPanel", () => {
 		"cancel selection clears selected state and hides action bar",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			fireEvent.click(screen.getByLabelText(/^全选/));
+			fireEvent.click(screen.getByLabelText(/^Select all/));
 
 			expect(
-				screen.getByRole("button", { name: "取消选择" }),
+				screen.getByRole("button", { name: "Clear selection" }),
 			).toBeInTheDocument();
-			fireEvent.click(screen.getByRole("button", { name: "取消选择" }));
-			expect(screen.queryByText(/已选/)).not.toBeInTheDocument();
+			fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+			expect(screen.queryByText(/Selected/)).not.toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -502,12 +522,14 @@ describe("SubscriptionBatchPanel", () => {
 			mockDelete.mockResolvedValue(undefined);
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			const deleteButtons = screen.getAllByRole("button", { name: "删除" });
+			const deleteButtons = screen.getAllByRole("button", { name: "Delete" });
 			fireEvent.click(deleteButtons[0]);
 
 			expect(mockDelete).not.toHaveBeenCalled();
 			fireEvent.click(
-				screen.getByRole("button", { name: "确认删除「Tech Channel」" }),
+				screen.getByRole("button", {
+					name: 'Confirm delete "Tech Channel"',
+				}),
 			);
 
 			await waitFor(() => {
@@ -535,9 +557,11 @@ describe("SubscriptionBatchPanel", () => {
 				/>,
 			);
 
-			fireEvent.click(screen.getAllByRole("button", { name: "删除" })[0]);
+			fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0]);
 			fireEvent.click(
-				screen.getByRole("button", { name: "确认删除「Tech Channel」" }),
+				screen.getByRole("button", {
+					name: 'Confirm delete "Tech Channel"',
+				}),
 			);
 
 			await waitFor(() => {
@@ -562,9 +586,9 @@ describe("SubscriptionBatchPanel", () => {
 			);
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			const firstRowCheckbox = screen.getByLabelText("选择 Tech Channel");
+			const firstRowCheckbox = screen.getByLabelText("Select Tech Channel");
 			const firstDeleteButton = screen.getAllByRole("button", {
-				name: "删除",
+				name: "Delete",
 			})[0];
 			const firstRow = firstRowCheckbox.closest("tr");
 			expect(firstRow).not.toBeNull();
@@ -579,7 +603,9 @@ describe("SubscriptionBatchPanel", () => {
 			expect(firstRow).toHaveAttribute("data-state", "confirming-delete");
 
 			fireEvent.click(
-				screen.getByRole("button", { name: "确认删除「Tech Channel」" }),
+				screen.getByRole("button", {
+					name: 'Confirm delete "Tech Channel"',
+				}),
 			);
 			await waitFor(() => {
 				expect(mockDelete).toHaveBeenCalledTimes(1);
@@ -599,18 +625,24 @@ describe("SubscriptionBatchPanel", () => {
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			const deleteButtons = screen.getAllByRole("button", { name: "删除" });
+			const deleteButtons = screen.getAllByRole("button", { name: "Delete" });
 			fireEvent.click(deleteButtons[0]);
 			expect(
-				screen.getByRole("button", { name: "确认删除「Tech Channel」" }),
+				screen.getByRole("button", {
+					name: 'Confirm delete "Tech Channel"',
+				}),
 			).toBeInTheDocument();
 
-			fireEvent.click(screen.getByRole("button", { name: "取消" }));
+			fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 			expect(mockDelete).not.toHaveBeenCalled();
 			expect(
-				screen.queryByRole("button", { name: "确认删除「Tech Channel」" }),
+				screen.queryByRole("button", {
+					name: 'Confirm delete "Tech Channel"',
+				}),
 			).not.toBeInTheDocument();
-			expect(screen.getAllByRole("button", { name: "删除" })[0]).toHaveFocus();
+			expect(
+				screen.getAllByRole("button", { name: "Delete" })[0],
+			).toHaveFocus();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -621,10 +653,12 @@ describe("SubscriptionBatchPanel", () => {
 			mockDelete.mockRejectedValue(new Error("delete denied"));
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
 
-			const deleteButtons = screen.getAllByRole("button", { name: "删除" });
+			const deleteButtons = screen.getAllByRole("button", { name: "Delete" });
 			fireEvent.click(deleteButtons[0]);
 			fireEvent.click(
-				screen.getByRole("button", { name: "确认删除「Tech Channel」" }),
+				screen.getByRole("button", {
+					name: 'Confirm delete "Tech Channel"',
+				}),
 			);
 
 			await waitFor(() => {
@@ -632,12 +666,14 @@ describe("SubscriptionBatchPanel", () => {
 			});
 			await waitFor(() => {
 				expect(
-					screen.getByText("删除失败：请求失败，请稍后重试。"),
+					screen.getByText(
+						"Delete failed: The request failed. Please try again later.",
+					),
 				).toBeInTheDocument();
 			});
 			await waitFor(() => {
 				expect(
-					screen.getAllByRole("button", { name: "删除" })[0],
+					screen.getAllByRole("button", { name: "Delete" })[0],
 				).toHaveFocus();
 			});
 		},
@@ -648,7 +684,9 @@ describe("SubscriptionBatchPanel", () => {
 		"uses non-empty aria-label fallback when source fields are empty",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			expect(screen.getByLabelText("选择 订阅 sub-3")).toBeInTheDocument();
+			expect(
+				screen.getByLabelText("Select Subscription sub-3"),
+			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,
 	);
@@ -657,10 +695,10 @@ describe("SubscriptionBatchPanel", () => {
 		"announces delete target with stable fallback name",
 		() => {
 			render(<SubscriptionBatchPanel subscriptions={MOCK_SUBS} />);
-			const deleteButtons = screen.getAllByRole("button", { name: "删除" });
+			const deleteButtons = screen.getAllByRole("button", { name: "Delete" });
 			fireEvent.click(deleteButtons[2]);
 			expect(
-				screen.getByText("已进入删除确认，目标为 订阅 sub-3。"),
+				screen.getByText("Delete confirmation opened for Subscription sub-3."),
 			).toBeInTheDocument();
 		},
 		PANEL_TEST_TIMEOUT_MS,

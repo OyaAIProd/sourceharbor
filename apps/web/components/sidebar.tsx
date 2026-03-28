@@ -36,11 +36,11 @@ const CATEGORY_ORDER: SubscriptionCategory[] = [
 	"misc",
 ];
 const CATEGORY_LABELS: Record<SubscriptionCategory, string> = {
-	tech: "科技",
-	creator: "创作者",
-	macro: "宏观",
-	ops: "运维",
-	misc: "其他",
+	tech: "Tech",
+	creator: "Creator",
+	macro: "Macro",
+	ops: "Operations",
+	misc: "Other",
 };
 
 function groupByCategory(
@@ -99,7 +99,10 @@ function SidebarNavContent({
 
 	return (
 		<>
-			<nav aria-label="主导航" className="flex flex-col gap-0.5 p-3">
+			<nav
+				aria-label="Primary navigation"
+				className="flex flex-col gap-0.5 p-3"
+			>
 				<Link
 					href="/"
 					className={cn(
@@ -111,7 +114,7 @@ function SidebarNavContent({
 					aria-current={pathname === "/" ? "page" : undefined}
 				>
 					<Home className="size-4 shrink-0 opacity-80" aria-hidden />
-					<span className={collapsed ? "sr-only" : undefined}>首页</span>
+					<span className={collapsed ? "sr-only" : undefined}>Home</span>
 				</Link>
 				<Link
 					href="/feed"
@@ -126,7 +129,7 @@ function SidebarNavContent({
 					}
 				>
 					<Sparkles className="size-4 shrink-0 opacity-80" aria-hidden />
-					<span className={collapsed ? "sr-only" : undefined}>AI 摘要</span>
+					<span className={collapsed ? "sr-only" : undefined}>Digest feed</span>
 				</Link>
 				<Link
 					href="/jobs"
@@ -139,7 +142,7 @@ function SidebarNavContent({
 					aria-current={pathname.startsWith("/jobs") ? "page" : undefined}
 				>
 					<ListTodo className="size-4 shrink-0 opacity-80" aria-hidden />
-					<span className={collapsed ? "sr-only" : undefined}>任务</span>
+					<span className={collapsed ? "sr-only" : undefined}>Jobs</span>
 				</Link>
 
 				{subscriptionsLoadError && !collapsed ? (
@@ -149,13 +152,13 @@ function SidebarNavContent({
 						aria-atomic="true"
 					>
 						<p className="text-xs text-destructive">
-							订阅列表加载失败，可在订阅管理中重试。
+							Subscriptions failed to load. Retry from Subscriptions.
 						</p>
 						<Link
 							href="/subscriptions"
 							className="mt-1 inline-flex text-xs font-medium text-destructive underline underline-offset-2"
 						>
-							前往订阅管理
+							Open Subscriptions
 						</Link>
 					</div>
 				) : null}
@@ -197,7 +200,7 @@ function SidebarNavContent({
 														currentSub === sub.id ? "page" : undefined
 													}
 												>
-													{sub.source_name || sub.source_value || "未命名"}
+													{sub.source_name || sub.source_value || "Untitled"}
 												</Link>
 											</li>
 										))}
@@ -225,7 +228,7 @@ function SidebarNavContent({
 					>
 						<Plus className="size-4 shrink-0 opacity-80" aria-hidden />
 						<span className={collapsed ? "sr-only" : undefined}>
-							+ 添加订阅
+							+ Add subscription
 						</span>
 					</Link>
 					<Link
@@ -239,7 +242,7 @@ function SidebarNavContent({
 						aria-current={pathname.startsWith("/settings") ? "page" : undefined}
 					>
 						<Settings className="size-4 shrink-0 opacity-80" aria-hidden />
-						<span className={collapsed ? "sr-only" : undefined}>设置</span>
+						<span className={collapsed ? "sr-only" : undefined}>Settings</span>
 					</Link>
 					<Separator className="my-2" />
 					<div
@@ -249,7 +252,7 @@ function SidebarNavContent({
 						)}
 					>
 						{!collapsed ? (
-							<span className="text-xs text-muted-foreground">主题</span>
+							<span className="text-xs text-muted-foreground">Theme</span>
 						) : null}
 						<ThemeToggle />
 					</div>
@@ -266,7 +269,7 @@ function SidebarNavContent({
 								aria-hidden
 							/>
 							<span className="text-muted-foreground">
-								API 状态：{apiHealthLabel}
+								API health: {apiHealthLabel}
 							</span>
 						</a>
 					) : null}
@@ -309,23 +312,28 @@ export function Sidebar({
 				"flex shrink-0 flex-col border-r border-border/40 bg-background transition-[width] duration-200 motion-reduce:transition-none",
 				collapsed ? "w-[72px]" : "w-[240px]",
 			)}
-			aria-label="侧边栏导航"
+			aria-label="Sidebar navigation"
 		>
 			<div className="flex items-center justify-between border-b border-border/40 px-3 py-3">
 				{collapsed ? (
 					<Sheet>
 						<SheetTrigger asChild>
-							<Button variant="ghost" size="icon" aria-label="展开导航面板">
+							<Button
+								variant="ghost"
+								size="icon"
+								aria-label="Open navigation panel"
+							>
 								<Menu className="size-4" />
 							</Button>
 						</SheetTrigger>
 						<SheetContent side="left" className="w-[280px] p-0">
-							<SheetTitle className="sr-only">移动端导航</SheetTitle>
+							<SheetTitle className="sr-only">Mobile navigation</SheetTitle>
 							<SheetDescription className="sr-only">
-								在移动端查看页面导航、订阅分组和全局状态入口。
+								Open page navigation, subscription groups, and global status
+								shortcuts on mobile.
 							</SheetDescription>
 							<aside
-								aria-label="侧边栏导航"
+								aria-label="Sidebar navigation"
 								className="flex h-full flex-col bg-background"
 							>
 								<ScrollArea className="flex-1">
@@ -343,14 +351,14 @@ export function Sidebar({
 					</Sheet>
 				) : (
 					<span className="text-sm font-semibold tracking-tight text-foreground">
-						导航
+						Navigation
 					</span>
 				)}
 				<Button
 					type="button"
 					variant="ghost"
 					size="icon"
-					aria-label={collapsed ? "展开侧边栏" : "折叠侧边栏"}
+					aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 					onClick={() => setCollapsed((value) => !value)}
 				>
 					<PanelLeftClose

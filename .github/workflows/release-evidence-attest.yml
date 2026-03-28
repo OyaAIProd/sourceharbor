@@ -94,7 +94,7 @@ jobs:
             artifacts/releases/${{ steps.release_tag.outputs.release_tag }}/rollback/drill.json
 
       - name: Attest release evidence bundle provenance
-        uses: actions/attest-build-provenance@b3e506e8c389afc651c5bacf2b8f2a1ea0557215 # v4
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
         with:
           subject-path: .runtime-cache/reports/release/release-evidence-${{ steps.release_tag.outputs.release_tag }}.tar.gz
 

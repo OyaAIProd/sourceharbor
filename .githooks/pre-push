@@ -10,8 +10,8 @@ source "$ROOT_DIR/scripts/lib/standard_env.sh"
 ensure_external_uv_project_environment "$ROOT_DIR"
 
 echo "[pre-push] sync web environment"
-mkdir -p .runtime-cache/hooks
-WEB_LOCK_HASH_FILE=".runtime-cache/hooks/web-package-lock.sha256"
+mkdir -p .runtime-cache/run/hooks
+WEB_LOCK_HASH_FILE=".runtime-cache/run/hooks/web-package-lock.sha256"
 PACKAGE_HASH="$(shasum -a 256 apps/web/package-lock.json | awk '{print $1}')"
 CURRENT_HASH=""
 if [[ -f "$WEB_LOCK_HASH_FILE" ]]; then

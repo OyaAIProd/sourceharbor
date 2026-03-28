@@ -8,11 +8,11 @@ type RouteTransitionProps = {
 };
 
 const ROUTE_NAME_MAP: Array<{ href: string; label: string }> = [
-	{ href: "/", label: "首页" },
-	{ href: "/subscriptions", label: "订阅管理" },
-	{ href: "/jobs", label: "任务" },
-	{ href: "/feed", label: "AI 摘要" },
-	{ href: "/settings", label: "设置" },
+	{ href: "/", label: "Home" },
+	{ href: "/subscriptions", label: "Subscriptions" },
+	{ href: "/jobs", label: "Jobs" },
+	{ href: "/feed", label: "Digest feed" },
+	{ href: "/settings", label: "Settings" },
 ];
 
 function getRouteLabel(pathname: string | null): string {
@@ -27,7 +27,7 @@ function getRouteLabel(pathname: string | null): string {
 			return route.label;
 		}
 	}
-	return "页面";
+	return "Page";
 }
 
 export function RouteTransition({ children }: RouteTransitionProps) {
@@ -93,7 +93,7 @@ export function RouteTransition({ children }: RouteTransitionProps) {
 				<div aria-hidden="true" className="route-progress-bar" />
 			</div>
 			<output className="sr-only" aria-live="polite" aria-atomic="true">
-				已切换到：{routeLabel}
+				Switched to: {routeLabel}
 			</output>
 			{children}
 		</div>

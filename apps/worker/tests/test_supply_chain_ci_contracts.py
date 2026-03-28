@@ -40,7 +40,7 @@ def test_build_ci_standard_image_workflow_emits_sbom_and_attestations() -> None:
     assert "attestations: write" in workflow
     assert "id-token: write" in workflow
     assert "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610" in workflow
-    assert "actions/attest-build-provenance@b3e506e8c389afc651c5bacf2b8f2a1ea0557215" in workflow
+    assert "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" in workflow
     assert "actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26" in workflow
     assert "cyclonedx-json" in workflow
     assert "strict-ci-image.cdx.json" in workflow
@@ -63,7 +63,7 @@ def test_release_evidence_attestation_workflow_exists() -> None:
     assert "run_db_rollback_drill.sh" in workflow
     assert "python3 scripts/release/verify_db_rollback_readiness.py \\" in workflow
     assert "capture_canary_rollout_evidence.sh" in workflow
-    assert "actions/attest-build-provenance@b3e506e8c389afc651c5bacf2b8f2a1ea0557215" in workflow
+    assert "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" in workflow
     assert "release-evidence-" in workflow
     assert "runner_workspace_maintenance.sh" in workflow
     assert "actions/setup-python@" in workflow

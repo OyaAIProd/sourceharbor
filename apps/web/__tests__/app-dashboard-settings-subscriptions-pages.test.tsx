@@ -153,9 +153,9 @@ describe("dashboard/settings/subscriptions pages", () => {
 			expect(
 				within(recentVideoTable).getByText("rss_generic"),
 			).toBeInTheDocument();
-			expect(within(recentVideoTable).getByText("运行中")).toBeInTheDocument();
-			expect(within(recentVideoTable).getByText("排队中")).toBeInTheDocument();
-			expect(within(recentVideoTable).getByText("已失败")).toBeInTheDocument();
+			expect(within(recentVideoTable).getByText("Running")).toBeInTheDocument();
+			expect(within(recentVideoTable).getByText("Queued")).toBeInTheDocument();
+			expect(within(recentVideoTable).getByText("Failed")).toBeInTheDocument();
 
 			expect(screen.getByRole("link", { name: "job-111" })).toHaveAttribute(
 				"href",
@@ -250,7 +250,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			render(await DashboardPage({ searchParams: {} }));
 
 			expect(screen.getByRole("alert")).toHaveTextContent(
-				"请求失败，请稍后重试。",
+				"The request failed. Please try again later.",
 			);
 			expect(
 				screen.getByRole("link", { name: "重试当前页面" }),
@@ -288,7 +288,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			);
 
 			const successFlash = screen
-				.getByText("已触发采集任务。")
+				.getByText("Ingestion job queued.")
 				.closest("output");
 			expect(successFlash).not.toBeNull();
 			expect(successFlash).toHaveAttribute("aria-live", "polite");
@@ -330,32 +330,32 @@ describe("dashboard/settings/subscriptions pages", () => {
 			);
 
 			expect(screen.getByRole("alert")).toHaveTextContent(
-				"输入参数不合法，请检查后重试。",
+				"The input is invalid. Review the fields and try again.",
 			);
 			expect(screen.getByTestId("subscription-batch-panel")).toHaveTextContent(
 				"count:1",
 			);
 			expect(
-				screen.getByRole("button", { name: "保存订阅" }),
+				screen.getByRole("button", { name: "Save subscription" }),
 			).toBeInTheDocument();
-			expect(screen.getByRole("combobox", { name: "平台" })).toHaveTextContent(
-				"YouTube",
-			);
 			expect(
-				screen.getByRole("combobox", { name: "来源类型" }),
-			).toHaveTextContent("来源链接（URL）");
-			expect(screen.getByLabelText("来源值")).toBeRequired();
+				screen.getByRole("combobox", { name: "Platform" }),
+			).toHaveTextContent("YouTube");
 			expect(
-				screen.getByRole("combobox", { name: "适配器类型" }),
-			).toHaveTextContent("RSSHub 路由");
-			expect(screen.getByRole("combobox", { name: "分类" })).toHaveTextContent(
-				"其他",
-			);
-			expect(screen.getByLabelText("优先级 (0-100)")).toHaveValue(50);
-			expect(screen.getByRole("checkbox", { name: "启用" })).toBeChecked();
+				screen.getByRole("combobox", { name: "Source type" }),
+			).toHaveTextContent("Source URL");
+			expect(screen.getByLabelText("Source value")).toBeRequired();
+			expect(
+				screen.getByRole("combobox", { name: "Adapter type" }),
+			).toHaveTextContent("RSSHub route");
+			expect(
+				screen.getByRole("combobox", { name: "Category" }),
+			).toHaveTextContent("Other");
+			expect(screen.getByLabelText("Priority (0-100)")).toHaveValue(50);
+			expect(screen.getByRole("checkbox", { name: "Enabled" })).toBeChecked();
 
 			const subscriptionsForm = screen
-				.getByRole("button", { name: "保存订阅" })
+				.getByRole("button", { name: "Save subscription" })
 				.closest("form");
 			expect(subscriptionsForm).not.toBeNull();
 			expect(subscriptionsForm).toHaveAttribute(
@@ -390,7 +390,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("test-session-token");
 			expect(
 				within(subscriptionsForm as HTMLElement).getByRole("button", {
-					name: "保存订阅",
+					name: "Save subscription",
 				}),
 			).toHaveAttribute("type", "submit");
 		},
@@ -420,7 +420,9 @@ describe("dashboard/settings/subscriptions pages", () => {
 				}),
 			);
 
-			expect(screen.getByText("通知配置已保存。")).toBeInTheDocument();
+			expect(
+				screen.getByText("Notification settings saved."),
+			).toBeInTheDocument();
 			expect(screen.getByLabelText("收件人邮箱")).toHaveValue(
 				"ops@example.com",
 			);
@@ -496,7 +498,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			render(await SettingsPage({ searchParams: {} }));
 
 			expect(screen.getByRole("alert")).toHaveTextContent(
-				"请求失败，请稍后重试。",
+				"The request failed. Please try again later.",
 			);
 			expect(
 				screen.getByRole("link", { name: "重试当前页面" }),
@@ -528,13 +530,13 @@ describe("dashboard/settings/subscriptions pages", () => {
 			render(await SubscriptionsPage({ searchParams: {} }));
 
 			expect(screen.getByRole("alert")).toHaveTextContent(
-				"请求失败，请稍后重试。",
+				"The request failed. Please try again later.",
 			);
 			expect(
-				screen.getByRole("link", { name: "重试当前页面" }),
+				screen.getByRole("link", { name: "Retry this page" }),
 			).toHaveAttribute("href", "/subscriptions");
 			expect(
-				screen.getByRole("button", { name: "保存订阅" }),
+				screen.getByRole("button", { name: "Save subscription" }),
 			).toBeInTheDocument();
 		},
 		PAGE_TEST_TIMEOUT_MS,

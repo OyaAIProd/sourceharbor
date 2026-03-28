@@ -156,3 +156,50 @@ def test_doc_drift_hit_and_fail_on_returns_1(tmp_path: Path) -> None:
     assert proc.returncode == 1
     payload = json.loads(out_json.read_text(encoding="utf-8"))
     assert payload["doc_drift"]["missing_required_in_docs"] == ["SQLITE_PATH"]
+
+
+def test_unregistered_env_key_report_does_not_persist_env_value(tmp_path: Path) -> None:
+    (tmp_path / "apps").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "docs").mkdir(parents=True, exist_ok=True)
+
+    _write_contract(
+        tmp_path / "infra/config/env.contract.json",
+        [
+            {
+                "name": "KNOWN_VAR",
+                "scope": "runtime",
+                "required": False,
+                "secret": False,
+                "default": None,
+                "consumer": ["apps/runtime.py"],
+                "description": "known var",
+            }
+        ],
+    )
+
+    secret_value = "ghp_super_secret_value_for_test"
+    (tmp_path / "apps/runtime.py").write_text('print("ok")\n', encoding="utf-8")
+    (tmp_path / ".env.example").write_text("KNOWN_VAR=1\n", encoding="utf-8")
+    (tmp_path / ".env").write_text(
+        f"KNOWN_VAR=1\nUNREGISTERED_SECRET={secret_value}\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/testing.md").write_text("`KNOWN_VAR`\n", encoding="utf-8")
+
+    out_json = tmp_path / ".runtime-cache/reports/governance/report.json"
+    out_md = tmp_path / ".runtime-cache/reports/governance/report.md"
+    proc = _run_report(
+        tmp_path,
+        "--fail-on",
+        "doc_drift",
+        "--json-out",
+        str(out_json),
+        "--md-out",
+        str(out_md),
+    )
+
+    assert proc.returncode == 0
+    payload = json.loads(out_json.read_text(encoding="utf-8"))
+    assert payload["residual_refs"]["unregistered_env_file_keys"] == ["UNREGISTERED_SECRET"]
+    assert secret_value not in out_json.read_text(encoding="utf-8")
+    assert secret_value not in out_md.read_text(encoding="utf-8")

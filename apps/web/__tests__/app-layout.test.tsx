@@ -45,7 +45,7 @@ vi.mock("@/components/sidebar-wrapper", () => ({
 		<aside data-testid="sidebar-stub" aria-live="polite">
 			sidebar
 			<a href={apiHealthUrl} className={`api-health-dot-${apiHealthState}`}>
-				API 状态：{apiHealthLabel}
+				API health: {apiHealthLabel}
 			</a>
 		</aside>
 	),
@@ -72,7 +72,7 @@ describe("RootLayout", () => {
 			await RootLayout({ children: <div>content</div> }),
 		);
 
-		expect(html).toContain("API 状态：正常");
+		expect(html).toContain("API health: Healthy");
 		expect(html).toContain("http://127.0.0.1:18000/healthz");
 		expect(fetchApiHealthStateMock).toHaveBeenCalledWith({ timeoutMs: 2000 });
 	});
@@ -84,7 +84,7 @@ describe("RootLayout", () => {
 			await RootLayout({ children: <div>content</div> }),
 		);
 
-		expect(html).toContain("API 状态：异常");
+		expect(html).toContain("API health: Unhealthy");
 	});
 
 	it("shows timeout/unknown api state chip when fetch throws", async () => {
@@ -95,9 +95,9 @@ describe("RootLayout", () => {
 		);
 
 		expect(html).toContain("api-health-dot-timeout_or_unknown");
-		expect(html).toContain("API 状态：超时/未知");
+		expect(html).toContain("API health: Timeout / Unknown");
 		expect(html).toContain('aria-live="polite"');
-		expect(html).toContain("跳至主内容");
+		expect(html).toContain("Skip to main content");
 		expect(html).toContain('id="main-content"');
 		expect(html).toContain('tabindex="-1"');
 	});
@@ -108,9 +108,8 @@ describe("RootLayout", () => {
 		document.body.innerHTML = renderToStaticMarkup(
 			await RootLayout({ children: <div>content</div> }),
 		);
-		expect(screen.getByRole("link", { name: "跳至主内容" })).toHaveAttribute(
-			"href",
-			"#main-content",
-		);
+		expect(
+			screen.getByRole("link", { name: "Skip to main content" }),
+		).toHaveAttribute("href", "#main-content");
 	});
 });

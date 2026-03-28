@@ -206,19 +206,10 @@ def _collect_code_references(
     return refs
 
 
-def _parse_env_value(raw_value: str) -> str:
-    value = raw_value.strip()
-    if not value:
-        return ""
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1]
-    return value.split(" #", 1)[0].strip()
-
-
-def _load_env_file_items(path: Path) -> dict[str, str]:
+def _load_env_file_keys(path: Path) -> set[str]:
     if not path.is_file():
-        return {}
-    items: dict[str, str] = {}
+        return set()
+    keys: set[str] = set()
     for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -226,9 +217,8 @@ def _load_env_file_items(path: Path) -> dict[str, str]:
         matched = ENV_FILE_LINE_RE.match(line)
         if not matched:
             continue
-        key, raw_value = matched.group(1), matched.group(2)
-        items[key] = _parse_env_value(raw_value)
-    return items
+        keys.add(matched.group(1))
+    return keys
 
 
 def _load_env_example_vars(path: Path) -> set[str]:
@@ -249,7 +239,7 @@ def _collect_doc_refs(path: Path) -> set[str]:
 def _collect_residual_refs(
     contract_names: set[str],
     code_refs: dict[str, set[str]],
-    env_items: dict[str, str],
+    env_keys: set[str],
 ) -> dict[str, Any]:
     code_rows: list[dict[str, Any]] = []
     for file_path, refs in sorted(code_refs.items()):
@@ -258,7 +248,7 @@ def _collect_residual_refs(
             code_rows.append({"file": file_path, "names": missing})
 
     env_missing = sorted(
-        name for name in env_items if name not in contract_names and name not in IGNORE_REFS
+        name for name in env_keys if name not in contract_names and name not in IGNORE_REFS
     )
 
     return {
@@ -395,8 +385,8 @@ def _build_report(
     delete_candidates = _collect_delete_candidates(root, variables)
 
     code_refs = _collect_code_references(root)
-    env_items = _load_env_file_items(env_file_path)
-    residual_refs = _collect_residual_refs(contract_names, code_refs, env_items)
+    env_keys = _load_env_file_keys(env_file_path)
+    residual_refs = _collect_residual_refs(contract_names, code_refs, env_keys)
 
     env_example_vars = _load_env_example_vars(env_example_path)
     doc_drift = _collect_doc_drift(

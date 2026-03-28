@@ -36,11 +36,11 @@ const CATEGORIES: SubscriptionCategory[] = [
 ];
 const UNDO_WINDOW_MS = 10_000;
 const CATEGORY_LABELS: Record<SubscriptionCategory, string> = {
-	tech: "科技",
-	creator: "创作者",
-	macro: "宏观",
-	ops: "运维",
-	misc: "其他",
+	tech: "Tech",
+	creator: "Creator",
+	macro: "Macro",
+	ops: "Operations",
+	misc: "Other",
 };
 
 type Props = {
@@ -153,7 +153,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 				setUndoContext(null);
 				setUndoRemainingSeconds(0);
 				setUndoHistory({
-					message: "批量分类撤销窗口已结束。",
+					message: "The bulk category undo window expired.",
 					isError: false,
 				});
 				if (undoCountdownRef.current) {
@@ -239,7 +239,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 		const targetName = getSubscriptionDisplayNameById(id);
 		setDeletingId(id);
 		setPendingDeleteId(null);
-		setDeleteStatusMessage(`正在删除「${targetName}」。`);
+		setDeleteStatusMessage(`Deleting "${targetName}".`);
 		try {
 			await deleteSubscriptionWithAuth(id);
 			setVisibleSubscriptions((prev) => prev.filter((item) => item.id !== id));
@@ -249,13 +249,15 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 				return next;
 			});
 			setApplyResult(null);
-			setDeleteStatusMessage(`已删除「${targetName}」。`);
+			setDeleteStatusMessage(`Deleted "${targetName}".`);
 			router.replace("/subscriptions?status=success&code=SUBSCRIPTION_DELETED");
 			router.refresh();
 		} catch (err) {
-			const message = `删除失败：${getFlashMessage(toErrorCode(err))}`;
+			const message = `Delete failed: ${getFlashMessage(toErrorCode(err))}`;
 			setApplyResult(message);
-			setDeleteStatusMessage(`删除「${targetName}」失败，请稍后重试。`);
+			setDeleteStatusMessage(
+				`Deleting "${targetName}" failed. Please try again.`,
+			);
 			restoreDeleteTriggerFocusIdRef.current = id;
 		} finally {
 			setDeletingId(null);
@@ -296,12 +298,12 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 			});
 			setUndoHistory(null);
 			setApplyResult(
-				`已将 ${result.updated} 条订阅移至分类「${getCategoryLabel(batchCategory)}」`,
+				`Moved ${result.updated} subscriptions to "${getCategoryLabel(batchCategory)}".`,
 			);
 			setSelected(new Set());
 			router.refresh();
 		} catch (err) {
-			setApplyResult(`操作失败：${getFlashMessage(toErrorCode(err))}`);
+			setApplyResult(`Action failed: ${getFlashMessage(toErrorCode(err))}`);
 		} finally {
 			setApplying(false);
 		}
@@ -338,18 +340,18 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 			);
 			clearUndoContext();
 			setUndoHistory({
-				message: `已恢复 ${undoContext.ids.length} 条订阅至原分类。`,
+				message: `Restored ${undoContext.ids.length} subscriptions to their previous categories.`,
 				isError: false,
 			});
 			setApplyResult(
-				`已撤销分类变更，恢复 ${undoContext.ids.length} 条订阅至原分类。`,
+				`Category change undone. Restored ${undoContext.ids.length} subscriptions to their previous categories.`,
 			);
 		} catch (err) {
 			setUndoHistory({
-				message: "上次撤销失败，请稍后重试。",
+				message: "Undo failed. Please try again.",
 				isError: true,
 			});
-			setApplyResult(`撤销失败：${getFlashMessage(toErrorCode(err))}`);
+			setApplyResult(`Undo failed: ${getFlashMessage(toErrorCode(err))}`);
 		} finally {
 			setUndoing(false);
 		}
@@ -363,28 +365,28 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 	const selectedSummary = `${selected.size}/${visibleSubscriptions.length}`;
 	const isApplyError = Boolean(
 		applyResult &&
-			(applyResult.startsWith("操作失败") ||
-				applyResult.startsWith("删除失败") ||
-				applyResult.startsWith("撤销失败")),
+			(applyResult.startsWith("Action failed") ||
+				applyResult.startsWith("Delete failed") ||
+				applyResult.startsWith("Undo failed")),
 	);
 
 	function getSubscriptionDisplayName(item: Subscription) {
 		const sourceName = item.source_name?.trim();
 		const sourceValue = item.source_value?.trim();
-		return sourceName || sourceValue || `订阅 ${item.id}`;
+		return sourceName || sourceValue || `Subscription ${item.id}`;
 	}
 
 	function getSubscriptionDisplayNameById(id: string): string {
 		const target = visibleSubscriptions.find((item) => item.id === id);
-		return target ? getSubscriptionDisplayName(target) : `订阅 ${id}`;
+		return target ? getSubscriptionDisplayName(target) : `Subscription ${id}`;
 	}
 
 	if (visibleSubscriptions.length === 0) {
 		return (
 			<Card className="border-dashed">
 				<CardHeader className="gap-2">
-					<CardTitle className="text-base">订阅批量管理</CardTitle>
-					<CardDescription>暂无订阅数据。</CardDescription>
+					<CardTitle className="text-base">Bulk subscription actions</CardTitle>
+					<CardDescription>No subscriptions available.</CardDescription>
 				</CardHeader>
 			</Card>
 		);
@@ -393,15 +395,16 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 	return (
 		<Card>
 			<CardHeader className="gap-2">
-				<CardTitle className="text-base">订阅批量管理</CardTitle>
+				<CardTitle className="text-base">Bulk subscription actions</CardTitle>
 				<CardDescription>
-					统一进行批量分类、状态查看和安全删除确认。
+					Review status, update categories in bulk, and confirm deletions
+					safely.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="overflow-x-auto rounded-lg border">
 					<table className="min-w-[920px] w-full text-sm">
-						<caption className="sr-only">当前订阅列表</caption>
+						<caption className="sr-only">Current subscriptions</caption>
 						<thead className="bg-muted/40">
 							<tr className="[&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-muted-foreground">
 								<th scope="col" className="w-12">
@@ -414,15 +417,15 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 													: false
 										}
 										onCheckedChange={toggleAll}
-										aria-label={`全选（已选 ${selectedSummary}）`}
+										aria-label={`Select all (${selectedSummary} selected)`}
 									/>
 								</th>
-								<th scope="col">来源</th>
-								<th scope="col">平台 / 类型</th>
-								<th scope="col">分类 / 优先级</th>
-								<th scope="col">启用</th>
-								<th scope="col">更新时间</th>
-								<th scope="col">操作</th>
+								<th scope="col">Source</th>
+								<th scope="col">Platform / Type</th>
+								<th scope="col">Category / Priority</th>
+								<th scope="col">Enabled</th>
+								<th scope="col">Updated</th>
+								<th scope="col">Actions</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -448,7 +451,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 											<Checkbox
 												checked={isSelected}
 												onCheckedChange={() => toggleOne(item.id)}
-												aria-label={`选择 ${getSubscriptionDisplayName(item)}`}
+												aria-label={`Select ${getSubscriptionDisplayName(item)}`}
 											/>
 										</td>
 										<td className="px-3 py-3">
@@ -481,7 +484,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 												{getCategoryLabel(item.category)}
 											</Badge>
 											<div className="mt-1 text-xs text-muted-foreground">
-												优先级 {item.priority}
+												Priority {item.priority}
 												{item.tags.length > 0
 													? ` · ${item.tags.join(", ")}`
 													: ""}
@@ -489,7 +492,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 										</td>
 										<td className="px-3 py-3">
 											<StatusBadge
-												label={item.enabled ? "启用" : "停用"}
+												label={item.enabled ? "Enabled" : "Disabled"}
 												tone={item.enabled ? "success" : "error"}
 											/>
 										</td>
@@ -512,8 +515,8 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 														data-testid="subscription-confirm-delete"
 													>
 														{deletingId === item.id
-															? "删除中…"
-															: `确认删除「${getSubscriptionDisplayName(item)}」`}
+															? "Deleting..."
+															: `Confirm delete "${getSubscriptionDisplayName(item)}"`}
 													</Button>
 													<Button
 														type="button"
@@ -522,11 +525,11 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 														onClick={() => {
 															restoreDeleteTriggerFocusIdRef.current = item.id;
 															setPendingDeleteId(null);
-															setDeleteStatusMessage("已取消删除。");
+															setDeleteStatusMessage("Delete cancelled.");
 														}}
 														data-interaction="control"
 													>
-														取消
+														Cancel
 													</Button>
 												</div>
 											) : (
@@ -541,12 +544,12 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 													onClick={() => {
 														setPendingDeleteId(item.id);
 														setDeleteStatusMessage(
-															`已进入删除确认，目标为 ${getSubscriptionDisplayName(item)}。`,
+															`Delete confirmation opened for ${getSubscriptionDisplayName(item)}.`,
 														);
 													}}
 													data-interaction="cta"
 												>
-													删除
+													Delete
 												</Button>
 											)}
 										</td>
@@ -561,15 +564,16 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 					<div className="batch-action-bar rounded-lg border bg-muted/25 p-3">
 						<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 							<span className="text-sm text-muted-foreground">
-								已选{" "}
-								<strong className="text-foreground">{selected.size}</strong> 条
+								Selected{" "}
+								<strong className="text-foreground">{selected.size}</strong>{" "}
+								subscriptions
 							</span>
 							<div className="inline-flex flex-wrap items-center gap-2">
 								<Label
 									htmlFor="batch-category"
 									className="batch-category-label text-xs font-medium"
 								>
-									批量设分类
+									Bulk category
 								</Label>
 								<Select
 									value={batchCategory}
@@ -579,10 +583,10 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 								>
 									<SelectTrigger
 										id="batch-category"
-										aria-label="批量设分类"
+										aria-label="Bulk category"
 										className="min-w-[9rem]"
 									>
-										<SelectValue placeholder="选择分类" />
+										<SelectValue placeholder="Select category" />
 									</SelectTrigger>
 									<SelectContent>
 										{CATEGORIES.map((c) => (
@@ -601,7 +605,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 									aria-busy={applying}
 									data-testid="subscription-apply-category"
 								>
-									{applying ? "应用分类中…" : "应用分类"}
+									{applying ? "Applying..." : "Apply category"}
 								</Button>
 								<Button
 									type="button"
@@ -609,7 +613,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 									onClick={() => setSelected(new Set())}
 									data-interaction="control"
 								>
-									取消选择
+									Clear selection
 								</Button>
 							</div>
 						</div>
@@ -643,9 +647,9 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 						aria-atomic="true"
 					>
 						<span>
-							已将 {undoContext.ids.length} 条订阅从「
-							{getCategoryLabel(undoContext.nextCategory)}」更新，可在{" "}
-							{undoRemainingSeconds} 秒内撤销。
+							Updated {undoContext.ids.length} subscriptions to &quot;
+							{getCategoryLabel(undoContext.nextCategory)}&quot;. Undo available
+							for {undoRemainingSeconds} seconds.
 						</span>
 						<Button
 							type="button"
@@ -657,7 +661,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 							data-interaction="control"
 							data-testid="subscription-undo-category"
 						>
-							{undoing ? "撤销中…" : "撤销"}
+							{undoing ? "Undoing..." : "Undo"}
 						</Button>
 					</div>
 				)}

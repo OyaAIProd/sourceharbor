@@ -9,14 +9,14 @@ type GlobalErrorProps = {
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
 	return (
-		<html lang="zh-Hans">
+		<html lang="en">
 			<body className="min-h-screen bg-background text-foreground">
 				<main className="global-error-shell mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-10">
 					<ErrorStateCard
-						eyebrow="系统异常"
-						title="应用发生错误"
+						eyebrow="System error"
+						title="The application hit an error"
 						titleAs="h1"
-						description="出现系统异常，请稍后重试或刷新页面。"
+						description="A system error occurred. Retry or refresh the page."
 						digest={error.digest}
 						onRetry={reset}
 						className="folo-surface w-full border-destructive/35 bg-destructive/5"

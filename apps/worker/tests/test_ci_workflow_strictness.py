@@ -135,7 +135,7 @@ def test_pre_push_hook_uses_local_safe_ci_dedupe() -> None:
 
     assert 'source "$ROOT_DIR/scripts/lib/standard_env.sh"' in content
     assert 'ensure_external_uv_project_environment "$ROOT_DIR"' in content
-    assert 'WEB_LOCK_HASH_FILE=".runtime-cache/hooks/web-package-lock.sha256"' in content
+    assert 'WEB_LOCK_HASH_FILE=".runtime-cache/run/hooks/web-package-lock.sha256"' in content
     assert "npm --prefix apps/web install --no-audit --no-fund >/dev/null" in content
     assert "git diff --quiet -- apps/web/package-lock.json apps/web/package.json" in content
     assert "bash scripts/ci/python_tests.sh" in content

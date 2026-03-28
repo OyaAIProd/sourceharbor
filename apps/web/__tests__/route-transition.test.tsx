@@ -35,7 +35,9 @@ describe("RouteTransition", () => {
 		);
 
 		const heading = screen.getByRole("heading", { name: "通知配置" });
-		expect(screen.getByRole("status")).toHaveTextContent("已切换到：设置");
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Settings",
+		);
 		expect(heading).toHaveAttribute("tabindex", "-1");
 		expect(document.activeElement).toBe(heading);
 		// data-route-focus-target 已改为 useRef 追踪，不再写入 DOM 属性
@@ -50,7 +52,7 @@ describe("RouteTransition", () => {
 			</RouteTransition>,
 		);
 
-		expect(screen.getByRole("status")).toHaveTextContent("已切换到：首页");
+		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Home");
 	});
 
 	it("falls back to generic label for unknown routes", () => {
@@ -61,7 +63,7 @@ describe("RouteTransition", () => {
 			</RouteTransition>,
 		);
 
-		expect(screen.getByRole("status")).toHaveTextContent("已切换到：页面");
+		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Page");
 	});
 
 	it("skips focus updates when no heading is present", () => {
@@ -72,7 +74,9 @@ describe("RouteTransition", () => {
 			</RouteTransition>,
 		);
 
-		expect(screen.getByRole("status")).toHaveTextContent("已切换到：AI 摘要");
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Digest feed",
+		);
 	});
 
 	it("falls back to h2 when no explicit route heading or h1 exists", () => {
@@ -87,7 +91,7 @@ describe("RouteTransition", () => {
 		);
 
 		const heading = screen.getByRole("heading", { name: "历史任务" });
-		expect(screen.getByRole("status")).toHaveTextContent("已切换到：任务");
+		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Jobs");
 		expect(heading).toHaveAttribute("tabindex", "-1");
 		expect(document.activeElement).toBe(heading);
 	});

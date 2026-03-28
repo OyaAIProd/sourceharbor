@@ -211,7 +211,7 @@ describe("ui primitive coverage", () => {
 		expect(heading).toBeInTheDocument();
 		expect(screen.getByText("trace-123")).toBeInTheDocument();
 		expect(heading.closest('[data-slot="card"]')).toHaveClass("folo-surface");
-		fireEvent.click(screen.getByRole("button", { name: "重试页面" }));
+		fireEvent.click(screen.getByRole("button", { name: "Retry page" }));
 		expect(onRetry).toHaveBeenCalledTimes(1);
 	});
 
@@ -264,12 +264,12 @@ describe("ui primitive coverage", () => {
 		const user = userEvent.setup();
 		render(<ThemeToggle />);
 
-		await user.click(screen.getByRole("button", { name: "切换主题" }));
-		await user.click(screen.getByRole("menuitem", { name: "浅色" }));
-		await user.click(screen.getByRole("button", { name: "切换主题" }));
-		await user.click(screen.getByRole("menuitem", { name: "深色" }));
-		await user.click(screen.getByRole("button", { name: "切换主题" }));
-		await user.click(screen.getByRole("menuitem", { name: "跟随系统" }));
+		await user.click(screen.getByRole("button", { name: "Switch theme" }));
+		await user.click(screen.getByRole("menuitem", { name: "Light" }));
+		await user.click(screen.getByRole("button", { name: "Switch theme" }));
+		await user.click(screen.getByRole("menuitem", { name: "Dark" }));
+		await user.click(screen.getByRole("button", { name: "Switch theme" }));
+		await user.click(screen.getByRole("menuitem", { name: "System" }));
 
 		expect(mockSetTheme).toHaveBeenNthCalledWith(1, "light");
 		expect(mockSetTheme).toHaveBeenNthCalledWith(2, "dark");
@@ -477,8 +477,8 @@ describe("ui primitive coverage", () => {
 		expect(
 			screen.getByRole("heading", { level: 1, name: "加载失败" }),
 		).toBeInTheDocument();
-		expect(screen.getByText("错误编号：")).toBeInTheDocument();
-		fireEvent.click(screen.getByRole("button", { name: "重试页面" }));
+		expect(screen.getByText("Error code:")).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: "Retry page" }));
 		expect(onRetry).toHaveBeenCalledTimes(1);
 
 		rerender(
@@ -492,7 +492,7 @@ describe("ui primitive coverage", () => {
 		expect(
 			screen.getByRole("heading", { level: 2, name: "再次失败" }),
 		).toBeInTheDocument();
-		expect(screen.queryByText("错误编号：")).toBeNull();
+		expect(screen.queryByText("Error code:")).toBeNull();
 	});
 
 	it("covers ScrollArea root and default vertical scrollbar branches", () => {

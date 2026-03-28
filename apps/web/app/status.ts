@@ -4,14 +4,14 @@ export type DisplayStatus = {
 };
 
 const LABEL_MAP: Record<string, string> = {
-	running: "运行中",
-	queued: "排队中",
-	succeeded: "已完成",
-	failed: "已失败",
-	degraded: "已降级",
-	pending: "等待中",
-	cancelled: "已取消",
-	skipped: "已跳过",
+	running: "Running",
+	queued: "Queued",
+	succeeded: "Succeeded",
+	failed: "Failed",
+	degraded: "Degraded",
+	pending: "Pending",
+	cancelled: "Cancelled",
+	skipped: "Skipped",
 };
 
 export function toDisplayStatus(

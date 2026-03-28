@@ -25,7 +25,7 @@ import {
 	type SearchParamsInput,
 } from "@/lib/search-params";
 
-export const metadata: Metadata = { title: "订阅管理" };
+export const metadata: Metadata = { title: "Subscriptions" };
 
 type SubscriptionsPageProps = {
 	searchParams?: SearchParamsInput;
@@ -37,22 +37,22 @@ const PLATFORM_OPTIONS = [
 ];
 
 const SOURCE_TYPE_OPTIONS = [
-	{ value: "url", label: "来源链接（URL）" },
-	{ value: "youtube_channel_id", label: "YouTube 频道 ID" },
-	{ value: "bilibili_uid", label: "Bilibili 用户 UID" },
+	{ value: "url", label: "Source URL" },
+	{ value: "youtube_channel_id", label: "YouTube channel ID" },
+	{ value: "bilibili_uid", label: "Bilibili user UID" },
 ];
 
 const ADAPTER_TYPE_OPTIONS = [
-	{ value: "rsshub_route", label: "RSSHub 路由" },
-	{ value: "rss_generic", label: "通用 RSS" },
+	{ value: "rsshub_route", label: "RSSHub route" },
+	{ value: "rss_generic", label: "Generic RSS" },
 ];
 
 const CATEGORY_OPTIONS = [
-	{ value: "misc", label: "其他" },
-	{ value: "tech", label: "科技" },
-	{ value: "creator", label: "创作者" },
-	{ value: "macro", label: "宏观" },
-	{ value: "ops", label: "运维" },
+	{ value: "misc", label: "Other" },
+	{ value: "tech", label: "Tech" },
+	{ value: "creator", label: "Creator" },
+	{ value: "macro", label: "Macro" },
+	{ value: "ops", label: "Operations" },
 ];
 
 function renderAlert(status: string, code: string) {
@@ -100,10 +100,11 @@ export default async function SubscriptionsPage({
 			<div className="folo-page-header">
 				<p className="folo-page-kicker">SourceHarbor Sources</p>
 				<h1 className="folo-page-title" data-route-heading>
-					订阅管理
+					Subscriptions
 				</h1>
 				<p className="folo-page-subtitle">
-					维护来源配置、分类与优先级，确保后续采集与摘要链路拥有稳定输入。
+					Manage source settings, categories, and priority so ingestion and
+					digest pipelines always start from stable inputs.
 				</p>
 			</div>
 
@@ -115,14 +116,16 @@ export default async function SubscriptionsPage({
 					aria-live="assertive"
 				>
 					<CardHeader className="gap-2">
-						<CardTitle className="text-base">加载失败</CardTitle>
+						<CardTitle className="text-base">
+							Unable to load subscriptions
+						</CardTitle>
 						<CardDescription>
 							{getFlashMessage(subscriptionsResult.errorCode)}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
 						<Button asChild variant="outline" size="sm">
-							<Link href="/subscriptions">重试当前页面</Link>
+							<Link href="/subscriptions">Retry this page</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -131,10 +134,12 @@ export default async function SubscriptionsPage({
 			<section>
 				<Card className="folo-surface border-border/70">
 					<CardHeader className="gap-2">
-						<h2 className="text-xl font-semibold">创建或更新订阅</h2>
+						<h2 className="text-xl font-semibold">
+							Create or update a subscription
+						</h2>
 						<CardDescription>
-							先选择“来源类型”，再填写对应来源值；仅在使用通用 RSS 时填写“来源
-							URL”。
+							Choose a source type first, then enter the matching source value.
+							Only fill in Source URL when using Generic RSS.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -152,61 +157,61 @@ export default async function SubscriptionsPage({
 							<FormSelectField
 								id="platform"
 								name="platform"
-								label="平台"
+								label="Platform"
 								defaultValue="youtube"
 								options={PLATFORM_OPTIONS}
 							/>
 							<FormSelectField
 								id="source_type"
 								name="source_type"
-								label="来源类型"
+								label="Source type"
 								defaultValue="url"
 								options={SOURCE_TYPE_OPTIONS}
 							/>
 							<FormInputField
 								id="source_value"
 								name="source_value"
-								label="来源值"
+								label="Source value"
 								required
-								placeholder="频道 ID / UID / URL"
+								placeholder="Channel ID / UID / URL"
 							/>
 							<FormSelectField
 								id="adapter_type"
 								name="adapter_type"
-								label="适配器类型"
+								label="Adapter type"
 								defaultValue="rsshub_route"
 								options={ADAPTER_TYPE_OPTIONS}
 							/>
 							<FormInputField
 								id="source_url"
 								name="source_url"
-								label="来源 URL（rss_generic 时使用）"
+								label="Source URL (for rss_generic)"
 								type="url"
 								placeholder="https://example.com/feed.xml"
 							/>
 							<FormInputField
 								id="rsshub_route"
 								name="rsshub_route"
-								label="RSSHub 路由（可选）"
+								label="RSSHub route (optional)"
 								placeholder="/youtube/channel/UCxxxx"
 							/>
 							<FormSelectField
 								id="category"
 								name="category"
-								label="分类"
+								label="Category"
 								defaultValue="misc"
 								options={CATEGORY_OPTIONS}
 							/>
 							<FormInputField
 								id="tags"
 								name="tags"
-								label="标签（逗号分隔，可选）"
+								label="Tags (comma-separated, optional)"
 								placeholder="ai,weekly,high-priority"
 							/>
 							<FormInputField
 								id="priority"
 								name="priority"
-								label="优先级 (0-100)"
+								label="Priority (0-100)"
 								type="number"
 								min={0}
 								max={100}
@@ -214,16 +219,16 @@ export default async function SubscriptionsPage({
 							/>
 							<FormCheckboxField
 								name="enabled"
-								label="启用"
+								label="Enabled"
 								defaultChecked
 								fieldClassName="md:col-span-2"
 							/>
 							<div className="md:col-span-2">
 								<SubmitButton
-									pendingLabel="保存中…"
-									statusText="正在保存订阅配置"
+									pendingLabel="Saving..."
+									statusText="Saving subscription settings"
 								>
-									保存订阅
+									Save subscription
 								</SubmitButton>
 							</div>
 						</form>
@@ -234,17 +239,18 @@ export default async function SubscriptionsPage({
 			<section>
 				<Card className="folo-surface border-border/70">
 					<CardHeader className="gap-2">
-						<h2 className="text-xl font-semibold">当前订阅列表</h2>
+						<h2 className="text-xl font-semibold">Current subscriptions</h2>
 						<CardDescription>
 							<output
 								className="text-sm text-muted-foreground"
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								已加载 {subscriptions.length} 条订阅。
+								Loaded {subscriptions.length} subscriptions.
 							</output>
 							<p className="text-sm text-muted-foreground">
-								勾选多行可批量更新分类，底部将出现操作栏。
+								Select multiple rows to update categories in bulk. The action
+								bar appears at the bottom.
 							</p>
 						</CardDescription>
 					</CardHeader>

@@ -40,8 +40,8 @@ const LOADING_CASES: LoadingCase[] = [
 	{
 		name: "subscriptions loading",
 		Component: SubscriptionsLoading,
-		heading: "订阅管理加载中",
-		message: "正在加载订阅数据，请稍候。",
+		heading: "Loading subscriptions",
+		message: "Loading subscription data. Please wait.",
 		describedBy: "subscriptions-loading-message",
 	},
 	{

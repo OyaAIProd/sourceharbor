@@ -194,7 +194,8 @@ export function FormSelectField({
 	const [uncontrolledValue, setUncontrolledValue] = useState(initialValue);
 	const value = controlledValue ?? uncontrolledValue;
 	const selectValue = value === "" ? EMPTY_SELECT_VALUE : value;
-	const placeholder = typeof label === "string" ? `选择${label}` : "请选择";
+	const placeholder =
+		typeof label === "string" ? `Select ${label}` : "Select an option";
 
 	return (
 		<FormField className={fieldClassName}>

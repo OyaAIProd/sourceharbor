@@ -1,22 +1,27 @@
 export type FlashStatus = "success" | "error";
 
 const FLASH_MESSAGES: Record<string, string> = {
-	POLL_INGEST_OK: "已触发采集任务。",
-	PROCESS_VIDEO_OK: "已创建处理任务。",
-	SUBSCRIPTION_CREATED: "订阅已创建。",
-	SUBSCRIPTION_UPDATED: "订阅已更新。",
-	SUBSCRIPTION_DELETED: "订阅已删除。",
-	NOTIFICATION_CONFIG_SAVED: "通知配置已保存。",
-	NOTIFICATION_TEST_SENT: "测试通知已发送。",
-	ERR_AUTH_REQUIRED: "会话已失效，请刷新页面后重试。",
-	ERR_INVALID_INPUT: "输入参数不合法，请检查后重试。",
-	ERR_INVALID_URL: "URL 格式不合法，请输入以 http:// 或 https:// 开头的地址。",
-	ERR_INVALID_EMAIL: "邮箱格式不合法，请输入有效的邮箱地址。",
-	ERR_INVALID_IDENTIFIER: "标识符格式不合法。",
-	ERR_NOTIFICATION_EMAIL_REQUIRED: "启用通知时必须填写收件邮箱。",
-	ERR_DAILY_DIGEST_HOUR_REQUIRED: "启用每日摘要时必须设置 UTC 小时。",
-	ERR_SENSITIVE_QUERY_KEY: "请求参数包含敏感字段，已被客户端阻止。",
-	ERR_REQUEST_FAILED: "请求失败，请稍后重试。",
+	POLL_INGEST_OK: "Ingestion job queued.",
+	PROCESS_VIDEO_OK: "Processing job created.",
+	SUBSCRIPTION_CREATED: "Subscription created.",
+	SUBSCRIPTION_UPDATED: "Subscription updated.",
+	SUBSCRIPTION_DELETED: "Subscription deleted.",
+	NOTIFICATION_CONFIG_SAVED: "Notification settings saved.",
+	NOTIFICATION_TEST_SENT: "Test notification sent.",
+	ERR_AUTH_REQUIRED: "Your session expired. Refresh the page and try again.",
+	ERR_INVALID_INPUT: "The input is invalid. Review the fields and try again.",
+	ERR_INVALID_URL:
+		"The URL is invalid. Enter an address that starts with http:// or https://.",
+	ERR_INVALID_EMAIL:
+		"The email address is invalid. Enter a valid email address.",
+	ERR_INVALID_IDENTIFIER: "The identifier format is invalid.",
+	ERR_NOTIFICATION_EMAIL_REQUIRED:
+		"A recipient email is required when notifications are enabled.",
+	ERR_DAILY_DIGEST_HOUR_REQUIRED:
+		"Set a UTC hour when the daily digest is enabled.",
+	ERR_SENSITIVE_QUERY_KEY:
+		"The request contains a sensitive query field and was blocked by the client.",
+	ERR_REQUEST_FAILED: "The request failed. Please try again later.",
 };
 
 export function getFlashMessage(code: string): string {

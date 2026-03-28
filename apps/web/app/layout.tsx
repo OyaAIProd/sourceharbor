@@ -32,20 +32,20 @@ export default async function RootLayout({
 	});
 	const healthLabel =
 		healthState === "healthy"
-			? "正常"
+			? "Healthy"
 			: healthState === "unhealthy"
-				? "异常"
-				: "超时/未知";
+				? "Unhealthy"
+				: "Timeout / Unknown";
 
 	return (
 		<html
-			lang="zh-Hans"
+			lang="en"
 			suppressHydrationWarning
 			className={`${GeistSans.variable} ${GeistMono.variable}`}
 		>
 			<body className="font-sans antialiased">
 				<a className="skip-link" href="#main-content">
-					跳至主内容
+					Skip to main content
 				</a>
 				<ThemeProvider>
 					<div className="flex h-screen overflow-hidden bg-background">
