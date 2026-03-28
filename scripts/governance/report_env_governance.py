@@ -56,6 +56,18 @@ ENV_EXAMPLE_EXPORT_RE = re.compile(
 )
 DOC_ASSIGN_RE = re.compile(r"^\s*(?:export\s+)?([A-Z][A-Z0-9_]*[A-Z0-9])\s*=\s*", re.MULTILINE)
 DOC_BACKTICK_RE = re.compile(r"`([A-Z][A-Z0-9_]*[A-Z0-9])`")
+SENSITIVE_ENV_NAME_TOKENS = {
+    "AUTH",
+    "AUTHORIZATION",
+    "KEY",
+    "PASSWD",
+    "PASSWORD",
+    "SECRET",
+    "SESSION",
+    "SIGNATURE",
+    "TOKEN",
+}
+SENSITIVE_ENV_NAME_PLACEHOLDER = "<redacted-sensitive-env-name>"
 
 
 def _repo_root() -> Path:
@@ -91,6 +103,21 @@ def _resolve_fail_on(raw: str) -> set[str]:
     if unknown:
         raise ValueError(f"unknown --fail-on values: {', '.join(sorted(unknown))}")
     return values
+
+
+def _is_sensitive_env_name(name: str) -> bool:
+    tokens = {token for token in re.split(r"[^A-Z0-9]+", name.upper()) if token}
+    return bool(tokens & SENSITIVE_ENV_NAME_TOKENS)
+
+
+def _sanitize_env_name(name: str) -> str:
+    if _is_sensitive_env_name(name):
+        return SENSITIVE_ENV_NAME_PLACEHOLDER
+    return name
+
+
+def _sanitize_env_names(names: list[str]) -> list[str]:
+    return [_sanitize_env_name(name) for name in names]
 
 
 def _load_contract(path: Path) -> dict[str, Any]:
@@ -152,7 +179,7 @@ def _collect_delete_candidates(root: Path, variables: list[dict[str, Any]]) -> l
         if not found:
             candidates.append(
                 {
-                    "name": name,
+                    "name": _sanitize_env_name(name),
                     "scope": item.get("scope"),
                     "consumers": consumers,
                     "checked_paths": checked_paths,
@@ -245,7 +272,7 @@ def _collect_residual_refs(
     for file_path, refs in sorted(code_refs.items()):
         missing = sorted(name for name in refs if name not in contract_names)
         if missing:
-            code_rows.append({"file": file_path, "names": missing})
+            code_rows.append({"file": file_path, "names": _sanitize_env_names(missing)})
 
     env_missing = sorted(
         name for name in env_keys if name not in contract_names and name not in IGNORE_REFS
@@ -253,7 +280,7 @@ def _collect_residual_refs(
 
     return {
         "unregistered_code_refs": code_rows,
-        "unregistered_env_file_keys": env_missing,
+        "unregistered_env_file_keys": _sanitize_env_names(env_missing),
     }
 
 
@@ -278,13 +305,17 @@ def _collect_doc_drift(
         all_doc_refs.update(refs)
         if refs:
             rel_path = str(path.relative_to(root)) if path.is_relative_to(root) else str(path)
-            doc_refs_by_file.append({"file": rel_path, "names": refs})
+            doc_refs_by_file.append({"file": rel_path, "names": _sanitize_env_names(refs)})
 
-    missing_required_in_env_example = sorted(
-        name for name in required_vars if name not in env_example_vars
+    missing_required_in_env_example = _sanitize_env_names(
+        sorted(name for name in required_vars if name not in env_example_vars)
     )
-    missing_required_in_docs = sorted(name for name in required_vars if name not in all_doc_refs)
-    stale_doc_refs = sorted(name for name in all_doc_refs if name not in contract_names)
+    missing_required_in_docs = _sanitize_env_names(
+        sorted(name for name in required_vars if name not in all_doc_refs)
+    )
+    stale_doc_refs = _sanitize_env_names(
+        sorted(name for name in all_doc_refs if name not in contract_names)
+    )
 
     return {
         "missing_required_in_env_example": missing_required_in_env_example,

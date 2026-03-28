@@ -181,7 +181,7 @@ def test_unregistered_env_key_report_does_not_persist_env_value(tmp_path: Path) 
     (tmp_path / "apps/runtime.py").write_text('print("ok")\n', encoding="utf-8")
     (tmp_path / ".env.example").write_text("KNOWN_VAR=1\n", encoding="utf-8")
     (tmp_path / ".env").write_text(
-        f"KNOWN_VAR=1\nUNREGISTERED_SECRET={secret_value}\n",
+        f"KNOWN_VAR=1\nUNREGISTERED_SECRET={secret_value}\nUNREGISTERED_VISIBLE=1\n",
         encoding="utf-8",
     )
     (tmp_path / "docs/testing.md").write_text("`KNOWN_VAR`\n", encoding="utf-8")
@@ -200,6 +200,16 @@ def test_unregistered_env_key_report_does_not_persist_env_value(tmp_path: Path) 
 
     assert proc.returncode == 0
     payload = json.loads(out_json.read_text(encoding="utf-8"))
-    assert payload["residual_refs"]["unregistered_env_file_keys"] == ["UNREGISTERED_SECRET"]
-    assert secret_value not in out_json.read_text(encoding="utf-8")
-    assert secret_value not in out_md.read_text(encoding="utf-8")
+    assert payload["residual_refs"]["unregistered_env_file_keys"] == [
+        "<redacted-sensitive-env-name>",
+        "UNREGISTERED_VISIBLE",
+    ]
+    out_json_text = out_json.read_text(encoding="utf-8")
+    out_md_text = out_md.read_text(encoding="utf-8")
+    assert secret_value not in out_json_text
+    assert secret_value not in out_md_text
+    assert "UNREGISTERED_SECRET" not in out_json_text
+    assert "UNREGISTERED_SECRET" not in out_md_text
+    assert "<redacted-sensitive-env-name>" in out_json_text
+    assert "<redacted-sensitive-env-name>" in out_md_text
+    assert "UNREGISTERED_VISIBLE" in out_json_text
