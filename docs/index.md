@@ -52,10 +52,20 @@ SourceHarbor has several layers, but the public entry should stay simple:
 
 If you only have one minute, trust these four documents first:
 
-1. `README.md`
-2. `docs/start-here.md`
-3. `docs/proof.md`
-4. `docs/testing.md`
+1. `README.md` for the front door and product shape
+2. `docs/start-here.md` for the first real run
+3. `docs/proof.md` for the evidence ladder and proof boundary
+4. `docs/testing.md` for the testing and CI contract
+
+## Truth Route At A Glance
+
+| Surface | Role | Reading rule |
+| :-- | :-- | :-- |
+| [README.md](../README.md) | Front door | Start here for product shape and navigation, not for commit-sensitive verdicts |
+| [start-here.md](./start-here.md) | First real run | Use this when you want the shortest truthful local path |
+| [proof.md](./proof.md) | Proof ladder | Use this to understand what is locally provable, what needs remote proof, and where the public boundary stops |
+| `docs/generated/*` | Render-only pointers | Follow these only as signposts into runtime-owned evidence, never as the current verdict itself |
+| `.agents/Plans/*` | Historical execution archive | Treat these as archived planning context, not as the current truth route for public readers |
 
 ## Public Trust Links
 

@@ -2,11 +2,15 @@
 
 If the README is the front door, this page is the shop window.
 
+This page is for fast evaluation. It is not a hosted demo, cloud sandbox, or one-click trial.
+
 The goal here is simple:
 
 1. show what SourceHarbor looks like
 2. show what comes out of it
 3. let you decide whether it is worth a deeper evaluation
+
+If you like what you see here, the next step is [run it locally](./start-here.md), not "open the live app."
 
 <p>
   <img
@@ -101,7 +105,7 @@ That is the key idea:
 - not just one summary blob
 - a reusable artifact with traceable structure
 
-## The 60-Second Trust Path
+## The 60-Second Evaluation Path
 
 If you want confidence without booting the full stack yet:
 

@@ -15,7 +15,7 @@
 <p align="center">
   <a href="#see-it-in-30-seconds">See It In 30 Seconds</a>
   ·
-  <a href="./docs/start-here.md">Quickstart</a>
+  <a href="./docs/start-here.md">Run Locally</a>
   ·
   <a href="./docs/see-it-fast.md">No-Boot Tour</a>
   ·
@@ -38,6 +38,14 @@
 SourceHarbor is a GitHub-native knowledge pipeline for teams who need more than a transcript dump.
 
 It helps you subscribe to long-form sources, pull fresh items, turn them into digests, inspect every step, ship artifacts, and reuse the same knowledge surface through API, MCP, and a browser command center.
+
+There are two honest first paths:
+
+- **Evaluate fast:** inspect the product shape and evidence surfaces without booting anything.
+- **Run locally:** install dependencies, boot the stack, and queue a real job on your own machine.
+
+> Truth route, in plain English:
+> `README.md` is the front door, [`docs/start-here.md`](./docs/start-here.md) is the first real run, [`docs/proof.md`](./docs/proof.md) is the proof ladder, `docs/generated/*` pages are render-only pointers, and `.agents/Plans/*` files are historical execution archives rather than current public truth.
 
 ## See It In 30 Seconds
 
@@ -66,7 +74,7 @@ Representative result shape, based on the current digest template and UI surface
 - Every job carries a step summary, artifacts index, and pipeline final status.
 ```
 
-For the lightweight walkthrough, go to [docs/see-it-fast.md](./docs/see-it-fast.md).
+For the lightweight evaluation path, go to [docs/see-it-fast.md](./docs/see-it-fast.md).
 
 ## Why Star SourceHarbor Now
 
@@ -86,17 +94,19 @@ For the lightweight walkthrough, go to [docs/see-it-fast.md](./docs/see-it-fast.
 | **Retrieval** | Search over generated artifacts | Reuse digests as a searchable knowledge layer |
 | **MCP tools** | Expose ingestion, jobs, artifacts, search, and notifications to agents | Let assistants act on the same system without custom glue code |
 
-## Fastest No-Boot Tour
+## Evaluate Fast: No-Boot Tour
 
 Think of this like walking past a storefront window before deciding whether to step inside.
 
+This path is for evaluation, not a hosted trial. You are inspecting the product shape, evidence surfaces, and result format before deciding whether a local run is worth it.
+
 1. Open [docs/see-it-fast.md](./docs/see-it-fast.md) to see the command center, digest feed, and job trace path in one page.
-2. Open [docs/proof.md](./docs/proof.md) to see what is locally provable today and where the public-proof boundary stops.
-3. If the shape matches what you need, continue to [docs/start-here.md](./docs/start-here.md) for the first real run.
+2. Open [docs/proof.md](./docs/proof.md) to see what is locally provable today and where the public-proof boundary stops. Treat it as the evidence map, not as a machine-generated live verdict page.
+3. If the shape matches what you need, continue to [docs/start-here.md](./docs/start-here.md) for the local boot path.
 
-## Quickstart: Result Path
+## Run Locally: Result Path
 
-Think of this quickstart like a guided store demo, not an installation maze.
+This is the shortest truthful local setup path. It starts when you are ready to install dependencies and boot the stack yourself; it is not a hosted "try now" flow.
 
 By the end of this path, you should have:
 
@@ -192,9 +202,11 @@ This repository does not ask you to trust product copy on its own.
 
 GitHub profile description, homepage, topics, discussions, and social preview intent are tracked in `config/public/github-profile.json`, but the live GitHub settings still require GitHub-side verification.
 
+Generated docs under `docs/generated/` can point you toward runtime-owned evidence, but they are not the current verdict themselves. Historical plans under `.agents/Plans/` explain past execution context only and should not be read as the current public truth route.
+
 > SourceHarbor is a public, source-first engineering repository.
 >
-> It is inspectable and runnable. It is not marketed as a turnkey hosted product, and external distribution claims are valid only when live remote workflows prove them for the current `main` commit.
+> It is inspectable, and you can run it locally. It is not marketed as a turnkey hosted product, and external distribution claims are valid only when live remote workflows prove them for the current `main` commit.
 
 ## Documentation Map
 

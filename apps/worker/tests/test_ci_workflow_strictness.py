@@ -129,14 +129,16 @@ def test_global_rules_hosted_jobs_can_fail_without_continue_on_error() -> None:
     )
 
 
-def test_pre_push_hook_uses_local_safe_ci_dedupe() -> None:
+def test_pre_push_hook_uses_manifest_hashing_and_local_ci_parity() -> None:
     hook_path = Path(__file__).resolve().parents[3] / ".githooks" / "pre-push"
     content = hook_path.read_text(encoding="utf-8")
 
     assert 'source "$ROOT_DIR/scripts/lib/standard_env.sh"' in content
     assert 'ensure_external_uv_project_environment "$ROOT_DIR"' in content
-    assert 'WEB_LOCK_HASH_FILE=".runtime-cache/run/hooks/web-package-lock.sha256"' in content
-    assert "npm --prefix apps/web install --no-audit --no-fund >/dev/null" in content
+    assert (
+        'WEB_MANIFEST_HASH_FILE=".runtime-cache/run/hooks/web-package-manifests.sha256"' in content
+    )
+    assert "npm --prefix apps/web ci --no-audit --no-fund >/dev/null" in content
     assert "git diff --quiet -- apps/web/package-lock.json apps/web/package.json" in content
     assert "bash scripts/ci/python_tests.sh" in content
     assert "--ci-dedupe" not in content

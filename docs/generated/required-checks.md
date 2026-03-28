@@ -1,7 +1,9 @@
 <!-- generated: docs governance control plane -->
 # Required Checks
 
-These are the repository-local merge gates currently declared in GitHub Actions workflows and mirrored by branch protection.
+These are the deterministic GitHub Actions checks currently documented as the repository's pull-request path.
+
+Local Git hooks may rerun overlapping checks, but they are contributor-side guardrails rather than remote required checks.
 
 | Check | Workflow | Why it exists |
 | --- | --- | --- |

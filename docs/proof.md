@@ -4,6 +4,8 @@ SourceHarbor should not rely on vibes, adjectives, or hidden test folders to jus
 
 This page defines the public proof ladder.
 
+It is the evidence map for human readers. It is not a machine-rendered current verdict page, and it should not be read as a substitute for commit-sensitive runtime reports.
+
 ## Proof Layer 1: Product Surface
 
 These prove that the public narrative maps to visible product surfaces:
@@ -89,7 +91,9 @@ These require stronger evidence:
 
 Tracked manifests and public presentation assets are inputs to this layer, not proof on their own.
 
-For the tracked render-only pointer into the external lane, see [docs/generated/external-lane-truth-entry.md](./generated/external-lane-truth-entry.md).
+For the tracked render-only pointer into the external lane, see [docs/generated/external-lane-truth-entry.md](./generated/external-lane-truth-entry.md). That page is a signpost, not the verdict.
+
+Historical plans under `.agents/Plans/` are archived execution context only. They can explain how the repo arrived here, but they must not be treated as the current public truth for SourceHarbor.
 
 ## Short Version
 

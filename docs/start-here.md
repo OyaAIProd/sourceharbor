@@ -2,7 +2,9 @@
 
 This is the shortest truthful path from clone to visible product value.
 
-Think of it like a guided demo:
+If you only want a fast fit check first, go to [see-it-fast.md](./see-it-fast.md). This page starts when you are ready to install dependencies and boot the stack locally.
+
+Think of it like a guided first local run:
 
 - first boot the stack
 - then queue one real job
@@ -17,7 +19,7 @@ Think of it like a guided demo:
 - a digest feed entry or an inspectable job payload
 - a smoke command you can rerun as public proof
 
-## Fastest Result Path
+## Run Locally: Fastest Result Path
 
 ### 1. Install dependencies
 
@@ -116,7 +118,7 @@ npm --prefix apps/web run lint
 
 ## Boundaries
 
-- This repository is **inspectable and runnable**, but not marketed as a turnkey hosted product.
+- This repository is **inspectable and runnable locally**, but not marketed as a turnkey hosted product.
 - Local proof is different from remote release proof.
 - Public screenshots and diagrams are presentation assets, not a substitute for live verification.
 

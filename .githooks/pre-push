@@ -9,24 +9,26 @@ source "$ROOT_DIR/scripts/lib/standard_env.sh"
 
 ensure_external_uv_project_environment "$ROOT_DIR"
 
-echo "[pre-push] sync web environment"
+echo "[pre-push] sync local web environment"
 mkdir -p .runtime-cache/run/hooks
-WEB_LOCK_HASH_FILE=".runtime-cache/run/hooks/web-package-lock.sha256"
-PACKAGE_HASH="$(shasum -a 256 apps/web/package-lock.json | awk '{print $1}')"
+WEB_MANIFEST_HASH_FILE=".runtime-cache/run/hooks/web-package-manifests.sha256"
+PACKAGE_HASH="$(
+  cat apps/web/package.json apps/web/package-lock.json | shasum -a 256 | awk '{print $1}'
+)"
 CURRENT_HASH=""
-if [[ -f "$WEB_LOCK_HASH_FILE" ]]; then
-  CURRENT_HASH="$(cat "$WEB_LOCK_HASH_FILE" 2>/dev/null || true)"
+if [[ -f "$WEB_MANIFEST_HASH_FILE" ]]; then
+  CURRENT_HASH="$(cat "$WEB_MANIFEST_HASH_FILE" 2>/dev/null || true)"
 fi
 
 if [[ ! -x "apps/web/node_modules/.bin/next" || "$CURRENT_HASH" != "$PACKAGE_HASH" ]]; then
-  npm --prefix apps/web install --no-audit --no-fund >/dev/null
+  npm --prefix apps/web ci --no-audit --no-fund >/dev/null
   if ! git diff --quiet -- apps/web/package-lock.json apps/web/package.json; then
     echo "[pre-push] web dependency sync changed tracked package manifests; commit those changes before pushing" >&2
     exit 1
   fi
-  printf '%s' "$PACKAGE_HASH" > "$WEB_LOCK_HASH_FILE"
+  printf '%s' "$PACKAGE_HASH" > "$WEB_MANIFEST_HASH_FILE"
 else
-  echo "[pre-push] web environment already matches package-lock"
+  echo "[pre-push] local web environment already matches tracked manifests"
 fi
 
 echo "[pre-push] env contract"
