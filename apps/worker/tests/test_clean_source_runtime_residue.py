@@ -18,19 +18,17 @@ def _load_module():
     return module
 
 
-def test_remove_path_ignores_file_not_found_race_for_directories(tmp_path: Path) -> None:
+def test_remove_path_ignores_file_not_found_race_for_directories(
+    tmp_path: Path, monkeypatch
+) -> None:
     module = _load_module()
     module.ROOT = tmp_path
 
     residue_dir = tmp_path / "pkg" / "__pycache__"
     residue_dir.mkdir(parents=True)
 
-    def _raise_file_not_found(target: Path) -> None:
+    def _raise_file_not_found(target: Path, *args, **kwargs) -> None:
         raise FileNotFoundError(target)
 
-    original_rmtree = module.shutil.rmtree
-    try:
-        module.shutil.rmtree = _raise_file_not_found
-        module._remove_path("pkg/__pycache__")
-    finally:
-        module.shutil.rmtree = original_rmtree
+    monkeypatch.setattr(module.shutil, "rmtree", _raise_file_not_found)
+    module._remove_path("pkg/__pycache__")
