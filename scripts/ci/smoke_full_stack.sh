@@ -45,6 +45,8 @@ Options:
   --reader-env-file <path>            Reader env file for Miniflux/Nextflux values
                                       (default: reader.local.env when present, else tracked template)
   --heartbeat-seconds <n>             Smoke heartbeat interval (default: 30)
+  --offline-fallback <0>             Deprecated compatibility alias used by docs.
+                                      Only 0 is accepted; use live-smoke flags for other behavior.
   --live-smoke-api-base-url <url>     e2e live smoke API base URL (default: same as --api-base-url)
   --live-smoke-require-api <0|1>      e2e live smoke require API health gate (default: 1)
   --live-smoke-require-secrets <0|1>  e2e live smoke require secrets (default: 1)
@@ -86,6 +88,13 @@ while [[ $# -gt 0 ]]; do
       ;;
     --heartbeat-seconds)
       HEARTBEAT_SECONDS="${2:-}"
+      shift 2
+      ;;
+    --offline-fallback)
+      if [[ "${2:-}" != "0" ]]; then
+        echo "[$SCRIPT_NAME] --offline-fallback only supports 0 for backward-compatible docs usage; use explicit --live-smoke-* flags instead" >&2
+        exit 2
+      fi
       shift 2
       ;;
     --live-smoke-api-base-url)

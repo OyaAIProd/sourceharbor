@@ -45,7 +45,7 @@ def parse_feed(xml_content: str) -> list[dict[str, Any]]:
 
     if root_name == "rss":
         channel = next((c for c in root if _local_name(c.tag) == "channel"), None)
-        items = [c for c in (channel or []) if _local_name(c.tag) == "item"]
+        items = [c for c in channel if _local_name(c.tag) == "item"] if channel is not None else []
     elif root_name == "feed":
         items = [c for c in root if _local_name(c.tag) == "entry"]
     else:

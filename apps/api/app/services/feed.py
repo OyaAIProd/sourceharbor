@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -254,7 +254,7 @@ class FeedService:
             return value.isoformat()
         if isinstance(value, str) and value.strip():
             return value
-        return datetime.utcnow().isoformat()
+        return datetime.now(UTC).isoformat()
 
     def _parse_cursor(self, cursor: str | None) -> tuple[str | None, str | None]:
         if not cursor or "__" not in cursor:

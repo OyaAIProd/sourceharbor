@@ -24,6 +24,7 @@ __pycache__/
 
 # node
 node_modules/
+apps/web/node_modules.broken*/
 .next/
 *.tsbuildinfo
 

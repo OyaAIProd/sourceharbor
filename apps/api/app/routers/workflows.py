@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -104,7 +104,7 @@ async def run_workflow(payload: WorkflowRunRequest, db: Session = Depends(get_db
             workflow_name=workflow_name,
             workflow_id=workflow_id,
             status="already_running",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             result=None,
         )
     except Exception as exc:
@@ -138,7 +138,7 @@ async def run_workflow(payload: WorkflowRunRequest, db: Session = Depends(get_db
             workflow_id=handle.id,
             run_id=run_id,
             status="completed",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             result=result if isinstance(result, dict) else {"value": result},
         )
 
@@ -148,6 +148,6 @@ async def run_workflow(payload: WorkflowRunRequest, db: Session = Depends(get_db
         workflow_id=handle.id,
         run_id=run_id,
         status="started",
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(UTC),
         result=None,
     )
