@@ -809,10 +809,16 @@ def test_ci_python_tests_script_preserves_backend_coverage_and_junit_contract() 
     ) < script.index("from common import write_runtime_metadata")
     assert "rm -f .runtime-cache/reports/python/.coverage.meta.json" in script
     assert "--data-file=.runtime-cache/reports/python/.coverage" in script
-    assert "apps/worker/worker/pipeline/orchestrator.py \\" in script
-    assert "apps/worker/worker/pipeline/policies.py \\" in script
-    assert "apps/worker/worker/pipeline/runner.py \\" in script
-    assert "apps/worker/worker/pipeline/types.py \\" in script
+    assert (
+        "apps/worker/worker/pipeline/orchestrator.py,*/apps/worker/worker/pipeline/orchestrator.py"
+        in script
+    )
+    assert (
+        "apps/worker/worker/pipeline/policies.py,*/apps/worker/worker/pipeline/policies.py"
+        in script
+    )
+    assert "apps/worker/worker/pipeline/runner.py,*/apps/worker/worker/pipeline/runner.py" in script
+    assert "apps/worker/worker/pipeline/types.py,*/apps/worker/worker/pipeline/types.py" in script
     assert "apps/api/app/routers/ingest.py,*/apps/api/app/routers/ingest.py" in script
     assert "--cov-report=xml:.runtime-cache/reports/python/python-coverage.xml" in script
     assert "--junitxml=.runtime-cache/reports/python/python-tests-junit.xml" in script

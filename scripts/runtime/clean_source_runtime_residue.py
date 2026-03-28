@@ -51,10 +51,16 @@ def _collect_residue() -> tuple[list[str], list[str]]:
 def _remove_path(relative: str) -> None:
     target = ROOT / relative
     if target.is_dir():
-        shutil.rmtree(target)
+        try:
+            shutil.rmtree(target)
+        except FileNotFoundError:
+            return
         return
-    if target.exists():
-        target.unlink()
+    try:
+        if target.exists():
+            target.unlink()
+    except FileNotFoundError:
+        return
 
 
 def main() -> int:

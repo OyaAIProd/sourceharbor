@@ -93,12 +93,9 @@ rm -f .runtime-cache/reports/python/.coverage.meta.json
 set -o pipefail
 PYTHONDONTWRITEBYTECODE=1 uv run coverage report \
   --data-file=.runtime-cache/reports/python/.coverage \
+  --include="apps/worker/worker/pipeline/orchestrator.py,*/apps/worker/worker/pipeline/orchestrator.py,apps/worker/worker/pipeline/policies.py,*/apps/worker/worker/pipeline/policies.py,apps/worker/worker/pipeline/runner.py,*/apps/worker/worker/pipeline/runner.py,apps/worker/worker/pipeline/types.py,*/apps/worker/worker/pipeline/types.py" \
   --show-missing \
   --fail-under=95 \
-  apps/worker/worker/pipeline/orchestrator.py \
-  apps/worker/worker/pipeline/policies.py \
-  apps/worker/worker/pipeline/runner.py \
-  apps/worker/worker/pipeline/types.py \
   2>&1 | tee .runtime-cache/logs/tests/python-coverage-worker-core.log
 
 set -o pipefail
