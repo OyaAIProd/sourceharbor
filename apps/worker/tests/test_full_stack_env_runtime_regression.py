@@ -169,7 +169,8 @@ def test_smoke_full_stack_defaults_are_strict_for_local_validation() -> None:
     smoke_full_stack = (root / "scripts" / "ci" / "smoke_full_stack.sh").read_text(encoding="utf-8")
 
     assert 'LIVE_SMOKE_REQUIRE_SECRETS="1"' in smoke_full_stack
-    assert "--offline-fallback" not in smoke_full_stack
+    assert "--offline-fallback <0>" in smoke_full_stack
+    assert "Deprecated compatibility alias used by docs." in smoke_full_stack
     assert "e2e live smoke require secrets (default: 1)" in smoke_full_stack
     assert '--require-secrets "$LIVE_SMOKE_REQUIRE_SECRETS"' in smoke_full_stack
 
