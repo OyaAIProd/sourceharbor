@@ -63,6 +63,19 @@ def _remove_path(relative: str) -> None:
         return
 
 
+def _apply_cleanup_until_stable(*, max_passes: int = 3) -> tuple[list[str], list[str]]:
+    residue_dirs, residue_files = _collect_residue()
+    for _ in range(max_passes):
+        if not residue_dirs and not residue_files:
+            return residue_dirs, residue_files
+        for relative in residue_files:
+            _remove_path(relative)
+        for relative in residue_dirs:
+            _remove_path(relative)
+        residue_dirs, residue_files = _collect_residue()
+    return residue_dirs, residue_files
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Detect or clean source-tree runtime residue that leaked outside .runtime-cache."
@@ -77,11 +90,7 @@ def main() -> int:
 
     residue_dirs, residue_files = _collect_residue()
     if args.apply:
-        for relative in residue_files:
-            _remove_path(relative)
-        for relative in residue_dirs:
-            _remove_path(relative)
-        residue_dirs, residue_files = _collect_residue()
+        residue_dirs, residue_files = _apply_cleanup_until_stable()
 
     report = {
         "version": 1,
