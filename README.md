@@ -2,6 +2,14 @@
 
 <p align="center">
   <img
+    src="./docs/assets/sourceharbor-studio-preview.svg"
+    alt="SourceHarbor studio preview showing source intake, digest generation, and searchable artifacts"
+    width="100%"
+  />
+</p>
+
+<p align="center">
+  <img
     src="./docs/assets/sourceharbor-hero.svg"
     alt="SourceHarbor preview showing the command center, digest feed, and job trace surfaces a newcomer will inspect first."
     width="100%"
@@ -35,14 +43,25 @@
   <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/xiaojiou176-open/sourceharbor?style=social" />
 </p>
 
-SourceHarbor is a GitHub-native knowledge pipeline for teams who need more than a transcript dump.
+SourceHarbor helps you subscribe to long-form sources, pull fresh items, turn
+them into digests, inspect every step, ship artifacts, and reuse the same
+knowledge surface through the command center, API, and MCP.
 
-It helps you subscribe to long-form sources, pull fresh items, turn them into digests, inspect every step, ship artifacts, and reuse the same knowledge surface through API, MCP, and a browser command center.
+## First Practical Win
 
-There are two honest first paths:
+Choose the shortest honest path for the result you want first:
+
+| I want to... | Do this first | What I get |
+| --- | --- | --- |
+| evaluate without booting anything | [docs/see-it-fast.md](./docs/see-it-fast.md) | the fastest public tour of the command center, digest feed, and job trace |
+| run a real local flow | [docs/start-here.md](./docs/start-here.md) | the shortest repo-documented path to a local stack and a queued or completed job |
+| inspect the trust boundary first | [docs/proof.md](./docs/proof.md) | the current proof map, including what is locally provable and where the public boundary stops |
+
+There are three honest first paths:
 
 - **Evaluate fast:** inspect the product shape and evidence surfaces without booting anything.
 - **Run locally:** install dependencies, boot the stack, and queue a real job on your own machine.
+- **Inspect the trust boundary:** read the proof ladder first so you know exactly which claims are local proof and which still depend on live remote verification.
 
 > Truth route, in plain English:
 > `README.md` is the front door, [`docs/start-here.md`](./docs/start-here.md) is the first real run, [`docs/proof.md`](./docs/proof.md) is the proof ladder, `docs/generated/*` pages are render-only pointers, and `.agents/Plans/*` files are historical execution archives rather than current public truth.

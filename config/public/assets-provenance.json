@@ -31,6 +31,20 @@
       "notes": "Public system-map illustration for architecture docs."
     },
     {
+      "path": "docs/assets/sourceharbor-studio-preview.svg",
+      "asset_kind": "svg",
+      "surface_role": "readme-front-door-preview",
+      "public_surfaces": [
+        "README.md"
+      ],
+      "provenance_status": "repository-tracked-source-file",
+      "rights_basis": "maintainer-assertion-required",
+      "sanitization_status": "non-runtime-illustration",
+      "public_distribution_status": "currently-published-in-repo",
+      "follow_up_required": true,
+      "notes": "Front-door preview card for README-first public evaluation."
+    },
+    {
       "path": "docs/assets/sourceharbor-social-preview.svg",
       "asset_kind": "svg",
       "surface_role": "social-preview-source",
