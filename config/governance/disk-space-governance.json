@@ -90,7 +90,8 @@
       "path": ".runtime-cache/tmp",
       "layer": "repo-internal",
       "ownership": "repo-exclusive",
-      "category": "runtime-scratch"
+      "category": "runtime-scratch",
+      "highlight": true
     },
     {
       "id": "repo-web-runtime",
@@ -122,7 +123,8 @@
       "path": "apps/web/node_modules",
       "layer": "repo-internal",
       "ownership": "repo-exclusive",
-      "category": "mainline-dependency"
+      "category": "mainline-dependency",
+      "highlight": true
     },
     {
       "id": "repo-python-venv",
@@ -130,7 +132,99 @@
       "path": ".venv",
       "layer": "repo-internal",
       "ownership": "repo-exclusive",
-      "category": "mainline-dependency"
+      "category": "mainline-dependency",
+      "highlight": true
+    },
+    {
+      "id": "repo-proof-scratch-manual-image-audit",
+      "label": "Repo manual image audit scratch",
+      "path": ".runtime-cache/tmp/manual-image-audit",
+      "layer": "repo-internal",
+      "ownership": "repo-exclusive",
+      "category": "proof-scratch",
+      "highlight": true
+    },
+    {
+      "id": "repo-proof-scratch-public-image-audit",
+      "label": "Repo public image audit scratch",
+      "path": ".runtime-cache/tmp/public-image-audit",
+      "layer": "repo-internal",
+      "ownership": "repo-exclusive",
+      "category": "proof-scratch",
+      "highlight": true
+    },
+    {
+      "id": "repo-proof-scratch-audit-images",
+      "label": "Repo audit images scratch",
+      "path": ".runtime-cache/tmp/audit-images",
+      "layer": "repo-internal",
+      "ownership": "repo-exclusive",
+      "category": "proof-scratch",
+      "highlight": true
+    },
+    {
+      "id": "repo-proof-scratch-audit-images-direct",
+      "label": "Repo direct audit images scratch",
+      "path": ".runtime-cache/tmp/audit-images-direct",
+      "layer": "repo-internal",
+      "ownership": "repo-exclusive",
+      "category": "proof-scratch",
+      "highlight": true
+    },
+    {
+      "id": "repo-proof-scratch-image-audit",
+      "label": "Repo image audit scratch",
+      "path": ".runtime-cache/tmp/image-audit",
+      "layer": "repo-internal",
+      "ownership": "repo-exclusive",
+      "category": "proof-scratch",
+      "highlight": true
+    },
+    {
+      "id": "external-sourceharbor-state-root",
+      "label": "SourceHarbor external state root",
+      "path": "$HOME/.sourceharbor",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "external-state",
+      "count_in_layer_total": true,
+      "highlight": true
+    },
+    {
+      "id": "external-sourceharbor-artifacts",
+      "label": "SourceHarbor artifacts root",
+      "path": "$HOME/.sourceharbor/artifacts",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "protected-state",
+      "highlight": true
+    },
+    {
+      "id": "external-sourceharbor-workspace",
+      "label": "SourceHarbor workspace root",
+      "path": "$HOME/.sourceharbor/workspace",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "protected-state",
+      "highlight": true
+    },
+    {
+      "id": "external-sourceharbor-sqlite-state",
+      "label": "SourceHarbor sqlite state root",
+      "path": "$HOME/.sourceharbor/state",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "protected-state",
+      "highlight": true
+    },
+    {
+      "id": "external-sourceharbor-project-venv",
+      "label": "SourceHarbor project venv",
+      "path": "$HOME/.cache/sourceharbor/project-venv",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "protected-mainline",
+      "highlight": true
     },
     {
       "id": "external-sourceharbor-cache",
@@ -139,7 +233,17 @@
       "layer": "repo-external-repo-owned",
       "ownership": "repo-primary",
       "category": "external-owned",
-      "count_in_layer_total": true
+      "count_in_layer_total": true,
+      "highlight": true
+    },
+    {
+      "id": "external-video-digestor-project-venv",
+      "label": "Legacy video-digestor project venv",
+      "path": "$HOME/.cache/video-digestor/project-venv",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "protected-mainline",
+      "highlight": true
     },
     {
       "id": "external-video-digestor-cache",
@@ -148,7 +252,8 @@
       "layer": "repo-external-repo-owned",
       "ownership": "repo-primary",
       "category": "legacy-compatible",
-      "count_in_layer_total": true
+      "count_in_layer_total": true,
+      "highlight": true
     },
     {
       "id": "external-video-digestor-state",
@@ -157,7 +262,8 @@
       "layer": "repo-external-repo-owned",
       "ownership": "repo-primary",
       "category": "legacy-compatible",
-      "count_in_layer_total": true
+      "count_in_layer_total": true,
+      "highlight": true
     },
     {
       "id": "shared-ms-playwright",
@@ -166,7 +272,8 @@
       "layer": "shared-layer",
       "ownership": "shared",
       "category": "shared-cache",
-      "count_in_layer_total": true
+      "count_in_layer_total": true,
+      "highlight": true
     },
     {
       "id": "shared-uv-cache",
@@ -175,7 +282,8 @@
       "layer": "shared-layer",
       "ownership": "shared",
       "category": "shared-cache",
-      "count_in_layer_total": true
+      "count_in_layer_total": true,
+      "highlight": true
     },
     {
       "id": "shared-uv-python",
@@ -184,7 +292,8 @@
       "layer": "shared-layer",
       "ownership": "shared",
       "category": "shared-toolchain",
-      "count_in_layer_total": true
+      "count_in_layer_total": true,
+      "highlight": true
     }
   ],
   "docker_named_volumes": [
@@ -404,6 +513,8 @@
   "excluded_paths": [
     "apps/web/node_modules",
     ".venv",
+    "$HOME/.sourceharbor",
+    "$HOME/.cache/sourceharbor/project-venv",
     "$HOME/.cache/video-digestor/project-venv",
     "$HOME/.video-digestor/state/worker_state.db",
     "$HOME/.video-digestor/artifacts",

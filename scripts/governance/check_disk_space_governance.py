@@ -168,6 +168,18 @@ def main() -> int:
         if str(item.get("layer") or "") == "shared-layer"
     }
     canonical_paths = dict(policy.get("canonical_paths", {}))
+    user_state_root = str(canonical_paths.get("user_state_root") or "").strip()
+    if user_state_root:
+        user_state_root_counted = any(
+            str(item.get("path") or "").strip() == user_state_root
+            and str(item.get("layer") or "").strip() == "repo-external-repo-owned"
+            and bool(item.get("count_in_layer_total", False))
+            for item in policy.get("audit_targets", [])
+        )
+        if not user_state_root_counted:
+            errors.append(
+                "disk-space-governance.json must count canonical user_state_root in audit_targets repo-external-repo-owned totals"
+            )
     legacy_roots = {
         str(canonical_paths.get("legacy_state_root") or "").strip().lower(),
         str(canonical_paths.get("legacy_cache_root") or "").strip().lower(),

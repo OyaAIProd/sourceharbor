@@ -14,11 +14,35 @@ from disk_space_common import (
     expand_policy_path,
     human_bytes,
     load_policy,
-    rel_path,
+    rel_path_from,
     repo_root,
+    resolve_candidate_paths,
     size_bytes,
     write_report,
 )
+
+REPO_INTERNAL_RESIDUE_BUCKETS: dict[str, list[str]] = {
+    "proof_scratch": [
+        ".runtime-cache/tmp/manual-image-audit",
+        ".runtime-cache/tmp/public-image-audit",
+        ".runtime-cache/tmp/audit-images",
+        ".runtime-cache/tmp/audit-images-direct",
+        ".runtime-cache/tmp/image-audit",
+    ],
+    "active_logs": [
+        ".runtime-cache/logs/app",
+    ],
+    "local_private_ledgers": [
+        ".runtime-cache/evidence/ai-ledgers",
+        ".agents",
+    ],
+    "tracked_release_evidence": [
+        "artifacts/releases",
+    ],
+    "orphan_residue": [
+        "apps/web/node_modules.broken.*",
+    ],
+}
 
 
 def _entry_payload(root: Path, target: dict[str, Any]) -> dict[str, Any]:
@@ -28,7 +52,7 @@ def _entry_payload(root: Path, target: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": str(target["id"]),
         "label": str(target["label"]),
-        "path": rel_path(path),
+        "path": rel_path_from(root, path),
         "layer": str(target["layer"]),
         "ownership": str(target["ownership"]),
         "category": str(target["category"]),
@@ -36,6 +60,7 @@ def _entry_payload(root: Path, target: dict[str, Any]) -> dict[str, Any]:
         "size_bytes": size,
         "size_human": human_bytes(size),
         "count_in_layer_total": bool(target.get("count_in_layer_total", False)),
+        "highlight": bool(target.get("highlight", False)),
     }
 
 
@@ -95,6 +120,46 @@ def _docker_entries(docker: dict[str, Any]) -> tuple[list[dict[str, Any]], bool]
     return entries, has_unverified
 
 
+def _residue_bucket_entries(root: Path, patterns: list[str]) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    seen: set[Path] = set()
+    for pattern in patterns:
+        resolved_paths = resolve_candidate_paths(pattern, root=root)
+        if not resolved_paths and not any(token in pattern for token in ("*", "?", "[")):
+            resolved_paths = [expand_policy_path(pattern, root=root)]
+        for path in resolved_paths:
+            if path in seen:
+                continue
+            seen.add(path)
+            exists = path.exists()
+            size = size_bytes(path) if exists else 0
+            entries.append(
+                {
+                    "path": rel_path_from(root, path),
+                    "exists": exists,
+                    "size_bytes": size,
+                    "size_human": human_bytes(size),
+                }
+            )
+    return sorted(
+        entries,
+        key=lambda item: (not item["exists"], -int(item["size_bytes"]), str(item["path"])),
+    )
+
+
+def _repo_internal_residue(root: Path) -> dict[str, dict[str, Any]]:
+    residue: dict[str, dict[str, Any]] = {}
+    for bucket, patterns in REPO_INTERNAL_RESIDUE_BUCKETS.items():
+        entries = _residue_bucket_entries(root, patterns)
+        total = sum(int(item["size_bytes"]) for item in entries if item["exists"])
+        residue[bucket] = {
+            "size_bytes": total,
+            "size_human": human_bytes(total),
+            "paths": entries,
+        }
+    return residue
+
+
 def build_report(root: Path, policy: dict[str, Any]) -> dict[str, Any]:
     entries = [_entry_payload(root, target) for target in policy.get("audit_targets", [])]
     docker = detect_docker_named_volumes(list(policy.get("docker_named_volumes", [])))
@@ -108,21 +173,12 @@ def build_report(root: Path, policy: dict[str, Any]) -> dict[str, Any]:
         totals[layer] = totals.get(layer, 0) + int(item["size_bytes"])
     legacy_status = collect_legacy_compatibility(root, policy)
     governance = collect_disk_governance_signals(root, policy, entries, legacy_status)
-    highlights = [
-        item
-        for item in entries
-        if item["path"]
-        in {
-            ".runtime-cache/tmp",
-            "apps/web/node_modules",
-            ".venv",
-            str(Path.home() / ".cache" / "sourceharbor"),
-            str(Path.home() / ".cache" / "video-digestor"),
-            str(Path.home() / ".video-digestor"),
-            str(Path.home() / "Library" / "Caches" / "ms-playwright"),
-            str(Path.home() / ".cache" / "uv"),
-        }
-    ]
+    governance["repo_internal_residue"] = _repo_internal_residue(root)
+    highlights = sorted(
+        (item for item in entries if item.get("highlight")),
+        key=lambda item: int(item.get("size_bytes") or 0),
+        reverse=True,
+    )
     report = {
         "version": 1,
         "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
@@ -211,6 +267,8 @@ def render_text(report: dict[str, Any]) -> str:
     lines.append(
         "unexpected-repo-external-paths: " + ("detected" if unexpected["detected"] else "clear")
     )
+    for bucket, payload in report["governance"].get("repo_internal_residue", {}).items():
+        lines.append(f"repo-internal-residue: {bucket} | size={payload['size_human']}")
     for item in report["highlights"]:
         lines.append(
             f"highlight: {item['path']} | layer={item['layer']} | size={item['size_human']}"

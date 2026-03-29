@@ -155,6 +155,92 @@ def test_ci_workflow_trusted_internal_pr_boundary_guards_self_hosted_bootstrap()
     assert "runs-on: ubuntu-latest" in jobs["web-lint"]
 
 
+def test_current_repo_ci_workflow_strictness_contract_passes() -> None:
+    module = _load_module()
+    failures: list[str] = []
+    workflow_path = _repo_root() / ".github" / "workflows" / "ci.yml"
+    workflow = workflow_path.read_text(encoding="utf-8")
+
+    module._check_global_rules(
+        workflow_path, workflow, dict(module._job_blocks(workflow)), failures
+    )
+
+    assert failures == []
+
+
+def test_build_standard_image_requires_manual_only_protected_environment() -> None:
+    module = _load_module()
+    workflow = """name: build-ci-standard-image
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@1234567890abcdef1234567890abcdef12345678
+        with:
+          clean: true
+      - run: echo build
+"""
+    failures: list[str] = []
+
+    module._check_build_standard_image_specific_rules(workflow, failures)
+
+    assert (
+        "build-ci-standard-image.yml: external publish lane must be workflow_dispatch only"
+        in failures
+    )
+    assert (
+        "build-ci-standard-image.yml: publish: must use protected environment `external-ghcr-publish`"
+        in failures
+    )
+
+
+def test_release_evidence_requires_manual_only_protected_environment() -> None:
+    module = _load_module()
+    workflow = """name: release-evidence-attest
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: release tag
+        required: false
+        type: string
+  push:
+    tags:
+      - "v*"
+jobs:
+  release-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@1234567890abcdef1234567890abcdef12345678
+        with:
+          clean: true
+      - run: echo attest
+"""
+    failures: list[str] = []
+
+    module._check_release_evidence_specific_rules(workflow, failures)
+
+    assert (
+        "release-evidence-attest.yml: external attestation lane must be workflow_dispatch only"
+        in failures
+    )
+    assert (
+        "release-evidence-attest.yml: release-evidence: must use protected environment `external-release-evidence`"
+        in failures
+    )
+    assert (
+        "release-evidence-attest.yml: workflow_dispatch.release_tag must stay required for manual attestation runs"
+        in failures
+    )
+
+
 def test_global_rules_reusable_workflow_must_define_timeout(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

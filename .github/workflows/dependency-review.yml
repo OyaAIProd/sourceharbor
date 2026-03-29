@@ -9,6 +9,7 @@ permissions:
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check dependency review support
         id: support_check
@@ -68,6 +69,8 @@ jobs:
 
       - if: ${{ steps.support_check.outputs.supported == 'true' }}
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          clean: true
 
       - if: ${{ steps.support_check.outputs.supported == 'true' }}
         uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0

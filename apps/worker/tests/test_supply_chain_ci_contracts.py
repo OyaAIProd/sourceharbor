@@ -45,8 +45,9 @@ def test_build_ci_standard_image_workflow_emits_sbom_and_attestations() -> None:
     assert "cyclonedx-json" in workflow
     assert "strict-ci-image.cdx.json" in workflow
     assert "mkdir -p .runtime-cache/reports/attestations" in workflow
-    assert "push:" in workflow
-    assert "branches:\n      - main" in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "push:" not in workflow
+    assert "environment:\n      name: external-ghcr-publish" in workflow
     assert "runner_workspace_maintenance.sh" in workflow
 
 
@@ -56,9 +57,10 @@ def test_release_evidence_attestation_workflow_exists() -> None:
     )
 
     assert "workflow_dispatch" in workflow
-    assert "push:" in workflow
-    assert 'tags:\n      - "v*"' in workflow
+    assert "push:" not in workflow
+    assert "environment:\n      name: external-release-evidence" in workflow
     assert "release_tag" in workflow
+    assert "required: true" in workflow
     assert "capture_release_manifest.sh" in workflow
     assert "run_db_rollback_drill.sh" in workflow
     assert "python3 scripts/release/verify_db_rollback_readiness.py \\" in workflow
