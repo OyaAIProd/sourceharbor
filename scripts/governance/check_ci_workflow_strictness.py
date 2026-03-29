@@ -8,6 +8,7 @@ from pathlib import Path
 WORKFLOW_DIR = Path(".github/workflows")
 WORKFLOW_PATH = WORKFLOW_DIR / "ci.yml"
 BUILD_STANDARD_IMAGE_WORKFLOW_PATH = WORKFLOW_DIR / "build-ci-standard-image.yml"
+RELEASE_EVIDENCE_WORKFLOW_PATH = WORKFLOW_DIR / "release-evidence-attest.yml"
 RUNNER_HEALTH_WORKFLOW_PATH = WORKFLOW_DIR / "runner-health.yml"
 REMOTE_INTEGRITY_WORKFLOW_PATH = WORKFLOW_DIR / "remote-integrity-audit.yml"
 TRUSTED_BOUNDARY_REUSABLE_WORKFLOW_PATH = WORKFLOW_DIR / "_trusted-pr-boundary.yml"
@@ -476,6 +477,100 @@ def _check_ci_concurrency_rules(workflow_path: Path, text: str, failures: list[s
         )
 
 
+def _workflow_has_explicit_trigger(text: str, trigger_name: str) -> bool:
+    return trigger_name in _top_level_on_triggers(text)
+
+
+def _workflow_has_only_workflow_dispatch(text: str) -> bool:
+    triggers = _top_level_on_triggers(text)
+    return bool(triggers) and set(triggers) == {"workflow_dispatch"}
+
+
+def _top_level_on_triggers(text: str) -> list[str]:
+    lines = text.splitlines()
+    in_on = False
+    triggers: list[str] = []
+    for line in lines:
+        if not in_on:
+            if re.match(r"^on:\s*$", line):
+                in_on = True
+            continue
+        if line and not line.startswith(" "):
+            break
+        match = re.match(r"^\s{2}([A-Za-z0-9_-]+):\s*$", line)
+        if match:
+            triggers.append(match.group(1))
+    return triggers
+
+
+def _push_branches(text: str) -> list[str]:
+    lines = text.splitlines()
+    in_push = False
+    in_branches = False
+    branches: list[str] = []
+    for line in lines:
+        if not in_push:
+            if re.match(r"^\s{2}push:\s*$", line):
+                in_push = True
+            continue
+        if line and not line.startswith(" "):
+            break
+        if not in_branches:
+            if re.match(r"^\s{4}branches:\s*$", line):
+                in_branches = True
+            continue
+        if re.match(r"^\s{4}[A-Za-z0-9_-]+:\s*$", line):
+            break
+        match = re.match(r"^\s{6}-\s*(.+?)\s*$", line)
+        if match:
+            branches.append(match.group(1))
+    return branches
+
+
+def _check_job_runs_on_hosted(
+    workflow_name: str, blocks: dict[str, str], job_name: str, failures: list[str]
+) -> None:
+    block = blocks.get(job_name, "")
+    if not block:
+        failures.append(f"{workflow_name}: {job_name}: missing job")
+        return
+    if "runs-on: ubuntu-latest" not in block:
+        failures.append(f"{workflow_name}: {job_name}: must run on ubuntu-latest")
+
+
+def _uses_public_hosted_first_ci(blocks: dict[str, str]) -> bool:
+    return set(blocks) == {"python-tests", "web-lint"}
+
+
+def _check_public_hosted_first_ci_specific_rules(
+    text: str, blocks: dict[str, str], failures: list[str]
+) -> None:
+    if not _workflow_has_pull_request_trigger(text):
+        failures.append("ci.yml: must trigger on pull_request")
+    if _push_branches(text) != ["main"]:
+        failures.append("ci.yml: push trigger must be limited to main")
+    if "self-hosted" in text or "shared-pool" in text:
+        failures.append("ci.yml: current PR path must not reference self-hosted or shared-pool")
+
+    python_tests = blocks.get("python-tests", "")
+    if "python3 scripts/governance/check_env_contract.py --strict" not in python_tests:
+        failures.append("ci.yml: python-tests: missing env contract check")
+    if "python3 scripts/governance/check_test_assertions.py" not in python_tests:
+        failures.append("ci.yml: python-tests: missing placebo assertion guard")
+    if "bash scripts/ci/python_tests.sh" not in python_tests:
+        failures.append("ci.yml: python-tests: missing canonical python test command")
+    if "secrets." in python_tests:
+        failures.append("ci.yml: python-tests: public PR path must not consume secrets context")
+
+    web_lint = blocks.get("web-lint", "")
+    if "npm --prefix apps/web ci" not in web_lint:
+        failures.append("ci.yml: web-lint: missing deterministic npm ci step")
+    if "npm --prefix apps/web run lint" not in web_lint:
+        failures.append("ci.yml: web-lint: missing frontend lint command")
+    if "secrets." in web_lint:
+        failures.append("ci.yml: web-lint: public PR path must not consume secrets context")
+
+
 def _check_global_rules(
     workflow_path: Path, text: str, blocks: dict[str, str], failures: list[str]
 ) -> None:
@@ -566,6 +661,10 @@ def _check_global_rules(
     _check_cache_path_rules(workflow_path, text, failures)
 
     if workflow_path.name != WORKFLOW_PATH.name:
+        return
+
+    if _uses_public_hosted_first_ci(blocks):
+        _check_public_hosted_first_ci_specific_rules(text, blocks, failures)
         return
 
     # Every workflow must hard-fail when required CI secrets are missing.
@@ -727,6 +826,23 @@ def _check_runner_health_specific_rules(
 
 
 def _check_build_standard_image_specific_rules(text: str, failures: list[str]) -> None:
+    blocks = dict(_job_blocks(text))
+    if not _workflow_has_only_workflow_dispatch(text):
+        failures.append(
+            "build-ci-standard-image.yml: external publish lane must be workflow_dispatch only"
+        )
+    if not _workflow_has_explicit_trigger(text, "workflow_dispatch"):
+        failures.append("build-ci-standard-image.yml: missing workflow_dispatch trigger")
+    publish = blocks.get("publish", "")
+    if not publish:
+        failures.append("build-ci-standard-image.yml: publish: missing job")
+    else:
+        if "environment:\n      name: external-ghcr-publish" not in publish:
+            failures.append(
+                "build-ci-standard-image.yml: publish: must use protected environment `external-ghcr-publish`"
+            )
+        if "runs-on: ubuntu-latest" not in publish:
+            failures.append("build-ci-standard-image.yml: publish: must run on ubuntu-latest")
     if re.search(r"^\s{2}contents:\s+write\s*$", text, flags=re.MULTILINE):
         failures.append(
             "build-ci-standard-image.yml: permissions.contents must stay read-only; image publish must not mutate the repository"
@@ -747,6 +863,34 @@ def _check_build_standard_image_specific_rules(text: str, failures: list[str]) -
     if "contract-candidate.json" not in text:
         failures.append(
             "build-ci-standard-image.yml: must emit a contract-candidate artifact instead of writing infra/config/strict_ci_contract.json"
+        )
+
+
+def _check_release_evidence_specific_rules(text: str, failures: list[str]) -> None:
+    blocks = dict(_job_blocks(text))
+    if not _workflow_has_only_workflow_dispatch(text):
+        failures.append(
+            "release-evidence-attest.yml: external attestation lane must be workflow_dispatch only"
+        )
+    if not _workflow_has_explicit_trigger(text, "workflow_dispatch"):
+        failures.append("release-evidence-attest.yml: missing workflow_dispatch trigger")
+    release_evidence = blocks.get("release-evidence", "")
+    if not release_evidence:
+        failures.append("release-evidence-attest.yml: release-evidence: missing job")
+        return
+    if "environment:\n      name: external-release-evidence" not in release_evidence:
+        failures.append(
+            "release-evidence-attest.yml: release-evidence: must use protected environment `external-release-evidence`"
+        )
+    if "runs-on: ubuntu-latest" not in release_evidence:
+        failures.append("release-evidence-attest.yml: release-evidence: must run on ubuntu-latest")
+    if not re.search(
+        r"workflow_dispatch:\n(?:\s{4}.+\n)*\s{6}release_tag:\n(?:\s{8}.+\n)*\s{8}required:\s+true",
+        text,
+        flags=re.MULTILINE,
+    ):
+        failures.append(
+            "release-evidence-attest.yml: workflow_dispatch.release_tag must stay required for manual attestation runs"
         )
 
 
@@ -970,9 +1114,12 @@ def main() -> int:
         _check_global_rules(workflow, text, blocks, failures)
         _check_shared_self_hosted_pr_boundary_rules(workflow, text, blocks, failures)
         if workflow == WORKFLOW_PATH:
-            _check_ci_specific_rules(blocks, failures)
+            if not _uses_public_hosted_first_ci(blocks):
+                _check_ci_specific_rules(blocks, failures)
         elif workflow == BUILD_STANDARD_IMAGE_WORKFLOW_PATH:
             _check_build_standard_image_specific_rules(text, failures)
+        elif workflow == RELEASE_EVIDENCE_WORKFLOW_PATH:
+            _check_release_evidence_specific_rules(text, failures)
         elif workflow == RUNNER_HEALTH_WORKFLOW_PATH:
             _check_runner_health_specific_rules(text, blocks, failures)
         elif workflow == REMOTE_INTEGRITY_WORKFLOW_PATH:

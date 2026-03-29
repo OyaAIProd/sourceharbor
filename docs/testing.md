@@ -69,11 +69,13 @@ These are repo-visible checks that help with supply-chain and long-tail risk, bu
 - `dependency-review.yml` inspects pull-request dependency changes
 - `codeql.yml` runs code scanning on the tracked languages
 - `build-ci-standard-image.yml` and `release-evidence-attest.yml` stay in the external-proof lane, not the default pull-request gate
+- those external lanes are `workflow_dispatch` only and run behind protected environments so ordinary pull requests never touch their secrets or publication paths
 
 Think of them like specialist inspectors after the core exam:
 
 - the required path proves the repo is locally honest and rerunnable
 - the advisory or external lanes prove harder claims when you actually need them
+- publication or attestation happens only after an owner deliberately opens that lane and approves the protected environment
 
 ## Public-Proof Boundary
 

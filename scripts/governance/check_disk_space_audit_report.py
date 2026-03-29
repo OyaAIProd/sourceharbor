@@ -34,6 +34,68 @@ def _validate_total(name: str, payload: object, *, allow_null: bool) -> list[str
     return errors
 
 
+def _validate_repo_internal_residue(payload: object) -> list[str]:
+    errors: list[str] = []
+    expected_buckets = {
+        "proof_scratch",
+        "active_logs",
+        "local_private_ledgers",
+        "tracked_release_evidence",
+        "orphan_residue",
+    }
+    if not isinstance(payload, dict):
+        return ["disk-space audit report governance.repo_internal_residue must be an object"]
+    for bucket in expected_buckets:
+        if bucket not in payload:
+            errors.append(
+                f"disk-space audit report missing governance.repo_internal_residue.{bucket}"
+            )
+            continue
+        bucket_payload = payload[bucket]
+        if not isinstance(bucket_payload, dict):
+            errors.append(
+                f"disk-space audit report governance.repo_internal_residue.{bucket} must be an object"
+            )
+            continue
+        if not isinstance(bucket_payload.get("size_bytes"), int):
+            errors.append(
+                f"disk-space audit report governance.repo_internal_residue.{bucket}.size_bytes must be integer"
+            )
+        if not isinstance(bucket_payload.get("size_human"), str):
+            errors.append(
+                f"disk-space audit report governance.repo_internal_residue.{bucket}.size_human must be string"
+            )
+        paths = bucket_payload.get("paths")
+        if not isinstance(paths, list):
+            errors.append(
+                f"disk-space audit report governance.repo_internal_residue.{bucket}.paths must be list"
+            )
+            continue
+        for idx, entry in enumerate(paths):
+            if not isinstance(entry, dict):
+                errors.append(
+                    f"disk-space audit report governance.repo_internal_residue.{bucket}.paths[{idx}] must be object"
+                )
+                continue
+            if not isinstance(entry.get("path"), str):
+                errors.append(
+                    f"disk-space audit report governance.repo_internal_residue.{bucket}.paths[{idx}].path must be string"
+                )
+            if not isinstance(entry.get("exists"), bool):
+                errors.append(
+                    f"disk-space audit report governance.repo_internal_residue.{bucket}.paths[{idx}].exists must be bool"
+                )
+            if not isinstance(entry.get("size_bytes"), int):
+                errors.append(
+                    f"disk-space audit report governance.repo_internal_residue.{bucket}.paths[{idx}].size_bytes must be integer"
+                )
+            if not isinstance(entry.get("size_human"), str):
+                errors.append(
+                    f"disk-space audit report governance.repo_internal_residue.{bucket}.paths[{idx}].size_human must be string"
+                )
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate the generated disk-space audit report structure."
@@ -102,9 +164,12 @@ def main() -> int:
             "runtime_tmp_over_budget",
             "legacy_default_write_drift",
             "unexpected_repo_external_paths",
+            "repo_internal_residue",
         ):
             if key not in governance:
                 errors.append(f"disk-space audit report missing governance.{key}")
+        if "repo_internal_residue" in governance:
+            errors.extend(_validate_repo_internal_residue(governance["repo_internal_residue"]))
 
     if errors:
         print("[disk-space-audit-report] FAIL")

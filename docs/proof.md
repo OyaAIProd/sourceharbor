@@ -66,6 +66,7 @@ This layer is stricter:
 - release notes and changelog
 - any remote or external distribution proof attached to a release
 - live GitHub profile settings such as description, homepage, topics, discussions, and uploaded social preview state
+- manual external lanes such as GHCR publishing or release attestation only after protected-environment approval
 
 What this layer answers:
 

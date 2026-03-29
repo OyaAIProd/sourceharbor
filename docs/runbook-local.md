@@ -27,6 +27,9 @@ UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/proj
 - Disk-space audit report check: `./bin/disk-space-audit-check`
 - Dry-run cleanup planning: `./bin/disk-space-cleanup --wave safe`
 - Legacy-path migration dry-run: `./bin/disk-space-legacy-migration --json`
+- Local-private ledger migration: `python3 scripts/governance/migrate_local_private_ledgers.py --json`
+- Worktree status closure: `python3 scripts/governance/report_worktree_status.py`
+  This report now fail-closes to `partial` when no authoritative local-private plan ledger exists yet, instead of exiting without a report.
 
 ## Quick Diagnosis Loop
 

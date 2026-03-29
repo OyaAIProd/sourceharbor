@@ -312,6 +312,145 @@ def test_report_disk_space_counts_present_docker_volume_into_repo_external_total
     assert payload["totals"]["unverified-layer"]["size_bytes"] == 0
 
 
+def test_report_disk_space_counts_user_state_root_without_double_counting_child_highlights(
+    tmp_path: Path,
+) -> None:
+    state_root = tmp_path / "sourceharbor-state"
+    artifacts = state_root / "artifacts"
+    workspace = state_root / "workspace"
+    sqlite_state = state_root / "state"
+    artifacts.mkdir(parents=True, exist_ok=True)
+    workspace.mkdir(parents=True, exist_ok=True)
+    sqlite_state.mkdir(parents=True, exist_ok=True)
+    (artifacts / "artifact.bin").write_bytes(b"a" * 16)
+    (workspace / "job.txt").write_text("workspace", encoding="utf-8")
+    (sqlite_state / "worker.db").write_bytes(b"sqlite" * 3)
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "canonical_paths": {
+            "user_state_root": str(state_root),
+        },
+        "legacy_reference_files": [],
+        "audit_targets": [
+            {
+                "id": "user-state-root",
+                "label": "User state root",
+                "path": str(state_root),
+                "layer": "repo-external-repo-owned",
+                "ownership": "repo-primary",
+                "category": "external-state",
+                "count_in_layer_total": True,
+                "highlight": True,
+            },
+            {
+                "id": "user-state-artifacts",
+                "label": "User state artifacts",
+                "path": str(artifacts),
+                "layer": "repo-external-repo-owned",
+                "ownership": "repo-primary",
+                "category": "protected-state",
+                "highlight": True,
+            },
+            {
+                "id": "user-state-workspace",
+                "label": "User state workspace",
+                "path": str(workspace),
+                "layer": "repo-external-repo-owned",
+                "ownership": "repo-primary",
+                "category": "protected-state",
+                "highlight": True,
+            },
+            {
+                "id": "user-state-sqlite",
+                "label": "User state sqlite",
+                "path": str(sqlite_state),
+                "layer": "repo-external-repo-owned",
+                "ownership": "repo-primary",
+                "category": "protected-state",
+                "highlight": True,
+            },
+        ],
+        "docker_named_volumes": [],
+        "cleanup_waves": {},
+        "excluded_paths": [],
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    result = _run_script(
+        "report_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    expected_total = 16 + len("workspace") + (len(b"sqlite") * 3)
+    assert payload["totals"]["repo-external-repo-owned"]["size_bytes"] == expected_total
+    highlight_paths = {item["path"] for item in payload["highlights"]}
+    assert "sourceharbor-state" in highlight_paths
+    assert "sourceharbor-state/artifacts" in highlight_paths
+    assert "sourceharbor-state/workspace" in highlight_paths
+    assert "sourceharbor-state/state" in highlight_paths
+
+
+def test_report_disk_space_emits_repo_internal_residue_buckets(tmp_path: Path) -> None:
+    proof_dir = tmp_path / ".runtime-cache" / "tmp" / "manual-image-audit"
+    log_dir = tmp_path / ".runtime-cache" / "logs" / "app"
+    ai_ledger_dir = tmp_path / ".runtime-cache" / "evidence" / "ai-ledgers"
+    ledger_dir = tmp_path / ".agents" / "Plans"
+    release_dir = tmp_path / "artifacts" / "releases"
+    orphan_dir = tmp_path / "apps" / "web" / "node_modules.broken.20260327-0755"
+    proof_dir.mkdir(parents=True, exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    ai_ledger_dir.mkdir(parents=True, exist_ok=True)
+    ledger_dir.mkdir(parents=True, exist_ok=True)
+    release_dir.mkdir(parents=True, exist_ok=True)
+    orphan_dir.mkdir(parents=True, exist_ok=True)
+    (proof_dir / "proof.png").write_bytes(b"p" * 11)
+    (log_dir / "api.jsonl").write_bytes(b"l" * 13)
+    (ai_ledger_dir / "current-ledger.md").write_text("authoritative", encoding="utf-8")
+    (ledger_dir / "plan.md").write_text("plan", encoding="utf-8")
+    (release_dir / "manifest.json").write_text("{}", encoding="utf-8")
+    (orphan_dir / "index.js").write_text("broken", encoding="utf-8")
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "canonical_paths": {},
+        "legacy_reference_files": [],
+        "audit_targets": [],
+        "docker_named_volumes": [],
+        "cleanup_waves": {},
+        "excluded_paths": [],
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    result = _run_script(
+        "report_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    residue = payload["governance"]["repo_internal_residue"]
+    assert residue["proof_scratch"]["size_bytes"] == 11
+    assert residue["active_logs"]["size_bytes"] == 13
+    assert residue["local_private_ledgers"]["size_bytes"] == len("authoritative") + len("plan")
+    assert residue["tracked_release_evidence"]["size_bytes"] == len("{}")
+    assert residue["orphan_residue"]["size_bytes"] == len("broken")
+    assert residue["orphan_residue"]["paths"][0]["path"].endswith(
+        "node_modules.broken.20260327-0755"
+    )
+    local_private_paths = {item["path"] for item in residue["local_private_ledgers"]["paths"]}
+    assert ".runtime-cache/evidence/ai-ledgers" in local_private_paths
+    assert ".agents" in local_private_paths
+
+
 def test_cleanup_disk_space_safe_wave_dry_run_preserves_files(tmp_path: Path) -> None:
     pycache_dir = tmp_path / "pkg" / "__pycache__"
     pycache_dir.mkdir(parents=True)
@@ -359,8 +498,80 @@ def test_cleanup_disk_space_safe_wave_dry_run_preserves_files(tmp_path: Path) ->
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["mode"] == "dry-run"
-    assert payload["release_potential_bytes"] > 0
+    assert payload["safe_clear_bytes"] > 0
+    assert payload["verify_first_bytes"] == 0
+    assert "release_potential_bytes" not in payload
     assert pycache_dir.exists()
+
+
+def test_cleanup_disk_space_reports_bucketed_totals_and_protected_entries(tmp_path: Path) -> None:
+    safe_dir = tmp_path / ".runtime-cache" / "tmp" / "pytest-cache"
+    safe_dir.mkdir(parents=True, exist_ok=True)
+    (safe_dir / "index.bin").write_bytes(b"s" * 9)
+    verify_dir = tmp_path / "legacy-cache" / "closure-fix-venv"
+    verify_dir.mkdir(parents=True, exist_ok=True)
+    (verify_dir / "venv.bin").write_bytes(b"v" * 12)
+    canonical_env = tmp_path / "canonical-cache" / "project-venv"
+    canonical_env.mkdir(parents=True, exist_ok=True)
+    protected_root = tmp_path / "current-state"
+    protected_root.mkdir(parents=True, exist_ok=True)
+    (protected_root / "state.bin").write_bytes(b"p" * 20)
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "canonical_paths": {},
+        "legacy_reference_files": [],
+        "audit_targets": [],
+        "docker_named_volumes": [],
+        "excluded_paths": [str(protected_root)],
+        "cleanup_waves": {
+            "safe": {
+                "candidates": [
+                    {
+                        "id": "runtime-pytest-cache",
+                        "path": ".runtime-cache/tmp/pytest-cache",
+                        "layer": "repo-internal",
+                        "ownership": "repo-exclusive",
+                        "classification": "safe-clear",
+                    }
+                ]
+            },
+            "external-history": {
+                "candidates": [
+                    {
+                        "id": "closure-fix-venv",
+                        "path": "legacy-cache/closure-fix-venv",
+                        "quiet_minutes": 0,
+                        "reference_markers": ["closure-fix-venv"],
+                        "equivalent_paths": ["canonical-cache/project-venv"],
+                        "verify_command": ["bash", "-lc", "test -d canonical-cache/project-venv"],
+                        "layer": "repo-external-repo-owned",
+                        "ownership": "repo-primary",
+                        "classification": "verify-first",
+                    }
+                ]
+            },
+        },
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    result = _run_script(
+        "cleanup_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["safe_clear_bytes"] == 9
+    assert payload["verify_first_bytes"] == 12
+    assert payload["protected_bytes"] == 20
+    assert payload["classification_totals"]["safe-clear"]["size_bytes"] == 9
+    assert payload["classification_totals"]["verify-first"]["size_bytes"] == 12
+    assert payload["protected_entries"][0]["path"] == str(protected_root.resolve())
+    assert "release_potential_bytes" not in payload
 
 
 def test_cleanup_disk_space_repo_tmp_apply_requires_gates_and_rebuild(tmp_path: Path) -> None:
@@ -1612,6 +1823,50 @@ def test_check_disk_space_governance_rejects_shared_layer_cleanup_candidate(tmp_
     result = _run_checker(tmp_path, policy_path=policy_path)
     assert result.returncode == 1
     assert "shared-layer path" in result.stdout
+
+
+def test_check_disk_space_governance_requires_user_state_root_in_audit_totals(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "config" / "governance").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "infra" / "systemd").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "docs" / "reference").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".env.example").write_text(
+        'export PIPELINE_ARTIFACT_ROOT="$HOME/.sourceharbor/artifacts"\n'
+        'export PIPELINE_WORKSPACE_DIR="$HOME/.sourceharbor/workspace"\n'
+        'export SQLITE_PATH="$HOME/.sourceharbor/state/worker_state.db"\n'
+        'export SQLITE_STATE_PATH="$HOME/.sourceharbor/state/api_state.db"\n'
+        'export UV_PROJECT_ENVIRONMENT="$HOME/.cache/sourceharbor/project-venv"\n'
+        "export WEB_RUNTIME_WEB_DIR=.runtime-cache/tmp/web-runtime/workspace/apps/web\n"
+        "export WEB_E2E_RUNTIME_WEB_DIR=.runtime-cache/tmp/web-runtime/workspace/apps/web\n",
+        encoding="utf-8",
+    )
+    for service in ("sourceharbor-api.service", "sourceharbor-worker.service"):
+        (tmp_path / "infra" / "systemd" / service).write_text(
+            "ExecStart=/bin/bash -lc 'exec \"${UV_PROJECT_ENVIRONMENT:-${HOME}/.cache/sourceharbor/project-venv}/bin/python\"'\n",
+            encoding="utf-8",
+        )
+    (tmp_path / "docs" / "reference" / "runtime-cache-retention.md").write_text(
+        "## Canonical Compartments\n- `run/`\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs" / "reference" / "disk-space-governance.md").write_text(
+        "runtime docs\n",
+        encoding="utf-8",
+    )
+    policy_path = _write_policy(
+        tmp_path / "config" / "governance" / "disk-space-governance.json",
+        {
+            **_minimal_checker_policy(),
+            "canonical_paths": {
+                "user_state_root": "$HOME/.sourceharbor",
+            },
+        },
+    )
+
+    result = _run_checker(tmp_path, policy_path=policy_path)
+    assert result.returncode == 1
+    assert "must count canonical user_state_root" in result.stdout
 
 
 def test_check_disk_space_governance_rejects_excluded_path_and_broad_repo_tmp_lock(

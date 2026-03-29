@@ -23,7 +23,7 @@ The important idea is simple:
 | `run/` | live process scratch | pid files, resolved env, lock state | shortest-lived |
 | `logs/` | structured activity trail | app logs, governance logs, smoke logs | retained long enough for debugging |
 | `reports/` | machine-readable summaries | junit, coverage, governance summaries | retained for proof and automation |
-| `evidence/` | debugging evidence | screenshots, traces, persisted audit artifacts | retained for proof, then pruned |
+| `evidence/` | debugging evidence | screenshots, traces, persisted audit artifacts, local-private ai ledgers | retained for proof, then pruned |
 | `tmp/` | disposable workbench | temporary workdirs, copied runtime web workspace, short-lived venvs | aggressively bounded |
 
 ## Guardrails
@@ -32,5 +32,9 @@ The important idea is simple:
 - `logs/`, `reports/`, and `evidence/` are proof surfaces, not random junk drawers.
 - a compartment having a TTL does **not** mean every file under it is automatically safe to delete at any moment.
 - the canonical repo-side web runtime path is `.runtime-cache/tmp/web-runtime/workspace/apps/web`, not `.runtime/web`.
+- image-audit directories under `tmp/` are repo-side proof scratch.
+- examples include `.runtime-cache/tmp/manual-image-audit`, `.runtime-cache/tmp/public-image-audit`, `.runtime-cache/tmp/audit-images`, `.runtime-cache/tmp/audit-images-direct`, and `.runtime-cache/tmp/image-audit`.
+- treat those paths as "requires verification" rather than generic safe-clear cache.
+- `.runtime-cache/evidence/ai-ledgers` is the authoritative local-private execution ledger root; `.agents/Plans` is only an optional compatibility bridge when it still exists locally.
 
 For the larger repo-wide disk map, including repo-external and shared caches, use [disk-space-governance.md](./disk-space-governance.md).

@@ -166,6 +166,53 @@ def _quarantine_path(path: Path) -> Path:
     return path.parent / f".{path.name}.cleanup-quarantine-{uuid4().hex}"
 
 
+def _dedupe_paths(paths: list[Path]) -> list[Path]:
+    kept: list[Path] = []
+    for path in sorted(
+        {path.resolve() for path in paths}, key=lambda item: (len(item.parts), str(item))
+    ):
+        if any(existing == path or existing in path.parents for existing in kept):
+            continue
+        kept.append(path)
+    return kept
+
+
+def _protected_entries(root: Path, policy: dict[str, Any]) -> list[dict[str, Any]]:
+    resolved: list[Path] = []
+    for raw_path in [str(item) for item in policy.get("excluded_paths", [])]:
+        resolved.extend(resolve_candidate_paths(raw_path, root=root))
+    entries: list[dict[str, Any]] = []
+    for path in _dedupe_paths(resolved):
+        exists = path.exists()
+        size = size_bytes(path) if exists else 0
+        entries.append(
+            {
+                "path": str(path),
+                "exists": exists,
+                "size_bytes": size,
+                "size_human": human_bytes(size),
+                "classification": "protected",
+            }
+        )
+    return sorted(entries, key=lambda item: int(item["size_bytes"]), reverse=True)
+
+
+def _classification_totals(candidates: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    totals: dict[str, int] = {}
+    for item in candidates:
+        if not item["eligible"]:
+            continue
+        classification = str(item["classification"])
+        totals[classification] = totals.get(classification, 0) + int(item["size_bytes"])
+    return {
+        classification: {
+            "size_bytes": total,
+            "size_human": human_bytes(total),
+        }
+        for classification, total in sorted(totals.items())
+    }
+
+
 def build_cleanup_plan(
     root: Path, policy: dict[str, Any], selected_waves: list[str]
 ) -> dict[str, Any]:
@@ -187,7 +234,11 @@ def build_cleanup_plan(
                     legacy_status=legacy_status,
                 )
             )
-    release_potential = sum(item["size_bytes"] for item in evaluated if item["eligible"])
+    classification_totals = _classification_totals(evaluated)
+    protected_entries = _protected_entries(root, policy)
+    safe_clear_bytes = int(classification_totals.get("safe-clear", {}).get("size_bytes", 0))
+    verify_first_bytes = int(classification_totals.get("verify-first", {}).get("size_bytes", 0))
+    protected_bytes = sum(int(item["size_bytes"]) for item in protected_entries if item["exists"])
     return {
         "version": 1,
         "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
@@ -195,8 +246,14 @@ def build_cleanup_plan(
         "mode": "dry-run",
         "selected_waves": wave_names,
         "legacy_compatibility": legacy_status,
-        "release_potential_bytes": release_potential,
-        "release_potential_human": human_bytes(release_potential),
+        "classification_totals": classification_totals,
+        "safe_clear_bytes": safe_clear_bytes,
+        "safe_clear_human": human_bytes(safe_clear_bytes),
+        "verify_first_bytes": verify_first_bytes,
+        "verify_first_human": human_bytes(verify_first_bytes),
+        "protected_bytes": protected_bytes,
+        "protected_human": human_bytes(protected_bytes),
+        "protected_entries": protected_entries,
         "candidates": evaluated,
     }
 
@@ -247,19 +304,30 @@ def render_text(plan: dict[str, Any]) -> str:
     lines = [
         "[disk-space-cleanup] " + ("APPLY" if plan["mode"] == "apply" else "DRY-RUN"),
         f"waves: {', '.join(plan['selected_waves'])}",
-        f"release-potential: {plan['release_potential_human']}",
+        f"safe-clear: {plan['safe_clear_human']}",
+        f"verify-first: {plan['verify_first_human']}",
+        f"protected: {plan['protected_human']}",
         "legacy-retirement-blocked: "
         + str(plan["legacy_compatibility"]["legacy_retirement_blocked"]).lower(),
     ]
+    for classification, totals in plan.get("classification_totals", {}).items():
+        lines.append(f"classification: {classification} | eligible={totals['size_human']}")
     for item in plan["candidates"]:
         lines.append(
-            f"candidate: {item['path']} | wave={item['wave']} | eligible={str(item['eligible']).lower()} | size={item['size_human']}"
+            "candidate: "
+            f"{item['path']} | wave={item['wave']} | classification={item['classification']} "
+            f"| eligible={str(item['eligible']).lower()} | size={item['size_human']}"
         )
         for gate in item["gates"]:
             lines.append(
                 f"  gate: {gate['name']} | ok={str(gate['ok']).lower()}"
                 + (f" | {gate['detail']}" if gate.get("detail") else "")
             )
+    for entry in plan.get("protected_entries", []):
+        lines.append(
+            "protected: "
+            f"{entry['path']} | exists={str(entry['exists']).lower()} | size={entry['size_human']}"
+        )
     for action in plan.get("actions", []):
         lines.append(
             f"action: {action['path']} | status={action['status']}"
