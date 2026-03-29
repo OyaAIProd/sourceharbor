@@ -57,10 +57,11 @@ Choose the shortest honest path for the result you want first:
 | run a real local flow | [docs/start-here.md](./docs/start-here.md) | the shortest repo-documented path to a local stack and a queued or completed job |
 | inspect the trust boundary first | [docs/proof.md](./docs/proof.md) | the current proof map, including what is locally provable and where the public boundary stops |
 
-There are two honest first paths:
+There are three honest first paths:
 
 - **Evaluate fast:** inspect the product shape and evidence surfaces without booting anything.
 - **Run locally:** install dependencies, boot the stack, and queue a real job on your own machine.
+- **Inspect the trust boundary:** read the proof ladder first so you know exactly which claims are local proof and which still depend on live remote verification.
 
 > Truth route, in plain English:
 > `README.md` is the front door, [`docs/start-here.md`](./docs/start-here.md) is the first real run, [`docs/proof.md`](./docs/proof.md) is the proof ladder, `docs/generated/*` pages are render-only pointers, and `.agents/Plans/*` files are historical execution archives rather than current public truth.
