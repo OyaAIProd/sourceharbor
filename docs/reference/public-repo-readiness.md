@@ -16,6 +16,7 @@ That does **not** automatically mean every remote or release claim is proven for
 - release distribution quality
 - remote workflow success on the current `main`
 - live GitHub profile settings matching `config/public/github-profile.json`
+- any external publication or attestation lane that is intentionally kept behind manual dispatch and protected-environment approval
 
 Read this together with [proof.md](../proof.md) whenever you want to separate local credibility from remote proof.
 

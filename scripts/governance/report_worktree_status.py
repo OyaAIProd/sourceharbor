@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -25,14 +26,57 @@ def _run(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _plan_search_roots() -> list[Path]:
+    config_path = ROOT / "config" / "governance" / "local-private-ledgers.json"
+    roots: list[Path] = []
+    if config_path.is_file():
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+        for ledger in payload.get("ledgers", []):
+            authoritative = str(ledger.get("authoritative_target_path") or "").strip()
+            if authoritative:
+                roots.append((ROOT / authoritative).resolve())
+            for compat in ledger.get("compatibility_paths", []):
+                compat_text = str(compat).strip()
+                if compat_text:
+                    roots.append((ROOT / compat_text).resolve())
+    if not roots:
+        roots = [
+            (ROOT / ".runtime-cache" / "evidence" / "ai-ledgers").resolve(),
+            (ROOT / ".agents" / "Plans").resolve(),
+        ]
+    deduped: list[Path] = []
+    for path in roots:
+        if path not in deduped:
+            deduped.append(path)
+    return deduped
+
+
 def _latest_plan_path(explicit: str) -> Path:
     if explicit:
         return (ROOT / explicit).resolve()
-    plans_dir = ROOT / ".agents" / "Plans"
-    candidates = sorted(plans_dir.glob("*.md"), key=lambda path: path.stat().st_mtime, reverse=True)
-    if not candidates:
-        raise SystemExit("no plan file found under .agents/Plans/")
-    return candidates[0]
+    for plans_dir in _plan_search_roots():
+        candidates = sorted(
+            plans_dir.glob("*.md"), key=lambda path: path.stat().st_mtime, reverse=True
+        )
+        if candidates:
+            return candidates[0]
+    searched = " or ".join(path.relative_to(ROOT).as_posix() for path in _plan_search_roots())
+    raise SystemExit(f"no plan file found under {searched}")
+
+
+def _find_latest_plan_path(explicit: str) -> Path | None:
+    if explicit:
+        candidate = (ROOT / explicit).resolve()
+        return candidate if candidate.is_file() else None
+    for plans_dir in _plan_search_roots():
+        if not plans_dir.is_dir():
+            continue
+        candidates = sorted(
+            plans_dir.glob("*.md"), key=lambda path: path.stat().st_mtime, reverse=True
+        )
+        if candidates:
+            return candidates[0]
+    return None
 
 
 def _tracked_dirty_files() -> list[str]:
@@ -146,14 +190,54 @@ def _recommended_commit_groups(
     return groups
 
 
+def _build_report(
+    *,
+    plan_path: Path | None,
+    declared_in_scope: list[str],
+    declared_out_of_scope: list[str],
+    dirty_files: list[str],
+) -> dict[str, object]:
+    declared_all = set(declared_in_scope) | set(declared_out_of_scope)
+    dirty_set = set(dirty_files)
+    plan_missing = plan_path is None
+
+    return {
+        "version": 1,
+        "status": "partial"
+        if plan_missing
+        else ("pass" if dirty_set <= declared_all else "partial"),
+        "plan_path": None if plan_path is None else str(plan_path.relative_to(ROOT)),
+        "plan_missing": plan_missing,
+        "searched_plan_roots": [path.relative_to(ROOT).as_posix() for path in _plan_search_roots()],
+        "source_commit": current_git_commit(),
+        "tracked_dirty_files": dirty_files,
+        "declared_in_scope": declared_in_scope,
+        "declared_out_of_scope": declared_out_of_scope,
+        "undeclared_dirty_files": sorted(dirty_set if plan_missing else (dirty_set - declared_all)),
+        "declared_but_clean_files": [] if plan_missing else sorted(declared_all - dirty_set),
+        "summary": {
+            "tracked_dirty_count": len(dirty_files),
+            "in_scope_count": len(declared_in_scope),
+            "out_of_scope_count": len(declared_out_of_scope),
+            "undeclared_dirty_count": len(
+                dirty_set if plan_missing else (dirty_set - declared_all)
+            ),
+            "declared_but_clean_count": 0 if plan_missing else len(declared_all - dirty_set),
+        },
+        "recommended_commit_groups": []
+        if plan_missing
+        else _recommended_commit_groups(declared_in_scope, declared_out_of_scope),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Report dirty tracked worktree status against the authoritative plan."
     )
     parser.add_argument(
         "--plan",
-        default=".agents/Plans/2026-03-20_04-58-20__repo-validated-single-path-construction-master-plan.md",
-        help="Plan path relative to repo root. Defaults to the current authoritative plan.",
+        default="",
+        help="Plan path relative to repo root. Defaults to authoritative ai-ledgers, then falls back to .agents/Plans.",
     )
     parser.add_argument(
         "--output",
@@ -162,35 +246,21 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    plan_path = _latest_plan_path(args.plan)
-    plan_text = plan_path.read_text(encoding="utf-8")
-    declared_in_scope, declared_out_of_scope = _extract_declared_dirty_sets(plan_text)
     dirty_files = _tracked_dirty_files()
+    plan_path = _find_latest_plan_path(args.plan)
+    if plan_path is None:
+        declared_in_scope: list[str] = []
+        declared_out_of_scope: list[str] = []
+    else:
+        plan_text = plan_path.read_text(encoding="utf-8")
+        declared_in_scope, declared_out_of_scope = _extract_declared_dirty_sets(plan_text)
 
-    declared_all = set(declared_in_scope) | set(declared_out_of_scope)
-    dirty_set = set(dirty_files)
-
-    report = {
-        "version": 1,
-        "status": "pass" if dirty_set <= declared_all else "partial",
-        "plan_path": str(plan_path.relative_to(ROOT)),
-        "source_commit": current_git_commit(),
-        "tracked_dirty_files": dirty_files,
-        "declared_in_scope": declared_in_scope,
-        "declared_out_of_scope": declared_out_of_scope,
-        "undeclared_dirty_files": sorted(dirty_set - declared_all),
-        "declared_but_clean_files": sorted(declared_all - dirty_set),
-        "summary": {
-            "tracked_dirty_count": len(dirty_files),
-            "in_scope_count": len(declared_in_scope),
-            "out_of_scope_count": len(declared_out_of_scope),
-            "undeclared_dirty_count": len(dirty_set - declared_all),
-            "declared_but_clean_count": len(declared_all - dirty_set),
-        },
-        "recommended_commit_groups": _recommended_commit_groups(
-            declared_in_scope, declared_out_of_scope
-        ),
-    }
+    report = _build_report(
+        plan_path=plan_path,
+        declared_in_scope=declared_in_scope,
+        declared_out_of_scope=declared_out_of_scope,
+        dirty_files=dirty_files,
+    )
 
     write_json_artifact(
         ROOT / args.output,
@@ -203,7 +273,11 @@ def main() -> int:
     )
 
     print("[worktree-status-closure] " + report["status"].upper())
-    print(f"  - plan={report['plan_path']}")
+    if report["plan_path"] is None:
+        print("  - plan=missing")
+        print("  - reason=missing_authoritative_plan")
+    else:
+        print(f"  - plan={report['plan_path']}")
     print(f"  - tracked_dirty_count={report['summary']['tracked_dirty_count']}")
     print(f"  - undeclared_dirty_count={report['summary']['undeclared_dirty_count']}")
     return 0

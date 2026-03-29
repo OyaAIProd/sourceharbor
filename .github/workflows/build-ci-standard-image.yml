@@ -2,13 +2,6 @@ name: build-ci-standard-image
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - ".devcontainer/**"
-      - ".github/workflows/build-ci-standard-image.yml"
-      - "scripts/ci/build_standard_image.sh"
 
 permissions:
   contents: read
@@ -20,6 +13,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    environment:
+      name: external-ghcr-publish
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6

@@ -27,6 +27,14 @@ The canonical repo-side web runtime workspace is:
 
 - `.runtime-cache/tmp/web-runtime/workspace/apps/web`
 
+The canonical current-state root is:
+
+- `$HOME/.sourceharbor/`
+
+Treat that root like the live warehouse shelf, not like a disposable staging box.
+
+If it is present, it must be counted into the repo-external-repo-owned audit total.
+
 Legacy `video-digestor` paths are compatibility surfaces only.
 
 They may still exist locally, but they must be treated as:
@@ -61,6 +69,36 @@ Examples:
 - `$HOME/.video-digestor` → `repo-external-repo-owned`
 - `$HOME/Library/Caches/ms-playwright` → `shared-layer`
 - Docker named volumes when the daemon is unavailable → `unverified-layer`
+
+## Repo-Internal Residue Map
+
+Second-pass audit output keeps a dedicated repo-internal residue map under `governance.repo_internal_residue`.
+
+It is intentionally descriptive, not a cleanup queue.
+
+The fixed buckets are:
+
+- `proof_scratch`
+- `active_logs`
+- `local_private_ledgers`
+- `tracked_release_evidence`
+- `orphan_residue`
+
+Think of these like labeled shelves in the warehouse.
+
+The point is to stop guessing what a leftover path "probably" is.
+
+Examples:
+
+- `proof_scratch` → repo-side image-audit workbenches under `.runtime-cache/tmp/*image-audit*`
+- `active_logs` → `.runtime-cache/logs/app`
+- `local_private_ledgers` → authoritative `.runtime-cache/evidence/ai-ledgers` plus optional `.agents` compatibility bridge
+- `tracked_release_evidence` → `artifacts/releases`
+- `orphan_residue` → `apps/web/node_modules.broken.*`
+
+Being listed here does **not** mean the object is safe-clear.
+
+It only means the audit now has a fixed bucket for it.
 
 ## Cleanup States
 
@@ -134,12 +172,53 @@ They must prove:
 2. they are outside the active change window
 3. an equivalent mainline environment exists
 
+Even when all three checks currently pass, these objects stay in the **verify-first** bucket.
+
+They do **not** become safe-clear just because the dry-run shows them as eligible.
+
+Eligibility means "may enter an execution wave after review", not "now safe to delete by default".
+
+## Repo-side Proof Scratch
+
+Some repo-side `tmp/` paths are temporary proof workbenches rather than generic cache.
+
+Examples:
+
+- `.runtime-cache/tmp/manual-image-audit`
+- `.runtime-cache/tmp/public-image-audit`
+- `.runtime-cache/tmp/audit-images`
+- `.runtime-cache/tmp/audit-images-direct`
+- `.runtime-cache/tmp/image-audit`
+
+Treat these as:
+
+- **repo-internal**
+- ownership-confirmed
+- maybe rebuildable
+- **not automatically cleanup-allowed**
+
+They are proof scratch, not anonymous junk drawers.
+
+## Local Private Ledgers
+
+`.agents/Plans` remains a compatibility bridge.
+
+The authoritative local-private execution ledger root is:
+
+- `.runtime-cache/evidence/ai-ledgers`
+
+Second-pass governance should migrate readable plan ledgers into that authoritative target while preserving the original `.agents/Plans` files.
+
+That migration is a copy-forward step, not a destructive cleanup step.
+
 ## Explicit Non-Targets
 
 These are intentionally excluded from automatic cleanup planning:
 
 - `apps/web/node_modules`
 - `.venv`
+- `$HOME/.sourceharbor`
+- `$HOME/.cache/sourceharbor/project-venv`
 - `$HOME/.cache/video-digestor/project-venv`
 - `$HOME/.video-digestor/state/worker_state.db`
 - `$HOME/.video-digestor/artifacts`
@@ -174,10 +253,26 @@ JSON output for automation:
 ./bin/disk-space-cleanup --wave safe --json
 ```
 
+The cleanup JSON keeps these totals separate:
+
+- `safe_clear_bytes`
+- `verify_first_bytes`
+- `protected_bytes`
+
+This is intentional.
+
+Do not collapse them back into a single "release potential" sentence.
+
 Validate the generated audit report shape:
 
 ```bash
 ./bin/disk-space-audit-check
+```
+
+Copy local-private ledgers into the authoritative target:
+
+```bash
+python3 scripts/governance/migrate_local_private_ledgers.py --json
 ```
 
 Dry-run the legacy-path migration plan:
