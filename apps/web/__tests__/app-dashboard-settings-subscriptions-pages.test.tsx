@@ -1,12 +1,15 @@
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import IngestRunsPage from "@/app/ingest-runs/page";
 import DashboardPage from "@/app/page";
 import SettingsPage from "@/app/settings/page";
 import SubscriptionsPage from "@/app/subscriptions/page";
 
 const mockListSubscriptions = vi.fn();
 const mockListVideos = vi.fn();
+const mockListIngestRuns = vi.fn();
+const mockGetIngestRun = vi.fn();
 const mockGetNotificationConfig = vi.fn();
 
 vi.mock("next/link", () => ({
@@ -44,6 +47,8 @@ vi.mock("@/lib/api/client", () => ({
 	apiClient: {
 		listSubscriptions: (...args: unknown[]) => mockListSubscriptions(...args),
 		listVideos: (...args: unknown[]) => mockListVideos(...args),
+		listIngestRuns: (...args: unknown[]) => mockListIngestRuns(...args),
+		getIngestRun: (...args: unknown[]) => mockGetIngestRun(...args),
 		getNotificationConfig: (...args: unknown[]) =>
 			mockGetNotificationConfig(...args),
 	},
@@ -109,6 +114,28 @@ describe("dashboard/settings/subscriptions pages", () => {
 					last_job_id: "job-333",
 				},
 			]);
+			mockListIngestRuns.mockResolvedValue([
+				{
+					id: "run-1",
+					subscription_id: null,
+					workflow_id: "wf-1",
+					platform: "youtube",
+					max_new_videos: 5,
+					status: "queued",
+					jobs_created: 2,
+					candidates_count: 2,
+					feeds_polled: 1,
+					entries_fetched: 3,
+					entries_normalized: 3,
+					ingest_events_created: 2,
+					ingest_event_duplicates: 1,
+					job_duplicates: 0,
+					error_message: null,
+					created_at: "2026-02-01T00:00:00Z",
+					updated_at: "2026-02-01T00:00:00Z",
+					completed_at: null,
+				},
+			]);
 
 			render(await DashboardPage({ searchParams: {} }));
 			expect(document.querySelector(".folo-page-shell")).not.toBeNull();
@@ -137,7 +164,21 @@ describe("dashboard/settings/subscriptions pages", () => {
 				screen.getByRole("link", { name: "查看失败任务 →" }),
 			).toHaveAttribute("href", "/jobs");
 
-			const recentVideoTable = screen.getByRole("table");
+			const recentIngestTable = screen
+				.getByText("最近摄取运行")
+				.closest('[data-slot="card"]');
+			expect(recentIngestTable).not.toBeNull();
+			expect(screen.getByText("run-1")).toBeInTheDocument();
+			expect(
+				screen.getByRole("link", { name: "查看全部摄取运行 →" }),
+			).toHaveAttribute("href", "/ingest-runs");
+			expect(screen.getByText("新任务").tagName).toBe("TH");
+			expect(screen.getByText("候选条目").tagName).toBe("TH");
+			expect(screen.getAllByText("Queued").length).toBeGreaterThanOrEqual(1);
+
+			const tables = screen.getAllByRole("table");
+			expect(tables).toHaveLength(2);
+			const recentVideoTable = tables[1] as HTMLElement;
 			expect(
 				within(recentVideoTable).getByText("最近视频列表"),
 			).toBeInTheDocument();
@@ -246,6 +287,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 		async () => {
 			mockListSubscriptions.mockRejectedValue(new Error("network failed"));
 			mockListVideos.mockRejectedValue(new Error("network failed"));
+			mockListIngestRuns.mockRejectedValue(new Error("network failed"));
 
 			render(await DashboardPage({ searchParams: {} }));
 
@@ -257,6 +299,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveAttribute("href", "/");
 			expect(screen.getByText("当前无法加载视频列表。")).toBeInTheDocument();
 			expect(screen.getAllByText("数据暂不可用")).toHaveLength(4);
+			expect(screen.getByText("摄取运行数据暂不可用。")).toBeInTheDocument();
 
 			const metricRegion = screen.getByRole("region", { name: "关键指标" });
 			const metrics = Array.from(
@@ -280,6 +323,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 		async () => {
 			mockListSubscriptions.mockResolvedValue([]);
 			mockListVideos.mockResolvedValue([]);
+			mockListIngestRuns.mockResolvedValue([]);
 
 			render(
 				await DashboardPage({
@@ -393,6 +437,96 @@ describe("dashboard/settings/subscriptions pages", () => {
 					name: "Save subscription",
 				}),
 			).toHaveAttribute("type", "submit");
+		},
+		PAGE_TEST_TIMEOUT_MS,
+	);
+
+	it(
+		"renders ingest runs page with recent table and selected run detail",
+		async () => {
+			mockListIngestRuns.mockResolvedValue([
+				{
+					id: "run-1",
+					subscription_id: null,
+					workflow_id: "wf-1",
+					platform: "youtube",
+					max_new_videos: 5,
+					status: "running",
+					jobs_created: 2,
+					candidates_count: 3,
+					feeds_polled: 1,
+					entries_fetched: 4,
+					entries_normalized: 4,
+					ingest_events_created: 3,
+					ingest_event_duplicates: 1,
+					job_duplicates: 0,
+					error_message: null,
+					created_at: "2026-02-01T00:00:00Z",
+					updated_at: "2026-02-01T00:05:00Z",
+					completed_at: null,
+				},
+			]);
+			mockGetIngestRun.mockResolvedValue({
+				id: "run-1",
+				subscription_id: null,
+				workflow_id: "wf-1",
+				platform: "youtube",
+				max_new_videos: 5,
+				status: "running",
+				jobs_created: 2,
+				candidates_count: 3,
+				feeds_polled: 1,
+				entries_fetched: 4,
+				entries_normalized: 4,
+				ingest_events_created: 3,
+				ingest_event_duplicates: 1,
+				job_duplicates: 0,
+				error_message: null,
+				created_at: "2026-02-01T00:00:00Z",
+				updated_at: "2026-02-01T00:05:00Z",
+				completed_at: null,
+				requested_by: "tester",
+				requested_trace_id: "trace-1",
+				filters_json: { platform: "youtube" },
+				items: [
+					{
+						id: "item-1",
+						subscription_id: null,
+						video_id: "video-1",
+						job_id: "job-1",
+						ingest_event_id: "event-1",
+						platform: "youtube",
+						video_uid: "yt-1",
+						source_url: "https://example.com/watch?v=1",
+						title: "Video One",
+						published_at: "2026-02-01T00:00:00Z",
+						entry_hash: "hash-1",
+						pipeline_mode: "full",
+						content_type: "video",
+						item_status: "queued",
+						created_at: "2026-02-01T00:00:00Z",
+						updated_at: "2026-02-01T00:05:00Z",
+					},
+				],
+			});
+
+			render(await IngestRunsPage({ searchParams: { run_id: "run-1" } }));
+
+			expect(
+				screen.getByRole("heading", { name: "Recent ingest runs" }),
+			).toBeInTheDocument();
+			expect(screen.getByRole("link", { name: "run-1" })).toHaveAttribute(
+				"href",
+				"/ingest-runs?run_id=run-1",
+			);
+			expect(screen.getByText("Run detail")).toBeInTheDocument();
+			expect(screen.getByText("Video One")).toBeInTheDocument();
+			expect(screen.getByRole("link", { name: "job-1" })).toHaveAttribute(
+				"href",
+				"/jobs?job_id=job-1",
+			);
+			expect(mockListIngestRuns).toHaveBeenCalledWith({ limit: 10 });
+			expect(mockGetIngestRun).toHaveBeenCalledWith("run-1");
 		},
 		PAGE_TEST_TIMEOUT_MS,
 	);

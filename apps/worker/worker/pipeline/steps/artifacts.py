@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import re
 from typing import Any
 
 from worker.comments import empty_comments_payload
@@ -19,6 +21,220 @@ from worker.pipeline.runner_rendering import (
 from worker.pipeline.step_executor import utc_now_iso, write_json
 from worker.pipeline.steps.llm import normalize_digest_payload, normalize_outline_payload
 from worker.pipeline.types import PipelineContext, StepExecution
+
+_TOPIC_STOP_WORDS = {
+    "about",
+    "after",
+    "again",
+    "against",
+    "agent",
+    "agents",
+    "also",
+    "because",
+    "between",
+    "digest",
+    "from",
+    "have",
+    "into",
+    "just",
+    "more",
+    "than",
+    "that",
+    "their",
+    "them",
+    "there",
+    "these",
+    "this",
+    "video",
+    "with",
+}
+
+
+def _extract_topic_key(*parts: str) -> tuple[str, str]:
+    tokens: list[str] = []
+    for part in parts:
+        tokens.extend(re.findall(r"[a-z0-9]+", part.lower()))
+
+    filtered = [token for token in tokens if len(token) >= 4 and token not in _TOPIC_STOP_WORDS]
+    if not filtered:
+        return "general", "General"
+
+    ordered: list[str] = []
+    for token in filtered:
+        if token not in ordered:
+            ordered.append(token)
+    chosen = ordered[:2]
+    topic_key = "-".join(chosen)
+    topic_label = " / ".join(token.capitalize() for token in chosen)
+    return topic_key, topic_label
+
+
+def _build_claim_metadata(
+    *,
+    title: str,
+    body: str,
+    source_section: str,
+    order_index: int,
+    claim_kind: str,
+    confidence_label: str,
+) -> dict[str, Any]:
+    topic_key, topic_label = _extract_topic_key(title, body, source_section)
+    normalized_body = re.sub(r"\s+", " ", body.strip().lower())
+    claim_seed = f"{claim_kind}|{source_section}|{normalized_body}"
+    claim_id = hashlib.sha1(claim_seed.encode("utf-8")).hexdigest()[:12]
+    return {
+        "artifact_source": "knowledge_cards.json",
+        "topic_key": topic_key,
+        "topic_label": topic_label,
+        "claim_id": claim_id,
+        "claim_kind": claim_kind,
+        "confidence_label": confidence_label,
+        "source_anchor": f"{source_section}[{order_index}]",
+    }
+
+
+def _build_knowledge_cards(
+    *,
+    title: str,
+    digest: dict[str, Any],
+    outline: dict[str, Any],
+) -> list[dict[str, Any]]:
+    cards: list[dict[str, Any]] = []
+    safe_title = title.strip() or "Untitled"
+
+    summary = str(digest.get("summary") or "").strip()
+    if summary:
+        cards.append(
+            {
+                "card_type": "summary",
+                "title": safe_title,
+                "body": summary,
+                "source_section": "summary",
+                "order_index": 0,
+                "metadata": _build_claim_metadata(
+                    title=safe_title,
+                    body=summary,
+                    source_section="summary",
+                    order_index=0,
+                    claim_kind="summary",
+                    confidence_label="high",
+                ),
+            }
+        )
+
+    highlights = [
+        str(item).strip() for item in (digest.get("highlights") or []) if str(item).strip()
+    ]
+    for index, item in enumerate(highlights[:12], start=1):
+        cards.append(
+            {
+                "card_type": "takeaway",
+                "title": f"{safe_title} · Takeaway {index}",
+                "body": item,
+                "source_section": "highlights",
+                "order_index": index,
+                "metadata": _build_claim_metadata(
+                    title=safe_title,
+                    body=item,
+                    source_section="highlights",
+                    order_index=index,
+                    claim_kind="takeaway",
+                    confidence_label="high",
+                ),
+            }
+        )
+
+    action_items = [
+        str(item).strip() for item in (digest.get("action_items") or []) if str(item).strip()
+    ]
+    for index, item in enumerate(action_items[:12], start=1):
+        cards.append(
+            {
+                "card_type": "action",
+                "title": f"{safe_title} · Action {index}",
+                "body": item,
+                "source_section": "action_items",
+                "order_index": index,
+                "metadata": _build_claim_metadata(
+                    title=safe_title,
+                    body=item,
+                    source_section="action_items",
+                    order_index=index,
+                    claim_kind="action",
+                    confidence_label="medium",
+                ),
+            }
+        )
+
+    topic_mentions: dict[str, dict[str, Any]] = {}
+    for card in cards:
+        metadata = dict(card.get("metadata") or {})
+        topic_key = str(metadata.get("topic_key") or "").strip()
+        topic_label = str(metadata.get("topic_label") or "").strip()
+        if not topic_key or not topic_label:
+            continue
+        existing = topic_mentions.setdefault(
+            topic_key,
+            {
+                "label": topic_label,
+                "mentions": 0,
+                "source_sections": set(),
+            },
+        )
+        existing["mentions"] = int(existing.get("mentions") or 0) + 1
+        cast_sections = existing.get("source_sections")
+        if isinstance(cast_sections, set):
+            cast_sections.add(str(card.get("source_section") or ""))
+
+    for _, topic_payload in sorted(
+        topic_mentions.items(),
+        key=lambda item: (-int(item[1]["mentions"]), str(item[0])),
+    )[:4]:
+        source_sections = sorted(
+            section
+            for section in topic_payload.get("source_sections", set())
+            if isinstance(section, str) and section
+        )
+        cards.append(
+            {
+                "card_type": "topic",
+                "title": f"{safe_title} · Topic",
+                "body": str(topic_payload["label"]),
+                "source_section": "topics",
+                "metadata": {
+                    "artifact_source": "knowledge_cards.json",
+                    "topic_key": _extract_topic_key(str(topic_payload["label"]))[0],
+                    "topic_label": str(topic_payload["label"]),
+                    "mentions": int(topic_payload["mentions"]),
+                    "source_sections": source_sections,
+                },
+            }
+        )
+
+    claim_cards: list[dict[str, Any]] = []
+    for index, card in enumerate(cards):
+        if card.get("card_type") not in {"summary", "takeaway", "action"}:
+            continue
+        metadata = dict(card.get("metadata") or {})
+        claim_cards.append(
+            {
+                "card_type": "claim",
+                "title": f"{safe_title} · Claim {len(claim_cards) + 1}",
+                "body": str(card.get("body") or ""),
+                "source_section": str(card.get("source_section") or "summary"),
+                "metadata": {
+                    **metadata,
+                    "claim_source_card_type": str(card.get("card_type") or ""),
+                    "source_anchor": metadata.get("source_anchor") or f"claim[{index}]",
+                },
+            }
+        )
+    cards.extend(claim_cards)
+
+    for index, card in enumerate(cards):
+        card["order_index"] = index
+
+    return cards
 
 
 def _has_transcript_evidence(transcript: str) -> bool:
@@ -171,12 +387,43 @@ async def step_write_artifacts(ctx: PipelineContext, state: dict[str, Any]) -> S
         transcript_path = ctx.artifacts_dir / "transcript.txt"
         outline_path = ctx.artifacts_dir / "outline.json"
         digest_path = ctx.artifacts_dir / "digest.md"
+        knowledge_cards_path = ctx.artifacts_dir / "knowledge_cards.json"
+
+        knowledge_cards = _build_knowledge_cards(
+            title=str(
+                digest.get("title")
+                or metadata.get("title")
+                or state.get("title")
+                or "Untitled Video"
+            ),
+            digest=digest,
+            outline=outline,
+        )
 
         write_json(meta_path, meta_payload)
         write_json(comments_path, comments)
         transcript_path.write_text(transcript, encoding="utf-8")
         write_json(outline_path, outline)
         digest_path.write_text(rendered_digest, encoding="utf-8")
+        write_json(knowledge_cards_path, knowledge_cards)
+        if ctx.pg_store is not None:
+            video_id = str(ctx.job_record.get("video_id") or "").strip()
+            if video_id and hasattr(ctx.pg_store, "replace_knowledge_cards"):
+                ctx.pg_store.replace_knowledge_cards(
+                    video_id=video_id,
+                    job_id=ctx.job_id,
+                    items=[
+                        {
+                            "card_type": card["card_type"],
+                            "source_section": card["source_section"],
+                            "title": card["title"],
+                            "body": card["body"],
+                            "ordinal": int(card["order_index"]),
+                            "metadata": dict(card.get("metadata") or {}),
+                        }
+                        for card in knowledge_cards
+                    ],
+                )
 
         return StepExecution(
             status="succeeded",
@@ -188,6 +435,7 @@ async def step_write_artifacts(ctx: PipelineContext, state: dict[str, Any]) -> S
                     "transcript": str(transcript_path.resolve()),
                     "outline": str(outline_path.resolve()),
                     "digest": str(digest_path.resolve()),
+                    "knowledge_cards": str(knowledge_cards_path.resolve()),
                 },
             },
             state_updates={
@@ -198,6 +446,7 @@ async def step_write_artifacts(ctx: PipelineContext, state: dict[str, Any]) -> S
                     "transcript": str(transcript_path.resolve()),
                     "outline": str(outline_path.resolve()),
                     "digest": str(digest_path.resolve()),
+                    "knowledge_cards": str(knowledge_cards_path.resolve()),
                 },
             },
         )

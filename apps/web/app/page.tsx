@@ -119,28 +119,38 @@ export default async function DashboardPage({
 	] as const);
 	const sessionToken = getActionSessionTokenForForm();
 
-	const [subscriptionsResult, videosResult] = await Promise.all([
-		apiClient
-			.listSubscriptions()
-			.then((data) => ({ data, errorCode: null as string | null }))
-			.catch(() => ({
-				data: [] as Awaited<ReturnType<typeof apiClient.listSubscriptions>>,
-				errorCode: "ERR_REQUEST_FAILED",
-			})),
-		apiClient
-			.listVideos({ limit: 200 })
-			.then((data) => ({ data, errorCode: null as string | null }))
-			.catch(() => ({
-				data: [] as Awaited<ReturnType<typeof apiClient.listVideos>>,
-				errorCode: "ERR_REQUEST_FAILED",
-			})),
-	]);
+	const [subscriptionsResult, videosResult, ingestRunsResult] =
+		await Promise.all([
+			apiClient
+				.listSubscriptions()
+				.then((data) => ({ data, errorCode: null as string | null }))
+				.catch(() => ({
+					data: [] as Awaited<ReturnType<typeof apiClient.listSubscriptions>>,
+					errorCode: "ERR_REQUEST_FAILED",
+				})),
+			apiClient
+				.listVideos({ limit: 200 })
+				.then((data) => ({ data, errorCode: null as string | null }))
+				.catch(() => ({
+					data: [] as Awaited<ReturnType<typeof apiClient.listVideos>>,
+					errorCode: "ERR_REQUEST_FAILED",
+				})),
+			apiClient
+				.listIngestRuns({ limit: 5 })
+				.then((data) => ({ data, errorCode: null as string | null }))
+				.catch(() => ({
+					data: [] as Awaited<ReturnType<typeof apiClient.listIngestRuns>>,
+					errorCode: "ERR_REQUEST_FAILED",
+				})),
+		]);
 
 	const subscriptions = subscriptionsResult.data;
 	const videos = videosResult.data;
+	const ingestRuns = ingestRunsResult.data;
 	const loadErrorCode = subscriptionsResult.errorCode ?? videosResult.errorCode;
 	const subscriptionsUnavailable = subscriptionsResult.errorCode !== null;
 	const videosUnavailable = videosResult.errorCode !== null;
+	const ingestRunsUnavailable = ingestRunsResult.errorCode !== null;
 	const runningJobs = videos.filter(
 		(video) => video.status === "running" || video.status === "queued",
 	).length;
@@ -389,6 +399,94 @@ export default async function DashboardPage({
 								</Button>
 							</div>
 						</form>
+					</CardContent>
+				</Card>
+			</section>
+
+			<section>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<h2 className="text-xl font-semibold">最近摄取运行</h2>
+						<CardDescription>
+							把它理解成“最近几次进货记录”。如果你刚触发了采集，这里应该最先告诉你它有没有真的发车。
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-3">
+						<Button asChild variant="link" size="sm" className="h-auto px-0">
+							<Link href="/ingest-runs">查看全部摄取运行 →</Link>
+						</Button>
+						{ingestRunsUnavailable ? (
+							<output
+								className="text-sm text-muted-foreground"
+								aria-live="polite"
+								aria-atomic="true"
+							>
+								摄取运行数据暂不可用。
+							</output>
+						) : null}
+						{!ingestRunsUnavailable && ingestRuns.length === 0 ? (
+							<output
+								className="text-sm text-muted-foreground"
+								aria-live="polite"
+								aria-atomic="true"
+							>
+								暂无摄取运行。
+							</output>
+						) : null}
+						{!ingestRunsUnavailable && ingestRuns.length > 0 ? (
+							<div className="overflow-x-auto rounded-lg border border-border/70">
+								<table className="min-w-[720px] w-full text-sm">
+									<caption className="sr-only">最近摄取运行列表</caption>
+									<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+										<tr>
+											<th scope="col" className="px-4 py-3 font-medium">
+												Run ID
+											</th>
+											<th scope="col" className="px-4 py-3 font-medium">
+												平台
+											</th>
+											<th scope="col" className="px-4 py-3 font-medium">
+												状态
+											</th>
+											<th scope="col" className="px-4 py-3 font-medium">
+												新任务
+											</th>
+											<th scope="col" className="px-4 py-3 font-medium">
+												候选条目
+											</th>
+										</tr>
+									</thead>
+									<tbody>
+										{ingestRuns.map((run) => (
+											<tr key={run.id} className="border-t border-border/60">
+												<td className="px-4 py-3 align-top font-mono text-xs">
+													<Link
+														href={`/ingest-runs?run_id=${encodeURIComponent(run.id)}`}
+														className="text-primary underline-offset-4 hover:underline"
+													>
+														{run.id}
+													</Link>
+												</td>
+												<td className="px-4 py-3 align-top">
+													{run.platform
+														? toPlatformLabel(run.platform)
+														: "全部"}
+												</td>
+												<td className="px-4 py-3 align-top">
+													<DashboardStatusBadge status={run.status} />
+												</td>
+												<td className="px-4 py-3 align-top">
+													{run.jobs_created}
+												</td>
+												<td className="px-4 py-3 align-top">
+													{run.candidates_count}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						) : null}
 					</CardContent>
 				</Card>
 			</section>

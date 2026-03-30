@@ -76,14 +76,18 @@ def test_ingest_poll_returns_candidates(
     api_client: TestClient,
     monkeypatch,
 ) -> None:
+    run_id = uuid.uuid4()
     video_id = uuid.uuid4()
     job_id = uuid.uuid4()
 
     async def fake_poll(self, *, subscription_id, platform, max_new_videos):
         assert max_new_videos == 10
-        return (
-            1,
-            [
+        return {
+            "run_id": run_id,
+            "workflow_id": "wf-1",
+            "status": "queued",
+            "enqueued": 1,
+            "candidates": [
                 {
                     "video_id": video_id,
                     "platform": "youtube",
@@ -94,7 +98,7 @@ def test_ingest_poll_returns_candidates(
                     "job_id": job_id,
                 }
             ],
-        )
+        }
 
     monkeypatch.setattr("apps.api.app.services.ingest.IngestService.poll", fake_poll)
 
@@ -105,6 +109,9 @@ def test_ingest_poll_returns_candidates(
 
     payload = response.json()
     assert response.status_code == 202
+    assert payload["run_id"] == str(run_id)
+    assert payload["workflow_id"] == "wf-1"
+    assert payload["status"] == "queued"
     assert payload["enqueued"] == 1
     assert payload["candidates"][0]["video_uid"] == "abc123"
     assert payload["candidates"][0]["job_id"] == str(job_id)
@@ -140,6 +147,233 @@ def test_ingest_poll_maps_value_error_to_404(api_client: TestClient, monkeypatch
 
     assert response.status_code == 404
     assert response.json()["detail"] == "subscription not found"
+
+
+def test_ingest_runs_list_returns_summaries(api_client: TestClient, monkeypatch) -> None:
+    run_id = uuid.uuid4()
+    now = datetime.now(UTC)
+
+    monkeypatch.setattr(
+        "apps.api.app.services.ingest.IngestService.list_runs",
+        lambda self, *, limit, status, platform: [
+            SimpleNamespace(
+                id=run_id,
+                subscription_id=None,
+                workflow_id="wf-ingest-1",
+                platform=platform,
+                max_new_videos=limit,
+                status=status or "queued",
+                jobs_created=2,
+                candidates_count=2,
+                feeds_polled=1,
+                entries_fetched=3,
+                entries_normalized=3,
+                ingest_events_created=2,
+                ingest_event_duplicates=1,
+                job_duplicates=0,
+                error_message=None,
+                created_at=now,
+                updated_at=now,
+                completed_at=None,
+            )
+        ],
+    )
+
+    response = api_client.get("/api/v1/ingest/runs?platform=youtube&status=queued&limit=5")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0]["id"] == str(run_id)
+    assert payload[0]["workflow_id"] == "wf-ingest-1"
+    assert payload[0]["platform"] == "youtube"
+    assert payload[0]["status"] == "queued"
+    assert payload[0]["jobs_created"] == 2
+
+
+def test_ingest_runs_get_returns_items(api_client: TestClient, monkeypatch) -> None:
+    run_id = uuid.uuid4()
+    item_id = uuid.uuid4()
+    job_id = uuid.uuid4()
+    video_id = uuid.uuid4()
+    event_id = uuid.uuid4()
+    now = datetime.now(UTC)
+
+    monkeypatch.setattr(
+        "apps.api.app.services.ingest.IngestService.get_run",
+        lambda self, *, run_id: SimpleNamespace(
+            id=run_id,
+            subscription_id=None,
+            workflow_id="wf-ingest-2",
+            platform="youtube",
+            max_new_videos=10,
+            status="succeeded",
+            jobs_created=1,
+            candidates_count=1,
+            feeds_polled=1,
+            entries_fetched=1,
+            entries_normalized=1,
+            ingest_events_created=1,
+            ingest_event_duplicates=0,
+            job_duplicates=0,
+            error_message=None,
+            requested_by="tester",
+            requested_trace_id="trace-ingest",
+            filters_json={"platform": "youtube"},
+            created_at=now,
+            updated_at=now,
+            completed_at=now,
+            items=[
+                SimpleNamespace(
+                    id=item_id,
+                    subscription_id=None,
+                    video_id=video_id,
+                    job_id=job_id,
+                    ingest_event_id=event_id,
+                    platform="youtube",
+                    video_uid="abc123",
+                    source_url="https://www.youtube.com/watch?v=abc123",
+                    title="Demo",
+                    published_at=now,
+                    entry_hash="entry-1",
+                    pipeline_mode="full",
+                    content_type="video",
+                    item_status="queued",
+                    created_at=now,
+                    updated_at=now,
+                )
+            ],
+        ),
+    )
+
+    response = api_client.get(f"/api/v1/ingest/runs/{run_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["id"] == str(run_id)
+    assert payload["workflow_id"] == "wf-ingest-2"
+    assert payload["requested_by"] == "tester"
+    assert payload["filters_json"] == {"platform": "youtube"}
+    assert payload["items"][0]["id"] == str(item_id)
+    assert payload["items"][0]["job_id"] == str(job_id)
+    assert payload["items"][0]["video_uid"] == "abc123"
+
+
+def test_get_ingest_run_returns_not_found(api_client: TestClient, monkeypatch) -> None:
+    def fake_get_run(self, *, run_id):
+        del self, run_id
+        return
+
+    monkeypatch.setattr("apps.api.app.services.ingest.IngestService.get_run", fake_get_run)
+
+    response = api_client.get(f"/api/v1/ingest/runs/{uuid.uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "ingest run not found"
+
+
+def test_list_ingest_runs_returns_summary_rows(api_client: TestClient, monkeypatch) -> None:
+    run_id = uuid.uuid4()
+    row = SimpleNamespace(
+        id=run_id,
+        subscription_id=None,
+        workflow_id="wf-1",
+        platform="youtube",
+        max_new_videos=5,
+        status="running",
+        jobs_created=1,
+        candidates_count=1,
+        feeds_polled=1,
+        entries_fetched=2,
+        entries_normalized=2,
+        ingest_events_created=1,
+        ingest_event_duplicates=0,
+        job_duplicates=1,
+        error_message=None,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+        completed_at=None,
+    )
+
+    def fake_list_runs(self, *, limit, status, platform):
+        assert limit == 10
+        assert status == "running"
+        assert platform == "youtube"
+        return [row]
+
+    monkeypatch.setattr("apps.api.app.services.ingest.IngestService.list_runs", fake_list_runs)
+
+    response = api_client.get("/api/v1/ingest/runs?limit=10&status=running&platform=youtube")
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload[0]["id"] == str(run_id)
+    assert payload[0]["workflow_id"] == "wf-1"
+    assert payload[0]["status"] == "running"
+
+
+def test_get_ingest_run_returns_items(api_client: TestClient, monkeypatch) -> None:
+    run_id = uuid.uuid4()
+    item_id = uuid.uuid4()
+    row = SimpleNamespace(
+        id=run_id,
+        subscription_id=None,
+        workflow_id="wf-2",
+        platform="youtube",
+        max_new_videos=8,
+        status="succeeded",
+        jobs_created=1,
+        candidates_count=1,
+        feeds_polled=1,
+        entries_fetched=1,
+        entries_normalized=1,
+        ingest_events_created=1,
+        ingest_event_duplicates=0,
+        job_duplicates=0,
+        error_message=None,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+        completed_at=datetime.now(UTC),
+        requested_by="tester",
+        requested_trace_id="trace-1",
+        filters_json={"platform": "youtube", "max_new_videos": 8},
+        items=[
+            SimpleNamespace(
+                id=item_id,
+                subscription_id=None,
+                video_id=None,
+                job_id=None,
+                ingest_event_id=None,
+                platform="youtube",
+                video_uid="abc123",
+                source_url="https://www.youtube.com/watch?v=abc123",
+                title="Demo",
+                published_at=datetime.now(UTC),
+                entry_hash="entry-1",
+                pipeline_mode="full",
+                content_type="video",
+                item_status="queued",
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            )
+        ],
+    )
+
+    def fake_get_run(self, *, run_id):
+        assert str(run_id) == str(row.id)
+        return row
+
+    monkeypatch.setattr("apps.api.app.services.ingest.IngestService.get_run", fake_get_run)
+
+    response = api_client.get(f"/api/v1/ingest/runs/{run_id}")
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload["id"] == str(run_id)
+    assert payload["workflow_id"] == "wf-2"
+    assert payload["requested_by"] == "tester"
+    assert payload["filters_json"] == {"platform": "youtube", "max_new_videos": 8}
+    assert payload["items"][0]["id"] == str(item_id)
+    assert payload["items"][0]["video_uid"] == "abc123"
 
 
 def test_video_process_maps_value_error_to_400(
@@ -401,6 +635,188 @@ def test_job_get_accepts_legacy_phase2_kind(api_client: TestClient, monkeypatch)
     assert response.json()["kind"] == "phase2_ingest_stub"
 
 
+def test_job_compare_returns_diff_payload(api_client: TestClient, monkeypatch) -> None:
+    job_id = uuid.uuid4()
+    previous_job_id = uuid.uuid4()
+
+    monkeypatch.setattr(
+        "apps.api.app.services.jobs.JobsService.compare_with_previous",
+        lambda self, *, job_id: {
+            "job_id": str(job_id),
+            "previous_job_id": str(previous_job_id),
+            "has_previous": True,
+            "current_digest": "# Current\n\n- one",
+            "previous_digest": "# Previous\n\n- zero",
+            "diff_markdown": "--- old\n+++ new\n@@\n-- zero\n+- one",
+            "stats": {"added_lines": 1, "removed_lines": 1, "changed": True},
+        },
+    )
+
+    response = api_client.get(f"/api/v1/jobs/{job_id}/compare")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["job_id"] == str(job_id)
+    assert payload["previous_job_id"] == str(previous_job_id)
+    assert payload["has_previous"] is True
+    assert payload["stats"]["changed"] is True
+    assert payload["stats"]["added_lines"] == 1
+
+
+def test_job_compare_returns_404_for_missing_job(api_client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "apps.api.app.services.jobs.JobsService.compare_with_previous",
+        lambda self, *, job_id: None,
+    )
+
+    response = api_client.get(f"/api/v1/jobs/{uuid.uuid4()}/compare")
+
+    assert response.status_code == 404
+
+
+def test_job_knowledge_cards_returns_payload(api_client: TestClient, monkeypatch) -> None:
+    job_id = uuid.uuid4()
+    monkeypatch.setattr(
+        "apps.api.app.services.jobs.JobsService.get_knowledge_cards",
+        lambda self, *, job_id: [
+            {
+                "card_type": "takeaway",
+                "title": "Key takeaway",
+                "body": "This job added a durable takeaway.",
+                "source_section": "highlights",
+                "order_index": 1,
+            }
+        ],
+    )
+
+    response = api_client.get(f"/api/v1/jobs/{job_id}/knowledge-cards")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0]["card_type"] == "takeaway"
+    assert payload[0]["title"] == "Key takeaway"
+
+
+def test_job_knowledge_cards_returns_404_for_missing_job(
+    api_client: TestClient, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "apps.api.app.services.jobs.JobsService.get_knowledge_cards",
+        lambda self, *, job_id: None,
+    )
+
+    response = api_client.get(f"/api/v1/jobs/{uuid.uuid4()}/knowledge-cards")
+
+    assert response.status_code == 404
+
+
+def test_knowledge_cards_list_returns_rows(api_client: TestClient, monkeypatch) -> None:
+    job_id = uuid.uuid4()
+    video_id = uuid.uuid4()
+    now = datetime.now(UTC)
+
+    monkeypatch.setattr(
+        "apps.api.app.services.knowledge.KnowledgeService.list_cards",
+        lambda self, *, job_id, video_id, card_type, topic_key, claim_kind, limit: [
+            SimpleNamespace(
+                id=uuid.uuid4(),
+                job_id=job_id,
+                video_id=video_id or uuid.uuid4(),
+                card_type=card_type or "takeaway",
+                source_section="highlights",
+                title="Key takeaway",
+                body="Durable note",
+                ordinal=0,
+                metadata_json={
+                    "kind": "highlight",
+                    "topic_key": topic_key or "agent-workflows",
+                    "claim_kind": claim_kind or "takeaway",
+                },
+                created_at=now,
+                updated_at=now,
+            )
+        ],
+    )
+
+    response = api_client.get(
+        f"/api/v1/knowledge/cards?job_id={job_id}&video_id={video_id}&card_type=takeaway&topic_key=agent-workflows&claim_kind=takeaway&limit=5"
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0]["job_id"] == str(job_id)
+    assert payload[0]["video_id"] == str(video_id)
+    assert payload[0]["card_type"] == "takeaway"
+    assert payload[0]["metadata_json"]["topic_key"] == "agent-workflows"
+    assert payload[0]["metadata_json"]["claim_kind"] == "takeaway"
+    assert payload[0]["order_index"] == 0
+    assert payload[0]["metadata_json"]["kind"] == "highlight"
+
+
+def test_feed_feedback_get_returns_default_state(api_client: TestClient, monkeypatch) -> None:
+    job_id = uuid.uuid4()
+    monkeypatch.setattr(
+        "apps.api.app.services.feed.FeedService.get_feedback",
+        lambda self, *, job_id: {
+            "job_id": job_id,
+            "saved": False,
+            "feedback_label": None,
+            "exists": False,
+            "created_at": None,
+            "updated_at": None,
+        },
+    )
+
+    response = api_client.get(f"/api/v1/feed/feedback?job_id={job_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["job_id"] == str(job_id)
+    assert payload["exists"] is False
+    assert payload["saved"] is False
+
+
+def test_feed_feedback_put_updates_state(api_client: TestClient, monkeypatch) -> None:
+    job_id = uuid.uuid4()
+    now = datetime.now(UTC)
+    monkeypatch.setattr(
+        "apps.api.app.services.feed.FeedService.set_feedback",
+        lambda self, *, job_id, saved, feedback_label: {
+            "job_id": job_id,
+            "saved": saved,
+            "feedback_label": feedback_label,
+            "exists": True,
+            "created_at": now,
+            "updated_at": now,
+        },
+    )
+
+    response = api_client.put(
+        "/api/v1/feed/feedback",
+        json={"job_id": str(job_id), "saved": True, "feedback_label": "useful"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["job_id"] == str(job_id)
+    assert payload["saved"] is True
+    assert payload["feedback_label"] == "useful"
+
+
+def test_feed_feedback_put_maps_missing_job_to_404(api_client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "apps.api.app.services.feed.FeedService.set_feedback",
+        lambda self, **kwargs: (_ for _ in ()).throw(ValueError("job not found")),
+    )
+
+    response = api_client.put(
+        "/api/v1/feed/feedback",
+        json={"job_id": str(uuid.uuid4()), "saved": False, "feedback_label": None},
+    )
+
+    assert response.status_code == 404
+
+
 def test_job_get_preserves_explicit_llm_required_false(api_client: TestClient, monkeypatch) -> None:
     job_id = uuid.uuid4()
     now = datetime.now(UTC)
@@ -522,6 +938,47 @@ def test_retrieval_search_passes_semantic_mode(api_client: TestClient, monkeypat
     assert payload["items"] == []
 
 
+def test_retrieval_search_accepts_knowledge_cards_source(
+    api_client: TestClient, monkeypatch
+) -> None:
+    def fake_search(self, *, query, top_k, mode, filters):
+        del self
+        assert query == "takeaway"
+        assert top_k == 1
+        assert mode == "keyword"
+        assert filters == {}
+        return {
+            "query": query,
+            "top_k": top_k,
+            "filters": filters,
+            "items": [
+                {
+                    "job_id": "00000000-0000-0000-0000-000000000001",
+                    "video_id": "00000000-0000-0000-0000-000000000010",
+                    "platform": "youtube",
+                    "video_uid": "abc123",
+                    "source_url": "https://www.youtube.com/watch?v=abc123",
+                    "title": "Demo",
+                    "kind": "video_digest_v1",
+                    "mode": "full",
+                    "source": "knowledge_cards",
+                    "snippet": "A reusable takeaway card.",
+                    "score": 1.5,
+                }
+            ],
+        }
+
+    monkeypatch.setattr("apps.api.app.services.retrieval.RetrievalService.search", fake_search)
+
+    response = api_client.post(
+        "/api/v1/retrieval/search",
+        json={"query": "takeaway", "top_k": 1},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["source"] == "knowledge_cards"
+
+
 def test_retrieval_search_semantic_failure_is_observable(
     api_client: TestClient, monkeypatch
 ) -> None:
@@ -559,9 +1016,13 @@ def test_retrieval_search_semantic_failure_is_observable(
 def test_feed_digests_returns_items(api_client: TestClient, monkeypatch) -> None:
     sub_id = str(uuid.uuid4())
 
-    def fake_list_digest_feed(self, *, source, category, subscription_id, limit, cursor, since):
+    def fake_list_digest_feed(
+        self, *, source, category, feedback, sort, subscription_id, limit, cursor, since
+    ):
         assert source == "youtube"
         assert category == "tech"
+        assert feedback is None
+        assert sort is None
         assert subscription_id == sub_id
         assert limit == 5
         assert cursor is None
@@ -603,6 +1064,56 @@ def test_feed_digests_returns_items(api_client: TestClient, monkeypatch) -> None
     assert payload["items"][0]["source"] == "youtube"
     assert payload["items"][0]["artifact_type"] == "digest"
     assert payload["items"][0]["content_type"] == "article"
+
+
+def test_feed_digests_passes_feedback_filter(api_client: TestClient, monkeypatch) -> None:
+    def fake_list_digest_feed(
+        self, *, source, category, feedback, sort, subscription_id, limit, cursor, since
+    ):
+        assert source is None
+        assert category is None
+        assert feedback == "saved"
+        assert sort is None
+        assert subscription_id is None
+        assert limit == 20
+        assert cursor is None
+        assert since is None
+        return {"items": [], "has_more": False, "next_cursor": None}
+
+    monkeypatch.setattr(
+        "apps.api.app.services.feed.FeedService.list_digest_feed", fake_list_digest_feed
+    )
+
+    response = api_client.get("/api/v1/feed/digests", params={"feedback": "saved"})
+
+    assert response.status_code == 200
+    assert response.json() == {"items": [], "has_more": False, "next_cursor": None}
+
+
+def test_feed_digests_passes_sort_mode(api_client: TestClient, monkeypatch) -> None:
+    def fake_list_digest_feed(
+        self, *, source, category, feedback, sort, subscription_id, limit, cursor, since
+    ):
+        assert source == "youtube"
+        assert category is None
+        assert feedback is None
+        assert sort == "curated"
+        assert subscription_id is None
+        assert limit == 20
+        assert cursor is None
+        assert since is None
+        return {"items": [], "has_more": False, "next_cursor": None}
+
+    monkeypatch.setattr(
+        "apps.api.app.services.feed.FeedService.list_digest_feed", fake_list_digest_feed
+    )
+
+    response = api_client.get(
+        "/api/v1/feed/digests", params={"source": "youtube", "sort": "curated"}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"items": [], "has_more": False, "next_cursor": None}
 
 
 def test_subscriptions_list_includes_adapter_and_category_fields(
@@ -1235,7 +1746,13 @@ def test_execution_endpoints_enforce_write_access(api_client: TestClient, monkey
 
     async def fake_ingest_poll(self, *, subscription_id, platform, max_new_videos):
         del self, subscription_id, platform, max_new_videos
-        return 0, []
+        return {
+            "run_id": uuid.uuid4(),
+            "workflow_id": "wf-ingest-auth",
+            "status": "queued",
+            "enqueued": 0,
+            "candidates": [],
+        }
 
     async def fake_process_video(self, **kwargs):
         del self, kwargs

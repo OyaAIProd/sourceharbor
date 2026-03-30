@@ -30,7 +30,7 @@ class RetrievalHit(BaseModel):
     title: str | None = None
     kind: str
     mode: str | None = None
-    source: Literal["digest", "transcript", "outline", "comments", "meta"]
+    source: Literal["digest", "transcript", "outline", "knowledge_cards", "comments", "meta"]
     snippet: str
     score: float
 

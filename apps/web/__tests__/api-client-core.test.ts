@@ -108,9 +108,16 @@ describe("apiClient core behavior", () => {
 
 	it("sends JSON payload with no-store caching", async () => {
 		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-			new Response(JSON.stringify({ enqueued: 0, candidates: [] }), {
-				status: 200,
-			}),
+			new Response(
+				JSON.stringify({
+					run_id: "run-1",
+					workflow_id: "wf-1",
+					status: "queued",
+					enqueued: 0,
+					candidates: [],
+				}),
+				{ status: 200 },
+			),
 		);
 
 		await apiClient.pollIngest({ max_new_videos: 20 });
@@ -126,6 +133,87 @@ describe("apiClient core behavior", () => {
 			body: JSON.stringify({ max_new_videos: 20 }),
 		});
 		expect(headers).toMatchObject({ "content-type": "application/json" });
+	});
+
+	it("loads one ingest run by id", async () => {
+		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					id: "run-1",
+					subscription_id: null,
+					workflow_id: "wf-1",
+					platform: "youtube",
+					max_new_videos: 10,
+					status: "queued",
+					jobs_created: 0,
+					candidates_count: 0,
+					feeds_polled: 0,
+					entries_fetched: 0,
+					entries_normalized: 0,
+					ingest_events_created: 0,
+					ingest_event_duplicates: 0,
+					job_duplicates: 0,
+					error_message: null,
+					created_at: "2026-03-29T00:00:00Z",
+					updated_at: "2026-03-29T00:00:00Z",
+					completed_at: null,
+					requested_by: null,
+					requested_trace_id: null,
+					filters_json: null,
+					items: [],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.getIngestRun("run-1");
+
+		expect(payload.id).toBe("run-1");
+		expect(payload.workflow_id).toBe("wf-1");
+		expect(fetchSpy.mock.calls[0]?.[0]).toContain("/api/v1/ingest/runs/run-1");
+	});
+
+	it("lists ingest runs with query params", async () => {
+		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						id: "run-2",
+						subscription_id: null,
+						workflow_id: "wf-2",
+						platform: "youtube",
+						max_new_videos: 5,
+						status: "succeeded",
+						jobs_created: 2,
+						candidates_count: 2,
+						feeds_polled: 1,
+						entries_fetched: 2,
+						entries_normalized: 2,
+						ingest_events_created: 2,
+						ingest_event_duplicates: 0,
+						job_duplicates: 0,
+						error_message: null,
+						created_at: "2026-03-29T00:00:00Z",
+						updated_at: "2026-03-29T00:00:00Z",
+						completed_at: "2026-03-29T00:01:00Z",
+					},
+				]),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.listIngestRuns({
+			platform: "youtube",
+			status: "succeeded",
+			limit: 5,
+		});
+
+		expect(payload[0]?.id).toBe("run-2");
+		const requestUrl = String(fetchSpy.mock.calls[0]?.[0] ?? "");
+		expect(requestUrl).toContain("/api/v1/ingest/runs?");
+		expect(requestUrl).toContain("status=succeeded");
+		expect(requestUrl).toContain("platform=youtube");
+		expect(requestUrl).toContain("limit=5");
 	});
 
 	it("adds write access token headers for mutating requests", async () => {
@@ -220,6 +308,135 @@ describe("apiClient core behavior", () => {
 		expect(job.artifacts_index).toEqual({ digest: "a.md" });
 		expect(job.mode).toBeNull();
 		expect(job.notification_retry).toBeNull();
+	});
+
+	it("loads job compare payload", async () => {
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					job_id: "job-1",
+					previous_job_id: "job-0",
+					has_previous: true,
+					current_digest: "# Current",
+					previous_digest: "# Previous",
+					diff_markdown: "--- old\n+++ new",
+					stats: { added_lines: 1, removed_lines: 1, changed: true },
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.getJobCompare("job-1");
+
+		expect(payload.job_id).toBe("job-1");
+		expect(payload.previous_job_id).toBe("job-0");
+		expect(payload.stats.changed).toBe(true);
+	});
+
+	it("gets and updates feed feedback", async () => {
+		const fetchSpy = vi
+			.spyOn(globalThis, "fetch")
+			.mockResolvedValueOnce(
+				new Response(
+					JSON.stringify({
+						job_id: "job-1",
+						saved: true,
+						feedback_label: "useful",
+						exists: true,
+						created_at: "2026-03-29T00:00:00Z",
+						updated_at: "2026-03-29T00:00:00Z",
+					}),
+					{ status: 200 },
+				),
+			)
+			.mockResolvedValueOnce(
+				new Response(
+					JSON.stringify({
+						job_id: "job-1",
+						saved: false,
+						feedback_label: "dismissed",
+						exists: true,
+						created_at: "2026-03-29T00:00:00Z",
+						updated_at: "2026-03-29T00:05:00Z",
+					}),
+					{ status: 200 },
+				),
+			);
+
+		const current = await apiClient.getFeedFeedback("job-1");
+		const updated = await apiClient.updateFeedFeedback(
+			{ job_id: "job-1", saved: false, feedback_label: "dismissed" },
+			{ webSessionToken: "session-1" },
+		);
+
+		expect(current.feedback_label).toBe("useful");
+		expect(updated.feedback_label).toBe("dismissed");
+		expect(String(fetchSpy.mock.calls[0]?.[0])).toContain(
+			"/api/v1/feed/feedback?job_id=job-1",
+		);
+	});
+
+	it("loads job knowledge cards payload", async () => {
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						card_type: "takeaway",
+						title: "Key takeaway",
+						body: "This is reusable.",
+						source_section: "highlights",
+						order_index: 1,
+					},
+				]),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.getJobKnowledgeCards("job-1");
+
+		expect(payload[0]?.card_type).toBe("takeaway");
+		expect(payload[0]?.title).toBe("Key takeaway");
+	});
+
+	it("normalizes knowledge card list payloads that use ordinal", async () => {
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						id: "card-1",
+						job_id: "job-1",
+						video_id: "video-1",
+						card_type: "summary",
+						source_section: "overview",
+						title: null,
+						body: "Long-lived fact",
+						ordinal: 3,
+						metadata_json: { confidence: "high" },
+						created_at: "2026-03-29T00:00:00Z",
+						updated_at: "2026-03-29T00:00:00Z",
+					},
+				]),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.listKnowledgeCards({ limit: 5 });
+
+		expect(payload).toEqual([
+			{
+				id: "card-1",
+				job_id: "job-1",
+				video_id: "video-1",
+				card_type: "summary",
+				title: null,
+				body: "Long-lived fact",
+				source_section: "overview",
+				order_index: 3,
+				metadata_json: { confidence: "high" },
+				created_at: "2026-03-29T00:00:00Z",
+				updated_at: "2026-03-29T00:00:00Z",
+			},
+		]);
 	});
 
 	it("supports plain text artifact markdown endpoint", async () => {
@@ -338,6 +555,8 @@ describe("apiClient core behavior", () => {
 				summary_md: "",
 				artifact_type: "digest",
 				content_type: "video",
+				saved: false,
+				feedback_label: null,
 			},
 		]);
 	});
@@ -442,6 +661,7 @@ describe("apiClient core behavior", () => {
 		});
 		await apiClient.getDigestFeed({
 			source: "youtube",
+			sort: "curated",
 			subscription_id: "sub-1",
 			limit: 20,
 		});
@@ -454,6 +674,7 @@ describe("apiClient core behavior", () => {
 		const [feedUrl] = fetchSpy.mock.calls[2];
 		expect(String(feedUrl)).toContain("/api/v1/feed/digests");
 		expect(String(feedUrl)).toContain("source=youtube");
+		expect(String(feedUrl)).toContain("sort=curated");
 		expect(String(feedUrl)).toContain("sub=sub-1");
 		expect(String(feedUrl)).toContain("limit=20");
 	});

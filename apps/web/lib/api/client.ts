@@ -1,10 +1,16 @@
 import type {
 	ArtifactMarkdownWithMeta,
 	DigestFeedResponse,
+	FeedFeedback,
+	FeedFeedbackUpdateRequest,
 	IngestPollRequest,
 	IngestPollResponse,
+	IngestRun,
+	IngestRunSummary,
 	Job,
+	JobCompare,
 	JobStatus,
+	KnowledgeCard,
 	NotificationConfig,
 	NotificationConfigUpdateRequest,
 	NotificationSendResponse,
@@ -173,6 +179,16 @@ function normalizeDigestFeedResponse(payload: unknown): DigestFeedResponse {
 				summary_md: asString(record.summary_md),
 				artifact_type: artifactTypeRaw === "outline" ? "outline" : "digest",
 				content_type: contentType,
+				saved: asBoolean(record.saved),
+				feedback_label: (() => {
+					const raw = asString(record.feedback_label).trim().toLowerCase();
+					return raw === "useful" ||
+						raw === "noisy" ||
+						raw === "dismissed" ||
+						raw === "archived"
+						? raw
+						: null;
+				})(),
 			};
 		})
 		.filter(
@@ -185,6 +201,46 @@ function normalizeDigestFeedResponse(payload: unknown): DigestFeedResponse {
 		has_more: asBoolean(parsed?.has_more),
 		next_cursor: typeof nextCursorRaw === "string" ? nextCursorRaw : null,
 	};
+}
+
+function normalizeKnowledgeCards(payload: unknown): KnowledgeCard[] {
+	const rawItems = Array.isArray(payload) ? payload : [];
+	return rawItems
+		.map((item, index): KnowledgeCard | null => {
+			const record = asObject(item);
+			if (!record) {
+				return null;
+			}
+
+			const cardType = asString(record.card_type).trim();
+			const body = asString(record.body).trim();
+			const sourceSection = asString(record.source_section).trim();
+			if (!cardType || !body || !sourceSection) {
+				return null;
+			}
+
+			const rawOrderIndex =
+				typeof record.order_index === "number"
+					? record.order_index
+					: typeof record.ordinal === "number"
+						? record.ordinal
+						: index;
+
+			return {
+				id: asString(record.id) || undefined,
+				job_id: asString(record.job_id) || undefined,
+				video_id: asString(record.video_id) || undefined,
+				card_type: cardType,
+				title: asString(record.title) || null,
+				body,
+				source_section: sourceSection,
+				order_index: Number.isFinite(rawOrderIndex) ? rawOrderIndex : index,
+				metadata_json: asObject(record.metadata_json) ?? undefined,
+				created_at: asString(record.created_at) || undefined,
+				updated_at: asString(record.updated_at) || undefined,
+			};
+		})
+		.filter((item): item is KnowledgeCard => item !== null);
 }
 
 function assertSafeExternalUrl(raw: string): string {
@@ -445,6 +501,19 @@ export const apiClient = {
 		});
 	},
 
+	getIngestRun(runId: string) {
+		const safeId = encodeURIComponent(assertSafeIdentifier(runId));
+		return requestJson<IngestRun>(`/api/v1/ingest/runs/${safeId}`);
+	},
+
+	listIngestRuns(params?: {
+		status?: string;
+		platform?: Platform;
+		limit?: number;
+	}) {
+		return requestJson<IngestRunSummary[]>("/api/v1/ingest/runs", {}, params);
+	},
+
 	listVideos(params?: {
 		platform?: Platform;
 		status?: JobStatus;
@@ -467,6 +536,37 @@ export const apiClient = {
 	getJob(jobId: string) {
 		const safeJobId = encodeURIComponent(assertSafeIdentifier(jobId));
 		return requestJson<Job>(`/api/v1/jobs/${safeJobId}`).then(normalizeJob);
+	},
+
+	getJobCompare(jobId: string) {
+		const safeJobId = encodeURIComponent(assertSafeIdentifier(jobId));
+		return requestJson<JobCompare>(`/api/v1/jobs/${safeJobId}/compare`);
+	},
+
+	getJobKnowledgeCards(jobId: string) {
+		const safeJobId = encodeURIComponent(assertSafeIdentifier(jobId));
+		return requestJson<KnowledgeCard[]>(
+			`/api/v1/jobs/${safeJobId}/knowledge-cards`,
+			{},
+			undefined,
+			normalizeKnowledgeCards,
+		);
+	},
+
+	listKnowledgeCards(params?: {
+		job_id?: string;
+		video_id?: string;
+		card_type?: string;
+		topic_key?: string;
+		claim_kind?: string;
+		limit?: number;
+	}) {
+		return requestJson<KnowledgeCard[]>(
+			"/api/v1/knowledge/cards",
+			{},
+			params,
+			normalizeKnowledgeCards,
+		);
 	},
 
 	getArtifactMarkdown,
@@ -500,6 +600,8 @@ export const apiClient = {
 	getDigestFeed(params?: {
 		source?: Platform;
 		category?: "tech" | "creator" | "macro" | "ops" | "misc";
+		feedback?: "saved" | "useful" | "noisy" | "dismissed" | "archived";
+		sort?: "recent" | "curated";
 		subscription_id?: string;
 		limit?: number;
 		cursor?: string;
@@ -520,5 +622,37 @@ export const apiClient = {
 			query,
 			normalizeDigestFeedResponse,
 		);
+	},
+
+	getFeedFeedback(jobId: string) {
+		const safeJobId = encodeURIComponent(assertSafeIdentifier(jobId));
+		return requestJson<FeedFeedback>(
+			`/api/v1/feed/feedback?job_id=${safeJobId}`,
+		);
+	},
+
+	updateFeedFeedback(
+		payload: FeedFeedbackUpdateRequest,
+		options?: {
+			webSessionToken?: string | null;
+			writeAccessToken?: string | null;
+		},
+	) {
+		return requestJson<FeedFeedback>("/api/v1/feed/feedback", {
+			method: "PUT",
+			body: payload,
+			webSessionToken: options?.webSessionToken,
+			writeAccessToken: options?.writeAccessToken,
+		});
+	},
+
+	setFeedFeedback(
+		payload: FeedFeedbackUpdateRequest,
+		options?: {
+			webSessionToken?: string | null;
+			writeAccessToken?: string | null;
+		},
+	) {
+		return this.updateFeedFeedback(payload, options);
 	},
 };

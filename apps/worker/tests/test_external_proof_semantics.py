@@ -29,17 +29,26 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def _write_meta(path: Path, *, source_commit: str, verification_scope: str) -> None:
+def _write_meta(
+    path: Path,
+    *,
+    source_commit: str,
+    verification_scope: str,
+    source_run_id: str = "test-fixture",
+    extra: dict | None = None,
+) -> None:
     meta = {
         "version": 1,
         "artifact_path": path.as_posix(),
         "created_at": "2026-03-16T12:00:00Z",
         "source_entrypoint": "test-fixture",
-        "source_run_id": "test-fixture",
+        "source_run_id": source_run_id,
         "source_commit": source_commit,
         "verification_scope": verification_scope,
         "freshness_window_hours": 24,
     }
+    if extra:
+        meta.update(extra)
     path.with_name(f"{path.name}.meta.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -1586,3 +1595,134 @@ def test_current_proof_alignment_report_records_dirty_workspace_context(
     assert isinstance(worktree_state, dict)
     assert worktree_state["dirty"] is True
     assert worktree_state["workspace_freshness"] == "stale"
+
+
+def test_upstream_same_run_cohesion_allows_current_diagnostic_artifacts(
+    monkeypatch, tmp_path: Path
+) -> None:
+    module = _load_governance_module(
+        "check_upstream_same_run_cohesion_diagnostic_test",
+        "scripts/governance/check_upstream_same_run_cohesion.py",
+    )
+
+    head = "1111111111111111111111111111111111111111"
+    report_path = tmp_path / ".runtime-cache/reports/governance/upstream-compat-report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_json(report_path, {"version": 1, "status": "pass"})
+    _write_meta(
+        report_path,
+        source_commit=head,
+        verification_scope="upstream-compat-report",
+        source_run_id="historic-success-run",
+    )
+
+    row_log = tmp_path / ".runtime-cache/logs/tests/compat-rsshub-youtube-ingest.log"
+    row_log.parent.mkdir(parents=True, exist_ok=True)
+    row_log.write_text("diagnostic artifact\n", encoding="utf-8")
+    _write_meta(
+        row_log,
+        source_commit=head,
+        verification_scope="upstream:rsshub-youtube-ingest-chain",
+        source_run_id="current-diagnostic-run",
+        extra={"status": "diagnostic", "report_kind": "provider-compat-log"},
+    )
+
+    matrix = {
+        "matrix": [
+            {
+                "name": "rsshub-youtube-ingest-chain",
+                "blocking_level": "blocker",
+                "verification_status": "verified",
+                "verification_lane": "provider",
+                "last_verified_run_id": "historic-success-run",
+                "verification_artifacts": [
+                    ".runtime-cache/reports/governance/upstream-compat-report.json",
+                    ".runtime-cache/logs/tests/compat-rsshub-youtube-ingest.log",
+                ],
+            }
+        ]
+    }
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(module, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(module, "load_governance_json", lambda _name: matrix)
+    monkeypatch.setattr(
+        module,
+        "write_json_artifact",
+        lambda _path, report, **_kwargs: captured.setdefault("report", report),
+    )
+
+    exit_code = module.main()
+
+    assert exit_code == 0
+    report = captured["report"]
+    assert report["status"] == "pass"
+    row = report["rows"][0]
+    assert row["status"] == "pass"
+    assert row["diagnostic_mismatched_run_ids"] == [
+        ".runtime-cache/logs/tests/compat-rsshub-youtube-ingest.log -> current-diagnostic-run"
+    ]
+
+
+def test_upstream_same_run_cohesion_rejects_non_diagnostic_mismatch(
+    monkeypatch, tmp_path: Path
+) -> None:
+    module = _load_governance_module(
+        "check_upstream_same_run_cohesion_strict_mismatch_test",
+        "scripts/governance/check_upstream_same_run_cohesion.py",
+    )
+
+    head = "1111111111111111111111111111111111111111"
+    report_path = tmp_path / ".runtime-cache/reports/governance/upstream-compat-report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_json(report_path, {"version": 1, "status": "pass"})
+    _write_meta(
+        report_path,
+        source_commit=head,
+        verification_scope="upstream-compat-report",
+        source_run_id="historic-success-run",
+    )
+
+    row_log = tmp_path / ".runtime-cache/logs/tests/compat-rsshub-youtube-ingest.log"
+    row_log.parent.mkdir(parents=True, exist_ok=True)
+    row_log.write_text("non-diagnostic artifact\n", encoding="utf-8")
+    _write_meta(
+        row_log,
+        source_commit=head,
+        verification_scope="upstream:rsshub-youtube-ingest-chain",
+        source_run_id="unexpected-run",
+    )
+
+    matrix = {
+        "matrix": [
+            {
+                "name": "rsshub-youtube-ingest-chain",
+                "blocking_level": "blocker",
+                "verification_status": "verified",
+                "verification_lane": "provider",
+                "last_verified_run_id": "historic-success-run",
+                "verification_artifacts": [
+                    ".runtime-cache/reports/governance/upstream-compat-report.json",
+                    ".runtime-cache/logs/tests/compat-rsshub-youtube-ingest.log",
+                ],
+            }
+        ]
+    }
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(module, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(module, "load_governance_json", lambda _name: matrix)
+    monkeypatch.setattr(
+        module,
+        "write_json_artifact",
+        lambda _path, report, **_kwargs: captured.setdefault("report", report),
+    )
+
+    exit_code = module.main()
+
+    assert exit_code == 1
+    report = captured["report"]
+    assert report["status"] == "fail"
+    row = report["rows"][0]
+    assert row["status"] == "fail"
+    assert row["diagnostic_mismatched_run_ids"] == []

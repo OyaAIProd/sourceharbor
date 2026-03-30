@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from worker.config import Settings
@@ -318,3 +319,81 @@ def test_step_write_artifacts_low_evidence_mode_blocks_fabricated_details(tmp_pa
     assert "开箱与防伪检查" not in digest_content
     assert "检查防伪标签" not in digest_content
     assert "quality_gate:low_evidence_mode" in digest_content
+
+
+def test_step_write_artifacts_persists_knowledge_cards_to_pg_store(tmp_path: Path) -> None:
+    settings = Settings(
+        pipeline_workspace_dir=str((tmp_path / "workspace").resolve()),
+        pipeline_artifact_root=str((tmp_path / "artifact-root").resolve()),
+    )
+    ctx = _build_ctx(tmp_path, settings=settings)
+
+    captured: dict[str, Any] = {}
+
+    class _FakePGStore:
+        def replace_knowledge_cards(
+            self, *, video_id: str, job_id: str, items: list[dict[str, Any]]
+        ) -> int:
+            captured["video_id"] = video_id
+            captured["job_id"] = job_id
+            captured["items"] = items
+            return len(items)
+
+    ctx = SimpleNamespace(**ctx.__dict__)
+    ctx.pg_store = _FakePGStore()
+    ctx.job_record = {"video_id": "video-1"}
+
+    execution = asyncio.run(
+        runner._step_write_artifacts(
+            ctx,
+            {
+                "title": "Demo",
+                "job_id": "job",
+                "source_url": "https://www.youtube.com/watch?v=abc123xyz09",
+                "platform": "youtube",
+                "video_uid": "abc123xyz09",
+                "metadata": {"title": "Demo"},
+                "outline": {},
+                "digest": {
+                    "summary": "summary",
+                    "highlights": ["one takeaway"],
+                    "action_items": ["one action"],
+                },
+                "comments": {},
+                "transcript": "This transcript is long enough to satisfy the evidence guard. "
+                "It contains substantially more than eighty characters so knowledge cards stay aligned "
+                "with the original digest payload.",
+                "degradations": [],
+                "frames": [],
+            },
+        )
+    )
+
+    assert execution.status == "succeeded"
+    assert captured["video_id"] == "video-1"
+    assert captured["job_id"] == "job"
+    assert len(captured["items"]) >= 6
+    card_types = {item["card_type"] for item in captured["items"]}
+    assert {"summary", "takeaway", "action", "topic", "claim"}.issubset(card_types)
+    summary_card = captured["items"][0]
+    takeaway_card = captured["items"][1]
+    action_card = captured["items"][2]
+    topic_card = next(item for item in captured["items"] if item["card_type"] == "topic")
+    claim_card = next(item for item in captured["items"] if item["card_type"] == "claim")
+    assert summary_card["metadata"]["claim_kind"] == "summary"
+    assert summary_card["metadata"]["confidence_label"] == "high"
+    assert summary_card["metadata"]["topic_key"]
+    assert takeaway_card["metadata"]["claim_kind"] == "takeaway"
+    assert takeaway_card["metadata"]["source_anchor"] == "highlights[1]"
+    assert action_card["metadata"]["claim_kind"] == "action"
+    assert action_card["metadata"]["confidence_label"] == "medium"
+    assert topic_card["metadata"]["topic_key"]
+    assert topic_card["metadata"]["mentions"] >= 1
+    assert claim_card["metadata"]["claim_id"]
+    assert claim_card["metadata"]["claim_source_card_type"] in {"summary", "takeaway", "action"}
+    assert (ctx.artifacts_dir / "knowledge_cards.json").is_file()
+    knowledge_cards = json.loads(
+        (ctx.artifacts_dir / "knowledge_cards.json").read_text(encoding="utf-8")
+    )
+    assert knowledge_cards[0]["metadata"]["claim_kind"] == "summary"
+    assert knowledge_cards[1]["metadata"]["source_anchor"] == "highlights[1]"

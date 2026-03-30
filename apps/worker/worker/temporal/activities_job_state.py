@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from os import getenv
 from typing import Any
 
 from worker.config import Settings
+from worker.state.mirrored_sqlite_store import MirroredSQLiteStateStore
 from worker.state.postgres_store import PostgresBusinessStore
-from worker.state.sqlite_store import SQLiteStateStore
 
 try:
     from temporalio import activity
@@ -22,6 +23,21 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 PIPELINE_FINAL_STATUSES = {"succeeded", "degraded", "failed"}
+SQLiteStateStore = MirroredSQLiteStateStore
+
+
+def _build_runtime_sqlite_store(settings: Settings) -> Any:
+    mirror_paths: list[str] = []
+    api_state_path = str(getenv("SQLITE_STATE_PATH", "")).strip()
+    if api_state_path:
+        mirror_paths.append(api_state_path)
+    store_cls = SQLiteStateStore
+    if hasattr(store_cls, "from_paths"):
+        return store_cls.from_paths(
+            primary_path=settings.sqlite_path,
+            mirror_paths=mirror_paths,
+        )
+    return store_cls(settings.sqlite_path)
 
 
 def _to_pipeline_final_status(value: Any, *, fallback: str | None) -> str | None:
@@ -101,7 +117,7 @@ def _resolve_last_error_code(payload: dict[str, Any]) -> str | None:
 @activity.defn(name="mark_running_activity")
 async def mark_running_activity(job_id: str) -> dict[str, Any]:
     settings = Settings.from_env()
-    sqlite_store = SQLiteStateStore(settings.sqlite_path)
+    sqlite_store = _build_runtime_sqlite_store(settings)
     pg_store = PostgresBusinessStore(settings.database_url)
 
     attempt = sqlite_store.next_attempt(job_id=job_id)
@@ -162,7 +178,7 @@ async def run_pipeline_activity(payload: dict[str, Any]) -> dict[str, Any]:
     from worker.pipeline.runner import run_pipeline
 
     settings = Settings.from_env()
-    sqlite_store = SQLiteStateStore(settings.sqlite_path)
+    sqlite_store = _build_runtime_sqlite_store(settings)
     pg_store = PostgresBusinessStore(settings.database_url)
 
     job_id = str(payload["job_id"])
@@ -196,7 +212,7 @@ async def run_pipeline_activity(payload: dict[str, Any]) -> dict[str, Any]:
 @activity.defn(name="mark_succeeded_activity")
 async def mark_succeeded_activity(payload: dict[str, Any]) -> dict[str, Any]:
     settings = Settings.from_env()
-    sqlite_store = SQLiteStateStore(settings.sqlite_path)
+    sqlite_store = _build_runtime_sqlite_store(settings)
     pg_store = PostgresBusinessStore(settings.database_url)
 
     job_id = str(payload["job_id"])
@@ -269,7 +285,7 @@ async def mark_succeeded_activity(payload: dict[str, Any]) -> dict[str, Any]:
 @activity.defn(name="mark_failed_activity")
 async def mark_failed_activity(payload: dict[str, Any]) -> dict[str, Any]:
     settings = Settings.from_env()
-    sqlite_store = SQLiteStateStore(settings.sqlite_path)
+    sqlite_store = _build_runtime_sqlite_store(settings)
     pg_store = PostgresBusinessStore(settings.database_url)
 
     job_id = str(payload["job_id"])

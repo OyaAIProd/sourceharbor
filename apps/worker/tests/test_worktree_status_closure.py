@@ -197,3 +197,73 @@ def test_local_private_ledger_migration_copies_and_then_skips_unchanged(tmp_path
     assert receipts.is_file()
     assert first["summary"]["copied_count"] == 1
     assert second["summary"]["up_to_date_count"] == 1
+
+
+def test_local_private_ledger_migration_check_passes_after_migration(tmp_path: Path) -> None:
+    migrate_module = _load_module(
+        "migrate_local_private_ledgers", "scripts/governance/migrate_local_private_ledgers.py"
+    )
+    check_module = _load_module(
+        "check_local_private_ledger_migration",
+        "scripts/governance/check_local_private_ledger_migration.py",
+    )
+    (tmp_path / "config" / "governance").mkdir(parents=True, exist_ok=True)
+    source_dir = tmp_path / ".agents" / "Plans"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    (source_dir / "2026-03-27__plan.md").write_text("plan body", encoding="utf-8")
+    (tmp_path / "config" / "governance" / "local-private-ledgers.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "ledgers": [
+                    {
+                        "name": "agent-execution-ledger",
+                        "compatibility_paths": [".agents/Plans"],
+                        "authoritative_target_path": ".runtime-cache/evidence/ai-ledgers",
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    migrate_module.migrate_ledgers(tmp_path)
+    report = check_module.evaluate_local_private_ledger_migration(tmp_path)
+
+    assert report["status"] == "pass"
+    assert report["errors"] == []
+
+
+def test_local_private_ledger_migration_check_fail_closes_when_authoritative_copy_missing(
+    tmp_path: Path,
+) -> None:
+    check_module = _load_module(
+        "check_local_private_ledger_migration",
+        "scripts/governance/check_local_private_ledger_migration.py",
+    )
+    (tmp_path / "config" / "governance").mkdir(parents=True, exist_ok=True)
+    source_dir = tmp_path / ".agents" / "Plans"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    (source_dir / "2026-03-27__plan.md").write_text("plan body", encoding="utf-8")
+    (tmp_path / "config" / "governance" / "local-private-ledgers.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "ledgers": [
+                    {
+                        "name": "agent-execution-ledger",
+                        "compatibility_paths": [".agents/Plans"],
+                        "authoritative_target_path": ".runtime-cache/evidence/ai-ledgers",
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = check_module.evaluate_local_private_ledger_migration(tmp_path)
+
+    assert report["status"] == "fail"
+    assert any("authoritative target" in error for error in report["errors"])

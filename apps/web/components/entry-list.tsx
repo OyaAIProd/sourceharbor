@@ -92,6 +92,12 @@ export function EntryList({ items, selectedJobId }: EntryListProps) {
 												>
 													{CATEGORY_LABELS[item.category] ?? item.category}
 												</Badge>
+												{item.saved ? (
+													<Badge variant="outline">Saved</Badge>
+												) : null}
+												{item.feedback_label ? (
+													<Badge variant="outline">{item.feedback_label}</Badge>
+												) : null}
 											</div>
 										</div>
 									</div>

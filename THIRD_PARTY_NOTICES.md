@@ -35,7 +35,7 @@ This file is the machine-generated third-party rights ledger for the tracked pub
 | `click` | `8.3.1` | `BSD-3-Clause` | `license-expression` |
 | `courlan` | `1.3.2` | `Apache 2.0` | `license-field` |
 | `coverage` | `7.13.4` | `Apache-2.0` | `license-field` |
-| `cryptography` | `46.0.5` | `Apache-2.0 OR BSD-3-Clause` | `license-expression` |
+| `cryptography` | `46.0.6` | `Apache-2.0 OR BSD-3-Clause` | `license-expression` |
 | `dateparser` | `1.3.0` | `BSD` | `license-field` |
 | `distro` | `1.9.0` | `Apache License, Version 2.0` | `license-field` |
 | `execnet` | `2.1.2` | `MIT` | `license-expression` |
@@ -332,21 +332,21 @@ http://www.apache.org/licenses/LICENSE-2.0` | `license-field` |
 | `@radix-ui/react-visually-hidden` | `1.2.3` | `MIT` | `package-lock` |
 | `@radix-ui/rect` | `1.1.1` | `MIT` | `package-lock` |
 | `@swc/helpers` | `0.5.15` | `Apache-2.0` | `package-lock` |
-| `@tailwindcss/node` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-android-arm64` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-darwin-arm64` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-darwin-x64` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-freebsd-x64` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-linux-arm-gnueabihf` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-linux-arm64-gnu` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-linux-arm64-musl` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-linux-x64-gnu` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-linux-x64-musl` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-wasm32-wasi` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-win32-arm64-msvc` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/oxide-win32-x64-msvc` | `4.2.1` | `MIT` | `package-lock` |
-| `@tailwindcss/postcss` | `4.2.1` | `MIT` | `package-lock` |
+| `@tailwindcss/node` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-android-arm64` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-darwin-arm64` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-darwin-x64` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-freebsd-x64` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-linux-arm-gnueabihf` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-linux-arm64-gnu` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-linux-arm64-musl` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-linux-x64-gnu` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-linux-x64-musl` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-wasm32-wasi` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-win32-arm64-msvc` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/oxide-win32-x64-msvc` | `4.2.2` | `MIT` | `package-lock` |
+| `@tailwindcss/postcss` | `4.2.2` | `MIT` | `package-lock` |
 | `@tailwindcss/typography` | `0.5.19` | `MIT` | `package-lock` |
 | `@tybys/wasm-util` | `0.10.1` | `MIT` | `package-lock` |
 | `@types/debug` | `4.1.12` | `MIT` | `package-lock` |
@@ -381,7 +381,7 @@ http://www.apache.org/licenses/LICENSE-2.0` | `license-field` |
 | `detect-libc` | `2.1.2` | `Apache-2.0` | `package-lock` |
 | `detect-node-es` | `1.1.0` | `MIT` | `package-lock` |
 | `devlop` | `1.1.0` | `MIT` | `package-lock` |
-| `enhanced-resolve` | `5.20.0` | `MIT` | `package-lock` |
+| `enhanced-resolve` | `5.20.1` | `MIT` | `package-lock` |
 | `escape-string-regexp` | `5.0.0` | `MIT` | `package-lock` |
 | `estree-util-is-identifier-name` | `3.0.0` | `MIT` | `package-lock` |
 | `extend` | `3.0.2` | `MIT` | `package-lock` |
@@ -398,18 +398,18 @@ http://www.apache.org/licenses/LICENSE-2.0` | `license-field` |
 | `is-hexadecimal` | `2.0.1` | `MIT` | `package-lock` |
 | `is-plain-obj` | `4.1.0` | `MIT` | `package-lock` |
 | `jiti` | `2.6.1` | `MIT` | `package-lock` |
-| `lightningcss` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-android-arm64` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-darwin-arm64` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-darwin-x64` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-freebsd-x64` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-linux-arm-gnueabihf` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-linux-arm64-gnu` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-linux-arm64-musl` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-linux-x64-gnu` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-linux-x64-musl` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-win32-arm64-msvc` | `1.31.1` | `MPL-2.0` | `package-lock` |
-| `lightningcss-win32-x64-msvc` | `1.31.1` | `MPL-2.0` | `package-lock` |
+| `lightningcss` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-android-arm64` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-darwin-arm64` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-darwin-x64` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-freebsd-x64` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-linux-arm-gnueabihf` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-linux-arm64-gnu` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-linux-arm64-musl` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-linux-x64-gnu` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-linux-x64-musl` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-win32-arm64-msvc` | `1.32.0` | `MPL-2.0` | `package-lock` |
+| `lightningcss-win32-x64-msvc` | `1.32.0` | `MPL-2.0` | `package-lock` |
 | `longest-streak` | `3.1.0` | `MIT` | `package-lock` |
 | `lucide-react` | `1.7.0` | `ISC` | `package-lock` |
 | `magic-string` | `0.30.21` | `MIT` | `package-lock` |
@@ -488,8 +488,8 @@ http://www.apache.org/licenses/LICENSE-2.0` | `license-field` |
 | `style-to-object` | `1.0.14` | `MIT` | `package-lock` |
 | `styled-jsx` | `5.1.6` | `MIT` | `package-lock` |
 | `tailwind-merge` | `3.5.0` | `MIT` | `package-lock` |
-| `tailwindcss` | `4.2.1` | `MIT` | `package-lock` |
-| `tapable` | `2.3.0` | `MIT` | `package-lock` |
+| `tailwindcss` | `4.2.2` | `MIT` | `package-lock` |
+| `tapable` | `2.3.2` | `MIT` | `package-lock` |
 | `trim-lines` | `3.0.1` | `MIT` | `package-lock` |
 | `trough` | `2.2.0` | `MIT` | `package-lock` |
 | `tslib` | `2.8.1` | `0BSD` | `package-lock` |
@@ -506,5 +506,5 @@ http://www.apache.org/licenses/LICENSE-2.0` | `license-field` |
 | `util-deprecate` | `1.0.2` | `MIT` | `package-lock` |
 | `vfile` | `6.0.3` | `MIT` | `package-lock` |
 | `vfile-message` | `4.0.3` | `MIT` | `package-lock` |
-| `zod` | `3.25.76` | `MIT` | `package-lock` |
+| `zod` | `4.3.6` | `MIT` | `package-lock` |
 | `zwitch` | `2.0.4` | `MIT` | `package-lock` |

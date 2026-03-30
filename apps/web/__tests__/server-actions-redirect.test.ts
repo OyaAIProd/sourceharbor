@@ -29,6 +29,9 @@ describe("server actions redirect behavior", () => {
 
 	it("preserves success redirect instead of converting to error redirect", async () => {
 		vi.spyOn(apiClient, "pollIngest").mockResolvedValue({
+			run_id: "run-1",
+			workflow_id: "wf-1",
+			status: "queued",
 			enqueued: 1,
 			candidates: [],
 		});

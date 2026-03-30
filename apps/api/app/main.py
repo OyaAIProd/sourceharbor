@@ -22,6 +22,7 @@ from .routers import (
     health,
     ingest,
     jobs,
+    knowledge,
     notifications,
     retrieval,
     subscriptions,
@@ -230,6 +231,7 @@ app.include_router(subscriptions.router)
 app.include_router(feed.router)
 app.include_router(ingest.router)
 app.include_router(jobs.router)
+app.include_router(knowledge.router)
 app.include_router(videos.router)
 app.include_router(notifications.router)
 app.include_router(notifications.reports_router)

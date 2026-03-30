@@ -66,6 +66,19 @@ describe("RouteTransition", () => {
 		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Page");
 	});
 
+	it("maps nested ingest runs routes to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/ingest-runs/run-1");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>摄取运行详情</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Ingest runs",
+		);
+	});
+
 	it("skips focus updates when no heading is present", () => {
 		usePathnameMock.mockReturnValue("/feed");
 		render(
@@ -94,6 +107,19 @@ describe("RouteTransition", () => {
 		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Jobs");
 		expect(heading).toHaveAttribute("tabindex", "-1");
 		expect(document.activeElement).toBe(heading);
+	});
+
+	it("maps top-level ingest runs route to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/ingest-runs");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>摄取运行</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Ingest runs",
+		);
 	});
 
 	it("removes tabindex from previously focused heading when route updates", () => {

@@ -140,7 +140,7 @@ By the end of this path, you should have:
 cp .env.example .env
 UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/project-venv}" \
   uv sync --frozen --extra dev --extra e2e
-npm --prefix apps/web ci
+bash scripts/ci/prepare_web_runtime.sh >/dev/null
 ./bin/bootstrap-full-stack
 ./bin/full-stack up
 ```

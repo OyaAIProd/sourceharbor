@@ -12,6 +12,12 @@ SHARED_GOVERNANCE_ARTIFACTS = {
 }
 
 
+def _is_diagnostic_metadata(metadata: dict[str, object]) -> bool:
+    status = str(metadata.get("status") or "").strip().lower()
+    report_kind = str(metadata.get("report_kind") or "").strip().lower()
+    return status == "diagnostic" or report_kind == "provider-compat-log"
+
+
 def main() -> int:
     root = repo_root()
     matrix = load_governance_json("upstream-compat-matrix.json")
@@ -41,6 +47,7 @@ def main() -> int:
         missing_metadata: list[str] = []
         missing_source_commit: list[str] = []
         mismatched_run_ids: list[str] = []
+        diagnostic_mismatched_run_ids: list[str] = []
         observed_run_ids: dict[str, str] = {}
 
         for rel in verification_artifacts:
@@ -61,7 +68,11 @@ def main() -> int:
                 and rel in row_specific_artifacts
                 and source_run_id != last_verified_run_id
             ):
-                mismatched_run_ids.append(f"{rel} -> {source_run_id or '<missing>'}")
+                mismatch = f"{rel} -> {source_run_id or '<missing>'}"
+                if _is_diagnostic_metadata(metadata):
+                    diagnostic_mismatched_run_ids.append(mismatch)
+                else:
+                    mismatched_run_ids.append(mismatch)
 
         row_errors: list[str] = []
         if verification_status == "verified":
@@ -103,13 +114,21 @@ def main() -> int:
                 "missing_metadata": missing_metadata,
                 "missing_source_commit": missing_source_commit,
                 "observed_run_ids": observed_run_ids,
+                "diagnostic_mismatched_run_ids": diagnostic_mismatched_run_ids,
                 "status": "fail" if row_errors else "pass",
                 "notes": row_errors
                 if row_errors
                 else (
                     ["pending blocker row is not yet required to prove same-run cohesion"]
                     if verification_status != "verified"
-                    else ["verified blocker row has a coherent same-run bundle"]
+                    else (
+                        [
+                            "verified blocker row has a coherent same-run bundle",
+                            "diagnostic row-specific artifacts may carry a newer run id when they exist only to prove current fail-close freshness",
+                        ]
+                        if diagnostic_mismatched_run_ids
+                        else ["verified blocker row has a coherent same-run bundle"]
+                    )
                 ),
             }
         )

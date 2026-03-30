@@ -61,6 +61,9 @@ python3 scripts/governance/check_historical_release_examples.py
 python3 scripts/governance/check_public_contact_points.py
 python3 scripts/governance/check_public_entrypoint_manifests.py
 python3 scripts/governance/check_public_entrypoint_references.py
+python3 scripts/governance/check_route_contract_alignment.py
+python3 scripts/governance/migrate_local_private_ledgers.py
+python3 scripts/governance/check_local_private_ledger_migration.py
 python3 scripts/governance/check_root_policy_alignment.py
 python3 scripts/governance/check_evidence_contract.py
 python3 scripts/governance/check_external_lane_contract.py

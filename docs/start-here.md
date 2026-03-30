@@ -27,7 +27,7 @@ Think of it like a guided first local run:
 cp .env.example .env
 UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/project-venv}" \
   uv sync --frozen --extra dev --extra e2e
-npm --prefix apps/web ci
+bash scripts/ci/prepare_web_runtime.sh >/dev/null
 ```
 
 ### 2. Bootstrap the local stack
@@ -99,8 +99,9 @@ If you want the longer-lived workflow instead of one-off processing:
 
 1. Add one or more subscriptions in the web UI or via `POST /api/v1/subscriptions`
 2. Trigger `POST /api/v1/ingest/poll`
-3. Read the resulting entries in `/feed`
-4. Inspect the job page for retries, degradations, and artifact links
+3. Keep the returned `run_id` so you can inspect `GET /api/v1/ingest/runs/<run-id>`
+4. Read the resulting entries in `/feed`
+5. Inspect the job page for retries, degradations, and artifact links
 
 That path is what turns SourceHarbor from a one-shot processor into a knowledge intake system.
 

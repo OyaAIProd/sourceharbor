@@ -303,17 +303,18 @@ def test_ingest_poll_starts_workflow_with_real_postgres_harness(
 
     assert response.status_code == 202
     payload = response.json()
+    assert payload["run_id"]
+    assert payload["status"] == "queued"
     assert payload["enqueued"] == 0
     assert payload["candidates"] == []
 
     started = integration_api.temporal_client.started
     assert len(started) == 1
     assert started[0]["workflow"] == "PollFeedsWorkflow"
-    assert started[0]["job_id"] == {
-        "subscription_id": None,
-        "platform": "youtube",
-        "max_new_videos": 5,
-    }
+    assert started[0]["job_id"]["subscription_id"] is None
+    assert started[0]["job_id"]["platform"] == "youtube"
+    assert started[0]["job_id"]["max_new_videos"] == 5
+    assert started[0]["job_id"]["ingest_run_id"] == payload["run_id"]
 
 
 def test_subscriptions_upsert_is_idempotent_with_real_postgres(
