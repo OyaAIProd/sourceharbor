@@ -1674,3 +1674,108 @@ def test_artifacts_from_steps_skips_latest_write_step_with_non_dict_files_and_us
     )
 
     assert index == expected
+
+
+def test_compare_with_previous_returns_none_when_job_missing() -> None:
+    service = _service()
+
+    class _Repo:
+        def get(self, _job_id: uuid.UUID):
+            return None
+
+    service.repo = _Repo()
+
+    assert service.compare_with_previous(job_id=uuid.uuid4()) is None
+
+
+def test_compare_with_previous_without_previous_digest_returns_empty_diff(tmp_path: Path) -> None:
+    current_digest = tmp_path / "current.md"
+    current_digest.write_text("current digest", encoding="utf-8")
+    current_job_id = uuid.uuid4()
+
+    service = _service()
+
+    class _Repo:
+        def get(self, _job_id: uuid.UUID):
+            return SimpleNamespace(id=current_job_id, artifact_digest_md=str(current_digest))
+
+        def get_previous_successful_job(self, *, job_id: uuid.UUID):
+            assert job_id == current_job_id
+            return None
+
+    service.repo = _Repo()
+
+    payload = service.compare_with_previous(job_id=current_job_id)
+
+    assert payload == {
+        "job_id": str(current_job_id),
+        "previous_job_id": None,
+        "has_previous": False,
+        "current_digest": "current digest",
+        "previous_digest": None,
+        "diff_markdown": "",
+        "stats": {"added_lines": 0, "removed_lines": 0, "changed": False},
+    }
+
+
+def test_compare_with_previous_builds_diff_stats(tmp_path: Path) -> None:
+    previous_digest = tmp_path / "previous.md"
+    current_digest = tmp_path / "current.md"
+    previous_digest.write_text("line-a\nline-b\n", encoding="utf-8")
+    current_digest.write_text("line-a\nline-c\nline-d\n", encoding="utf-8")
+    current_job_id = uuid.uuid4()
+    previous_job_id = uuid.uuid4()
+
+    service = _service()
+
+    class _Repo:
+        def get(self, _job_id: uuid.UUID):
+            return SimpleNamespace(id=current_job_id, artifact_digest_md=str(current_digest))
+
+        def get_previous_successful_job(self, *, job_id: uuid.UUID):
+            assert job_id == current_job_id
+            return SimpleNamespace(id=previous_job_id, artifact_digest_md=str(previous_digest))
+
+    service.repo = _Repo()
+
+    payload = service.compare_with_previous(job_id=current_job_id)
+
+    assert payload["has_previous"] is True
+    assert payload["previous_job_id"] == str(previous_job_id)
+    assert payload["stats"]["added_lines"] == 2
+    assert payload["stats"]["removed_lines"] == 1
+    assert payload["stats"]["changed"] is True
+    assert f"job:{previous_job_id}" in payload["diff_markdown"]
+    assert f"job:{current_job_id}" in payload["diff_markdown"]
+
+
+def test_get_knowledge_cards_handles_missing_root_invalid_payload_and_filters_dicts(
+    tmp_path: Path,
+) -> None:
+    service = _service()
+    job_id = uuid.uuid4()
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir(parents=True, exist_ok=True)
+
+    class _Repo:
+        def get(self, requested_job_id: uuid.UUID):
+            assert requested_job_id == job_id
+            return SimpleNamespace(
+                id=job_id,
+                artifact_root=str(artifact_root),
+                artifact_digest_md=None,
+            )
+
+    service.repo = _Repo()
+
+    assert service.get_knowledge_cards(job_id=job_id) == []
+
+    cards_path = artifact_root / "knowledge_cards.json"
+    cards_path.write_text('{"not":"a list"}', encoding="utf-8")
+    assert service.get_knowledge_cards(job_id=job_id) == []
+
+    cards_path.write_text(
+        json.dumps([{"id": "card-1"}, "skip-me", {"id": "card-2"}], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    assert service.get_knowledge_cards(job_id=job_id) == [{"id": "card-1"}, {"id": "card-2"}]

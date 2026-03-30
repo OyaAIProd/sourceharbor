@@ -23,17 +23,21 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 PIPELINE_FINAL_STATUSES = {"succeeded", "degraded", "failed"}
+SQLiteStateStore = MirroredSQLiteStateStore
 
 
-def _build_runtime_sqlite_store(settings: Settings) -> MirroredSQLiteStateStore:
+def _build_runtime_sqlite_store(settings: Settings) -> Any:
     mirror_paths: list[str] = []
     api_state_path = str(getenv("SQLITE_STATE_PATH", "")).strip()
     if api_state_path:
         mirror_paths.append(api_state_path)
-    return MirroredSQLiteStateStore.from_paths(
-        primary_path=settings.sqlite_path,
-        mirror_paths=mirror_paths,
-    )
+    store_cls = SQLiteStateStore
+    if hasattr(store_cls, "from_paths"):
+        return store_cls.from_paths(
+            primary_path=settings.sqlite_path,
+            mirror_paths=mirror_paths,
+        )
+    return store_cls(settings.sqlite_path)
 
 
 def _to_pipeline_final_status(value: Any, *, fallback: str | None) -> str | None:

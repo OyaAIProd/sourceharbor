@@ -563,9 +563,17 @@ def _check_public_hosted_first_ci_specific_rules(
         failures.append("ci.yml: python-tests: public PR path must not consume secrets context")
 
     web_lint = blocks.get("web-lint", "")
-    if "npm --prefix apps/web ci" not in web_lint:
+    has_deterministic_web_install = (
+        "npm --prefix apps/web ci" in web_lint
+        or "install-command: bash scripts/ci/prepare_web_runtime.sh" in web_lint
+    )
+    if not has_deterministic_web_install:
         failures.append("ci.yml: web-lint: missing deterministic npm ci step")
-    if "npm --prefix apps/web run lint" not in web_lint:
+    has_frontend_lint = (
+        "npm --prefix apps/web run lint" in web_lint
+        or 'npm --prefix "$WEB_RUNTIME_WEB_DIR" run lint' in web_lint
+    )
+    if not has_frontend_lint:
         failures.append("ci.yml: web-lint: missing frontend lint command")
     if "secrets." in web_lint:
         failures.append("ci.yml: web-lint: public PR path must not consume secrets context")

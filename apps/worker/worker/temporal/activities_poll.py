@@ -28,6 +28,21 @@ except ModuleNotFoundError:  # pragma: no cover
     activity = _ActivityFallback()
 
 logger = logging.getLogger(__name__)
+SQLiteStateStore = MirroredSQLiteStateStore
+
+
+def _build_runtime_sqlite_store(settings: Settings) -> Any:
+    mirror_paths: list[str] = []
+    api_state_path = str(getenv("SQLITE_STATE_PATH", "")).strip()
+    if api_state_path:
+        mirror_paths.append(api_state_path)
+    store_cls = SQLiteStateStore
+    if hasattr(store_cls, "from_paths"):
+        return store_cls.from_paths(
+            primary_path=settings.sqlite_path,
+            mirror_paths=mirror_paths,
+        )
+    return store_cls(settings.sqlite_path)
 
 
 def _mark_ingest_run_running(pg_store: PostgresBusinessStore, *, run_id: str | None) -> None:
@@ -172,14 +187,7 @@ async def run_poll_feeds_once(
     filters = dict(filters or {})
     ingest_run_id = str(filters.get("ingest_run_id") or "").strip() or None
 
-    mirror_paths: list[str] = []
-    api_state_path = str(getenv("SQLITE_STATE_PATH", "")).strip()
-    if api_state_path:
-        mirror_paths.append(api_state_path)
-    sqlite_store = MirroredSQLiteStateStore.from_paths(
-        primary_path=settings.sqlite_path,
-        mirror_paths=mirror_paths,
-    )
+    sqlite_store = _build_runtime_sqlite_store(settings)
     pg_store = PostgresBusinessStore(settings.database_url)
     lock_owner = f"pid-{getpid()}"
     lock_key = "phase2.poll_feeds"
