@@ -146,7 +146,10 @@ def register_job_tools(mcp: FastMCP, api_call: ApiCall) -> None:
         response = api_call("GET", f"/api/v1/jobs/{url_path_segment(normalized_job_id)}")
         return _normalize_job_payload(response)
 
-    @mcp.tool(name="sourceharbor.jobs.compare", description="Compare one job against its previous successful run.")
+    @mcp.tool(
+        name="sourceharbor.jobs.compare",
+        description="Compare one job against its previous successful run.",
+    )
     def compare_job(job_id: str) -> dict[str, Any]:
         normalized_job_id = parse_uuid(job_id)
         if normalized_job_id is None:

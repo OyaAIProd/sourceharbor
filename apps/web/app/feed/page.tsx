@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getActionSessionTokenForForm } from "@/app/action-security";
-import { FeedFeedbackPanel } from "@/components/feed-feedback-panel";
 import { getFlashMessage, toErrorCode } from "@/app/flash-message";
 import { EntryList } from "@/components/entry-list";
+import { FeedFeedbackPanel } from "@/components/feed-feedback-panel";
 import { FormSelectField } from "@/components/form-field";
 import { ReadingPane } from "@/components/reading-pane";
 import { SyncNowButton } from "@/components/sync-now-button";
@@ -106,19 +106,18 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 		prev_cursor,
 		page,
 		item,
-	} =
-		await resolveSearchParams(searchParams, [
-			"source",
-			"category",
-			"feedback",
-			"sort",
-			"sub",
-			"limit",
-			"cursor",
-			"prev_cursor",
-			"page",
-			"item",
-		]);
+	} = await resolveSearchParams(searchParams, [
+		"source",
+		"category",
+		"feedback",
+		"sort",
+		"sub",
+		"limit",
+		"cursor",
+		"prev_cursor",
+		"page",
+		"item",
+	]);
 
 	const parsedLimit = Number.parseInt(limit, 10);
 	const safeLimit =
@@ -148,16 +147,25 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 	const safeSubscriptionId = sub.trim() || undefined;
 	const sourceSelectValue = toSourceSelectValue(source);
 	const isFiltered = Boolean(
-		safeSource || category || safeFeedback || safeSubscriptionId || safeSort !== "recent",
+		safeSource ||
+			category ||
+			safeFeedback ||
+			safeSubscriptionId ||
+			safeSort !== "recent",
 	);
 	const hasVisibleFilterLabel = Boolean(
-		safeSource || category || safeFeedback || safeSubscriptionId || safeSort !== "recent",
+		safeSource ||
+			category ||
+			safeFeedback ||
+			safeSubscriptionId ||
+			safeSort !== "recent",
 	);
 	const selectedJobId = item.trim() || null;
 
 	let feed: Awaited<ReturnType<typeof apiClient.getDigestFeed>> | null = null;
-	let selectedFeedback: Awaited<ReturnType<typeof apiClient.getFeedFeedback>> | null =
-		null;
+	let selectedFeedback: Awaited<
+		ReturnType<typeof apiClient.getFeedFeedback>
+	> | null = null;
 	let errorCode: string | null = null;
 	try {
 		const query: Parameters<typeof apiClient.getDigestFeed>[0] = {
@@ -413,17 +421,17 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 								sessionToken={sessionToken}
 							/>
 						) : null}
-					<ReadingPane
-						jobId={selectedJobId}
-						title={selectedItem?.title}
-						source={selectedItem?.source}
-						sourceName={selectedItem?.source_name}
-						videoUrl={selectedItem?.video_url}
-						publishedAt={selectedItem?.published_at}
-						publishedDateLabel={formatPublishedDateLabel(
-							selectedItem?.published_at,
-						)}
-					/>
+						<ReadingPane
+							jobId={selectedJobId}
+							title={selectedItem?.title}
+							source={selectedItem?.source}
+							sourceName={selectedItem?.source_name}
+							videoUrl={selectedItem?.video_url}
+							publishedAt={selectedItem?.published_at}
+							publishedDateLabel={formatPublishedDateLabel(
+								selectedItem?.published_at,
+							)}
+						/>
 					</div>
 				</div>
 			)}
@@ -459,7 +467,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 									? " · "
 									: ""}
 								{safeSubscriptionId ? "Subscription" : ""}
-								{(safeSource || category || safeFeedback || safeSubscriptionId) &&
+								{(safeSource ||
+									category ||
+									safeFeedback ||
+									safeSubscriptionId) &&
 								safeSort !== "recent"
 									? " · "
 									: ""}

@@ -22,7 +22,6 @@ from worker.pipeline.step_executor import utc_now_iso, write_json
 from worker.pipeline.steps.llm import normalize_digest_payload, normalize_outline_payload
 from worker.pipeline.types import PipelineContext, StepExecution
 
-
 _TOPIC_STOP_WORDS = {
     "about",
     "after",
@@ -123,7 +122,9 @@ def _build_knowledge_cards(
             }
         )
 
-    highlights = [str(item).strip() for item in (digest.get("highlights") or []) if str(item).strip()]
+    highlights = [
+        str(item).strip() for item in (digest.get("highlights") or []) if str(item).strip()
+    ]
     for index, item in enumerate(highlights[:12], start=1):
         cards.append(
             {
@@ -390,7 +391,10 @@ async def step_write_artifacts(ctx: PipelineContext, state: dict[str, Any]) -> S
 
         knowledge_cards = _build_knowledge_cards(
             title=str(
-                digest.get("title") or metadata.get("title") or state.get("title") or "Untitled Video"
+                digest.get("title")
+                or metadata.get("title")
+                or state.get("title")
+                or "Untitled Video"
             ),
             digest=digest,
             outline=outline,

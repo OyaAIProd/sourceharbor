@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -72,9 +72,7 @@ class IngestRunsRepository:
 
     def get_with_items(self, *, run_id: uuid.UUID) -> IngestRun | None:
         stmt = (
-            select(IngestRun)
-            .options(selectinload(IngestRun.items))
-            .where(IngestRun.id == run_id)
+            select(IngestRun).options(selectinload(IngestRun.items)).where(IngestRun.id == run_id)
         )
         return self.db.scalar(stmt)
 

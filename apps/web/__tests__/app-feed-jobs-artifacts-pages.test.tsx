@@ -376,8 +376,12 @@ describe("feed/jobs/artifacts pages", () => {
 			);
 			expect(screen.getByText("Feed curation")).toBeInTheDocument();
 			expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "Useful" })).toBeInTheDocument();
-			expect(screen.getByText("Marked as saved and useful.")).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Useful" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByText("Marked as saved and useful."),
+			).toBeInTheDocument();
 			expect(screen.getByRole("link", { name: /job-read/ })).toHaveAttribute(
 				"href",
 				"/jobs?job_id=job-reading-1",
@@ -789,7 +793,9 @@ describe("feed/jobs/artifacts pages", () => {
 			render(await JobsPage({ searchParams: { job_id: "job-2" } }));
 
 			expect(
-				screen.getByText("No previous successful job is available for comparison yet."),
+				screen.getByText(
+					"No previous successful job is available for comparison yet.",
+				),
 			).toBeInTheDocument();
 		},
 		PAGE_TEST_TIMEOUT_MS,
@@ -948,17 +954,25 @@ describe("feed/jobs/artifacts pages", () => {
 				screen.getByRole("heading", { name: "Filter knowledge cards" }),
 			).toBeInTheDocument();
 			expect(screen.getByText("Knowledge cards")).toBeInTheDocument();
-			const totalCardsPanel = screen.getByText("Total cards").closest('[data-slot="card"]');
+			const totalCardsPanel = screen
+				.getByText("Total cards")
+				.closest('[data-slot="card"]');
 			expect(totalCardsPanel).not.toBeNull();
-			expect(within(totalCardsPanel as HTMLElement).getByText("2")).toBeInTheDocument();
+			expect(
+				within(totalCardsPanel as HTMLElement).getByText("2"),
+			).toBeInTheDocument();
 			expect(screen.getByText("Key takeaway")).toBeInTheDocument();
 			expect(screen.getByText("A durable knowledge note.")).toBeInTheDocument();
 			expect(screen.getByText("Confidence: high")).toBeInTheDocument();
-			expect(screen.getAllByText("Agent / Workflows").length).toBeGreaterThan(0);
+			expect(screen.getAllByText("Agent / Workflows").length).toBeGreaterThan(
+				0,
+			);
 			expect(
 				screen.getByRole("link", { name: "Open job trace for job-1" }),
 			).toHaveAttribute("href", "/jobs?job_id=job-1");
-			expect(screen.getByRole("link", { name: /Takeaway \(1\)/ })).toHaveAttribute(
+			expect(
+				screen.getByRole("link", { name: /Takeaway \(1\)/ }),
+			).toHaveAttribute(
 				"href",
 				"/knowledge?job_id=job-1&video_id=video-1&card_type=takeaway&topic_key=agent-workflows&claim_kind=takeaway&limit=10",
 			);

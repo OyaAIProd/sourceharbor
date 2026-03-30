@@ -626,7 +626,9 @@ export const apiClient = {
 
 	getFeedFeedback(jobId: string) {
 		const safeJobId = encodeURIComponent(assertSafeIdentifier(jobId));
-		return requestJson<FeedFeedback>(`/api/v1/feed/feedback?job_id=${safeJobId}`);
+		return requestJson<FeedFeedback>(
+			`/api/v1/feed/feedback?job_id=${safeJobId}`,
+		);
 	},
 
 	updateFeedFeedback(

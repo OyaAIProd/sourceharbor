@@ -56,7 +56,7 @@ class _PollDB:
         instance_id = getattr(instance, "id", None)
         if instance_id is None:
             instance_id = uuid.uuid4()
-            setattr(instance, "id", instance_id)
+            instance.id = instance_id
         self._instances[instance_id] = instance
 
     def commit(self) -> None:

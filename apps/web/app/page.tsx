@@ -119,29 +119,30 @@ export default async function DashboardPage({
 	] as const);
 	const sessionToken = getActionSessionTokenForForm();
 
-	const [subscriptionsResult, videosResult, ingestRunsResult] = await Promise.all([
-		apiClient
-			.listSubscriptions()
-			.then((data) => ({ data, errorCode: null as string | null }))
-			.catch(() => ({
-				data: [] as Awaited<ReturnType<typeof apiClient.listSubscriptions>>,
-				errorCode: "ERR_REQUEST_FAILED",
-			})),
-		apiClient
-			.listVideos({ limit: 200 })
-			.then((data) => ({ data, errorCode: null as string | null }))
-			.catch(() => ({
-				data: [] as Awaited<ReturnType<typeof apiClient.listVideos>>,
-				errorCode: "ERR_REQUEST_FAILED",
-			})),
-		apiClient
-			.listIngestRuns({ limit: 5 })
-			.then((data) => ({ data, errorCode: null as string | null }))
-			.catch(() => ({
-				data: [] as Awaited<ReturnType<typeof apiClient.listIngestRuns>>,
-				errorCode: "ERR_REQUEST_FAILED",
-			})),
-	]);
+	const [subscriptionsResult, videosResult, ingestRunsResult] =
+		await Promise.all([
+			apiClient
+				.listSubscriptions()
+				.then((data) => ({ data, errorCode: null as string | null }))
+				.catch(() => ({
+					data: [] as Awaited<ReturnType<typeof apiClient.listSubscriptions>>,
+					errorCode: "ERR_REQUEST_FAILED",
+				})),
+			apiClient
+				.listVideos({ limit: 200 })
+				.then((data) => ({ data, errorCode: null as string | null }))
+				.catch(() => ({
+					data: [] as Awaited<ReturnType<typeof apiClient.listVideos>>,
+					errorCode: "ERR_REQUEST_FAILED",
+				})),
+			apiClient
+				.listIngestRuns({ limit: 5 })
+				.then((data) => ({ data, errorCode: null as string | null }))
+				.catch(() => ({
+					data: [] as Awaited<ReturnType<typeof apiClient.listIngestRuns>>,
+					errorCode: "ERR_REQUEST_FAILED",
+				})),
+		]);
 
 	const subscriptions = subscriptionsResult.data;
 	const videos = videosResult.data;
@@ -404,17 +405,17 @@ export default async function DashboardPage({
 
 			<section>
 				<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<h2 className="text-xl font-semibold">最近摄取运行</h2>
-							<CardDescription>
-								把它理解成“最近几次进货记录”。如果你刚触发了采集，这里应该最先告诉你它有没有真的发车。
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-3">
-							<Button asChild variant="link" size="sm" className="h-auto px-0">
-								<Link href="/ingest-runs">查看全部摄取运行 →</Link>
-							</Button>
-							{ingestRunsUnavailable ? (
+					<CardHeader>
+						<h2 className="text-xl font-semibold">最近摄取运行</h2>
+						<CardDescription>
+							把它理解成“最近几次进货记录”。如果你刚触发了采集，这里应该最先告诉你它有没有真的发车。
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-3">
+						<Button asChild variant="link" size="sm" className="h-auto px-0">
+							<Link href="/ingest-runs">查看全部摄取运行 →</Link>
+						</Button>
+						{ingestRunsUnavailable ? (
 							<output
 								className="text-sm text-muted-foreground"
 								aria-live="polite"
@@ -458,7 +459,7 @@ export default async function DashboardPage({
 									<tbody>
 										{ingestRuns.map((run) => (
 											<tr key={run.id} className="border-t border-border/60">
-													<td className="px-4 py-3 align-top font-mono text-xs">
+												<td className="px-4 py-3 align-top font-mono text-xs">
 													<Link
 														href={`/ingest-runs?run_id=${encodeURIComponent(run.id)}`}
 														className="text-primary underline-offset-4 hover:underline"
@@ -467,12 +468,16 @@ export default async function DashboardPage({
 													</Link>
 												</td>
 												<td className="px-4 py-3 align-top">
-													{run.platform ? toPlatformLabel(run.platform) : "全部"}
+													{run.platform
+														? toPlatformLabel(run.platform)
+														: "全部"}
 												</td>
 												<td className="px-4 py-3 align-top">
 													<DashboardStatusBadge status={run.status} />
 												</td>
-												<td className="px-4 py-3 align-top">{run.jobs_created}</td>
+												<td className="px-4 py-3 align-top">
+													{run.jobs_created}
+												</td>
 												<td className="px-4 py-3 align-top">
 													{run.candidates_count}
 												</td>

@@ -13,7 +13,11 @@ from apps.mcp.tools._common import (
 from apps.mcp.tools.artifacts import _normalize_markdown_payload, register_artifact_tools
 from apps.mcp.tools.feed import register_feed_tools
 from apps.mcp.tools.health import register_health_tools
-from apps.mcp.tools.jobs import _normalize_job_compare_payload, _normalize_job_payload, register_job_tools
+from apps.mcp.tools.jobs import (
+    _normalize_job_compare_payload,
+    _normalize_job_payload,
+    register_job_tools,
+)
 from apps.mcp.tools.knowledge import register_knowledge_tools
 from apps.mcp.tools.notifications import (
     _normalize_send_test_payload,
@@ -151,7 +155,9 @@ def test_jobs_tail_branches() -> None:
         == "UPSTREAM"
     )
     assert (
-        _normalize_job_compare_payload({"code": "UPSTREAM", "message": "bad", "details": {}})["code"]
+        _normalize_job_compare_payload({"code": "UPSTREAM", "message": "bad", "details": {}})[
+            "code"
+        ]
         == "UPSTREAM"
     )
 

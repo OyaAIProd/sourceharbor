@@ -210,7 +210,9 @@ class RetrievalService:
                 snippet_parts.append(f"claim_kind:{claim_kind}")
             if topic_key:
                 snippet_parts.append(f"topic_key:{topic_key}")
-            snippet = re.sub(r"\s+", " ", " | ".join(part for part in snippet_parts if part)).strip()
+            snippet = re.sub(
+                r"\s+", " ", " | ".join(part for part in snippet_parts if part)
+            ).strip()
             hits.append(
                 self._build_hit(
                     row=row,
@@ -599,7 +601,13 @@ class RetrievalService:
                 if isinstance(segment, str) and segment
             ]
             if isinstance(metadata, dict):
-                for key in ("topic_key", "topic_label", "claim_id", "claim_kind", "confidence_label"):
+                for key in (
+                    "topic_key",
+                    "topic_label",
+                    "claim_id",
+                    "claim_kind",
+                    "confidence_label",
+                ):
                     value = metadata.get(key)
                     if isinstance(value, str) and value.strip():
                         segments.append(f"{key}:{value.strip()}")

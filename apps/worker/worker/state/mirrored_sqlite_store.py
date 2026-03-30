@@ -21,7 +21,7 @@ class MirroredSQLiteStateStore(SQLiteStateStore):
     @classmethod
     def from_paths(
         cls, *, primary_path: str, mirror_paths: list[str] | None = None
-    ) -> "MirroredSQLiteStateStore":
+    ) -> MirroredSQLiteStateStore:
         primary = SQLiteStateStore(primary_path)
         resolved_primary = Path(primary_path).expanduser().resolve()
         mirrors: list[SQLiteStateStore] = []

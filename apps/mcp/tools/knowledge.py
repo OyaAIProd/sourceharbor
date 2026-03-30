@@ -4,7 +4,15 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from apps.mcp.tools._common import ApiCall, invalid_argument, is_error_payload, parse_bounded_int, parse_uuid, to_optional_dict, to_optional_str
+from apps.mcp.tools._common import (
+    ApiCall,
+    invalid_argument,
+    is_error_payload,
+    parse_bounded_int,
+    parse_uuid,
+    to_optional_dict,
+    to_optional_str,
+)
 
 
 def _normalize_knowledge_card(item: Any) -> dict[str, Any]:

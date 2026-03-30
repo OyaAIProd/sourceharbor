@@ -261,7 +261,7 @@ def test_ingest_runs_get_returns_items(api_client: TestClient, monkeypatch) -> N
 def test_get_ingest_run_returns_not_found(api_client: TestClient, monkeypatch) -> None:
     def fake_get_run(self, *, run_id):
         del self, run_id
-        return None
+        return
 
     monkeypatch.setattr("apps.api.app.services.ingest.IngestService.get_run", fake_get_run)
 
@@ -697,7 +697,9 @@ def test_job_knowledge_cards_returns_payload(api_client: TestClient, monkeypatch
     assert payload[0]["title"] == "Key takeaway"
 
 
-def test_job_knowledge_cards_returns_404_for_missing_job(api_client: TestClient, monkeypatch) -> None:
+def test_job_knowledge_cards_returns_404_for_missing_job(
+    api_client: TestClient, monkeypatch
+) -> None:
     monkeypatch.setattr(
         "apps.api.app.services.jobs.JobsService.get_knowledge_cards",
         lambda self, *, job_id: None,

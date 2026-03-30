@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-from typing import Any
 from types import SimpleNamespace
+from typing import Any
 
 from worker.config import Settings
 from worker.pipeline import runner
@@ -331,7 +331,9 @@ def test_step_write_artifacts_persists_knowledge_cards_to_pg_store(tmp_path: Pat
     captured: dict[str, Any] = {}
 
     class _FakePGStore:
-        def replace_knowledge_cards(self, *, video_id: str, job_id: str, items: list[dict[str, Any]]) -> int:
+        def replace_knowledge_cards(
+            self, *, video_id: str, job_id: str, items: list[dict[str, Any]]
+        ) -> int:
             captured["video_id"] = video_id
             captured["job_id"] = job_id
             captured["items"] = items
@@ -390,6 +392,8 @@ def test_step_write_artifacts_persists_knowledge_cards_to_pg_store(tmp_path: Pat
     assert claim_card["metadata"]["claim_id"]
     assert claim_card["metadata"]["claim_source_card_type"] in {"summary", "takeaway", "action"}
     assert (ctx.artifacts_dir / "knowledge_cards.json").is_file()
-    knowledge_cards = json.loads((ctx.artifacts_dir / "knowledge_cards.json").read_text(encoding="utf-8"))
+    knowledge_cards = json.loads(
+        (ctx.artifacts_dir / "knowledge_cards.json").read_text(encoding="utf-8")
+    )
     assert knowledge_cards[0]["metadata"]["claim_kind"] == "summary"
     assert knowledge_cards[1]["metadata"]["source_anchor"] == "highlights[1]"

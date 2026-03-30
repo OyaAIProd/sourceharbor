@@ -164,7 +164,9 @@ describe("dashboard/settings/subscriptions pages", () => {
 				screen.getByRole("link", { name: "查看失败任务 →" }),
 			).toHaveAttribute("href", "/jobs");
 
-			const recentIngestTable = screen.getByText("最近摄取运行").closest('[data-slot="card"]');
+			const recentIngestTable = screen
+				.getByText("最近摄取运行")
+				.closest('[data-slot="card"]');
 			expect(recentIngestTable).not.toBeNull();
 			expect(screen.getByText("run-1")).toBeInTheDocument();
 			expect(

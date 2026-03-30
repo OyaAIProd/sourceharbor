@@ -82,7 +82,9 @@ def _normalize_ingest_run(item: Any) -> dict[str, Any]:
     payload = _normalize_ingest_run_summary(source)
     payload["requested_by"] = to_optional_str(source.get("requested_by"))
     payload["requested_trace_id"] = to_optional_str(source.get("requested_trace_id"))
-    payload["filters_json"] = source.get("filters_json") if isinstance(source.get("filters_json"), dict) else None
+    payload["filters_json"] = (
+        source.get("filters_json") if isinstance(source.get("filters_json"), dict) else None
+    )
     items = source.get("items")
     payload["items"] = [
         _normalize_ingest_run_item(candidate)

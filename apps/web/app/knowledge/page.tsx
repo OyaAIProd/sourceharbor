@@ -40,7 +40,9 @@ function compactId(value: string | undefined): string | null {
 	return `${normalized.slice(0, 8)}…${normalized.slice(-6)}`;
 }
 
-function toMetadataTokens(metadata: Record<string, unknown> | undefined): string[] {
+function toMetadataTokens(
+	metadata: Record<string, unknown> | undefined,
+): string[] {
 	if (!metadata) {
 		return [];
 	}
@@ -68,10 +70,14 @@ export default async function KnowledgePage({
 		topic_key: topicKey,
 		claim_kind: claimKind,
 		limit,
-	} = await resolveSearchParams(
-		searchParams,
-		["job_id", "video_id", "card_type", "topic_key", "claim_kind", "limit"] as const,
-	);
+	} = await resolveSearchParams(searchParams, [
+		"job_id",
+		"video_id",
+		"card_type",
+		"topic_key",
+		"claim_kind",
+		"limit",
+	] as const);
 	const safeJobId = jobId.trim();
 	const safeVideoId = videoId.trim();
 	const safeCardType = cardType.trim();
@@ -99,7 +105,8 @@ export default async function KnowledgePage({
 	}
 
 	const totalCards = cards.length;
-	const uniqueJobs = new Set(cards.map((card) => card.job_id).filter(Boolean)).size;
+	const uniqueJobs = new Set(cards.map((card) => card.job_id).filter(Boolean))
+		.size;
 	const uniqueCardTypes = new Set(cards.map((card) => card.card_type)).size;
 	const cardTypeCounts = Array.from(
 		cards.reduce((map, card) => {
@@ -138,8 +145,8 @@ export default async function KnowledgePage({
 				value,
 				label:
 					String(
-						cards.find((card) => card.metadata_json?.topic_key === value)?.metadata_json
-							?.topic_label ?? humanizeToken(value),
+						cards.find((card) => card.metadata_json?.topic_key === value)
+							?.metadata_json?.topic_label ?? humanizeToken(value),
 					) || humanizeToken(value),
 			})),
 	];
@@ -204,7 +211,8 @@ export default async function KnowledgePage({
 					Knowledge
 				</h1>
 				<p className="folo-page-subtitle">
-					把它理解成“从 digest 里提炼出来的长期资产层”。这里更像知识卡片柜，而不是一次性的阅读流。
+					把它理解成“从 digest
+					里提炼出来的长期资产层”。这里更像知识卡片柜，而不是一次性的阅读流。
 				</p>
 			</div>
 
@@ -212,7 +220,8 @@ export default async function KnowledgePage({
 				<CardHeader>
 					<h2 className="text-xl font-semibold">Filter knowledge cards</h2>
 					<CardDescription>
-						用 `job_id`、`video_id`、`card_type` 来缩小范围。你可以把它理解成先选抽屉，再看里面的卡片。
+						用 `job_id`、`video_id`、`card_type`
+						来缩小范围。你可以把它理解成先选抽屉，再看里面的卡片。
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -311,9 +320,7 @@ export default async function KnowledgePage({
 							当前无法加载知识卡片。
 						</p>
 					) : cards.length === 0 ? (
-						<p className="text-sm text-muted-foreground">
-							暂无知识卡片。
-						</p>
+						<p className="text-sm text-muted-foreground">暂无知识卡片。</p>
 					) : (
 						<>
 							<div className="flex flex-wrap gap-2">
@@ -334,80 +341,90 @@ export default async function KnowledgePage({
 								))}
 							</div>
 							<ul className="space-y-3 text-sm">
-							{cards.map((card, index) => (
-								<li
-									key={card.id ?? `${card.card_type}-${card.order_index}-${index}`}
-									className="rounded-lg border border-border/60 bg-muted/20 p-3"
-								>
-									<div className="flex flex-wrap items-start justify-between gap-3">
-										<div className="space-y-1">
-											<p className="text-xs uppercase tracking-wide text-muted-foreground">
-												{humanizeToken(card.card_type)} ·{" "}
-												{humanizeToken(card.source_section)}
-											</p>
-											<p className="font-medium">
-												{card.title ?? `${humanizeToken(card.card_type)} #${card.order_index + 1}`}
-											</p>
-										</div>
-										<div className="flex flex-wrap gap-2">
-											{card.job_id ? (
+								{cards.map((card, index) => (
+									<li
+										key={
+											card.id ??
+											`${card.card_type}-${card.order_index}-${index}`
+										}
+										className="rounded-lg border border-border/60 bg-muted/20 p-3"
+									>
+										<div className="flex flex-wrap items-start justify-between gap-3">
+											<div className="space-y-1">
+												<p className="text-xs uppercase tracking-wide text-muted-foreground">
+													{humanizeToken(card.card_type)} ·{" "}
+													{humanizeToken(card.source_section)}
+												</p>
+												<p className="font-medium">
+													{card.title ??
+														`${humanizeToken(card.card_type)} #${card.order_index + 1}`}
+												</p>
+											</div>
+											<div className="flex flex-wrap gap-2">
+												{card.job_id ? (
+													<Button asChild variant="ghost" size="xs">
+														<Link
+															href={`/jobs?job_id=${encodeURIComponent(card.job_id)}`}
+															aria-label={`Open job trace for ${card.job_id}`}
+														>
+															Open job trace
+														</Link>
+													</Button>
+												) : null}
 												<Button asChild variant="ghost" size="xs">
 													<Link
-														href={`/jobs?job_id=${encodeURIComponent(card.job_id)}`}
-														aria-label={`Open job trace for ${card.job_id}`}
+														href={buildKnowledgeHref({
+															jobIdValue: safeJobId || undefined,
+															videoIdValue: safeVideoId || undefined,
+															cardTypeValue: card.card_type,
+															topicKeyValue:
+																String(
+																	card.metadata_json?.topic_key ?? "",
+																).trim() ||
+																safeTopicKey ||
+																undefined,
+															claimKindValue:
+																String(
+																	card.metadata_json?.claim_kind ?? "",
+																).trim() ||
+																safeClaimKind ||
+																undefined,
+														})}
 													>
-														Open job trace
+														Same type
 													</Link>
 												</Button>
-											) : null}
-											<Button asChild variant="ghost" size="xs">
-												<Link
-													href={buildKnowledgeHref({
-														jobIdValue: safeJobId || undefined,
-														videoIdValue: safeVideoId || undefined,
-														cardTypeValue: card.card_type,
-														topicKeyValue:
-															String(card.metadata_json?.topic_key ?? "").trim() ||
-															safeTopicKey ||
-															undefined,
-														claimKindValue:
-															String(card.metadata_json?.claim_kind ?? "").trim() ||
-															safeClaimKind ||
-															undefined,
-													})}
-												>
-													Same type
-												</Link>
-											</Button>
+											</div>
 										</div>
-									</div>
-									<p className="mt-2 text-muted-foreground">{card.body}</p>
-									<div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-										{compactId(card.job_id) ? (
-											<span>Job: {compactId(card.job_id)}</span>
-										) : null}
-										{compactId(card.video_id) ? (
-											<span>Video: {compactId(card.video_id)}</span>
-										) : null}
-										<span>Order: {card.order_index + 1}</span>
-										{card.metadata_json?.topic_label ? (
-											<span>Topic: {String(card.metadata_json.topic_label)}</span>
-										) : null}
-									</div>
-									{toMetadataTokens(card.metadata_json).length > 0 ? (
+										<p className="mt-2 text-muted-foreground">{card.body}</p>
 										<div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-											{toMetadataTokens(card.metadata_json).map((token) => (
-												<span
-													key={token}
-													className="rounded-full border border-border/60 px-2 py-1"
-												>
-													{token}
+											{compactId(card.job_id) ? (
+												<span>Job: {compactId(card.job_id)}</span>
+											) : null}
+											{compactId(card.video_id) ? (
+												<span>Video: {compactId(card.video_id)}</span>
+											) : null}
+											<span>Order: {card.order_index + 1}</span>
+											{card.metadata_json?.topic_label ? (
+												<span>
+													Topic: {String(card.metadata_json.topic_label)}
 												</span>
-											))}
+											) : null}
 										</div>
-									) : null}
-								</li>
-							))}
+										{toMetadataTokens(card.metadata_json).length > 0 ? (
+											<div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+												{toMetadataTokens(card.metadata_json).map((token) => (
+													<span
+														key={token}
+														className="rounded-full border border-border/60 px-2 py-1"
+													>
+														{token}
+													</span>
+												))}
+											</div>
+										) : null}
+									</li>
+								))}
 							</ul>
 						</>
 					)}

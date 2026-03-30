@@ -24,12 +24,7 @@ type IngestRunsPageProps = {
 };
 
 function RunStatusBadge({ status }: { status: string }) {
-	return (
-		<StatusBadge
-			label={status}
-			tone={mapStatusCssToTone(status)}
-		/>
-	);
+	return <StatusBadge label={status} tone={mapStatusCssToTone(status)} />;
 }
 
 export default async function IngestRunsPage({
@@ -40,7 +35,8 @@ export default async function IngestRunsPage({
 	] as const);
 
 	let runs: Awaited<ReturnType<typeof apiClient.listIngestRuns>> = [];
-	let selectedRun: Awaited<ReturnType<typeof apiClient.getIngestRun>> | null = null;
+	let selectedRun: Awaited<ReturnType<typeof apiClient.getIngestRun>> | null =
+		null;
 	let error = false;
 
 	try {
@@ -110,19 +106,33 @@ export default async function IngestRunsPage({
 						</CardHeader>
 						<CardContent className="space-y-3">
 							{runs.length === 0 ? (
-								<p className="text-sm text-muted-foreground">暂无 ingest runs。</p>
+								<p className="text-sm text-muted-foreground">
+									暂无 ingest runs。
+								</p>
 							) : (
 								<div className="overflow-x-auto rounded-lg border border-border/70">
 									<table className="min-w-[760px] w-full text-sm">
 										<caption className="sr-only">Recent ingest runs</caption>
 										<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 											<tr>
-												<th scope="col" className="px-4 py-3 font-medium">Run ID</th>
-												<th scope="col" className="px-4 py-3 font-medium">Platform</th>
-												<th scope="col" className="px-4 py-3 font-medium">Status</th>
-												<th scope="col" className="px-4 py-3 font-medium">Jobs</th>
-												<th scope="col" className="px-4 py-3 font-medium">Candidates</th>
-												<th scope="col" className="px-4 py-3 font-medium">Created</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Run ID
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Platform
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Status
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Jobs
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Candidates
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Created
+												</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -142,7 +152,9 @@ export default async function IngestRunsPage({
 													</td>
 													<td className="px-4 py-3">{run.jobs_created}</td>
 													<td className="px-4 py-3">{run.candidates_count}</td>
-													<td className="px-4 py-3">{formatDateTime(run.created_at)}</td>
+													<td className="px-4 py-3">
+														{formatDateTime(run.created_at)}
+													</td>
 												</tr>
 											))}
 										</tbody>
@@ -166,20 +178,36 @@ export default async function IngestRunsPage({
 						<CardContent className="space-y-4">
 							<dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
-									<dt className="text-xs uppercase tracking-wide text-muted-foreground">Run ID</dt>
-									<dd className="break-all text-sm font-medium">{selectedRun.id}</dd>
+									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+										Run ID
+									</dt>
+									<dd className="break-all text-sm font-medium">
+										{selectedRun.id}
+									</dd>
 								</div>
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
-									<dt className="text-xs uppercase tracking-wide text-muted-foreground">Workflow</dt>
-									<dd className="break-all text-sm font-medium">{selectedRun.workflow_id ?? "-"}</dd>
+									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+										Workflow
+									</dt>
+									<dd className="break-all text-sm font-medium">
+										{selectedRun.workflow_id ?? "-"}
+									</dd>
 								</div>
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
-									<dt className="text-xs uppercase tracking-wide text-muted-foreground">Jobs created</dt>
-									<dd className="text-sm font-medium">{selectedRun.jobs_created}</dd>
+									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+										Jobs created
+									</dt>
+									<dd className="text-sm font-medium">
+										{selectedRun.jobs_created}
+									</dd>
 								</div>
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
-									<dt className="text-xs uppercase tracking-wide text-muted-foreground">Candidates</dt>
-									<dd className="text-sm font-medium">{selectedRun.candidates_count}</dd>
+									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+										Candidates
+									</dt>
+									<dd className="text-sm font-medium">
+										{selectedRun.candidates_count}
+									</dd>
 								</div>
 							</dl>
 							{selectedRun.items.length > 0 ? (
@@ -188,17 +216,29 @@ export default async function IngestRunsPage({
 										<caption className="sr-only">Ingest run items</caption>
 										<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 											<tr>
-												<th scope="col" className="px-4 py-3 font-medium">Video UID</th>
-												<th scope="col" className="px-4 py-3 font-medium">Title</th>
-												<th scope="col" className="px-4 py-3 font-medium">Job</th>
-												<th scope="col" className="px-4 py-3 font-medium">Type</th>
-												<th scope="col" className="px-4 py-3 font-medium">Status</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Video UID
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Title
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Job
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Type
+												</th>
+												<th scope="col" className="px-4 py-3 font-medium">
+													Status
+												</th>
 											</tr>
 										</thead>
 										<tbody>
 											{selectedRun.items.map((item) => (
 												<tr key={item.id} className="border-t border-border/60">
-													<td className="px-4 py-3 font-mono text-xs">{item.video_uid}</td>
+													<td className="px-4 py-3 font-mono text-xs">
+														{item.video_uid}
+													</td>
 													<td className="px-4 py-3">{item.title ?? "-"}</td>
 													<td className="px-4 py-3">
 														{item.job_id ? (
@@ -220,7 +260,9 @@ export default async function IngestRunsPage({
 									</table>
 								</div>
 							) : (
-								<p className="text-sm text-muted-foreground">当前 run 还没有 item 详情。</p>
+								<p className="text-sm text-muted-foreground">
+									当前 run 还没有 item 详情。
+								</p>
 							)}
 						</CardContent>
 					</Card>

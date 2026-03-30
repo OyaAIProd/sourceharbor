@@ -27,5 +27,7 @@ class KnowledgeCardsRepository:
             stmt = stmt.where(KnowledgeCard.video_id == video_id)
         if card_type is not None:
             stmt = stmt.where(KnowledgeCard.card_type == card_type)
-        stmt = stmt.order_by(KnowledgeCard.created_at.desc(), KnowledgeCard.ordinal.asc()).limit(limit)
+        stmt = stmt.order_by(KnowledgeCard.created_at.desc(), KnowledgeCard.ordinal.asc()).limit(
+            limit
+        )
         return list(self.db.scalars(stmt).all())

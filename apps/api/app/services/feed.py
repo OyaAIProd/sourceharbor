@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-import uuid
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -35,9 +35,7 @@ class FeedService:
         normalized_sort = str(sort or "").strip().lower() or "recent"
         if normalized_sort not in {"recent", "curated"}:
             normalized_sort = "recent"
-        cursor_rank, cursor_ts, cursor_job_id = self._parse_cursor(
-            cursor, sort=normalized_sort
-        )
+        cursor_rank, cursor_ts, cursor_job_id = self._parse_cursor(cursor, sort=normalized_sort)
         normalized_feedback = str(feedback or "").strip().lower() or None
         if normalized_feedback not in {
             None,
@@ -255,8 +253,7 @@ class FeedService:
             last = items[-1]
             if normalized_sort == "curated":
                 next_cursor = (
-                    f"{last['_cursor_feedback_rank']}__"
-                    f"{last['_cursor_sort_ts']}__{last['job_id']}"
+                    f"{last['_cursor_feedback_rank']}__{last['_cursor_sort_ts']}__{last['job_id']}"
                 )
             else:
                 next_cursor = f"{last['_cursor_sort_ts']}__{last['job_id']}"

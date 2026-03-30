@@ -18,7 +18,14 @@ from apps.mcp.tools._common import (
 
 _ALLOWED_RETRIEVAL_MODES = {"keyword", "semantic", "hybrid"}
 _ALLOWED_RETRIEVAL_PLATFORMS = {"bilibili", "youtube"}
-_ALLOWED_RETRIEVAL_SOURCES = {"digest", "transcript", "outline", "knowledge_cards", "comments", "meta"}
+_ALLOWED_RETRIEVAL_SOURCES = {
+    "digest",
+    "transcript",
+    "outline",
+    "knowledge_cards",
+    "comments",
+    "meta",
+}
 
 
 def _normalize_retrieval_item(item: Any) -> dict[str, Any]:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
 import uuid
+from types import SimpleNamespace
 
 from apps.api.app.models.feed_feedback import FeedFeedback
 from apps.api.app.models.ingest_run import IngestRun

@@ -167,7 +167,9 @@ function SidebarNavContent({
 							? "bg-sidebar-accent text-sidebar-accent-foreground"
 							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
 					)}
-					aria-current={pathname.startsWith("/ingest-runs") ? "page" : undefined}
+					aria-current={
+						pathname.startsWith("/ingest-runs") ? "page" : undefined
+					}
 				>
 					<Inbox className="size-4 shrink-0 opacity-80" aria-hidden />
 					<span className={collapsed ? "sr-only" : undefined}>Ingest runs</span>

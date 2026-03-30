@@ -41,7 +41,9 @@ export function FeedFeedbackPanel({
 	jobId,
 	sessionToken,
 }: FeedFeedbackPanelProps) {
-	const [feedback, setFeedback] = useState<FeedFeedback | null>(initialFeedback);
+	const [feedback, setFeedback] = useState<FeedFeedback | null>(
+		initialFeedback,
+	);
 	const [pending, setPending] = useState<FeedbackLabel | "save" | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
@@ -75,8 +77,8 @@ export function FeedFeedbackPanel({
 			<div className="space-y-2">
 				<p className="text-sm font-medium">Feed curation</p>
 				<p className="text-sm text-muted-foreground">
-					Use these signals to tell SourceHarbor what should stay, what was useful,
-					and what should be filtered out later.
+					Use these signals to tell SourceHarbor what should stay, what was
+					useful, and what should be filtered out later.
 				</p>
 				<p
 					className="text-xs text-muted-foreground"
@@ -99,7 +101,9 @@ export function FeedFeedbackPanel({
 				<Button
 					type="button"
 					size="sm"
-					variant={feedback?.feedback_label === "useful" ? "success" : "outline"}
+					variant={
+						feedback?.feedback_label === "useful" ? "success" : "outline"
+					}
 					disabled={pending !== null}
 					onClick={() => submit(true, "useful")}
 				>
@@ -108,7 +112,9 @@ export function FeedFeedbackPanel({
 				<Button
 					type="button"
 					size="sm"
-					variant={feedback?.feedback_label === "noisy" ? "destructive" : "outline"}
+					variant={
+						feedback?.feedback_label === "noisy" ? "destructive" : "outline"
+					}
 					disabled={pending !== null}
 					onClick={() => submit(false, "noisy")}
 				>
@@ -117,7 +123,9 @@ export function FeedFeedbackPanel({
 				<Button
 					type="button"
 					size="sm"
-					variant={feedback?.feedback_label === "dismissed" ? "secondary" : "outline"}
+					variant={
+						feedback?.feedback_label === "dismissed" ? "secondary" : "outline"
+					}
 					disabled={pending !== null}
 					onClick={() => submit(false, "dismissed")}
 				>

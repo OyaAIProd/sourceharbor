@@ -101,7 +101,9 @@ def evaluate_local_private_ledger_migration(root: Path) -> dict[str, Any]:
             }
             receipt = receipt_entries.get(source_rel)
             if not target.is_file():
-                errors.append(f"{name}: authoritative ledger missing for `{source_rel}` -> `{target_rel}`")
+                errors.append(
+                    f"{name}: authoritative ledger missing for `{source_rel}` -> `{target_rel}`"
+                )
                 ledger_row["status"] = "fail"
                 continue
 
@@ -143,7 +145,11 @@ def evaluate_local_private_ledger_migration(root: Path) -> dict[str, Any]:
         "errors": errors,
     }
     write_json_artifact(
-        root / ".runtime-cache" / "reports" / "governance" / "local-private-ledger-migration-check.json",
+        root
+        / ".runtime-cache"
+        / "reports"
+        / "governance"
+        / "local-private-ledger-migration-check.json",
         report,
         source_entrypoint="scripts/governance/check_local_private_ledger_migration.py",
         verification_scope="local-private-ledger-migration-check",

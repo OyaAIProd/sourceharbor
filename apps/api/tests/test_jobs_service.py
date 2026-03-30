@@ -1701,7 +1701,7 @@ def test_compare_with_previous_without_previous_digest_returns_empty_diff(tmp_pa
 
         def get_previous_successful_job(self, *, job_id: uuid.UUID):
             assert job_id == current_job_id
-            return None
+            return
 
     service.repo = _Repo()
 

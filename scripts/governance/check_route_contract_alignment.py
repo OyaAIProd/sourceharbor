@@ -54,7 +54,10 @@ def main() -> int:
         failures.append("openapi default server drifted from canonical 9000 local origin")
 
     mcp_server = _read("apps/mcp/server.py")
-    if f'base_url=os.getenv("SOURCE_HARBOR_API_BASE_URL", "{EXPECTED_API_ORIGIN}")' not in mcp_server:
+    if (
+        f'base_url=os.getenv("SOURCE_HARBOR_API_BASE_URL", "{EXPECTED_API_ORIGIN}")'
+        not in mcp_server
+    ):
         failures.append("apps/mcp/server.py fallback base URL drifted")
     if "register_report_tools(mcp, api_call)" not in mcp_server:
         failures.append("apps/mcp/server.py is missing reports tool registration")
