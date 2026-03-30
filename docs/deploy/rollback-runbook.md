@@ -33,11 +33,15 @@ python3 scripts/release/verify_db_rollback_readiness.py \
 4. Apply the down migration in reverse order until the target schema boundary is restored.
 5. Re-run the rollback readiness report and capture any operator notes in `artifacts/releases/<tag>/rollback/drill.json`.
 
-## Current High-Risk Note
+## Current High-Risk Notes
 
 `infra/migrations/down/20260308_000016_content_type.down.sql` removes the `videos.content_type` column after dropping its check constraint.
 
 That rollback is schema-correct, but it is destructive for any data stored in that column. In plain language: it restores the older table shape by throwing away the newer field, so do not describe it as lossless.
+
+`infra/migrations/down/20260329_000020_expand_knowledge_card_types.down.sql` deletes `knowledge_cards` rows whose `card_type` is `topic` or `claim` before restoring the older constraint.
+
+That rollback is also schema-correct but data-destructive for the new card types. Say that plainly in drill notes instead of implying a lossless downgrade.
 
 ## Post-Rollback Verification
 

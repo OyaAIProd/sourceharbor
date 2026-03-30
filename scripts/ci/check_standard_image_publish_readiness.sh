@@ -330,9 +330,16 @@ fallback_token="${GHCR_WRITE_TOKEN:-${GHCR_TOKEN:-}}"
 fallback_username="${GHCR_WRITE_USERNAME:-${GHCR_USERNAME:-}}"
 fallback_attempted="false"
 primary_token_mode=""
-# In hosted GitHub Actions runs, prefer the repository-scoped GITHUB_TOKEN first
-# so stale GHCR_WRITE_* secrets cannot mask a healthier current token path.
-if [[ -n "${GITHUB_ACTIONS:-}" && -n "${GITHUB_TOKEN:-}" ]]; then
+# Hosted GHCR publish must prefer explicit writer credentials when they are
+# configured because private org packages can reject repository-scoped
+# GITHUB_TOKEN writes even when the workflow has packages:write permissions.
+if [[ -n "${GITHUB_ACTIONS:-}" && -n "${GHCR_WRITE_TOKEN:-}" ]]; then
+  token_mode="ghcr-write-token"
+  primary_token_mode="$token_mode"
+  selected_username="${GHCR_WRITE_USERNAME:-${GITHUB_ACTOR:-$selected_username}}"
+  selected_token="$GHCR_WRITE_TOKEN"
+  package_probe_json="$(probe_github_package_api "$selected_token" "$expected_owner" "$expected_package_name")"
+elif [[ -n "${GITHUB_ACTIONS:-}" && -n "${GITHUB_TOKEN:-}" ]]; then
   token_mode="github-actions-token"
   primary_token_mode="$token_mode"
   selected_username="${GITHUB_ACTOR:-$selected_username}"
@@ -383,7 +390,7 @@ payload = json.loads(sys.argv[1])
 print(payload.get("endpoint", ""))
 PY
 )"
-if [[ "$token_mode" == "ghcr-token" || "$token_mode" == "github-actions-token" ]]; then
+if [[ "$token_mode" == "ghcr-write-token" || "$token_mode" == "ghcr-token" || "$token_mode" == "github-actions-token" ]]; then
   case "$package_probe_status" in
     200|404)
       token_scope_ok="true"

@@ -31,16 +31,41 @@ jobs:
           bash scripts/governance/runner_workspace_maintenance.sh --workspace "$GITHUB_WORKSPACE" --include-runner-diag 1
           python3 scripts/governance/check_runner_baseline.py --profile ci-heavy --workspace "$GITHUB_WORKSPACE"
 
-      - name: Login to GHCR
+      - name: Resolve GHCR credentials
         env:
           GHCR_WRITE_USERNAME: ${{ secrets.GHCR_WRITE_USERNAME }}
           GHCR_WRITE_TOKEN: ${{ secrets.GHCR_WRITE_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Hosted GitHub Actions runs must publish with the repository-scoped
-          # GITHUB_TOKEN so stale GHCR_WRITE_* secrets cannot hijack push auth.
-          username="${{ github.actor }}"
-          token="${GITHUB_TOKEN}"
+          username=""
+          token=""
+          mode=""
+          if [[ -n "${GHCR_WRITE_TOKEN}" ]]; then
+            username="${GHCR_WRITE_USERNAME:-${{ github.actor }}}"
+            token="${GHCR_WRITE_TOKEN}"
+            mode="ghcr-write-token"
+          else
+            username="${{ github.actor }}"
+            token="${GITHUB_TOKEN}"
+            mode="github-actions-token"
+          fi
+          if [[ -z "$username" || -z "$token" ]]; then
+            echo "failed to resolve GHCR credentials for hosted publish" >&2
+            exit 1
+          fi
+          {
+            echo "GHCR_LOGIN_USERNAME=$username"
+            echo "GHCR_LOGIN_TOKEN=$token"
+            echo "GHCR_LOGIN_MODE=$mode"
+          } >> "$GITHUB_ENV"
+
+      - name: Login to GHCR
+        env:
+          GHCR_LOGIN_USERNAME: ${{ env.GHCR_LOGIN_USERNAME }}
+          GHCR_LOGIN_TOKEN: ${{ env.GHCR_LOGIN_TOKEN }}
+        run: |
+          username="${GHCR_LOGIN_USERNAME}"
+          token="${GHCR_LOGIN_TOKEN}"
           echo "$token" | docker login ghcr.io -u "$username" --password-stdin
 
       - name: Standard image publish preflight
@@ -99,8 +124,8 @@ jobs:
           format: cyclonedx-json
           output-file: .runtime-cache/reports/attestations/strict-ci-image.cdx.json
           upload-artifact: false
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          registry-username: ${{ env.GHCR_LOGIN_USERNAME }}
+          registry-password: ${{ env.GHCR_LOGIN_TOKEN }}
 
       - name: Record strict CI contract candidate (artifact only)
         run: |

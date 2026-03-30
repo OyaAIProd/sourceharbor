@@ -66,6 +66,31 @@ def test_release_prechecks_can_skip_runtime_observability_checks(tmp_path: Path)
     assert "slo_thresholds_documented" in check_names
 
 
+def test_validate_rum_baseline_accepts_zero_cls(tmp_path: Path) -> None:
+    module = _load_module(_script_path(), "generate_release_prechecks_test")
+    rum_path = tmp_path / "rum-baseline.json"
+    rum_path.write_text(
+        json.dumps(
+            {
+                "metrics": {
+                    "lcp_ms_p75": 388.0,
+                    "inp_ms_p75": 24.0,
+                    "cls_p75": 0.0,
+                    "sample_size": 5,
+                }
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    ok, evidence, values = module._validate_rum_baseline(rum_path)
+
+    assert ok is True
+    assert "cls_p75=0.0" in evidence
+    assert values == {"lcp_ms_p75": 388.0, "inp_ms_p75": 24.0, "cls_p75": 0.0}
+
+
 def test_verify_db_rollback_readiness_rejects_pending_drill_template(tmp_path: Path) -> None:
     module = _load_module(
         _repo_root() / "scripts" / "release" / "verify_db_rollback_readiness.py",
