@@ -59,7 +59,11 @@ class IngestRun(Base):
         nullable=False,
     )
 
-    items = relationship("IngestRunItem", back_populates="ingest_run", cascade="all, delete-orphan")
+    items: Mapped[list["IngestRunItem"]] = relationship(
+        lambda: IngestRunItem,
+        back_populates="ingest_run",
+        cascade="all, delete-orphan",
+    )
 
 
 class IngestRunItem(Base):
@@ -121,4 +125,4 @@ class IngestRunItem(Base):
         nullable=False,
     )
 
-    ingest_run = relationship("IngestRun", back_populates="items")
+    ingest_run: Mapped[IngestRun] = relationship(lambda: IngestRun, back_populates="items")
