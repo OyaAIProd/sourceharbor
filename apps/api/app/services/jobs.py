@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import json
 import os
 import sqlite3
@@ -21,6 +22,7 @@ _ARTIFACT_ALIAS_TO_FILE = {
     "outline": "outline.json",
     "transcript": "transcript.txt",
     "digest": "digest.md",
+    "knowledge_cards": "knowledge_cards.json",
 }
 _ARTIFACT_ALLOWED_FILENAMES = set(_ARTIFACT_ALIAS_TO_FILE.values())
 _ARTIFACT_ALLOWED_FRAME_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -32,6 +34,69 @@ class JobsService:
 
     def get_job(self, job_id: uuid.UUID):
         return self.repo.get(job_id)
+
+    def compare_with_previous(self, *, job_id: uuid.UUID) -> dict[str, Any] | None:
+        current = self.get_job(job_id)
+        if current is None:
+            return None
+
+        previous = self.repo.get_previous_successful_job(job_id=job_id)
+        current_digest = self._read_digest_text(getattr(current, "artifact_digest_md", None))
+        previous_digest = (
+            self._read_digest_text(getattr(previous, "artifact_digest_md", None))
+            if previous is not None
+            else None
+        )
+
+        if previous_digest is None:
+            return {
+                "job_id": str(current.id),
+                "previous_job_id": None,
+                "has_previous": False,
+                "current_digest": current_digest,
+                "previous_digest": None,
+                "diff_markdown": "",
+                "stats": {
+                    "added_lines": 0,
+                    "removed_lines": 0,
+                    "changed": False,
+                },
+            }
+
+        current_lines = (current_digest or "").splitlines()
+        previous_lines = previous_digest.splitlines()
+        diff_lines = list(
+            difflib.unified_diff(
+                previous_lines,
+                current_lines,
+                fromfile=f"job:{previous.id}",
+                tofile=f"job:{current.id}",
+                lineterm="",
+            )
+        )
+        added_lines = sum(
+            1
+            for line in diff_lines
+            if line.startswith("+") and not line.startswith("+++")
+        )
+        removed_lines = sum(
+            1
+            for line in diff_lines
+            if line.startswith("-") and not line.startswith("---")
+        )
+        return {
+            "job_id": str(current.id),
+            "previous_job_id": str(previous.id),
+            "has_previous": True,
+            "current_digest": current_digest,
+            "previous_digest": previous_digest,
+            "diff_markdown": "\n".join(diff_lines),
+            "stats": {
+                "added_lines": added_lines,
+                "removed_lines": removed_lines,
+                "changed": bool(diff_lines),
+            },
+        }
 
     def resolve_llm_gate_fields(
         self,
@@ -350,6 +415,7 @@ class JobsService:
                 "transcript": "transcript.txt",
                 "outline": "outline.json",
                 "digest": "digest.md",
+                "knowledge_cards": "knowledge_cards.json",
             }
             for key, name in known_files.items():
                 path = root / name
@@ -441,6 +507,41 @@ class JobsService:
             return None
         markdown = payload.get("markdown")
         return str(markdown) if isinstance(markdown, str) else None
+
+    def get_knowledge_cards(self, *, job_id: uuid.UUID) -> list[dict[str, Any]] | None:
+        row = self.get_job(job_id)
+        if row is None:
+            return None
+
+        artifact_root = self._resolve_artifact_root(
+            artifact_root=getattr(row, "artifact_root", None),
+            digest_path=getattr(row, "artifact_digest_md", None),
+        )
+        if artifact_root is None:
+            return []
+
+        cards_path = artifact_root / "knowledge_cards.json"
+        if not cards_path.exists() or not cards_path.is_file():
+            return []
+        try:
+            payload = json.loads(cards_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        if not isinstance(payload, list):
+            return []
+        return [item for item in payload if isinstance(item, dict)]
+
+    def _read_digest_text(self, digest_path: str | None) -> str | None:
+        if not isinstance(digest_path, str) or not digest_path.strip():
+            return None
+        path = Path(digest_path).expanduser()
+        if not path.exists() or not path.is_file():
+            return None
+        try:
+            payload = path.read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+        return payload or None
 
     def _read_artifact_meta(
         self, *, artifact_root: str | None, digest_path: str | None

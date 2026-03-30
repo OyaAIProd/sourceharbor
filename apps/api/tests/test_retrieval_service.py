@@ -246,6 +246,106 @@ def test_retrieval_service_search_hits_three_sources(tmp_path: Path) -> None:
     assert sources == {"digest", "transcript", "outline"}
 
 
+def test_retrieval_service_keyword_prioritizes_structured_knowledge_cards(tmp_path: Path) -> None:
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    (artifact_root / "digest.md").write_text(
+        "general digest about workflows and operators", encoding="utf-8"
+    )
+    (artifact_root / "knowledge_cards.json").write_text(
+        json.dumps(
+            [
+                {
+                    "card_type": "takeaway",
+                    "title": "Workflow reliability",
+                    "body": "Operator teams should prioritize workflow reliability checks.",
+                    "source_section": "highlights",
+                    "order_index": 0,
+                    "metadata": {
+                        "topic_key": "workflow-reliability",
+                        "topic_label": "Workflow / Reliability",
+                        "claim_kind": "takeaway",
+                        "confidence_label": "high",
+                    },
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    db = _FakeDB(
+        [
+            {
+                "job_id": uuid.uuid4(),
+                "video_id": uuid.uuid4(),
+                "kind": "video_digest_v1",
+                "mode": "full",
+                "artifact_root": str(artifact_root),
+                "platform": "youtube",
+                "video_uid": "abc123",
+                "source_url": "https://www.youtube.com/watch?v=abc123",
+                "title": "Demo",
+            }
+        ]
+    )
+    service = RetrievalService(db)  # type: ignore[arg-type]
+
+    payload = service.search(query="workflow-reliability", top_k=3, filters={})
+
+    assert payload["items"][0]["source"] == "knowledge_cards"
+    assert "Workflow / Reliability" in payload["items"][0]["snippet"]
+
+
+def test_retrieval_service_prioritizes_knowledge_cards_in_keyword_mode(tmp_path: Path) -> None:
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    (artifact_root / "digest.md").write_text("timeout fallback", encoding="utf-8")
+    (artifact_root / "knowledge_cards.json").write_text(
+        json.dumps(
+            [
+                {
+                    "card_type": "claim",
+                    "title": "Claim",
+                    "body": "Timeout fallback needs retry policy.",
+                    "source_section": "highlights",
+                    "metadata": {
+                        "topic_key": "timeout-fallback",
+                        "topic_label": "Timeout fallback",
+                        "claim_id": "claim-1",
+                        "claim_kind": "takeaway",
+                        "confidence_label": "high",
+                    },
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    db = _FakeDB(
+        [
+            {
+                "job_id": uuid.uuid4(),
+                "video_id": uuid.uuid4(),
+                "kind": "video_digest_v1",
+                "mode": "full",
+                "artifact_root": str(artifact_root),
+                "platform": "youtube",
+                "video_uid": "abc123",
+                "source_url": "https://www.youtube.com/watch?v=abc123",
+                "title": "Demo",
+            }
+        ]
+    )
+    service = RetrievalService(db)  # type: ignore[arg-type]
+
+    payload = service.search(query="timeout fallback", top_k=2, filters={"platform": "youtube"})
+
+    assert payload["items"][0]["source"] == "knowledge_cards"
+    assert "claim_kind:takeaway" in payload["items"][0]["snippet"]
+
+
 def test_normalize_mode_invalid_defaults_to_keyword() -> None:
     service = RetrievalService(_FakeDB([]))  # type: ignore[arg-type]
     assert service._normalize_mode("invalid") == "keyword"
@@ -551,6 +651,20 @@ def test_iter_artifact_texts_and_read_text_json_paths(tmp_path: Path) -> None:
     (root / "digest.md").write_text("digest", encoding="utf-8")
     (root / "outline.json").write_text(json.dumps({"a": 1}), encoding="utf-8")
     (root / "comments.json").write_text("{bad-json", encoding="utf-8")
+    (root / "knowledge_cards.json").write_text(
+        json.dumps(
+            [
+                {
+                    "card_type": "topic",
+                    "title": "Topic",
+                    "body": "Retry policy",
+                    "source_section": "topics",
+                    "metadata": {"topic_key": "retry-policy", "topic_label": "Retry policy"},
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     service = RetrievalService(_FakeDB([]))  # type: ignore[arg-type]
     payload = dict(service._iter_artifact_texts(str(root)))
@@ -558,6 +672,7 @@ def test_iter_artifact_texts_and_read_text_json_paths(tmp_path: Path) -> None:
     assert payload["digest"] == "digest"
     assert payload["outline"] == '{"a": 1}'
     assert payload["comments"] == "{bad-json"
+    assert "topic_key:retry-policy" in payload["knowledge_cards"]
 
 
 def test_match_content_branches() -> None:

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getActionSessionTokenForForm } from "@/app/action-security";
+import { FeedFeedbackPanel } from "@/components/feed-feedback-panel";
 import { getFlashMessage, toErrorCode } from "@/app/flash-message";
 import { EntryList } from "@/components/entry-list";
 import { FormSelectField } from "@/components/form-field";
@@ -34,6 +35,24 @@ const SOURCE_OPTIONS = [
 	{ value: "bilibili", label: "Bilibili" },
 	{ value: "rss", label: "RSS" },
 ] as const;
+
+const FEEDBACK_OPTIONS = [
+	{ value: "", label: "All feedback" },
+	{ value: "saved", label: "Saved" },
+	{ value: "useful", label: "Useful" },
+	{ value: "noisy", label: "Noisy" },
+	{ value: "dismissed", label: "Dismissed" },
+	{ value: "archived", label: "Archived" },
+] as const;
+
+type FeedFeedbackFilter = (typeof FEEDBACK_OPTIONS)[number]["value"];
+
+const SORT_OPTIONS = [
+	{ value: "recent", label: "Recent first" },
+	{ value: "curated", label: "Curated first" },
+] as const;
+
+type FeedSortMode = (typeof SORT_OPTIONS)[number]["value"];
 
 function toSourceSelectValue(
 	source: string,
@@ -76,10 +95,23 @@ function formatPublishedDateLabel(
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
 	const sessionToken = getActionSessionTokenForForm();
-	const { source, category, sub, limit, cursor, prev_cursor, page, item } =
+	const {
+		source,
+		category,
+		feedback,
+		sort,
+		sub,
+		limit,
+		cursor,
+		prev_cursor,
+		page,
+		item,
+	} =
 		await resolveSearchParams(searchParams, [
 			"source",
 			"category",
+			"feedback",
+			"sort",
 			"sub",
 			"limit",
 			"cursor",
@@ -101,31 +133,59 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 		Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : inferredPage;
 	const normalizedSource = source.trim().toLowerCase();
 	const safeSource = normalizedSource || undefined;
+	const normalizedFeedback = feedback.trim().toLowerCase();
+	const safeFeedback: FeedFeedbackFilter =
+		normalizedFeedback === "saved" ||
+		normalizedFeedback === "useful" ||
+		normalizedFeedback === "noisy" ||
+		normalizedFeedback === "dismissed" ||
+		normalizedFeedback === "archived"
+			? normalizedFeedback
+			: "";
+	const normalizedSort = sort.trim().toLowerCase();
+	const safeSort: FeedSortMode =
+		normalizedSort === "curated" ? "curated" : "recent";
 	const safeSubscriptionId = sub.trim() || undefined;
 	const sourceSelectValue = toSourceSelectValue(source);
-	const isFiltered = Boolean(safeSource || category || safeSubscriptionId);
+	const isFiltered = Boolean(
+		safeSource || category || safeFeedback || safeSubscriptionId || safeSort !== "recent",
+	);
 	const hasVisibleFilterLabel = Boolean(
-		safeSource || category || safeSubscriptionId,
+		safeSource || category || safeFeedback || safeSubscriptionId || safeSort !== "recent",
 	);
 	const selectedJobId = item.trim() || null;
 
 	let feed: Awaited<ReturnType<typeof apiClient.getDigestFeed>> | null = null;
+	let selectedFeedback: Awaited<ReturnType<typeof apiClient.getFeedFeedback>> | null =
+		null;
 	let errorCode: string | null = null;
 	try {
-		feed = await apiClient.getDigestFeed({
-			source: safeSource,
-			category:
-				category === "tech" ||
-				category === "creator" ||
-				category === "macro" ||
-				category === "ops" ||
-				category === "misc"
-					? category
-					: undefined,
-			subscription_id: safeSubscriptionId,
+		const query: Parameters<typeof apiClient.getDigestFeed>[0] = {
 			limit: safeLimit,
 			cursor: safeCursor,
-		});
+		};
+		if (safeSource) {
+			query.source = safeSource;
+		}
+		if (
+			category === "tech" ||
+			category === "creator" ||
+			category === "macro" ||
+			category === "ops" ||
+			category === "misc"
+		) {
+			query.category = category;
+		}
+		if (safeFeedback) {
+			query.feedback = safeFeedback;
+		}
+		if (safeSort !== "recent") {
+			query.sort = safeSort;
+		}
+		if (safeSubscriptionId) {
+			query.subscription_id = safeSubscriptionId;
+		}
+		feed = await apiClient.getDigestFeed(query);
 	} catch (err) {
 		errorCode = toErrorCode(err);
 	}
@@ -148,6 +208,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 		const params = new URLSearchParams();
 		if (safeSource) params.set("source", safeSource);
 		if (category) params.set("category", category);
+		if (safeFeedback) params.set("feedback", safeFeedback);
+		if (safeSort !== "recent") params.set("sort", safeSort);
 		if (safeSubscriptionId) params.set("sub", safeSubscriptionId);
 		if (safeLimit !== 20) params.set("limit", String(safeLimit));
 		if (pageValue > 1) params.set("page", String(pageValue));
@@ -176,6 +238,13 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 	const selectedItem = selectedJobId
 		? items.find((feedItem) => feedItem.job_id === selectedJobId)
 		: null;
+	if (selectedJobId && !errorCode) {
+		try {
+			selectedFeedback = await apiClient.getFeedFeedback(selectedJobId);
+		} catch {
+			selectedFeedback = null;
+		}
+	}
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
@@ -227,6 +296,30 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 									label: value,
 								})),
 							]}
+							fieldClassName="feed-filter-field"
+							labelClassName="sr-only"
+							selectClassName="feed-filter-select"
+						/>
+						<FormSelectField
+							name="feedback"
+							label="Feedback"
+							defaultValue={safeFeedback}
+							options={FEEDBACK_OPTIONS.map((option) => ({
+								value: option.value,
+								label: option.label,
+							}))}
+							fieldClassName="feed-filter-field"
+							labelClassName="sr-only"
+							selectClassName="feed-filter-select"
+						/>
+						<FormSelectField
+							name="sort"
+							label="Sort"
+							defaultValue={safeSort}
+							options={SORT_OPTIONS.map((option) => ({
+								value: option.value,
+								label: option.label,
+							}))}
 							fieldClassName="feed-filter-field"
 							labelClassName="sr-only"
 							selectClassName="feed-filter-select"
@@ -312,6 +405,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 						}))}
 						selectedJobId={selectedJobId}
 					/>
+					<div className="space-y-4">
+						{selectedJobId ? (
+							<FeedFeedbackPanel
+								initialFeedback={selectedFeedback}
+								jobId={selectedJobId}
+								sessionToken={sessionToken}
+							/>
+						) : null}
 					<ReadingPane
 						jobId={selectedJobId}
 						title={selectedItem?.title}
@@ -323,6 +424,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 							selectedItem?.published_at,
 						)}
 					/>
+					</div>
 				</div>
 			)}
 
@@ -350,8 +452,20 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 								{safeSource && `${toSourceLabel(safeSource)}`}
 								{safeSource && category ? " · " : ""}
 								{category && `${CATEGORY_LABELS[category] ?? category}`}
-								{(safeSource || category) && safeSubscriptionId ? " · " : ""}
+								{(safeSource || category) && safeFeedback ? " · " : ""}
+								{safeFeedback &&
+									`${FEEDBACK_OPTIONS.find((option) => option.value === safeFeedback)?.label ?? safeFeedback}`}
+								{(safeSource || category || safeFeedback) && safeSubscriptionId
+									? " · "
+									: ""}
 								{safeSubscriptionId ? "Subscription" : ""}
+								{(safeSource || category || safeFeedback || safeSubscriptionId) &&
+								safeSort !== "recent"
+									? " · "
+									: ""}
+								{safeSort !== "recent"
+									? `${SORT_OPTIONS.find((option) => option.value === safeSort)?.label ?? safeSort}`
+									: ""}
 							</span>
 						) : null}
 					</div>

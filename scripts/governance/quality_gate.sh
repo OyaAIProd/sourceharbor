@@ -792,6 +792,19 @@ run_docs_governance_gate() {
   python3 scripts/governance/check_docs_governance.py
   echo "[quality-gate] docs governance control-plane gate passed"
 
+  python3 scripts/governance/check_public_entrypoint_references.py
+  echo "[quality-gate] public entrypoint reference gate passed"
+
+  python3 scripts/governance/check_route_contract_alignment.py
+  echo "[quality-gate] route contract alignment gate passed"
+
+  python3 scripts/governance/migrate_local_private_ledgers.py >/dev/null
+  python3 scripts/governance/check_local_private_ledger_migration.py
+  echo "[quality-gate] local private ledger migration gate passed"
+
+  python3 scripts/governance/check_external_lane_contract.py
+  echo "[quality-gate] external lane contract gate passed"
+
   python3 scripts/governance/check_eval_assets.py
   echo "[quality-gate] eval asset gate passed"
 }

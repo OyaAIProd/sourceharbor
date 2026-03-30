@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..errors import ApiTimeoutError
 from ..models import Subscription
+from ..repositories import IngestRunsRepository
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 class IngestService:
     def __init__(self, db: Session) -> None:
         self.db = db
+        self.run_repo = IngestRunsRepository(db)
 
     async def poll(
         self,
@@ -27,7 +29,7 @@ class IngestService:
         max_new_videos: int,
         trace_id: str | None = None,
         user: str | None = None,
-    ) -> tuple[int, list[dict[str, object]]]:
+    ) -> dict[str, object]:
         trace = str(trace_id or "missing_trace")
         actor = str(user or "system")
         logger.info(
@@ -87,18 +89,34 @@ class IngestService:
             "platform": platform,
             "max_new_videos": max_new_videos,
         }
+        run = self.run_repo.create(
+            subscription_id=subscription_id,
+            platform=platform,
+            max_new_videos=max_new_videos,
+            filters_json=filters,
+            requested_by=actor,
+            requested_trace_id=trace,
+        )
+        filters["ingest_run_id"] = str(run.id)
 
         try:
             handle = await asyncio.wait_for(
                 client.start_workflow(
                     "PollFeedsWorkflow",
                     filters,
-                    id=f"api-poll-feeds-{uuid4()}",
+                    id=f"api-poll-feeds-{run.id}-{uuid4()}",
                     task_queue=settings.temporal_task_queue,
                 ),
                 timeout=settings.api_temporal_start_timeout_seconds,
             )
         except TimeoutError as exc:
+            self.run_repo.mark_failed(
+                run_id=run.id,
+                error_message=(
+                    "temporal workflow start timed out "
+                    f"after {settings.api_temporal_start_timeout_seconds:.1f}s"
+                ),
+            )
             logger.error(
                 "ingest_temporal_start_timeout",
                 extra={
@@ -115,15 +133,40 @@ class IngestService:
                 ),
                 error_code="TEMPORAL_WORKFLOW_START_TIMEOUT",
             ) from exc
+        except Exception as exc:
+            self.run_repo.mark_failed(run_id=run.id, error_message=str(exc))
+            raise
 
+        run = self.run_repo.mark_workflow_started(
+            run_id=run.id,
+            workflow_id=str(getattr(handle, "id", "") or ""),
+        )
         logger.info(
             "ingest_poll_completed",
             extra={
                 "trace_id": trace,
                 "user": actor,
                 "workflow_id": getattr(handle, "id", None),
-                "enqueued": 0,
-                "candidates": 0,
+                "run_id": str(run.id),
+                "status": run.status,
             },
         )
-        return 0, []
+        return {
+            "run_id": run.id,
+            "workflow_id": run.workflow_id,
+            "status": run.status,
+            "enqueued": 0,
+            "candidates": [],
+        }
+
+    def get_run(self, *, run_id: uuid.UUID):
+        return self.run_repo.get_with_items(run_id=run_id)
+
+    def list_runs(
+        self,
+        *,
+        limit: int = 20,
+        status: str | None = None,
+        platform: str | None = None,
+    ):
+        return self.run_repo.list_recent(limit=limit, status=status, platform=platform)

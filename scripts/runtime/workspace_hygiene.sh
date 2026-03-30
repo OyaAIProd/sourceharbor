@@ -56,6 +56,7 @@ for rel in \
   "cache" \
   "logs" \
   "mutants" \
+  "node_modules" \
   "playwright-report" \
   "test-results" \
   "htmlcov"; do
@@ -71,9 +72,6 @@ fi
 if [[ -d "$ROOT_DIR/.venv" ]]; then
   dir_targets+=("$ROOT_DIR/.venv")
 fi
-if [[ -d "$ROOT_DIR/apps/web/node_modules" ]]; then
-  dir_targets+=("$ROOT_DIR/apps/web/node_modules")
-fi
 if [[ -d "$ROOT_DIR/.runtime-cache/tmp/uv-project-env" ]]; then
   dir_targets+=("$ROOT_DIR/.runtime-cache/tmp/uv-project-env")
 fi
@@ -85,7 +83,7 @@ done < <(
   find "$ROOT_DIR" \
     -path "$ROOT_DIR/.git" -prune -o \
     -path "$ROOT_DIR/.runtime-cache" -prune -o \
-    -path "$ROOT_DIR/apps/web/node_modules" -prune -o \
+    \( -type d -name node_modules -print -prune \) -o \
     -type d -name __pycache__ -print 2>/dev/null | sort
 )
 

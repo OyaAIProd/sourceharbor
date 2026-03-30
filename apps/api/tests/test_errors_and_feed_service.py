@@ -77,6 +77,9 @@ def test_feed_service_list_digest_feed_applies_cursor_filters_and_has_more(
     ts1 = datetime(2026, 2, 25, 10, 0, tzinfo=UTC)
     ts2 = datetime(2026, 2, 25, 9, 0, tzinfo=UTC)
     ts3 = datetime(2026, 2, 25, 8, 0, tzinfo=UTC)
+    job_id_1 = "11111111-1111-1111-1111-111111111111"
+    job_id_2 = "22222222-2222-2222-2222-222222222222"
+    job_id_3 = "33333333-3333-3333-3333-333333333333"
 
     digest_1 = tmp_path / "digest-1.md"
     digest_2 = tmp_path / "digest-2.md"
@@ -87,7 +90,7 @@ def test_feed_service_list_digest_feed_applies_cursor_filters_and_has_more(
 
     rows = [
         {
-            "job_id": "job-3",
+            "job_id": job_id_3,
             "source_url": "https://example.com/v3",
             "source": "youtube",
             "content_type": "article",
@@ -100,11 +103,13 @@ def test_feed_service_list_digest_feed_applies_cursor_filters_and_has_more(
             "subscription_source_type": "url",
             "subscription_source_value": "https://youtube.com/@demo",
             "subscription_id": "sub-tech-1",
+            "feedback_saved": False,
+            "feedback_label": None,
             "artifact_digest_md": str(digest_1),
             "artifact_root": None,
         },
         {
-            "job_id": "job-2",
+            "job_id": job_id_2,
             "source_url": "https://example.com/v2",
             "source": "youtube",
             "content_type": "video",
@@ -117,11 +122,13 @@ def test_feed_service_list_digest_feed_applies_cursor_filters_and_has_more(
             "subscription_source_type": "url",
             "subscription_source_value": "https://youtube.com/@demo",
             "subscription_id": "sub-tech-1",
+            "feedback_saved": True,
+            "feedback_label": "useful",
             "artifact_digest_md": str(digest_2),
             "artifact_root": None,
         },
         {
-            "job_id": "job-1",
+            "job_id": job_id_1,
             "source_url": "https://example.com/v1",
             "source": "youtube",
             "content_type": "video",
@@ -134,6 +141,8 @@ def test_feed_service_list_digest_feed_applies_cursor_filters_and_has_more(
             "subscription_source_type": "url",
             "subscription_source_value": "https://youtube.com/@demo",
             "subscription_id": "sub-tech-2",
+            "feedback_saved": False,
+            "feedback_label": None,
             "artifact_digest_md": str(digest_3),
             "artifact_root": None,
         },
@@ -158,21 +167,134 @@ def test_feed_service_list_digest_feed_applies_cursor_filters_and_has_more(
 
     assert result["has_more"] is True
     assert len(result["items"]) == 2
-    assert result["next_cursor"] == f"{ts2.isoformat()}__job-2"
+    assert result["next_cursor"] == f"{ts2.isoformat()}__{job_id_2}"
     assert result["items"][0]["title"] == "v-3"
     assert result["items"][0]["source_name"] in {"youtube", "Demo Channel"}
     assert result["items"][0]["artifact_type"] == "digest"
     assert result["items"][0]["content_type"] == "article"
     assert result["items"][1]["content_type"] == "video"
+    assert result["items"][1]["saved"] is True
+    assert result["items"][1]["feedback_label"] == "useful"
+
+
+def test_feed_service_list_digest_feed_applies_feedback_filter_param(tmp_path: Path) -> None:
+    ts = datetime(2026, 2, 25, 10, 0, tzinfo=UTC)
+    digest = tmp_path / "digest.md"
+    digest.write_text("# d1", encoding="utf-8")
+
+    fake_db = _FakeDB(
+        [
+            {
+                "job_id": "11111111-1111-1111-1111-111111111111",
+                "source_url": "https://example.com/v1",
+                "source": "youtube",
+                "content_type": "video",
+                "title": "Video 1",
+                "video_uid": "v-1",
+                "published_at": ts,
+                "created_at": ts,
+                "sort_ts": ts,
+                "category": "tech",
+                "subscription_source_type": "url",
+                "subscription_source_value": "https://youtube.com/@demo",
+                "subscription_id": "sub-tech-1",
+                "feedback_saved": True,
+                "feedback_label": "useful",
+                "artifact_digest_md": str(digest),
+                "artifact_root": None,
+            }
+        ]
+    )
+    service = FeedService(db=fake_db)  # type: ignore[arg-type]
+
+    result = service.list_digest_feed(feedback=" Useful ")
+
+    assert result["items"][0]["saved"] is True
+    assert result["items"][0]["feedback_label"] == "useful"
+    assert fake_db.calls[0]["params"]["feedback"] == "useful"
+
+
+def test_feed_service_list_digest_feed_supports_curated_sort_cursor(tmp_path: Path) -> None:
+    ts1 = datetime(2026, 2, 25, 10, 0, tzinfo=UTC)
+    ts2 = datetime(2026, 2, 25, 9, 0, tzinfo=UTC)
+    digest_1 = tmp_path / "digest-curated-1.md"
+    digest_2 = tmp_path / "digest-curated-2.md"
+    digest_1.write_text("# curated-1", encoding="utf-8")
+    digest_2.write_text("# curated-2", encoding="utf-8")
+
+    fake_db = _FakeDB(
+        [
+            {
+                "job_id": "11111111-1111-1111-1111-111111111111",
+                "source_url": "https://example.com/v1",
+                "source": "youtube",
+                "content_type": "video",
+                "title": "Useful and saved",
+                "video_uid": "v-1",
+                "published_at": ts1,
+                "created_at": ts1,
+                "sort_ts": ts1,
+                "category": "tech",
+                "subscription_source_type": "url",
+                "subscription_source_value": "https://youtube.com/@demo",
+                "subscription_id": "sub-tech-1",
+                "feedback_saved": True,
+                "feedback_label": "useful",
+                "feedback_rank": 4,
+                "artifact_digest_md": str(digest_1),
+                "artifact_root": None,
+            },
+            {
+                "job_id": "22222222-2222-2222-2222-222222222222",
+                "source_url": "https://example.com/v2",
+                "source": "youtube",
+                "content_type": "video",
+                "title": "Neutral",
+                "video_uid": "v-2",
+                "published_at": ts2,
+                "created_at": ts2,
+                "sort_ts": ts2,
+                "category": "tech",
+                "subscription_source_type": "url",
+                "subscription_source_value": "https://youtube.com/@demo",
+                "subscription_id": "sub-tech-1",
+                "feedback_saved": False,
+                "feedback_label": None,
+                "feedback_rank": 0,
+                "artifact_digest_md": str(digest_2),
+                "artifact_root": None,
+            },
+        ]
+    )
+    service = FeedService(db=fake_db)  # type: ignore[arg-type]
+
+    result = service.list_digest_feed(
+        sort="curated",
+        limit=1,
+        cursor="4__2026-02-24T09:00:00+00:00__job-0",
+    )
+
+    params = fake_db.calls[0]["params"]
+    assert params["sort"] == "curated"
+    assert params["cursor_rank"] == 4
+    assert params["cursor_ts"] == "2026-02-24T09:00:00+00:00"
+    assert params["cursor_job_id"] == "job-0"
+    assert result["has_more"] is True
+    assert result["next_cursor"] == f"4__{ts1.isoformat()}__11111111-1111-1111-1111-111111111111"
+    assert result["items"][0]["saved"] is True
+    assert result["items"][0]["feedback_label"] == "useful"
 
 
 def test_feed_service_parse_cursor_and_title_resolution() -> None:
     service = FeedService(db=None)  # type: ignore[arg-type]
 
-    assert service._parse_cursor(None) == (None, None)
-    assert service._parse_cursor("invalid") == (None, None)
-    assert service._parse_cursor("ts__") == (None, None)
-    assert service._parse_cursor("ts__job-1") == ("ts", "job-1")
+    assert service._parse_cursor(None) == (None, None, None)
+    assert service._parse_cursor("invalid") == (None, None, None)
+    assert service._parse_cursor("ts__") == (None, None, None)
+    assert service._parse_cursor("ts__job-1") == (None, "ts", "job-1")
+    assert service._parse_cursor("4__ts__job-1") == (None, None, None)
+    assert service._parse_cursor("4__ts__job-1", sort="curated") == (4, "ts", "job-1")
+    assert service._parse_cursor("bad__ts__job-1", sort="curated") == (None, None, None)
 
     assert service._resolve_title({"title": "  T  "}) == "T"
     assert service._resolve_title({"title": "", "video_uid": "vid-1"}) == "vid-1"
@@ -297,6 +419,7 @@ def test_feed_service_resolve_summary_and_digest_io_edge_cases(tmp_path: Path, m
     assert service._normalize_content_type(" anything ") == "video"
     assert service._iso(" ") != " "
     assert service._parse_cursor(" 2026-03-01T00:00:00Z __ job-1 ") == (
+        None,
         "2026-03-01T00:00:00Z",
         "job-1",
     )

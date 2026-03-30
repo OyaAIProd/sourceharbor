@@ -72,6 +72,30 @@ class JobResponse(BaseModel):
     notification_retry: NotificationRetrySummary | None = None
 
 
+class JobCompareStats(BaseModel):
+    added_lines: int
+    removed_lines: int
+    changed: bool
+
+
+class JobCompareResponse(BaseModel):
+    job_id: str
+    previous_job_id: str | None = None
+    has_previous: bool
+    current_digest: str | None = None
+    previous_digest: str | None = None
+    diff_markdown: str
+    stats: JobCompareStats
+
+
+class KnowledgeCardResponse(BaseModel):
+    card_type: str
+    title: str
+    body: str
+    source_section: str
+    order_index: int
+
+
 @router.get("/{job_id}", response_model=JobResponse)
 def get_job(job_id: uuid.UUID, db: Session = Depends(get_db)):
     service = JobsService(db)
@@ -130,3 +154,21 @@ def get_job(job_id: uuid.UUID, db: Session = Depends(get_db)):
         artifacts_index=artifacts_index,
         notification_retry=service.get_notification_retry(job_id),
     )
+
+
+@router.get("/{job_id}/compare", response_model=JobCompareResponse)
+def compare_job(job_id: uuid.UUID, db: Session = Depends(get_db)):
+    service = JobsService(db)
+    payload = service.compare_with_previous(job_id=job_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="job not found")
+    return JobCompareResponse(**payload)
+
+
+@router.get("/{job_id}/knowledge-cards", response_model=list[KnowledgeCardResponse])
+def get_job_knowledge_cards(job_id: uuid.UUID, db: Session = Depends(get_db)):
+    service = JobsService(db)
+    payload = service.get_knowledge_cards(job_id=job_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="job not found")
+    return [KnowledgeCardResponse(**item) for item in payload]

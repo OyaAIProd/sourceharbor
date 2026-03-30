@@ -120,10 +120,15 @@ fi
 
 if [[ -z "${GEMINI_API_KEY:-}" ]]; then
   run_teardown_phase
-  DIAGNOSTICS_JSON="$DIAGNOSTICS_JSON" API_BASE_URL="$API_BASE_URL" STARTED_AT_UTC="$STARTED_AT_UTC" TEARDOWN_TRACE="$TEARDOWN_TRACE" MAX_RETRIES="$MAX_RETRIES" python3 - <<'PY'
+  ROOT_DIR="$ROOT_DIR" DIAGNOSTICS_JSON="$DIAGNOSTICS_JSON" API_BASE_URL="$API_BASE_URL" STARTED_AT_UTC="$STARTED_AT_UTC" TEARDOWN_TRACE="$TEARDOWN_TRACE" MAX_RETRIES="$MAX_RETRIES" python3 - <<'PY'
 import json
 import os
+import sys
 from pathlib import Path
+
+root = Path(os.environ["ROOT_DIR"]).resolve()
+sys.path.insert(0, str(root / "scripts" / "governance"))
+from common import write_json_artifact
 
 teardown_steps = []
 for raw in (os.environ.get("TEARDOWN_TRACE", "") or "").splitlines():
@@ -133,30 +138,36 @@ for raw in (os.environ.get("TEARDOWN_TRACE", "") or "").splitlines():
     ts, step, status, detail = parts
     teardown_steps.append({"timestamp": ts, "step": step, "status": status, "detail": detail})
 
-Path(os.environ["DIAGNOSTICS_JSON"]).write_text(
-    json.dumps(
-        {
-            "status": "failed",
-            "failure_kind": "network_or_environment_timeout",
-            "reason": "missing GEMINI_API_KEY",
-            "api_base_url": os.environ["API_BASE_URL"],
-            "started_at_utc": os.environ.get("STARTED_AT_UTC", ""),
-            "retry_policy": {"max_attempts": int(os.environ.get("MAX_RETRIES", "2") or "2")},
-            "write_policy": {
-                "idempotency": "computer_use request key is generated per endpoint+payload hash",
-                "teardown": "safe teardown removes only script temp files",
-            },
-            "write_operations": [],
-            "teardown": {"steps": teardown_steps},
-        },
-        ensure_ascii=False,
-        indent=2,
-    )
-    + "\n",
-    encoding="utf-8",
+payload = {
+    "status": "failed",
+    "failure_kind": "network_or_environment_timeout",
+    "reason": "missing GEMINI_API_KEY",
+    "api_base_url": os.environ["API_BASE_URL"],
+    "started_at_utc": os.environ.get("STARTED_AT_UTC", ""),
+    "retry_policy": {"max_attempts": int(os.environ.get("MAX_RETRIES", "2") or "2")},
+    "write_policy": {
+        "idempotency": "computer_use request key is generated per endpoint+payload hash",
+        "teardown": "safe teardown removes only script temp files",
+    },
+    "write_operations": [],
+    "teardown": {"steps": teardown_steps},
+}
+
+diag_path = Path(os.environ["DIAGNOSTICS_JSON"])
+if not diag_path.is_absolute():
+    diag_path = (root / diag_path).resolve()
+
+write_json_artifact(
+    diag_path,
+    payload,
+    source_entrypoint="scripts/ci/smoke_llm_real_local.sh",
+    verification_scope="tests:pr-llm-real-smoke",
+    source_run_id="smoke-llm-real-local-missing-key",
+    freshness_window_hours=24,
+    extra={"report_kind": "pr-llm-real-smoke-result"},
 )
 PY
-  fail "GEMINI_API_KEY is required"
+  echo "[smoke_llm_real_local] GEMINI_API_KEY is required" >&2
   exit 2
 fi
 

@@ -29,7 +29,7 @@ Usage: ./bin/dev-api [--app <module:app>] [--host <host>] [--port <port>] [--rel
 Options:
   --app <module:app>  Uvicorn ASGI app target (default: apps.api.app.main:app)
   --host <host>       Uvicorn bind host (default: 127.0.0.1)
-  --port <port>       Uvicorn bind port (default: 8000)
+  --port <port>       Uvicorn bind port (default: 9000)
   --reload            Enable auto-reload (default)
   --no-reload         Disable auto-reload
   -h, --help          Show this help

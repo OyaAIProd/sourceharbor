@@ -17,10 +17,13 @@ from mcp.server.fastmcp import FastMCP
 
 from .tools.artifacts import register_artifact_tools
 from .tools.computer_use import register_computer_use_tools
+from .tools.feed import register_feed_tools
 from .tools.health import register_health_tools
 from .tools.ingest import register_ingest_tools
 from .tools.jobs import register_job_tools
+from .tools.knowledge import register_knowledge_tools
 from .tools.notifications import register_notification_tools
+from .tools.reports import register_report_tools
 from .tools.retrieval import register_retrieval_tools
 from .tools.subscriptions import register_subscription_tools
 from .tools.ui_audit import register_ui_audit_tools
@@ -236,7 +239,7 @@ class ApiConfig:
             return value
 
         return cls(
-            base_url=os.getenv("SOURCE_HARBOR_API_BASE_URL", "http://127.0.0.1:8000").rstrip("/"),
+            base_url=os.getenv("SOURCE_HARBOR_API_BASE_URL", "http://127.0.0.1:9000").rstrip("/"),
             timeout_sec=_env_float("SOURCE_HARBOR_API_TIMEOUT_SEC", 20.0),
             api_key=os.getenv("SOURCE_HARBOR_API_KEY"),
             max_base64_bytes=_env_positive_int(
@@ -763,8 +766,11 @@ def create_server() -> FastMCP:
     register_subscription_tools(mcp, api_call)
     register_ingest_tools(mcp, api_call)
     register_job_tools(mcp, api_call)
+    register_feed_tools(mcp, api_call)
+    register_knowledge_tools(mcp, api_call)
     register_artifact_tools(mcp, api_call)
     register_notification_tools(mcp, api_call)
+    register_report_tools(mcp, api_call)
     register_health_tools(mcp, api_call)
     register_workflow_tools(mcp, api_call)
     register_retrieval_tools(mcp, api_call)

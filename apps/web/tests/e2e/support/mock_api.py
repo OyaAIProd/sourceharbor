@@ -542,7 +542,16 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                     status=int(HTTPStatus.ACCEPTED),
                     payload=payload,
                 )
-                self._send_json(HTTPStatus.ACCEPTED, {"enqueued": 2, "candidates": []})
+                self._send_json(
+                    HTTPStatus.ACCEPTED,
+                    {
+                        "run_id": "11111111-1111-1111-1111-111111111111",
+                        "workflow_id": "wf-e2e-ingest-001",
+                        "status": "queued",
+                        "enqueued": 2,
+                        "candidates": [],
+                    },
+                )
                 return
 
             if path == "/api/v1/videos/process":

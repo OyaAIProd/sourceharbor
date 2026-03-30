@@ -2,6 +2,8 @@
 
 import {
 	Home,
+	Inbox,
+	Layers3,
 	List,
 	ListTodo,
 	Menu,
@@ -132,6 +134,19 @@ function SidebarNavContent({
 					<span className={collapsed ? "sr-only" : undefined}>Digest feed</span>
 				</Link>
 				<Link
+					href="/knowledge"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/knowledge")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/knowledge") ? "page" : undefined}
+				>
+					<Layers3 className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Knowledge</span>
+				</Link>
+				<Link
 					href="/jobs"
 					className={cn(
 						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
@@ -143,6 +158,19 @@ function SidebarNavContent({
 				>
 					<ListTodo className="size-4 shrink-0 opacity-80" aria-hidden />
 					<span className={collapsed ? "sr-only" : undefined}>Jobs</span>
+				</Link>
+				<Link
+					href="/ingest-runs"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/ingest-runs")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/ingest-runs") ? "page" : undefined}
+				>
+					<Inbox className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Ingest runs</span>
 				</Link>
 
 				{subscriptionsLoadError && !collapsed ? (

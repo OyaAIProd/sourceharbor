@@ -30,12 +30,21 @@ _SEARCH_FILES = (
     ("digest", "digest.md"),
     ("transcript", "transcript.txt"),
     ("outline", "outline.json"),
+    ("knowledge_cards", "knowledge_cards.json"),
     ("comments", "comments.json"),
     ("meta", "meta.json"),
 )
 
 _RETRIEVAL_MODES = {"keyword", "semantic", "hybrid"}
 _EMBEDDING_DIMENSION = 768
+_KEYWORD_SOURCE_SCORE_BOOSTS = {
+    "knowledge_cards": 1.5,
+    "digest": 0.25,
+    "outline": 0.15,
+    "comments": 0.05,
+    "meta": 0.0,
+    "transcript": 0.0,
+}
 
 RetrievalMode = Literal["keyword", "semantic", "hybrid"]
 logger = logging.getLogger(__name__)
@@ -100,10 +109,20 @@ class RetrievalService:
             if not isinstance(artifact_root, str) or not artifact_root.strip():
                 continue
             for source, content in self._iter_artifact_texts(artifact_root):
+                if source == "knowledge_cards":
+                    hits.extend(
+                        self._match_knowledge_cards(
+                            row=row,
+                            content=content,
+                            query=query,
+                        )
+                    )
+                    continue
                 match = self._match_content(content=content, query=query)
                 if match is None:
                     continue
                 score, snippet = match
+                score += _KEYWORD_SOURCE_SCORE_BOOSTS.get(source, 0.0)
                 hits.append(
                     self._build_hit(
                         row=row,
@@ -114,6 +133,93 @@ class RetrievalService:
                 )
         hits.sort(key=lambda item: item["score"], reverse=True)
         return hits[:top_k]
+
+    def _match_knowledge_cards(
+        self,
+        *,
+        row: dict[str, Any],
+        content: str,
+        query: str,
+    ) -> list[dict[str, Any]]:
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            match = self._match_content(content=content, query=query)
+            if match is None:
+                return []
+            score, snippet = match
+            score += _KEYWORD_SOURCE_SCORE_BOOSTS.get("knowledge_cards", 0.0)
+            return [
+                self._build_hit(
+                    row=row,
+                    source="knowledge_cards",
+                    snippet=snippet[:400],
+                    score=score,
+                )
+            ]
+        cards = parsed if isinstance(parsed, list) else []
+        hits: list[dict[str, Any]] = []
+        query_norm = query.strip().lower()
+        if not query_norm:
+            return []
+
+        for index, card in enumerate(cards):
+            if not isinstance(card, dict):
+                continue
+            title = str(card.get("title") or "").strip()
+            body = str(card.get("body") or "").strip()
+            source_section = str(card.get("source_section") or "").strip()
+            metadata = card.get("metadata")
+            metadata_dict = metadata if isinstance(metadata, dict) else {}
+            topic_key = str(metadata_dict.get("topic_key") or "").strip()
+            topic_label = str(metadata_dict.get("topic_label") or "").strip()
+            claim_kind = str(metadata_dict.get("claim_kind") or "").strip()
+            confidence_label = str(metadata_dict.get("confidence_label") or "").strip()
+            searchable = "\n".join(
+                part
+                for part in [
+                    title,
+                    body,
+                    source_section,
+                    topic_key,
+                    topic_label,
+                    claim_kind,
+                    confidence_label,
+                ]
+                if part
+            )
+            match = self._match_content(content=searchable, query=query)
+            if match is None:
+                continue
+            score, _snippet = match
+            score += _KEYWORD_SOURCE_SCORE_BOOSTS.get("knowledge_cards", 0.0)
+            if query_norm in topic_key.lower() or query_norm in topic_label.lower():
+                score += 1.5
+            if query_norm == claim_kind.lower():
+                score += 1.2
+            if confidence_label.lower() == "high":
+                score += 0.35
+
+            snippet_parts = [
+                title or f"Knowledge card {index + 1}",
+                body,
+            ]
+            if topic_label:
+                snippet_parts.append(f"Topic: {topic_label}")
+            if claim_kind:
+                snippet_parts.append(f"claim_kind:{claim_kind}")
+            if topic_key:
+                snippet_parts.append(f"topic_key:{topic_key}")
+            snippet = re.sub(r"\s+", " ", " | ".join(part for part in snippet_parts if part)).strip()
+            hits.append(
+                self._build_hit(
+                    row=row,
+                    source="knowledge_cards",
+                    snippet=snippet[:400],
+                    score=score,
+                )
+            )
+        return hits
 
     def _search_semantic(
         self, *, query: str, top_k: int, filters: dict[str, Any], strict: bool = False
@@ -467,10 +573,39 @@ class RetrievalService:
         if path.suffix == ".json":
             try:
                 parsed = json.loads(raw)
+                if path.name == "knowledge_cards.json":
+                    return self._render_knowledge_cards_text(parsed)
                 return json.dumps(parsed, ensure_ascii=False)
             except json.JSONDecodeError:
                 return raw
         return raw
+
+    def _render_knowledge_cards_text(self, payload: Any) -> str:
+        if not isinstance(payload, list):
+            return json.dumps(payload, ensure_ascii=False)
+
+        lines: list[str] = []
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            card_type = str(item.get("card_type") or "").strip()
+            title = str(item.get("title") or "").strip()
+            body = str(item.get("body") or "").strip()
+            source_section = str(item.get("source_section") or "").strip()
+            metadata = item.get("metadata")
+            segments = [
+                segment
+                for segment in [card_type, title, body, source_section]
+                if isinstance(segment, str) and segment
+            ]
+            if isinstance(metadata, dict):
+                for key in ("topic_key", "topic_label", "claim_id", "claim_kind", "confidence_label"):
+                    value = metadata.get(key)
+                    if isinstance(value, str) and value.strip():
+                        segments.append(f"{key}:{value.strip()}")
+            if segments:
+                lines.append(" | ".join(segments))
+        return "\n".join(lines)
 
     def _match_content(self, *, content: str, query: str) -> tuple[float, str] | None:
         content_norm = content.strip()

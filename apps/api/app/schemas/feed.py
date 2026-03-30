@@ -17,6 +17,8 @@ class DigestFeedItem(BaseModel):
     summary_md: str
     artifact_type: str
     content_type: Literal["video", "article"]
+    saved: bool = False
+    feedback_label: Literal["useful", "noisy", "dismissed", "archived"] | None = None
 
 
 class DigestFeedResponse(BaseModel):

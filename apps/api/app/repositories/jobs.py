@@ -123,6 +123,23 @@ class JobsRepository:
     def get(self, job_id: uuid.UUID) -> Job | None:
         return self.db.get(Job, job_id)
 
+    def get_previous_successful_job(self, *, job_id: uuid.UUID) -> Job | None:
+        current = self.get(job_id)
+        if current is None:
+            return None
+        stmt = (
+            select(Job)
+            .where(
+                Job.video_id == current.video_id,
+                Job.status == "succeeded",
+                Job.id != current.id,
+                Job.created_at < current.created_at,
+            )
+            .order_by(Job.created_at.desc())
+            .limit(1)
+        )
+        return self.db.scalar(stmt)
+
     def get_by_idempotency_key(self, idempotency_key: str) -> Job | None:
         stmt = select(Job).where(Job.idempotency_key == idempotency_key)
         return self.db.scalar(stmt)

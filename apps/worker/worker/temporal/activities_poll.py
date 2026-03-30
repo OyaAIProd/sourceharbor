@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import json
 import logging
-from os import getpid
+from os import getenv, getpid
 from typing import Any
+
+from sqlalchemy import text
 
 from worker.config import Settings
 from worker.rss.adapters import poll_subscription_entries, resolve_feed_url
+from worker.state.mirrored_sqlite_store import MirroredSQLiteStateStore
 from worker.state.postgres_store import PostgresBusinessStore
-from worker.state.sqlite_store import SQLiteStateStore
 from worker.temporal.activities_timing import _utc_now_iso
 
 try:
@@ -27,25 +30,187 @@ except ModuleNotFoundError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
+def _mark_ingest_run_running(pg_store: PostgresBusinessStore, *, run_id: str | None) -> None:
+    if not run_id:
+        return
+    with pg_store._engine.begin() as conn:  # noqa: SLF001
+        conn.execute(
+            text(
+                """
+                UPDATE ingest_runs
+                SET status = 'running',
+                    updated_at = NOW(),
+                    error_message = NULL
+                WHERE id = CAST(:run_id AS UUID)
+                """
+            ),
+            {"run_id": run_id},
+        )
+
+
+def _complete_ingest_run(
+    pg_store: PostgresBusinessStore,
+    *,
+    run_id: str | None,
+    status: str,
+    filters: dict[str, Any],
+    summary: dict[str, Any],
+    items: list[dict[str, Any]],
+    error_message: str | None = None,
+) -> None:
+    if not run_id:
+        return
+
+    with pg_store._engine.begin() as conn:  # noqa: SLF001
+        conn.execute(
+            text("DELETE FROM ingest_run_items WHERE ingest_run_id = CAST(:run_id AS UUID)"),
+            {"run_id": run_id},
+        )
+        for item in items:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO ingest_run_items (
+                        ingest_run_id,
+                        subscription_id,
+                        video_id,
+                        job_id,
+                        ingest_event_id,
+                        platform,
+                        video_uid,
+                        source_url,
+                        title,
+                        published_at,
+                        entry_hash,
+                        pipeline_mode,
+                        content_type,
+                        item_status,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (
+                        CAST(:run_id AS UUID),
+                        CAST(:subscription_id AS UUID),
+                        CAST(:video_id AS UUID),
+                        CAST(:job_id AS UUID),
+                        CAST(:ingest_event_id AS UUID),
+                        :platform,
+                        :video_uid,
+                        :source_url,
+                        :title,
+                        :published_at,
+                        :entry_hash,
+                        :pipeline_mode,
+                        :content_type,
+                        :item_status,
+                        NOW(),
+                        NOW()
+                    )
+                    """
+                ),
+                {
+                    "run_id": run_id,
+                    "subscription_id": item.get("subscription_id"),
+                    "video_id": item.get("video_id"),
+                    "job_id": item.get("job_id"),
+                    "ingest_event_id": item.get("ingest_event_id"),
+                    "platform": item.get("platform"),
+                    "video_uid": item.get("video_uid"),
+                    "source_url": item.get("source_url"),
+                    "title": item.get("title"),
+                    "published_at": item.get("published_at"),
+                    "entry_hash": item.get("entry_hash"),
+                    "pipeline_mode": item.get("pipeline_mode"),
+                    "content_type": item.get("content_type") or "video",
+                    "item_status": item.get("item_status") or "queued",
+                },
+            )
+
+        conn.execute(
+            text(
+                """
+                UPDATE ingest_runs
+                SET status = :status,
+                    filters_json = CAST(:filters_json AS JSONB),
+                    jobs_created = :jobs_created,
+                    candidates_count = :candidates_count,
+                    feeds_polled = :feeds_polled,
+                    entries_fetched = :entries_fetched,
+                    entries_normalized = :entries_normalized,
+                    ingest_events_created = :ingest_events_created,
+                    ingest_event_duplicates = :ingest_event_duplicates,
+                    job_duplicates = :job_duplicates,
+                    error_message = :error_message,
+                    completed_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = CAST(:run_id AS UUID)
+                """
+            ),
+            {
+                "run_id": run_id,
+                "status": status,
+                "filters_json": json.dumps(filters, ensure_ascii=False, sort_keys=True),
+                "jobs_created": int(summary.get("jobs_created", 0)),
+                "candidates_count": int(summary.get("candidates_count", 0)),
+                "feeds_polled": int(summary.get("feeds_polled", 0)),
+                "entries_fetched": int(summary.get("entries_fetched", 0)),
+                "entries_normalized": int(summary.get("entries_normalized", 0)),
+                "ingest_events_created": int(summary.get("ingest_events_created", 0)),
+                "ingest_event_duplicates": int(summary.get("ingest_event_duplicates", 0)),
+                "job_duplicates": int(summary.get("job_duplicates", 0)),
+                "error_message": error_message,
+            },
+        )
+
+
 async def run_poll_feeds_once(
     settings: Settings,
     filters: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     from worker.rss.fetcher import RSSHubFetcher
 
-    sqlite_store = SQLiteStateStore(settings.sqlite_path)
+    filters = dict(filters or {})
+    ingest_run_id = str(filters.get("ingest_run_id") or "").strip() or None
+
+    mirror_paths: list[str] = []
+    api_state_path = str(getenv("SQLITE_STATE_PATH", "")).strip()
+    if api_state_path:
+        mirror_paths.append(api_state_path)
+    sqlite_store = MirroredSQLiteStateStore.from_paths(
+        primary_path=settings.sqlite_path,
+        mirror_paths=mirror_paths,
+    )
     pg_store = PostgresBusinessStore(settings.database_url)
     lock_owner = f"pid-{getpid()}"
     lock_key = "phase2.poll_feeds"
     lock_backend: str | None = None
     pg_lock_lease = None
+    _mark_ingest_run_running(pg_store, run_id=ingest_run_id)
 
     advisory_supported, pg_lock_lease, advisory_reason = pg_store.try_acquire_advisory_lock(
         lock_key=lock_key
     )
     if advisory_supported:
         if pg_lock_lease is None:
-            return {"ok": True, "skipped": True, "reason": "lock_not_acquired"}
+            result = {"ok": True, "skipped": True, "reason": "lock_not_acquired"}
+            _complete_ingest_run(
+                pg_store,
+                run_id=ingest_run_id,
+                status="skipped",
+                filters=filters,
+                summary={
+                    "jobs_created": 0,
+                    "candidates_count": 0,
+                    "feeds_polled": 0,
+                    "entries_fetched": 0,
+                    "entries_normalized": 0,
+                    "ingest_events_created": 0,
+                    "ingest_event_duplicates": 0,
+                    "job_duplicates": 0,
+                },
+                items=[],
+            )
+            return result
         lock_backend = "postgres_advisory"
     else:
         logger.warning(
@@ -59,10 +224,28 @@ async def run_poll_feeds_once(
             },
         )
         if not sqlite_store.acquire_lock(lock_key, lock_owner, settings.lock_ttl_seconds):
-            return {"ok": True, "skipped": True, "reason": "lock_not_acquired"}
+            result = {"ok": True, "skipped": True, "reason": "lock_not_acquired"}
+            _complete_ingest_run(
+                pg_store,
+                run_id=ingest_run_id,
+                status="skipped",
+                filters=filters,
+                summary={
+                    "jobs_created": 0,
+                    "candidates_count": 0,
+                    "feeds_polled": 0,
+                    "entries_fetched": 0,
+                    "entries_normalized": 0,
+                    "ingest_events_created": 0,
+                    "ingest_event_duplicates": 0,
+                    "job_duplicates": 0,
+                },
+                items=[],
+            )
+            return result
         lock_backend = "sqlite_local"
 
-    filters = filters or {}
+    run_items: list[dict[str, Any]] = []
     try:
         subscriptions = pg_store.list_subscriptions(
             subscription_id=filters.get("subscription_id"),
@@ -168,6 +351,23 @@ async def run_poll_feeds_once(
                     continue
 
                 created_job_ids.append(job["id"])
+                run_items.append(
+                    {
+                        "subscription_id": subscription["id"],
+                        "video_id": video["id"],
+                        "job_id": job["id"],
+                        "ingest_event_id": ingest_event["id"],
+                        "platform": video["platform"],
+                        "video_uid": video["video_uid"],
+                        "source_url": video["source_url"],
+                        "title": video.get("title"),
+                        "published_at": video.get("published_at"),
+                        "entry_hash": normalized["entry_hash"],
+                        "pipeline_mode": pipeline_mode,
+                        "content_type": content_type,
+                        "item_status": "queued",
+                    }
+                )
                 if len(candidates) < max_new:
                     rss_transcript = _build_rss_transcript(normalized)
                     candidates.append(
@@ -182,11 +382,13 @@ async def run_poll_feeds_once(
                             "entry_hash": normalized["entry_hash"],
                             "ingest_event_id": ingest_event["id"],
                             "pipeline_mode": pipeline_mode,
+                            "subscription_id": subscription["id"],
+                            "content_type": content_type,
                             "rss_transcript": rss_transcript,
                         }
                     )
 
-        return {
+        result = {
             "ok": True,
             "phase": "phase2",
             "feeds_polled": len(feed_urls),
@@ -201,6 +403,44 @@ async def run_poll_feeds_once(
             "at": _utc_now_iso(),
             "filters": filters,
         }
+        _complete_ingest_run(
+            pg_store,
+            run_id=ingest_run_id,
+            status="succeeded",
+            filters=filters,
+            summary={
+                "jobs_created": len(created_job_ids),
+                "candidates_count": len(run_items),
+                "feeds_polled": len(feed_urls),
+                "entries_fetched": entries_fetched,
+                "entries_normalized": entries_normalized,
+                "ingest_events_created": ingest_events_created,
+                "ingest_event_duplicates": ingest_event_duplicates,
+                "job_duplicates": job_duplicates,
+            },
+            items=run_items,
+        )
+        return result
+    except Exception as exc:
+        _complete_ingest_run(
+            pg_store,
+            run_id=ingest_run_id,
+            status="failed",
+            filters=filters,
+            summary={
+                "jobs_created": len(run_items),
+                "candidates_count": len(run_items),
+                "feeds_polled": 0,
+                "entries_fetched": 0,
+                "entries_normalized": 0,
+                "ingest_events_created": 0,
+                "ingest_event_duplicates": 0,
+                "job_duplicates": 0,
+            },
+            items=run_items,
+            error_message=str(exc),
+        )
+        raise
     finally:
         if lock_backend == "postgres_advisory" and pg_lock_lease is not None:
             pg_store.release_advisory_lock(pg_lock_lease)

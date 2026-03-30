@@ -75,8 +75,58 @@ export type IngestCandidate = {
 };
 
 export type IngestPollResponse = {
+	run_id: string;
+	workflow_id: string | null;
+	status: "queued" | "running" | "succeeded" | "failed" | "skipped";
 	enqueued: number;
 	candidates: IngestCandidate[];
+};
+
+export type IngestRunItem = {
+	id: string;
+	subscription_id: string | null;
+	video_id: string | null;
+	job_id: string | null;
+	ingest_event_id: string | null;
+	platform: Platform | string;
+	video_uid: string;
+	source_url: string;
+	title: string | null;
+	published_at: string | null;
+	entry_hash: string | null;
+	pipeline_mode: string | null;
+	content_type: ContentType;
+	item_status: string;
+	created_at: string;
+	updated_at: string;
+};
+
+export type IngestRunSummary = {
+	id: string;
+	subscription_id: string | null;
+	workflow_id: string | null;
+	platform: Platform | string | null;
+	max_new_videos: number;
+	status: "queued" | "running" | "succeeded" | "failed" | "skipped";
+	jobs_created: number;
+	candidates_count: number;
+	feeds_polled: number;
+	entries_fetched: number;
+	entries_normalized: number;
+	ingest_events_created: number;
+	ingest_event_duplicates: number;
+	job_duplicates: number;
+	error_message: string | null;
+	created_at: string;
+	updated_at: string;
+	completed_at: string | null;
+};
+
+export type IngestRun = IngestRunSummary & {
+	requested_by: string | null;
+	requested_trace_id: string | null;
+	filters_json: Record<string, unknown> | null;
+	items: IngestRunItem[];
 };
 
 export type Video = {
@@ -175,6 +225,45 @@ export type NotificationRetrySummary = {
 	last_error_kind: string | null;
 };
 
+export type JobCompareStats = {
+	added_lines: number;
+	removed_lines: number;
+	changed: boolean;
+};
+
+export type JobCompare = {
+	job_id: string;
+	previous_job_id: string | null;
+	has_previous: boolean;
+	current_digest: string | null;
+	previous_digest: string | null;
+	diff_markdown: string;
+	stats: JobCompareStats;
+};
+
+export type KnowledgeCard = {
+	id?: string;
+	job_id?: string;
+	video_id?: string;
+	card_type: string;
+	title: string | null;
+	body: string;
+	source_section: string;
+	order_index: number;
+	metadata_json?: Record<string, unknown>;
+	created_at?: string;
+	updated_at?: string;
+};
+
+export type FeedFeedback = {
+	job_id: string;
+	saved: boolean;
+	feedback_label: "useful" | "noisy" | "dismissed" | "archived" | null;
+	exists: boolean;
+	created_at: string | null;
+	updated_at: string | null;
+};
+
 export type ArtifactMarkdownWithMeta = {
 	markdown: string;
 	meta: Record<string, unknown> | null;
@@ -231,10 +320,18 @@ export type DigestFeedItem = {
 	summary_md: string;
 	artifact_type: "digest" | "outline";
 	content_type?: ContentType;
+	saved?: boolean;
+	feedback_label?: "useful" | "noisy" | "dismissed" | "archived" | null;
 };
 
 export type DigestFeedResponse = {
 	items: DigestFeedItem[];
 	has_more: boolean;
 	next_cursor: string | null;
+};
+
+export type FeedFeedbackUpdateRequest = {
+	job_id: string;
+	saved: boolean;
+	feedback_label?: "useful" | "noisy" | "dismissed" | "archived" | null;
 };

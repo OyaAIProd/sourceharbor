@@ -48,7 +48,13 @@ def test_ingest_poll_posts_expected_payload_with_normalized_uuid() -> None:
 
     def fake_api_call(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         calls.append({"method": method, "path": path, "kwargs": kwargs})
-        return {"ok": True}
+        return {
+            "run_id": UUID_1,
+            "workflow_id": "wf-ingest-0",
+            "status": "queued",
+            "enqueued": 0,
+            "candidates": [],
+        }
 
     register_ingest_tools(mcp, fake_api_call)
     payload = mcp.tools["sourceharbor.ingest.poll"](
@@ -57,7 +63,8 @@ def test_ingest_poll_posts_expected_payload_with_normalized_uuid() -> None:
         max_new_videos=10,
     )
 
-    assert payload["ok"] is True
+    assert payload["run_id"] == UUID_1
+    assert payload["workflow_id"] == "wf-ingest-0"
     assert calls == [
         {
             "method": "POST",
@@ -71,6 +78,127 @@ def test_ingest_poll_posts_expected_payload_with_normalized_uuid() -> None:
             },
         }
     ]
+
+
+def test_ingest_poll_normalizes_run_response() -> None:
+    mcp = _FakeMCP()
+
+    register_ingest_tools(
+        mcp,
+        lambda *_args, **_kwargs: {
+            "run_id": UUID_1,
+            "workflow_id": "wf-ingest-1",
+            "status": "queued",
+            "enqueued": 0,
+            "candidates": [],
+        },
+    )
+
+    payload = mcp.tools["sourceharbor.ingest.poll"](platform="youtube")
+
+    assert payload["run_id"] == UUID_1
+    assert payload["workflow_id"] == "wf-ingest-1"
+    assert payload["status"] == "queued"
+    assert payload["enqueued"] == 0
+
+
+def test_ingest_runs_list_and_get_normalize_payloads() -> None:
+    mcp = _FakeMCP()
+
+    def fake_api_call(method: str, path: str, **kwargs: Any) -> Any:
+        if method == "GET" and path == "/api/v1/ingest/runs":
+            return [
+                {
+                    "id": UUID_1,
+                    "subscription_id": None,
+                    "workflow_id": "wf-ingest-2",
+                    "platform": "youtube",
+                    "max_new_videos": 5,
+                    "status": "succeeded",
+                    "jobs_created": 2,
+                    "candidates_count": 2,
+                    "feeds_polled": 1,
+                    "entries_fetched": 2,
+                    "entries_normalized": 2,
+                    "ingest_events_created": 2,
+                    "ingest_event_duplicates": 0,
+                    "job_duplicates": 0,
+                    "error_message": None,
+                    "created_at": "2026-03-29T00:00:00Z",
+                    "updated_at": "2026-03-29T00:00:00Z",
+                    "completed_at": "2026-03-29T00:01:00Z",
+                }
+            ]
+        if method == "GET" and path == f"/api/v1/ingest/runs/{UUID_1}":
+            return {
+                "id": UUID_1,
+                "subscription_id": None,
+                "workflow_id": "wf-ingest-2",
+                "platform": "youtube",
+                "max_new_videos": 5,
+                "status": "succeeded",
+                "jobs_created": 2,
+                "candidates_count": 2,
+                "feeds_polled": 1,
+                "entries_fetched": 2,
+                "entries_normalized": 2,
+                "ingest_events_created": 2,
+                "ingest_event_duplicates": 0,
+                "job_duplicates": 0,
+                "error_message": None,
+                "created_at": "2026-03-29T00:00:00Z",
+                "updated_at": "2026-03-29T00:00:00Z",
+                "completed_at": "2026-03-29T00:01:00Z",
+                "requested_by": "tester",
+                "requested_trace_id": "trace-1",
+                "filters_json": {"platform": "youtube"},
+                "items": [
+                    {
+                        "id": "item-1",
+                        "subscription_id": None,
+                        "video_id": "video-1",
+                        "job_id": "job-1",
+                        "ingest_event_id": "event-1",
+                        "platform": "youtube",
+                        "video_uid": "abc123",
+                        "source_url": "https://example.com/watch?v=abc123",
+                        "title": "Demo",
+                        "published_at": "2026-03-29T00:00:00Z",
+                        "entry_hash": "entry-1",
+                        "pipeline_mode": "full",
+                        "content_type": "video",
+                        "item_status": "queued",
+                        "created_at": "2026-03-29T00:00:00Z",
+                        "updated_at": "2026-03-29T00:00:00Z",
+                    }
+                ],
+            }
+        raise AssertionError(f"unexpected api call: {method} {path} {kwargs}")
+
+    register_ingest_tools(mcp, fake_api_call)
+
+    list_payload = mcp.tools["sourceharbor.ingest.runs.list"](
+        platform="youtube",
+        status="succeeded",
+        limit=5,
+    )
+    get_payload = mcp.tools["sourceharbor.ingest.runs.get"](run_id=UUID_1)
+
+    assert list_payload["items"][0]["id"] == UUID_1
+    assert list_payload["items"][0]["workflow_id"] == "wf-ingest-2"
+    assert get_payload["id"] == UUID_1
+    assert get_payload["requested_by"] == "tester"
+    assert get_payload["items"][0]["job_id"] == "job-1"
+
+
+def test_ingest_runs_get_rejects_invalid_run_id() -> None:
+    mcp = _FakeMCP()
+    register_ingest_tools(mcp, lambda *_args, **_kwargs: {"ok": True})
+
+    payload = mcp.tools["sourceharbor.ingest.runs.get"](run_id="bad-run-id")
+
+    assert payload["code"] == "INVALID_ARGUMENT"
+    assert payload["details"]["field"] == "run_id"
 
 
 def test_workflows_run_rejects_invalid_workflow_id() -> None:

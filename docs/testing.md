@@ -13,6 +13,10 @@ Think of it like product evidence in layers:
 ```bash
 python3 scripts/governance/check_env_contract.py --strict
 python3 scripts/governance/check_test_assertions.py
+python3 scripts/governance/check_route_contract_alignment.py
+python3 scripts/governance/check_public_entrypoint_references.py
+python3 scripts/governance/check_local_private_ledger_migration.py
+python3 scripts/governance/check_external_lane_contract.py
 npm --prefix apps/web run lint
 ```
 
@@ -20,6 +24,9 @@ What they cover:
 
 - environment contract drift
 - placebo test detection
+- route and public-entrypoint contract drift
+- local-private ledger migration drift
+- external-lane contract drift
 - web lint regressions
 
 ## Core Python Test Suite

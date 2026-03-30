@@ -79,22 +79,28 @@ export function EntryList({ items, selectedJobId }: EntryListProps) {
 										</span>
 										<div className="feed-entry-meta-wrap">
 											<h3 className="feed-entry-title">{item.title}</h3>
-											<div className="feed-entry-meta">
-												<span className="feed-entry-source">
-													{renderSourceName(item.source, item.source_name)}
-												</span>
-												<span>·</span>
-												<RelativeTime dateTime={item.published_at} />
-												<Badge
-													variant="secondary"
-													className="feed-entry-category-badge"
-													data-category={item.category}
-												>
-													{CATEGORY_LABELS[item.category] ?? item.category}
-												</Badge>
-											</div>
-										</div>
+									<div className="feed-entry-meta">
+										<span className="feed-entry-source">
+											{renderSourceName(item.source, item.source_name)}
+										</span>
+										<span>·</span>
+										<RelativeTime dateTime={item.published_at} />
+										<Badge
+											variant="secondary"
+											className="feed-entry-category-badge"
+											data-category={item.category}
+										>
+											{CATEGORY_LABELS[item.category] ?? item.category}
+										</Badge>
+										{item.saved ? (
+											<Badge variant="outline">Saved</Badge>
+										) : null}
+										{item.feedback_label ? (
+											<Badge variant="outline">{item.feedback_label}</Badge>
+										) : null}
 									</div>
+								</div>
+							</div>
 								</Link>
 							</li>
 						);

@@ -285,7 +285,7 @@ def test_api_config_from_env_falls_back_for_invalid_numeric_values(
 
     config = ApiConfig.from_env()
 
-    assert config.base_url == "http://127.0.0.1:8000"
+    assert config.base_url == "http://127.0.0.1:9000"
     assert config.timeout_sec == 20.0
     assert config.max_base64_bytes == 2 * 1024 * 1024
 
@@ -332,8 +332,11 @@ def test_create_server_registers_tools_and_normalizes_error_payloads(
     monkeypatch.setattr(server, "register_subscription_tools", _register_tool)
     monkeypatch.setattr(server, "register_ingest_tools", _register_tool)
     monkeypatch.setattr(server, "register_job_tools", _register_tool)
+    monkeypatch.setattr(server, "register_feed_tools", _register_tool)
+    monkeypatch.setattr(server, "register_knowledge_tools", _register_tool)
     monkeypatch.setattr(server, "register_artifact_tools", _register_tool)
     monkeypatch.setattr(server, "register_notification_tools", _register_tool)
+    monkeypatch.setattr(server, "register_report_tools", _register_tool)
     monkeypatch.setattr(server, "register_health_tools", _register_tool)
     monkeypatch.setattr(server, "register_workflow_tools", _register_tool)
     monkeypatch.setattr(server, "register_retrieval_tools", _register_tool)
@@ -380,3 +383,11 @@ def test_main_runs_server(monkeypatch: pytest.MonkeyPatch) -> None:
     server.main()
 
     assert runnable.called is True
+
+
+def test_api_config_from_env_defaults_to_local_9000(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SOURCE_HARBOR_API_BASE_URL", raising=False)
+
+    config = server.ApiConfig.from_env()
+
+    assert config.base_url == "http://127.0.0.1:9000"

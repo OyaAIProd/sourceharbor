@@ -620,6 +620,78 @@ class PostgresBusinessStore:
             )
         return [dict(row) for row in rows]
 
+    @staticmethod
+    def _knowledge_cards_table_exists(conn: Any) -> bool:
+        exists = conn.execute(
+            text("SELECT to_regclass('public.knowledge_cards') IS NOT NULL")
+        ).scalar()
+        return bool(exists)
+
+    def replace_knowledge_cards(
+        self,
+        *,
+        video_id: str,
+        job_id: str,
+        items: list[dict[str, Any]],
+    ) -> int:
+        if not items:
+            return 0
+
+        with self._engine.begin() as conn:
+            if not self._knowledge_cards_table_exists(conn):
+                return 0
+            conn.execute(
+                text(
+                    """
+                    DELETE FROM knowledge_cards
+                    WHERE job_id = CAST(:job_id AS UUID)
+                    """
+                ),
+                {"job_id": job_id},
+            )
+            for item in items:
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO knowledge_cards (
+                            video_id,
+                            job_id,
+                            card_type,
+                            source_section,
+                            title,
+                            body,
+                            ordinal,
+                            metadata_json,
+                            created_at,
+                            updated_at
+                        )
+                        VALUES (
+                            CAST(:video_id AS UUID),
+                            CAST(:job_id AS UUID),
+                            :card_type,
+                            :source_section,
+                            :title,
+                            :body,
+                            :ordinal,
+                            CAST(:metadata_json AS JSONB),
+                            NOW(),
+                            NOW()
+                        )
+                        """
+                    ),
+                    {
+                        "video_id": video_id,
+                        "job_id": job_id,
+                        "card_type": str(item.get("card_type") or "takeaway"),
+                        "source_section": str(item.get("source_section") or "highlights"),
+                        "title": str(item.get("title") or "") or None,
+                        "body": str(item.get("body") or ""),
+                        "ordinal": int(item.get("ordinal") or 0),
+                        "metadata_json": json.dumps(item.get("metadata") or {}, ensure_ascii=False),
+                    },
+                )
+        return len(items)
+
     def mark_job_succeeded(
         self,
         *,

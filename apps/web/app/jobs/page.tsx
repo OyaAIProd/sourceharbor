@@ -45,11 +45,25 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
 	let error: string | null = null;
 	let job: Awaited<ReturnType<typeof apiClient.getJob>> | null = null;
+	let jobCompare: Awaited<ReturnType<typeof apiClient.getJobCompare>> | null = null;
+	let knowledgeCards: Awaited<ReturnType<typeof apiClient.getJobKnowledgeCards>> = [];
 	if (jobId) {
 		try {
 			job = await apiClient.getJob(jobId);
 		} catch (err) {
 			error = getFlashMessage(toErrorCode(err));
+		}
+		if (!error) {
+			try {
+				jobCompare = await apiClient.getJobCompare(jobId);
+			} catch {
+				jobCompare = null;
+			}
+			try {
+				knowledgeCards = await apiClient.getJobKnowledgeCards(jobId);
+			} catch {
+				knowledgeCards = [];
+			}
 		}
 	}
 	const jobStatus = job ? toDisplayStatus(job.status) : null;
@@ -267,6 +281,91 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 					</section>
 
 					<section className="grid gap-4 lg:grid-cols-2">
+						<Card className="folo-surface border-border/70">
+							<CardHeader>
+								<h2 className="text-xl font-semibold">Compare to previous run</h2>
+								<CardDescription>
+									把它理解成“这次和上次相比，结果改了多少”。如果没有上一条成功任务，这里会明确告诉你没有可比较对象。
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-3">
+								{jobCompare && jobCompare.has_previous ? (
+									<>
+										<dl className="grid gap-3 sm:grid-cols-3">
+											<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
+												<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+													Previous job
+												</dt>
+												<dd className="break-all text-sm font-medium">
+													{jobCompare.previous_job_id}
+												</dd>
+											</div>
+											<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
+												<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+													Added lines
+												</dt>
+												<dd className="text-sm font-medium">
+													{jobCompare.stats.added_lines}
+												</dd>
+											</div>
+											<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
+												<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+													Removed lines
+												</dt>
+												<dd className="text-sm font-medium">
+													{jobCompare.stats.removed_lines}
+												</dd>
+											</div>
+										</dl>
+										{jobCompare.diff_markdown ? (
+											<pre className="overflow-x-auto rounded-lg border border-border/70 bg-muted/20 p-3 text-xs leading-6">
+												<code>{jobCompare.diff_markdown}</code>
+											</pre>
+										) : (
+											<p className="text-sm text-muted-foreground">
+												No line-level diff preview was produced.
+											</p>
+										)}
+									</>
+								) : (
+									<p className="text-sm text-muted-foreground">
+										No previous successful job is available for comparison yet.
+									</p>
+								)}
+							</CardContent>
+						</Card>
+
+						<Card className="folo-surface border-border/70">
+							<CardHeader>
+								<h2 className="text-xl font-semibold">Knowledge cards</h2>
+								<CardDescription>
+									把它理解成“从这次结果里提炼出的长期可复用卡片”。它们比原始 digest 更像可积累的知识对象。
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								{knowledgeCards.length === 0 ? (
+									<p className="text-sm text-muted-foreground">
+										No knowledge cards generated yet.
+									</p>
+								) : (
+									<ul className="space-y-3 text-sm">
+										{knowledgeCards.map((card) => (
+											<li
+												key={`${card.card_type}-${card.order_index}-${card.title}`}
+												className="rounded-lg border border-border/60 bg-muted/20 p-3"
+											>
+												<p className="text-xs uppercase tracking-wide text-muted-foreground">
+													{card.card_type} · {card.source_section}
+												</p>
+												<p className="mt-1 font-medium">{card.title}</p>
+												<p className="mt-1 text-muted-foreground">{card.body}</p>
+											</li>
+										))}
+									</ul>
+								)}
+							</CardContent>
+						</Card>
+
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
 								<h2 className="text-xl font-semibold">Degradations</h2>

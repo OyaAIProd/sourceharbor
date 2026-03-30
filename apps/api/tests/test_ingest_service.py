@@ -41,6 +41,7 @@ class _PollDB:
         self.scalar_calls = 0
         self.execute_calls = 0
         self.last_scalar_stmt: Any | None = None
+        self._instances: dict[uuid.UUID, Any] = {}
 
     def scalar(self, stmt: Any) -> Any:
         self.scalar_calls += 1
@@ -50,6 +51,22 @@ class _PollDB:
     def execute(self, _stmt: Any) -> _RowsResult:
         self.execute_calls += 1
         return _RowsResult(self.rows)
+
+    def add(self, instance: Any) -> None:
+        instance_id = getattr(instance, "id", None)
+        if instance_id is None:
+            instance_id = uuid.uuid4()
+            setattr(instance, "id", instance_id)
+        self._instances[instance_id] = instance
+
+    def commit(self) -> None:
+        return None
+
+    def refresh(self, _instance: Any) -> None:
+        return None
+
+    def get(self, _model: Any, key: uuid.UUID) -> Any | None:
+        return self._instances.get(key)
 
 
 class _FakeHandle:
@@ -146,7 +163,7 @@ async def _run_poll(
     max_new_videos: int = 10,
     trace_id: str | None = None,
     user: str | None = None,
-) -> tuple[int, list[dict[str, object]]]:
+) -> dict[str, object]:
     return await service.poll(
         subscription_id=subscription_id,
         platform=platform,
@@ -182,10 +199,12 @@ def test_poll_connects_to_temporal_with_expected_host_and_namespace(
     _install_temporal_client(monkeypatch, client, connect_calls=connect_calls)
     service = IngestService(_PollDB(exists=True))  # type: ignore[arg-type]
 
-    total, candidates = asyncio.run(_run_poll(service))
+    result = asyncio.run(_run_poll(service))
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
+    assert result["status"] == "queued"
+    assert isinstance(result["workflow_id"], str)
     assert connect_calls == [
         (
             ingest_module.settings.temporal_target_host,
@@ -199,12 +218,13 @@ def test_poll_returns_empty_when_temporal_creates_no_jobs(monkeypatch: pytest.Mo
     _install_temporal_client(monkeypatch, client)
     service = IngestService(_PollDB(exists=True))  # type: ignore[arg-type]
 
-    total, candidates = asyncio.run(
+    result = asyncio.run(
         _run_poll(service, subscription_id=uuid.uuid4(), platform="youtube", max_new_videos=5)
     )
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
+    assert result["status"] == "queued"
     assert len(client.calls) == 1
     assert client.calls[0]["workflow"] == "PollFeedsWorkflow"
     assert client.calls[0]["filters"]["platform"] == "youtube"
@@ -219,17 +239,16 @@ def test_poll_skips_subscription_lookup_when_subscription_id_is_none(
     db = _PollDB(exists=True)
     service = IngestService(db)  # type: ignore[arg-type]
 
-    total, candidates = asyncio.run(_run_poll(service, subscription_id=None, platform=None))
+    result = asyncio.run(_run_poll(service, subscription_id=None, platform=None))
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
     assert db.scalar_calls == 0
     assert db.execute_calls == 0
-    assert client.calls[0]["filters"] == {
-        "subscription_id": None,
-        "platform": None,
-        "max_new_videos": 10,
-    }
+    assert client.calls[0]["filters"]["subscription_id"] is None
+    assert client.calls[0]["filters"]["platform"] is None
+    assert client.calls[0]["filters"]["max_new_videos"] == 10
+    assert isinstance(client.calls[0]["filters"]["ingest_run_id"], str)
 
 
 def test_poll_workflow_call_includes_expected_id_and_task_queue(
@@ -240,19 +259,19 @@ def test_poll_workflow_call_includes_expected_id_and_task_queue(
     _install_temporal_client(monkeypatch, client)
     service = IngestService(_PollDB(exists=True))  # type: ignore[arg-type]
 
-    total, candidates = asyncio.run(
+    result = asyncio.run(
         _run_poll(service, subscription_id=subscription_id, platform="youtube", max_new_videos=7)
     )
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
+    assert result["status"] == "queued"
     assert client.calls[0]["id"].startswith("api-poll-feeds-")
     assert client.calls[0]["task_queue"] == ingest_module.settings.temporal_task_queue
-    assert client.calls[0]["filters"] == {
-        "subscription_id": str(subscription_id),
-        "platform": "youtube",
-        "max_new_videos": 7,
-    }
+    assert client.calls[0]["filters"]["subscription_id"] == str(subscription_id)
+    assert client.calls[0]["filters"]["platform"] == "youtube"
+    assert client.calls[0]["filters"]["max_new_videos"] == 7
+    assert isinstance(client.calls[0]["filters"]["ingest_run_id"], str)
 
 
 def test_poll_returns_immediately_after_workflow_start(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -272,12 +291,12 @@ def test_poll_returns_immediately_after_workflow_start(monkeypatch: pytest.Monke
     )
     service = IngestService(_PollDB(exists=True, rows=[(job, video)]))  # type: ignore[arg-type]
 
-    total, candidates = asyncio.run(
+    result = asyncio.run(
         _run_poll(service, subscription_id=uuid.uuid4(), platform="youtube", max_new_videos=20)
     )
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
 
 
 def test_poll_maps_connect_timeout_to_api_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -348,10 +367,10 @@ def test_poll_passes_temporal_wait_for_timeouts_from_settings(
     monkeypatch.setattr("apps.api.app.services.ingest.asyncio.wait_for", wait_for)
     service = IngestService(_PollDB(exists=True))  # type: ignore[arg-type]
 
-    total, candidates = asyncio.run(_run_poll(service))
+    result = asyncio.run(_run_poll(service))
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
     assert wait_for.timeouts == [
         ingest_module.settings.api_temporal_connect_timeout_seconds,
         ingest_module.settings.api_temporal_start_timeout_seconds,
@@ -366,10 +385,10 @@ def test_poll_logs_default_trace_actor_and_workflow_id(
     service = IngestService(_PollDB(exists=True))  # type: ignore[arg-type]
 
     caplog.set_level("INFO", logger="apps.api.app.services.ingest")
-    total, candidates = asyncio.run(_run_poll(service, trace_id=None, user=None))
+    result = asyncio.run(_run_poll(service, trace_id=None, user=None))
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
     start_logs = [r for r in caplog.records if r.message == "ingest_poll_started"]
     assert start_logs
     assert start_logs[-1].trace_id == "missing_trace"
@@ -380,8 +399,8 @@ def test_poll_logs_default_trace_actor_and_workflow_id(
     assert complete_log.trace_id == "missing_trace"
     assert complete_log.user == "system"
     assert complete_log.workflow_id == client.calls[0]["id"]
-    assert complete_log.enqueued == 0
-    assert complete_log.candidates == 0
+    assert complete_log.run_id == str(result["run_id"])
+    assert complete_log.status == "queued"
 
 
 def test_poll_logs_started_fields_with_explicit_payload(
@@ -393,7 +412,7 @@ def test_poll_logs_started_fields_with_explicit_payload(
     subscription_id = uuid.uuid4()
 
     caplog.set_level("INFO", logger="apps.api.app.services.ingest")
-    total, candidates = asyncio.run(
+    result = asyncio.run(
         _run_poll(
             service,
             subscription_id=subscription_id,
@@ -404,8 +423,8 @@ def test_poll_logs_started_fields_with_explicit_payload(
         )
     )
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
     start_logs = [r for r in caplog.records if r.message == "ingest_poll_started"]
     assert start_logs
     start_log = start_logs[-1]
@@ -452,10 +471,10 @@ def test_poll_returns_degraded_empty_result_when_workflow_result_times_out(
 
     service = IngestService(_PollDB(exists=True))  # type: ignore[arg-type]
 
-    total, candidates = asyncio.run(_run_poll(service))
+    result = asyncio.run(_run_poll(service))
 
-    assert total == 0
-    assert candidates == []
+    assert result["enqueued"] == 0
+    assert result["candidates"] == []
 
 
 def test_poll_raises_runtime_error_when_temporal_client_import_fails(

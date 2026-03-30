@@ -11,8 +11,10 @@ from apps.mcp.tools._common import (
     validate_object_keys,
 )
 from apps.mcp.tools.artifacts import _normalize_markdown_payload, register_artifact_tools
+from apps.mcp.tools.feed import register_feed_tools
 from apps.mcp.tools.health import register_health_tools
-from apps.mcp.tools.jobs import _normalize_job_payload, register_job_tools
+from apps.mcp.tools.jobs import _normalize_job_compare_payload, _normalize_job_payload, register_job_tools
+from apps.mcp.tools.knowledge import register_knowledge_tools
 from apps.mcp.tools.notifications import (
     _normalize_send_test_payload,
     _normalize_set_config_payload,
@@ -148,6 +150,10 @@ def test_jobs_tail_branches() -> None:
         _normalize_job_payload({"code": "UPSTREAM", "message": "bad", "details": {}})["code"]
         == "UPSTREAM"
     )
+    assert (
+        _normalize_job_compare_payload({"code": "UPSTREAM", "message": "bad", "details": {}})["code"]
+        == "UPSTREAM"
+    )
 
     normalized = _normalize_job_payload(
         {
@@ -167,6 +173,16 @@ def test_jobs_tail_branches() -> None:
     def fake_api_call(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         calls.append((method, path))
         if path.startswith("/api/v1/jobs/"):
+            if path.endswith("/compare"):
+                return {
+                    "job_id": "job-1",
+                    "previous_job_id": "job-0",
+                    "has_previous": True,
+                    "current_digest": "# Current",
+                    "previous_digest": "# Previous",
+                    "diff_markdown": "--- old\n+++ new",
+                    "stats": {"added_lines": 1, "removed_lines": 1, "changed": True},
+                }
             return {"id": "job-1", "status": "running"}
         if path == "/api/v1/videos":
             return {"items": []}
@@ -179,11 +195,18 @@ def test_jobs_tail_branches() -> None:
     get_ok = mcp.tools["sourceharbor.jobs.get"](job_id=UUID_1.upper())
     assert get_ok["id"] == "job-1"
 
+    compare_ok = mcp.tools["sourceharbor.jobs.compare"](job_id=UUID_1.upper())
+    assert compare_ok["job_id"] == "job-1"
+    assert compare_ok["stats"]["changed"] is True
+
     list_ok = mcp.tools["sourceharbor.videos.list"](platform="youtube")
     assert list_ok["items"] == []
 
     bad_video_shape = mcp.tools["sourceharbor.videos.process"](video="bad")
     assert bad_video_shape["code"] == "INVALID_ARGUMENT"
+
+    bad_compare_id = mcp.tools["sourceharbor.jobs.compare"](job_id="bad")
+    assert bad_compare_id["code"] == "INVALID_ARGUMENT"
 
     missing_platform = mcp.tools["sourceharbor.videos.process"](
         video={"url": "https://example.com"}
@@ -200,6 +223,7 @@ def test_jobs_tail_branches() -> None:
     assert bad_override_value["details"]["field"] == "overrides"
 
     assert ("GET", f"/api/v1/jobs/{UUID_1}") in calls
+    assert ("GET", f"/api/v1/jobs/{UUID_1}/compare") in calls
     assert ("GET", "/api/v1/videos") in calls
 
 
@@ -222,6 +246,99 @@ def test_notifications_tail_branches() -> None:
     register_notification_tools(mcp, fake_api_call)
     payload = mcp.tools["sourceharbor.notifications.manage"](action="daily_send")
     assert payload["code"] == "UPSTREAM"
+
+
+def test_knowledge_tail_branches() -> None:
+    mcp = _FakeMCP()
+
+    register_knowledge_tools(
+        mcp,
+        lambda method, path, **kwargs: [
+            {
+                "id": "card-1",
+                "job_id": UUID_1,
+                "video_id": UUID_2,
+                "card_type": "takeaway",
+                "source_section": "highlights",
+                "title": "Key takeaway",
+                "body": "Durable note",
+                "order_index": 0,
+                "metadata_json": {"kind": "highlight"},
+                "created_at": "2026-03-29T00:00:00Z",
+                "updated_at": "2026-03-29T00:00:00Z",
+            }
+        ],
+    )
+
+    bad_job_id = mcp.tools["sourceharbor.knowledge.cards.list"](job_id="bad")
+    assert bad_job_id["code"] == "INVALID_ARGUMENT"
+
+    payload = mcp.tools["sourceharbor.knowledge.cards.list"](
+        job_id=UUID_1,
+        video_id=UUID_2,
+        card_type="takeaway",
+        topic_key="agent-workflows",
+        claim_kind="takeaway",
+        limit=5,
+    )
+    assert payload["items"][0]["id"] == "card-1"
+    assert payload["items"][0]["order_index"] == 0
+
+
+def test_feed_tail_branches() -> None:
+    mcp = _FakeMCP()
+
+    def fake_api_call(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+        assert method == "GET"
+        assert path == "/api/v1/feed/digests"
+        assert kwargs["params"]["feedback"] == "useful"
+        assert kwargs["params"]["sort"] == "curated"
+        assert kwargs["params"]["sub"] == UUID_1
+        return {
+            "items": [
+                {
+                    "feed_id": "feed-1",
+                    "job_id": "job-1",
+                    "video_url": "https://example.com/1",
+                    "title": "Curated digest",
+                    "source": "youtube",
+                    "source_name": "Demo Channel",
+                    "category": "tech",
+                    "published_at": "2026-03-29T00:00:00Z",
+                    "summary_md": "# Summary",
+                    "artifact_type": "digest",
+                    "content_type": "video",
+                    "saved": True,
+                    "feedback_label": "useful",
+                }
+            ],
+            "has_more": True,
+            "next_cursor": "4__2026-03-29T00:00:00Z__job-1",
+        }
+
+    register_feed_tools(mcp, fake_api_call)
+
+    bad_subscription = mcp.tools["sourceharbor.feed.digests.list"](subscription_id="bad")
+    assert bad_subscription["code"] == "INVALID_ARGUMENT"
+
+    bad_feedback = mcp.tools["sourceharbor.feed.digests.list"](feedback="wrong")
+    assert bad_feedback["code"] == "INVALID_ARGUMENT"
+
+    bad_sort = mcp.tools["sourceharbor.feed.digests.list"](sort="wrong")
+    assert bad_sort["code"] == "INVALID_ARGUMENT"
+
+    payload = mcp.tools["sourceharbor.feed.digests.list"](
+        source="youtube",
+        category="tech",
+        feedback="useful",
+        sort="curated",
+        subscription_id=UUID_1,
+        limit=5,
+        cursor="cursor-1",
+    )
+    assert payload["items"][0]["job_id"] == "job-1"
+    assert payload["items"][0]["saved"] is True
+    assert payload["has_more"] is True
 
 
 def test_subscriptions_tail_branches() -> None:

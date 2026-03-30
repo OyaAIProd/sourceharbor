@@ -117,6 +117,20 @@ def _normalize_job_payload(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _normalize_job_compare_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    if is_error_payload(payload):
+        return payload
+    return {
+        "job_id": to_optional_str(payload.get("job_id")),
+        "previous_job_id": to_optional_str(payload.get("previous_job_id")),
+        "has_previous": to_optional_bool(payload.get("has_previous")),
+        "current_digest": to_optional_str(payload.get("current_digest")),
+        "previous_digest": to_optional_str(payload.get("previous_digest")),
+        "diff_markdown": to_optional_str(payload.get("diff_markdown")) or "",
+        "stats": to_optional_dict(payload.get("stats")) or {},
+    }
+
+
 def register_job_tools(mcp: FastMCP, api_call: ApiCall) -> None:
     @mcp.tool(name="sourceharbor.jobs.get", description="Get one job by id.")
     def get_job(job_id: str) -> dict[str, Any]:
@@ -131,6 +145,20 @@ def register_job_tools(mcp: FastMCP, api_call: ApiCall) -> None:
             )
         response = api_call("GET", f"/api/v1/jobs/{url_path_segment(normalized_job_id)}")
         return _normalize_job_payload(response)
+
+    @mcp.tool(name="sourceharbor.jobs.compare", description="Compare one job against its previous successful run.")
+    def compare_job(job_id: str) -> dict[str, Any]:
+        normalized_job_id = parse_uuid(job_id)
+        if normalized_job_id is None:
+            return invalid_argument(
+                "job_id must be a valid UUID",
+                method="GET",
+                path="/api/v1/jobs/{job_id}/compare",
+                field="job_id",
+                value=job_id,
+            )
+        response = api_call("GET", f"/api/v1/jobs/{url_path_segment(normalized_job_id)}/compare")
+        return _normalize_job_compare_payload(response)
 
     @mcp.tool(name="sourceharbor.videos.list", description="List ingested videos.")
     def list_videos(

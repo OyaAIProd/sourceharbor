@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: API contract for subscriptions, ingest polling, jobs, videos and artifacts.
 servers:
-  - url: http://127.0.0.1:8000
+  - url: http://127.0.0.1:9000
 paths:
   /healthz:
     get:
@@ -104,6 +104,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/IngestPollResponse'
 
+  /api/v1/ingest/runs:
+    get:
+      operationId: listIngestRuns
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: platform
+          schema:
+            $ref: '#/components/schemas/Platform'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Recent ingest runs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngestRunSummary'
+
+  /api/v1/ingest/runs/{run_id}:
+    get:
+      operationId: getIngestRun
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ingest run detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestRun'
+        '404':
+          description: Not found
+
   /api/v1/jobs/{job_id}:
     get:
       operationId: getJob
@@ -121,6 +170,91 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Job'
+        '404':
+          description: Not found
+
+  /api/v1/jobs/{job_id}/compare:
+    get:
+      operationId: compareJob
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job compare detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobCompareResponse'
+        '404':
+          description: Not found
+
+  /api/v1/knowledge/cards:
+    get:
+      operationId: listKnowledgeCards
+      parameters:
+        - in: query
+          name: job_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: video_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: card_type
+          schema:
+            type: string
+        - in: query
+          name: topic_key
+          schema:
+            type: string
+        - in: query
+          name: claim_kind
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: Knowledge cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KnowledgeCard'
+
+  /api/v1/jobs/{job_id}/knowledge-cards:
+    get:
+      operationId: getJobKnowledgeCards
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Knowledge cards derived from one job
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KnowledgeCardResponse'
         '404':
           description: Not found
 
@@ -405,7 +539,17 @@ paths:
           schema:
             type: string
         - in: query
-          name: subscription_id
+          name: feedback
+          schema:
+            type: string
+            enum: [saved, useful, noisy, dismissed, archived]
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [recent, curated]
+        - in: query
+          name: sub
           schema:
             type: string
         - in: query
@@ -427,6 +571,39 @@ paths:
             application/json:
               schema:
                 type: object
+
+  /api/v1/feed/feedback:
+    get:
+      operationId: getFeedFeedback
+      parameters:
+        - in: query
+          name: job_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Feed feedback state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedFeedback'
+    put:
+      operationId: putFeedFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedFeedbackUpdateRequest'
+      responses:
+        '200':
+          description: Feed feedback updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedFeedback'
 
   /api/v1/ui-audit/run:
     post:
@@ -627,8 +804,17 @@ components:
 
     IngestPollResponse:
       type: object
-      required: [enqueued, candidates]
+      required: [run_id, status, enqueued, candidates]
       properties:
+        run_id:
+          type: string
+          format: uuid
+        workflow_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed, skipped]
         enqueued:
           type: integer
           minimum: 0
@@ -636,6 +822,158 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/IngestCandidate'
+
+    IngestRunItem:
+      type: object
+      required:
+        [id, platform, video_uid, source_url, content_type, item_status, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        subscription_id:
+          type: string
+          format: uuid
+          nullable: true
+        video_id:
+          type: string
+          format: uuid
+          nullable: true
+        job_id:
+          type: string
+          format: uuid
+          nullable: true
+        ingest_event_id:
+          type: string
+          format: uuid
+          nullable: true
+        platform:
+          $ref: '#/components/schemas/Platform'
+        video_uid:
+          type: string
+        source_url:
+          type: string
+        title:
+          type: string
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        entry_hash:
+          type: string
+          nullable: true
+        pipeline_mode:
+          type: string
+          nullable: true
+        content_type:
+          type: string
+          enum: [video, article]
+        item_status:
+          type: string
+          enum: [queued, deduped, skipped]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    IngestRunSummary:
+      type: object
+      required:
+        [
+          id,
+          max_new_videos,
+          status,
+          jobs_created,
+          candidates_count,
+          feeds_polled,
+          entries_fetched,
+          entries_normalized,
+          ingest_events_created,
+          ingest_event_duplicates,
+          job_duplicates,
+          created_at,
+          updated_at
+        ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        subscription_id:
+          type: string
+          format: uuid
+          nullable: true
+        workflow_id:
+          type: string
+          nullable: true
+        platform:
+          $ref: '#/components/schemas/Platform'
+          nullable: true
+        max_new_videos:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed, skipped]
+        jobs_created:
+          type: integer
+          minimum: 0
+        candidates_count:
+          type: integer
+          minimum: 0
+        feeds_polled:
+          type: integer
+          minimum: 0
+        entries_fetched:
+          type: integer
+          minimum: 0
+        entries_normalized:
+          type: integer
+          minimum: 0
+        ingest_events_created:
+          type: integer
+          minimum: 0
+        ingest_event_duplicates:
+          type: integer
+          minimum: 0
+        job_duplicates:
+          type: integer
+          minimum: 0
+        error_message:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    IngestRun:
+      allOf:
+        - $ref: '#/components/schemas/IngestRunSummary'
+        - type: object
+          required: [items]
+          properties:
+            requested_by:
+              type: string
+              nullable: true
+            requested_trace_id:
+              type: string
+              nullable: true
+            filters_json:
+              type: object
+              nullable: true
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngestRunItem'
 
     JobStep:
       type: object
@@ -674,24 +1012,136 @@ components:
           nullable: true
         error:
           nullable: true
-        error_kind:
+
+    JobCompareStats:
+      type: object
+      required: [added_lines, removed_lines, changed]
+      properties:
+        added_lines:
+          type: integer
+        removed_lines:
+          type: integer
+        changed:
+          type: boolean
+
+    JobCompareResponse:
+      type: object
+      required: [job_id, has_previous, diff_markdown, stats]
+      properties:
+        job_id:
           type: string
-          nullable: true
-        retry_meta:
-          type: object
-          nullable: true
-          additionalProperties: true
-        result:
-          type: object
-          nullable: true
-          additionalProperties: true
-        thought_metadata:
-          type: object
-          nullable: true
-          additionalProperties: true
-        cache_key:
+        previous_job_id:
+          type:
+            - string
+            - 'null'
+        has_previous:
+          type: boolean
+        current_digest:
+          type:
+            - string
+            - 'null'
+        previous_digest:
+          type:
+            - string
+            - 'null'
+        diff_markdown:
           type: string
-          nullable: true
+        stats:
+          $ref: '#/components/schemas/JobCompareStats'
+
+    KnowledgeCard:
+      type: object
+      required:
+        [id, job_id, video_id, card_type, source_section, body, order_index, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        job_id:
+          type: string
+          format: uuid
+        video_id:
+          type: string
+          format: uuid
+        card_type:
+          type: string
+          enum: [summary, takeaway, action]
+        source_section:
+          type: string
+        title:
+          type:
+            - string
+            - 'null'
+        body:
+          type: string
+        order_index:
+          type: integer
+        metadata_json:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    KnowledgeCardResponse:
+      type: object
+      required: [card_type, title, body, source_section, order_index]
+      properties:
+        card_type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        source_section:
+          type: string
+        order_index:
+          type: integer
+
+    FeedFeedback:
+      type: object
+      required: [job_id, saved, feedback_label, exists, created_at, updated_at]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        saved:
+          type: boolean
+        feedback_label:
+          type:
+            - string
+            - 'null'
+          enum: [useful, noisy, dismissed, archived, null]
+        exists:
+          type: boolean
+        created_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        updated_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+
+    FeedFeedbackUpdateRequest:
+      type: object
+      required: [job_id, saved]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        saved:
+          type: boolean
+        feedback_label:
+          type:
+            - string
+            - 'null'
+          enum: [useful, noisy, dismissed, archived, null]
 
     RetrievalSearchRequest:
       type: object
