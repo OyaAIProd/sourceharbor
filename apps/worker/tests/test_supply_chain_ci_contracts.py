@@ -101,15 +101,19 @@ def test_build_standard_image_script_uses_explicit_buildx_invocation() -> None:
     assert "docker/setup-buildx-action@" in workflow
 
 
-def test_build_ci_standard_image_workflow_uses_hosted_github_token_path_for_login_and_preflight() -> (
+def test_build_ci_standard_image_workflow_resolves_hosted_registry_credentials_before_login() -> (
     None
 ):
     workflow = (_repo_root() / ".github" / "workflows" / "build-ci-standard-image.yml").read_text(
         encoding="utf-8"
     )
 
-    assert 'username="${{ github.actor }}"' in workflow
+    assert "Resolve GHCR credentials" in workflow
+    assert 'token="${GHCR_WRITE_TOKEN}"' in workflow
     assert 'token="${GITHUB_TOKEN}"' in workflow
+    assert "GHCR_LOGIN_USERNAME=$username" in workflow
+    assert "GHCR_LOGIN_TOKEN=$token" in workflow
+    assert "GHCR_LOGIN_MODE=$mode" in workflow
     assert "GHCR_WRITE_USERNAME:" in workflow
     assert "GHCR_WRITE_TOKEN:" in workflow
 
@@ -118,8 +122,8 @@ def test_build_ci_standard_image_workflow_uses_hosted_github_token_path_for_logi
     assert 'GITHUB_ACTIONS: "true"' in preflight_block
     assert "GHCR_WRITE_USERNAME:" in preflight_block
     assert "GHCR_WRITE_TOKEN:" in preflight_block
-    assert "registry-username: ${{ github.actor }}" in workflow
-    assert "registry-password: ${{ secrets.GITHUB_TOKEN }}" in workflow
+    assert "registry-username: ${{ env.GHCR_LOGIN_USERNAME }}" in workflow
+    assert "registry-password: ${{ env.GHCR_LOGIN_TOKEN }}" in workflow
 
 
 def test_release_manifest_capture_uses_relative_artifact_paths_and_current_run_scope() -> None:

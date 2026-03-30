@@ -55,6 +55,16 @@ def _as_positive_float(value: Any) -> float | None:
     return parsed
 
 
+def _as_non_negative_float(value: Any) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if parsed < 0:
+        return None
+    return parsed
+
+
 def _validate_budget(path: Path) -> tuple[bool, str, dict[str, float] | None]:
     payload = _load_json_object(path)
     if payload is None:
@@ -107,7 +117,10 @@ def _validate_rum_baseline(path: Path) -> tuple[bool, str, dict[str, float] | No
     normalized: dict[str, float] = {}
     missing_or_invalid: list[str] = []
     for key in REQUIRED_CWV_METRICS:
-        value = _as_positive_float(metrics.get(key))
+        if key == "cls_p75":
+            value = _as_non_negative_float(metrics.get(key))
+        else:
+            value = _as_positive_float(metrics.get(key))
         if value is None:
             missing_or_invalid.append(key)
             continue
