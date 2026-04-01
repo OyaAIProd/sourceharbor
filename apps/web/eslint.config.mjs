@@ -22,7 +22,9 @@ export default defineConfig([
 	...nextTypeScript,
 	globalIgnores([
 		".next/**",
+		"**/.next/**",
 		".next-e2e-*/**",
+		"**/.next-e2e-*/**",
 		"out/**",
 		"build/**",
 		"next-env.d.ts",

@@ -14,7 +14,7 @@ Think of it like a guided first local run:
 ## What You Should See By The End
 
 - the web command center at the route recorded in `.runtime-cache/run/full-stack/resolved.env`
-- the API health endpoint recorded in `.runtime-cache/run/full-stack/resolved.env`, with the default local path staying on `9000` only when that port is still free
+- the API health endpoint recorded in `.runtime-cache/run/full-stack/resolved.env`, with the canonical default local health URL remaining `http://127.0.0.1:9000/healthz` only when that port is still free
 - at least one queued or completed processing job
 - a digest feed entry or an inspectable job payload
 - a local supervisor check you can rerun before you decide whether to open the long live-smoke lane
@@ -50,6 +50,7 @@ Open:
 
 - web command center: `http://127.0.0.1:${WEB_PORT}`
 - API health: `${SOURCE_HARBOR_API_BASE_URL}/healthz`
+- canonical local fallback before any port re-home: `http://127.0.0.1:9000/healthz`
 
 If anything feels off before you continue, run:
 
