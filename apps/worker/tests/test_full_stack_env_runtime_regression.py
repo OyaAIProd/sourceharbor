@@ -144,6 +144,19 @@ def test_full_stack_uses_runtime_snapshot_for_data_plane_and_worker_signature() 
     assert "Service-specific regex plus the expected port" in script
 
 
+def test_full_stack_only_falls_back_to_local_dev_tokens_outside_ci() -> None:
+    script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(encoding="utf-8")
+
+    assert 'startup_write_token="${local_write_token:-}"' in script
+    assert 'startup_web_session_token="${local_web_session_token:-}"' in script
+    assert (
+        'if [[ -z "$startup_write_token" && -z "${CI:-}" && -z "${GITHUB_ACTIONS:-}" ]]; then'
+        in script
+    )
+    assert 'startup_write_token="${local_write_token:-sourceharbor-local-dev-token}"' not in script
+    assert "normalize_database_url_driver()" not in script
+
+
 def test_full_stack_uses_python_detach_fallback_when_setsid_is_missing() -> None:
     script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(encoding="utf-8")
 

@@ -25,6 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pyyaml>=6.0.3,<7",
+  "pygments>=2.20.0,<3",
   "pytest>=8.4.1,<10",
   "pytest-cov>=6.0.0,<8",
   "pytest-rerunfailures>=15.1,<17",

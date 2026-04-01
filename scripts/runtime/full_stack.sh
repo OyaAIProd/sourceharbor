@@ -67,15 +67,6 @@ source "$ROOT_DIR/scripts/lib/load_env.sh"
 source "$ROOT_DIR/scripts/lib/temporal_ready.sh"
 load_repo_env "$ROOT_DIR" "$SCRIPT_NAME" "$ENV_PROFILE"
 
-normalize_database_url_driver() {
-  local url="${1:-}"
-  if [[ "$url" == postgresql://* ]]; then
-    printf 'postgresql+psycopg://%s\n' "${url#postgresql://}"
-    return 0
-  fi
-  printf '%s\n' "$url"
-}
-
 normalize_runtime_database_url() {
   local raw_url="${1:-}"
   local target_port="${2:-15432}"
@@ -159,8 +150,14 @@ if [[ -z "$local_write_token" && -z "${CI:-}" && -z "${GITHUB_ACTIONS:-}" ]]; th
   local_write_token="sourceharbor-local-dev-token"
 fi
 local_web_session_token="${WEB_ACTION_SESSION_TOKEN:-$local_write_token}"
-startup_write_token="${local_write_token:-sourceharbor-local-dev-token}"
-startup_web_session_token="${local_web_session_token:-$startup_write_token}"
+startup_write_token="${local_write_token:-}"
+startup_web_session_token="${local_web_session_token:-}"
+if [[ -z "$startup_write_token" && -z "${CI:-}" && -z "${GITHUB_ACTIONS:-}" ]]; then
+  startup_write_token="sourceharbor-local-dev-token"
+fi
+if [[ -z "$startup_web_session_token" ]]; then
+  startup_web_session_token="$startup_write_token"
+fi
 if [[ -n "$local_write_token" ]]; then
   export SOURCE_HARBOR_API_KEY="$local_write_token"
 fi
