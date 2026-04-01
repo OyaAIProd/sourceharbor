@@ -11,12 +11,21 @@ import {
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
 import type { RetrievalHit, RetrievalSearchMode } from "@/lib/api/types";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Ask" };
+const askCopy = getLocaleMessages().searchPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: askCopy.askTitle,
+	description: askCopy.askSubtitle,
+	route: "search",
+	keywords: ["Ask your sources", "grounded Ask", "citation-first Ask"],
+});
 
 type AskPageProps = {
 	searchParams?: SearchParamsInput;
@@ -34,7 +43,7 @@ function compactId(value: string): string {
 
 function formatSourceLabel(source: string): string {
 	if (source === "knowledge_cards") {
-		return "Knowledge cards";
+		return askCopy.knowledgeCardsSourceLabel;
 	}
 	return source
 		.split(/[_-]+/)
@@ -64,18 +73,18 @@ function EvidenceCard({ hit }: { hit: RetrievalHit }) {
 			<CardContent className="flex flex-wrap gap-2">
 				<Button asChild variant="outline" size="sm">
 					<Link href={`/jobs?job_id=${encodeURIComponent(hit.job_id)}`}>
-						Open job trace
+						{askCopy.openJobTraceButton}
 					</Link>
 				</Button>
 				<Button asChild variant="outline" size="sm">
 					<Link href={`/knowledge?job_id=${encodeURIComponent(hit.job_id)}`}>
-						Open knowledge cards
+						{askCopy.openKnowledgeCardsButton}
 					</Link>
 				</Button>
 				{hit.source_url ? (
 					<Button asChild variant="ghost" size="sm">
 						<a href={hit.source_url} target="_blank" rel="noreferrer">
-							Open original source
+							{askCopy.openSourceButton}
 						</a>
 					</Button>
 				) : null}

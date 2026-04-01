@@ -10,46 +10,48 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { getLocaleMessages } from "@/lib/i18n/messages";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: "Proof",
-	description:
-		"Proof ladder for SourceHarbor: local supervisor proof, long live-smoke boundaries, and remote proof.",
-};
+const proofCopy = getLocaleMessages().proofPage;
 
-const PROOF_LAYERS = [
-	{
-		title: "Product surface",
-		body: "README, runtime-truth, project-status, Search, Ask, MCP, and Ops explain what SourceHarbor is and where each claim lives.",
-	},
-	{
-		title: "Local supervisor proof",
-		body: "`bootstrap -> up -> status -> doctor` proves the repo-managed local stack, with routes taken from `resolved.env` instead of assumed defaults.",
-	},
-	{
-		title: "Long live-smoke lane",
-		body: "`./bin/smoke-full-stack --offline-fallback 0` is stricter than the base local proof and can still stop on provider-side YouTube, Resend, or Gemini gates.",
-	},
-	{
-		title: "Remote proof",
-		body: "Release badges, GitHub settings, and external distribution claims still need fresh remote verification. Local success does not replace that layer.",
-	},
-];
+export const metadata: Metadata = buildProductMetadata({
+	title: proofCopy.metadataTitle,
+	description: proofCopy.metadataDescription,
+	route: "proof",
+});
 
 export default function ProofPage() {
 	const copy = getLocaleMessages().proofPage;
+	const proofLayers = [
+		{
+			title: copy.layers.productSurfaceTitle,
+			body: copy.layers.productSurfaceBody,
+		},
+		{
+			title: copy.layers.localSupervisorTitle,
+			body: copy.layers.localSupervisorBody,
+		},
+		{
+			title: copy.layers.longSmokeTitle,
+			body: copy.layers.longSmokeBody,
+		},
+		{
+			title: copy.layers.remoteProofTitle,
+			body: copy.layers.remoteProofBody,
+		},
+	];
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Proof Ladder</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Proof boundary
+					{copy.heroTitle}
 				</h1>
 				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			<section className="grid gap-4 lg:grid-cols-2">
-				{PROOF_LAYERS.map((item) => (
+				{proofLayers.map((item) => (
 					<Card key={item.title} className="folo-surface border-border/70">
 						<CardHeader>
 							<CardTitle>{item.title}</CardTitle>
@@ -63,18 +65,18 @@ export default function ProofPage() {
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<CardTitle>Next truthful jumps</CardTitle>
+					<CardTitle>{copy.nextTruthfulJumpsTitle}</CardTitle>
 					<CardDescription>{copy.nextTruthfulJumpsDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
 					<Button asChild variant="outline" size="sm">
-						<Link href="/ops">Open Ops</Link>
+						<Link href="/">{copy.openCommandCenterButton}</Link>
 					</Button>
 					<Button asChild variant="outline" size="sm">
-						<Link href="/search">Open Search</Link>
+						<Link href="/ops">{copy.openOpsButton}</Link>
 					</Button>
 					<Button asChild variant="outline" size="sm">
-						<Link href="/playground">Open Playground</Link>
+						<Link href="/mcp">{copy.openMcpButton}</Link>
 					</Button>
 				</CardContent>
 			</Card>

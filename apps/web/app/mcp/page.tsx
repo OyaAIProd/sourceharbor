@@ -9,12 +9,15 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import { getLocaleMessages } from "@/lib/i18n/messages";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: "MCP",
-	description:
-		"Agent-facing MCP quickstart for SourceHarbor, including startup, representative tools, and the relation to API and Web.",
-};
+const mcpCopy = getLocaleMessages().mcpPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: mcpCopy.metadataTitle,
+	description: mcpCopy.metadataDescription,
+	route: "mcp",
+});
 
 const TOOL_EXAMPLES = [
 	"sourceharbor.jobs.get",
@@ -29,7 +32,7 @@ export default function McpPage() {
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor MCP Front Door</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>

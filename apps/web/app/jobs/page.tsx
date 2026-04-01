@@ -21,8 +21,15 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Job Trace" };
+const jobsCopy = getLocaleMessages().jobsPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: jobsCopy.metadataTitle,
+	description: jobsCopy.metadataDescription,
+	route: "jobs",
+});
 
 type JobsPageProps = { searchParams?: SearchParamsInput };
 
@@ -79,23 +86,24 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Pipeline</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Job Trace
+					{copy.heroTitle}
 				</h1>
 				<p className="folo-page-subtitle">
-					Look up a job ID to inspect full pipeline state, retry history, and
-					artifact links in one place.
+					{copy.heroSubtitle}
 				</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<h2 className="text-xl font-semibold">Find a job</h2>
+					<h2 className="text-xl font-semibold">{copy.findTitle}</h2>
 					<CardDescription>
-						Enter a job ID to inspect the step trail and artifact links. You can
-						jump here from <Link href="/">recent videos on the home page</Link>{" "}
-						or <Link href="/feed">the digest feed</Link>.
+						{copy.findDescriptionPrefix}{" "}
+						<Link href="/">{copy.homeLinkLabel}</Link>{" "}
+						{copy.findDescriptionConnector}{" "}
+						<Link href="/feed">{copy.digestFeedLinkLabel}</Link>
+						{copy.findDescriptionSuffix}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -107,16 +115,16 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 						<FormInputField
 							id="job-id-field"
 							name="job_id"
-							label="Job ID *"
+							label={copy.jobIdLabel}
 							type="text"
-							placeholder="9be4cbe7-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+							placeholder={copy.jobIdPlaceholder}
 							defaultValue={jobId}
 							required
 							data-field-kind="identifier"
 							fieldClassName="min-w-[280px] flex-1"
 						/>
 						<Button type="submit" data-interaction="control">
-							Search
+							{copy.searchButton}
 						</Button>
 					</form>
 				</CardContent>
@@ -129,12 +137,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 					aria-live="assertive"
 				>
 					<CardHeader className="gap-2">
-						<CardTitle className="text-base">Lookup failed</CardTitle>
+						<CardTitle className="text-base">
+							{copy.lookupFailedTitle}
+						</CardTitle>
 						<CardDescription>{error}</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
 						<Button asChild variant="outline" size="sm">
-							<Link href={retryHref}>Retry current page</Link>
+							<Link href={retryHref}>{copy.retryCurrentPageButton}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -147,26 +157,28 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 						aria-live="polite"
 						aria-atomic="true"
 					>
-						Current job status: {jobStatus?.label ?? "-"}, pipeline status:{" "}
-						{pipelineStatus?.label ?? "-"}, across {job.step_summary.length}{" "}
-						steps.
+						{copy.currentStatusPrefix}: {jobStatus?.label ?? "-"},{" "}
+						{copy.pipelineStatusPrefix}: {pipelineStatus?.label ?? "-"}, across{" "}
+						{job.step_summary.length} {copy.acrossStepsSuffix}.
 					</output>
 					<section>
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">Job overview</h2>
+								<h2 className="text-xl font-semibold">
+									{copy.jobOverviewTitle}
+								</h2>
 							</CardHeader>
 							<CardContent className="space-y-4">
 								<dl className="grid gap-3 sm:grid-cols-2">
 									<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 										<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-											Job ID
+											{copy.overviewFields.jobId}
 										</dt>
 										<dd className="break-all text-sm font-medium">{job.id}</dd>
 									</div>
 									<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 										<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-											Video ID
+											{copy.overviewFields.videoId}
 										</dt>
 										<dd className="break-all text-sm font-medium">
 											{job.video_id}
@@ -174,7 +186,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									</div>
 									<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 										<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-											Status
+											{copy.overviewFields.status}
 										</dt>
 										<dd>
 											<JobStatusBadge status={jobStatus?.css ?? "queued"} />
@@ -182,7 +194,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									</div>
 									<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 										<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-											Final pipeline status
+											{copy.overviewFields.finalPipelineStatus}
 										</dt>
 										<dd>
 											{pipelineStatus ? (
@@ -194,7 +206,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									</div>
 									<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 										<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-											Created at
+											{copy.overviewFields.createdAt}
 										</dt>
 										<dd className="text-sm">
 											{formatDateTime(job.created_at)}
@@ -202,7 +214,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									</div>
 									<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 										<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-											Updated at
+											{copy.overviewFields.updatedAt}
 										</dt>
 										<dd className="text-sm">
 											{formatDateTime(job.updated_at)}
@@ -216,7 +228,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									className="h-auto px-0"
 								>
 									<Link href={`/feed?item=${encodeURIComponent(job.id)}`}>
-										View in digest feed
+										{copy.viewInDigestFeed}
 									</Link>
 								</Button>
 								<Button
@@ -226,12 +238,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									className="h-auto px-0"
 								>
 									<a href={`/api/v1/jobs/${encodeURIComponent(job.id)}/bundle`}>
-										Download evidence bundle
+										{copy.downloadEvidenceBundle}
 									</a>
 								</Button>
 								<p className="text-sm text-muted-foreground">
-									Evidence bundles are for internal reuse and async
-									collaboration. They are not public release proof.
+									{copy.evidenceBundleNote}
 								</p>
 							</CardContent>
 						</Card>
@@ -240,35 +251,37 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 					<section>
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">Step summary</h2>
+								<h2 className="text-xl font-semibold">
+									{copy.stepSummaryTitle}
+								</h2>
 							</CardHeader>
 							<CardContent>
 								{job.step_summary.length === 0 ? (
 									<p className="text-sm text-muted-foreground">
-										No step records yet.
+										{copy.stepSummaryEmpty}
 									</p>
 								) : (
 									<div className="table-scroll overflow-x-auto rounded-lg border border-border/70">
 										<table className="min-w-[720px] w-full text-sm">
 											<caption className="sr-only">
-												Job step summary table
+												{copy.stepSummaryCaption}
 											</caption>
 											<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 												<tr>
 													<th scope="col" className="px-4 py-3 font-medium">
-														Step
+														{copy.stepSummaryHeaders.step}
 													</th>
 													<th scope="col" className="px-4 py-3 font-medium">
-														Status
+														{copy.stepSummaryHeaders.status}
 													</th>
 													<th scope="col" className="px-4 py-3 font-medium">
-														Retries
+														{copy.stepSummaryHeaders.retries}
 													</th>
 													<th scope="col" className="px-4 py-3 font-medium">
-														Started at
+														{copy.stepSummaryHeaders.startedAt}
 													</th>
 													<th scope="col" className="px-4 py-3 font-medium">
-														Finished at
+														{copy.stepSummaryHeaders.finishedAt}
 													</th>
 												</tr>
 											</thead>
@@ -303,7 +316,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
 								<h2 className="text-xl font-semibold">
-									Compare to previous run
+									{copy.compareTitle}
 								</h2>
 								<CardDescription>{copy.compareDescription}</CardDescription>
 							</CardHeader>
@@ -313,7 +326,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 										<dl className="grid gap-3 sm:grid-cols-3">
 											<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 												<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-													Previous job
+													{copy.compareFields.previousJob}
 												</dt>
 												<dd className="break-all text-sm font-medium">
 													{jobCompare.previous_job_id}
@@ -321,7 +334,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 											</div>
 											<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 												<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-													Added lines
+													{copy.compareFields.addedLines}
 												</dt>
 												<dd className="text-sm font-medium">
 													{jobCompare.stats.added_lines}
@@ -329,7 +342,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 											</div>
 											<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 												<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-													Removed lines
+													{copy.compareFields.removedLines}
 												</dt>
 												<dd className="text-sm font-medium">
 													{jobCompare.stats.removed_lines}
@@ -342,13 +355,13 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 											</pre>
 										) : (
 											<p className="text-sm text-muted-foreground">
-												No line-level diff preview was produced.
+												{copy.compareDiffEmpty}
 											</p>
 										)}
 									</>
 								) : (
 									<p className="text-sm text-muted-foreground">
-										No previous successful job is available for comparison yet.
+										{copy.compareEmpty}
 									</p>
 								)}
 							</CardContent>
@@ -356,13 +369,15 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">Knowledge cards</h2>
+								<h2 className="text-xl font-semibold">
+									{copy.knowledgeTitle}
+								</h2>
 								<CardDescription>{copy.knowledgeDescription}</CardDescription>
 							</CardHeader>
 							<CardContent>
 								{knowledgeCards.length === 0 ? (
 									<p className="text-sm text-muted-foreground">
-										No knowledge cards generated yet.
+										{copy.knowledgeEmpty}
 									</p>
 								) : (
 									<ul className="space-y-3 text-sm">
@@ -387,29 +402,31 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">Degradations</h2>
+								<h2 className="text-xl font-semibold">
+									{copy.degradationsTitle}
+								</h2>
 							</CardHeader>
 							<CardContent>
 								{job.degradations.length === 0 ? (
 									<p className="text-sm text-muted-foreground">
-										No degradations recorded.
+										{copy.degradationsEmpty}
 									</p>
 								) : (
 									<ul className="space-y-2 text-sm">
-										{job.degradations.map((item, index) => {
-											const degradationStatus =
-												typeof item.status === "string"
-													? toDisplayStatus(item.status).label
-													: "n/a";
-											return (
-												<li
-													key={`${item.step ?? "unknown"}-${index}`}
-													className="leading-6"
-												>
-													<strong>{item.step ?? "unknown"}</strong>:{" "}
-													{item.reason ?? degradationStatus}
-												</li>
-											);
+												{job.degradations.map((item, index) => {
+													const degradationStatus =
+														typeof item.status === "string"
+															? toDisplayStatus(item.status).label
+															: copy.naValue;
+													return (
+														<li
+															key={`${item.step ?? "unknown"}-${index}`}
+															className="leading-6"
+														>
+															<strong>{item.step ?? copy.unknownValue}</strong>:{" "}
+															{item.reason ?? degradationStatus}
+														</li>
+													);
 										})}
 									</ul>
 								)}
@@ -418,12 +435,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">Artifact index</h2>
+								<h2 className="text-xl font-semibold">
+									{copy.artifactIndexTitle}
+								</h2>
 							</CardHeader>
 							<CardContent>
 								{Object.keys(job.artifacts_index).length === 0 ? (
 									<p className="text-sm text-muted-foreground">
-										No artifacts yet.
+										{copy.artifactsEmpty}
 									</p>
 								) : (
 									<ul className="space-y-2 text-sm">
@@ -436,7 +455,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 													rel="noreferrer"
 													className="text-primary underline-offset-4 hover:underline"
 												>
-													<code>{value}</code> (opens in a new tab)
+													<code>{value}</code> {copy.opensInNewTabSuffix}
 												</a>
 											</li>
 										))}

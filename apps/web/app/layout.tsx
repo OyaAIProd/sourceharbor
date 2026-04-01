@@ -18,7 +18,18 @@ export const metadata: Metadata = {
 		template: "%s | SourceHarbor",
 	},
 	description:
-		"AI knowledge pipeline and MCP server for YouTube, Bilibili, and RSS. Search evidence, inspect jobs, and operate SourceHarbor from one command center.",
+		"AI knowledge control tower for grounded retrieval, job trace, MCP workflows, Codex, Claude Code, and source-first operator research.",
+	keywords: [
+		"SourceHarbor",
+		"AI knowledge control tower",
+		"grounded retrieval",
+		"MCP server",
+		"Model Context Protocol",
+		"Codex workflow",
+		"Claude Code workflow",
+		"job trace",
+		"evidence bundle",
+	],
 };
 
 const HEALTH_TIMEOUT_MS = 2000;

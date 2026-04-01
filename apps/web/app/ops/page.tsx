@@ -14,12 +14,15 @@ import { apiClient } from "@/lib/api/client";
 import type { OpsGate, OpsInboxItem, OpsInboxResponse } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import { getLocaleMessages } from "@/lib/i18n/messages";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: "Ops Inbox",
-	description:
-		"Operator diagnostics for failed jobs, ingest issues, provider health, notifications, and live-hardening gates.",
-};
+const opsCopy = getLocaleMessages().ops;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: opsCopy.metadataTitle,
+	description: opsCopy.metadataDescription,
+	route: "ops",
+});
 
 function toBadgeStatus(status: string): string {
 	const normalized = status.trim().toLowerCase();
@@ -236,7 +239,7 @@ export default async function OpsPage() {
 		return (
 			<div className="folo-page-shell folo-unified-shell">
 				<div className="folo-page-header">
-					<p className="folo-page-kicker">SourceHarbor Ops</p>
+					<p className="folo-page-kicker">{copy.kicker}</p>
 					<h1 className="folo-page-title" data-route-heading>
 						{copy.heroTitle}
 					</h1>
@@ -268,7 +271,7 @@ export default async function OpsPage() {
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Ops</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>

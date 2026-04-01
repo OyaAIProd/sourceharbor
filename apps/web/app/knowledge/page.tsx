@@ -15,10 +15,15 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: getLocaleMessages().knowledgePage.metadataTitle,
-};
+const knowledgeCopy = getLocaleMessages().knowledgePage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: knowledgeCopy.metadataTitle,
+	description: knowledgeCopy.metadataDescription,
+	route: "knowledge",
+});
 
 type KnowledgePageProps = {
 	searchParams?: SearchParamsInput;
@@ -210,7 +215,7 @@ export default async function KnowledgePage({
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Knowledge Layer</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>
@@ -361,9 +366,9 @@ export default async function KnowledgePage({
 													<Button asChild variant="ghost" size="xs">
 														<Link
 															href={`/jobs?job_id=${encodeURIComponent(card.job_id)}`}
-															aria-label={`Open job trace for ${card.job_id}`}
+															aria-label={`${copy.openJobTraceAriaPrefix} ${card.job_id}`}
 														>
-															Open job trace
+															{copy.openJobTraceButton}
 														</Link>
 													</Button>
 												) : null}

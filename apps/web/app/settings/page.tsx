@@ -31,8 +31,15 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Settings" };
+const settingsCopy = getLocaleMessages().settings;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: settingsCopy.metadataTitle,
+	description: settingsCopy.metadataDescription,
+	route: "settings",
+});
 
 type SettingsPageProps = {
 	searchParams?: SearchParamsInput;
@@ -74,7 +81,7 @@ export default async function SettingsPage({
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Settings</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>

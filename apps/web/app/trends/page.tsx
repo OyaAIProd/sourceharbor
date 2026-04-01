@@ -16,12 +16,15 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: "Trends",
-	description:
-		"Cross-run trend and diff view for recent watchlist matches across jobs and knowledge cards.",
-};
+const trendsCopy = getLocaleMessages().trendsPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: trendsCopy.metadataTitle,
+	description: trendsCopy.metadataDescription,
+	route: "trends",
+});
 
 type TrendsPageProps = {
 	searchParams?: SearchParamsInput;
@@ -50,18 +53,18 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Trends</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Cross-run trend
+					{copy.heroTitle}
 				</h1>
 				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
-			<Card className="folo-surface border-border/70">
-				<CardHeader>
-					<CardTitle>Choose a watchlist</CardTitle>
-					<CardDescription>{copy.chooseDescription}</CardDescription>
-				</CardHeader>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>{copy.chooseTitle}</CardTitle>
+						<CardDescription>{copy.chooseDescription}</CardDescription>
+					</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
 					{watchlists.length === 0 ? (
 						<p className="text-sm text-muted-foreground">{copy.empty}</p>
@@ -89,9 +92,10 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 					<CardHeader>
 						<CardTitle>{selectedWatchlist.name}</CardTitle>
 						<CardDescription>
-							Matcher: {trend.summary.matcher_type} ={" "}
-							<code>{trend.summary.matcher_value}</code> · Recent runs:{" "}
-							{trend.summary.recent_runs} · Matched cards:{" "}
+							{copy.matcherLabel}: {trend.summary.matcher_type} ={" "}
+							<code>{trend.summary.matcher_value}</code> ·{" "}
+							{copy.recentRunsLabel}: {trend.summary.recent_runs} ·{" "}
+							{copy.matchedCardsLabel}:{" "}
 							{trend.summary.matched_cards}
 						</CardDescription>
 					</CardHeader>
@@ -105,8 +109,8 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 									<div className="space-y-1">
 										<p className="font-medium">{run.title}</p>
 										<p className="text-sm text-muted-foreground">
-											{run.platform} · {formatDateTime(run.created_at)} ·
-											matched cards: {run.matched_card_count}
+											{run.platform} · {formatDateTime(run.created_at)} ·{" "}
+											{copy.matchedCardsLabel}: {run.matched_card_count}
 										</p>
 									</div>
 									<div className="flex flex-wrap gap-3">
@@ -119,7 +123,7 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 											<Link
 												href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}
 											>
-												Open job
+												{copy.openJobButton}
 											</Link>
 										</Button>
 										<Button
@@ -131,23 +135,27 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 											<Link
 												href={`/knowledge?job_id=${encodeURIComponent(run.job_id)}`}
 											>
-												Open knowledge
+												{copy.openKnowledgeButton}
 											</Link>
 										</Button>
 									</div>
 								</div>
 								<div className="mt-3 grid gap-2 text-sm text-muted-foreground lg:grid-cols-2">
-									<p>Added topics: {run.added_topics.join(", ") || "none"}</p>
 									<p>
-										Removed topics: {run.removed_topics.join(", ") || "none"}
+										{copy.addedTopicsPrefix}:{" "}
+										{run.added_topics.join(", ") || copy.noneValue}
 									</p>
 									<p>
-										Added claim kinds:{" "}
-										{run.added_claim_kinds.join(", ") || "none"}
+										{copy.removedTopicsPrefix}:{" "}
+										{run.removed_topics.join(", ") || copy.noneValue}
 									</p>
 									<p>
-										Removed claim kinds:{" "}
-										{run.removed_claim_kinds.join(", ") || "none"}
+										{copy.addedClaimKindsPrefix}:{" "}
+										{run.added_claim_kinds.join(", ") || copy.noneValue}
+									</p>
+									<p>
+										{copy.removedClaimKindsPrefix}:{" "}
+										{run.removed_claim_kinds.join(", ") || copy.noneValue}
 									</p>
 								</div>
 							</div>

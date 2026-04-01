@@ -16,22 +16,19 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: "Search",
-	description:
-		"Operator-facing retrieval front door for digests, transcripts, outlines, and knowledge cards.",
-};
+const searchCopy = getLocaleMessages().searchPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: searchCopy.metadataTitle,
+	description: searchCopy.metadataDescription,
+	route: "search",
+});
 
 type SearchPageProps = {
 	searchParams?: SearchParamsInput;
 };
-
-const MODE_OPTIONS = [
-	{ value: "keyword", label: "Keyword" },
-	{ value: "semantic", label: "Semantic (experimental)" },
-	{ value: "hybrid", label: "Hybrid (experimental)" },
-];
 
 function humanizeSource(source: string): string {
 	return source
@@ -43,6 +40,16 @@ function humanizeSource(source: string): string {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
 	const copy = getLocaleMessages().searchPage;
+	const modeOptions = [
+		{ value: "keyword", label: copy.modeOptions.keyword },
+		{ value: "semantic", label: copy.modeOptions.semantic },
+		{ value: "hybrid", label: copy.modeOptions.hybrid },
+	];
+	const platformOptions = [
+		{ value: "", label: copy.platformOptions.all },
+		{ value: "youtube", label: copy.platformOptions.youtube },
+		{ value: "bilibili", label: copy.platformOptions.bilibili },
+	];
 	const { q, query, mode, top_k, intent, platform } = await resolveSearchParams(
 		searchParams,
 		["q", "query", "mode", "top_k", "intent", "platform"] as const,
@@ -109,34 +116,28 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 						<input type="hidden" name="intent" value={askIntent ? "ask" : ""} />
 						<FormInputField
 							name="q"
-							label={askIntent ? "Question" : "Query"}
+							label={askIntent ? copy.questionLabel : copy.queryLabel}
 							placeholder={
-								askIntent
-									? "What did recent runs say about retry policy, agent workflow, or knowledge cards?"
-									: "agent workflow, retry policy, knowledge cards..."
+								askIntent ? copy.questionPlaceholder : copy.queryPlaceholder
 							}
 							defaultValue={queryValue}
 							hint={askIntent ? copy.askHint : copy.searchHint}
 						/>
 						<FormSelectField
 							name="mode"
-							label={askIntent ? "Grounding mode" : "Mode"}
+							label={askIntent ? copy.groundingModeLabel : copy.modeLabel}
 							defaultValue={normalizedMode}
-							options={MODE_OPTIONS}
+							options={modeOptions}
 						/>
 						<FormSelectField
 							name="platform"
-							label="Platform"
+							label={copy.platformLabel}
 							defaultValue={safePlatform}
-							options={[
-								{ value: "", label: "All platforms" },
-								{ value: "youtube", label: "YouTube" },
-								{ value: "bilibili", label: "Bilibili" },
-							]}
+							options={platformOptions}
 						/>
 						<FormInputField
 							name="top_k"
-							label="Top K"
+							label={copy.topKLabel}
 							type="number"
 							min={1}
 							max={20}
@@ -144,10 +145,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 						/>
 						<div className="flex items-end gap-3">
 							<Button type="submit" variant="hero" size="sm">
-								{askIntent ? "Ask" : "Search"}
+								{askIntent ? copy.askButton : copy.searchButton}
 							</Button>
 							<Button asChild variant="ghost" size="sm">
-								<Link href={askIntent ? "/ask" : "/search"}>Clear</Link>
+								<Link href={askIntent ? "/ask" : "/search"}>
+									{copy.clearButton}
+								</Link>
 							</Button>
 						</div>
 					</form>
@@ -242,21 +245,21 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 										<Link
 											href={`/jobs?job_id=${encodeURIComponent(item.job_id)}`}
 										>
-											Open job trace
+											{copy.openJobTraceButton}
 										</Link>
 									</Button>
 									<Button asChild variant="outline" size="sm">
 										<Link
 											href={`/knowledge?job_id=${encodeURIComponent(item.job_id)}`}
 										>
-											Open knowledge cards
+											{copy.openKnowledgeCardsButton}
 										</Link>
 									</Button>
 									<Button asChild variant="outline" size="sm">
 										<Link
 											href={`/feed?item=${encodeURIComponent(item.job_id)}`}
 										>
-											Open feed entry
+											{copy.openFeedEntryButton}
 										</Link>
 									</Button>
 									{item.source_url ? (
@@ -266,7 +269,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 												target="_blank"
 												rel="noreferrer"
 											>
-												Open source
+												{copy.openSourceButton}
 											</a>
 										</Button>
 									) : null}

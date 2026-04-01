@@ -26,8 +26,15 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Command Center" };
+const dashboardCopy = getLocaleMessages().dashboard;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: dashboardCopy.metadataTitle,
+	description: dashboardCopy.metadataDescription,
+	route: "dashboard",
+});
 
 type DashboardPageProps = {
 	searchParams?: SearchParamsInput;
@@ -163,7 +170,7 @@ export default async function DashboardPage({
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Command Center</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>

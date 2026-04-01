@@ -27,33 +27,40 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: "Watchlists",
-	description:
-		"Persisted topic and source watchlists for ongoing SourceHarbor tracking, with notification readiness and trend follow-through.",
-};
+const watchlistsCopy = getLocaleMessages().watchlistsPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: watchlistsCopy.metadataTitle,
+	description: watchlistsCopy.metadataDescription,
+	route: "watchlists",
+});
 
 type WatchlistsPageProps = {
 	searchParams?: SearchParamsInput;
 };
 
-const MATCHER_OPTIONS = [
-	{ value: "topic_key", label: "Topic key" },
-	{ value: "claim_kind", label: "Claim kind" },
-	{ value: "platform", label: "Platform" },
-	{ value: "source_match", label: "Source match" },
-];
-
-const DELIVERY_OPTIONS = [
-	{ value: "dashboard", label: "Dashboard only" },
-	{ value: "email", label: "Email when ready" },
-];
-
 export default async function WatchlistsPage({
 	searchParams,
 }: WatchlistsPageProps) {
 	const copy = getLocaleMessages().watchlistsPage;
+	const matcherOptions = [
+		{ value: "topic_key", label: copy.matcherOptions.topicKey },
+		{ value: "claim_kind", label: copy.matcherOptions.claimKind },
+		{ value: "platform", label: copy.matcherOptions.platform },
+		{ value: "source_match", label: copy.matcherOptions.sourceMatch },
+	];
+	const deliveryOptions = [
+		{ value: "dashboard", label: copy.deliveryOptions.dashboard },
+		{ value: "email", label: copy.deliveryOptions.email },
+	];
+	const matcherLabelMap = new Map(
+		matcherOptions.map((option) => [option.value, option.label]),
+	);
+	const deliveryLabelMap = new Map(
+		deliveryOptions.map((option) => [option.value, option.label]),
+	);
 	const {
 		status,
 		code,
@@ -110,9 +117,9 @@ export default async function WatchlistsPage({
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Compounders</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Watchlists
+					{copy.heroTitle}
 				</h1>
 				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
@@ -122,7 +129,7 @@ export default async function WatchlistsPage({
 			<section className="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Save a watchlist</CardTitle>
+						<CardTitle>{copy.saveTitle}</CardTitle>
 						<CardDescription>{copy.saveDescription}</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -142,49 +149,49 @@ export default async function WatchlistsPage({
 							<FormInputField
 								id="watchlist-name"
 								name="name"
-								label="Name"
+								label={copy.nameLabel}
 								type="text"
 								defaultValue={editingWatchlist?.name ?? ""}
-								placeholder="Retry policy, Agent workflow, YouTube AI channel..."
+								placeholder={copy.namePlaceholder}
 								required
 							/>
 							<FormSelectField
 								name="matcher_type"
-								label="Watch type"
+								label={copy.watchTypeLabel}
 								defaultValue={editingWatchlist?.matcher_type ?? "topic_key"}
-								options={MATCHER_OPTIONS}
+								options={matcherOptions}
 							/>
 							<FormInputField
 								id="watchlist-value"
 								name="matcher_value"
-								label="Matcher value"
+								label={copy.matcherValueLabel}
 								type="text"
 								defaultValue={editingWatchlist?.matcher_value ?? ""}
-								placeholder="retry-policy, claim_kind, youtube, /channel-name ..."
+								placeholder={copy.matcherValuePlaceholder}
 								required
 							/>
 							<FormSelectField
 								name="delivery_channel"
-								label="Delivery"
+								label={copy.deliveryLabel}
 								defaultValue={editingWatchlist?.delivery_channel ?? "dashboard"}
-								options={DELIVERY_OPTIONS}
+								options={deliveryOptions}
 							/>
 							<FormCheckboxField
 								name="enabled"
-								label="Enabled"
+								label={copy.enabledLabel}
 								defaultChecked={editingWatchlist?.enabled ?? true}
 							/>
 							<div className="flex flex-wrap gap-3">
 								<Button type="submit" variant="hero" size="sm">
-									{editingWatchlist ? "Update watchlist" : "Save watchlist"}
+									{editingWatchlist ? copy.updateButton : copy.saveButton}
 								</Button>
 								{editingWatchlist ? (
 									<Button asChild variant="outline" size="sm">
-										<Link href="/watchlists">Create new</Link>
+										<Link href="/watchlists">{copy.createNewButton}</Link>
 									</Button>
 								) : null}
 								<Button asChild variant="outline" size="sm">
-									<Link href="/trends">Open trend view</Link>
+									<Link href="/trends">{copy.openTrendViewButton}</Link>
 								</Button>
 							</div>
 						</form>
@@ -193,7 +200,7 @@ export default async function WatchlistsPage({
 
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Alert readiness</CardTitle>
+						<CardTitle>{copy.alertTitle}</CardTitle>
 						<CardDescription>{copy.alertDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -206,7 +213,7 @@ export default async function WatchlistsPage({
 							<p>{copy.alertFallback}</p>
 						)}
 						<Button asChild variant="outline" size="sm">
-							<Link href="/settings">Open notification settings</Link>
+							<Link href="/settings">{copy.openNotificationSettingsButton}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -214,7 +221,7 @@ export default async function WatchlistsPage({
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<CardTitle>Current watchlists</CardTitle>
+					<CardTitle>{copy.currentTitle}</CardTitle>
 					<CardDescription>{copy.currentDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
@@ -233,12 +240,15 @@ export default async function WatchlistsPage({
 										<div className="space-y-1">
 											<p className="font-medium">{item.name}</p>
 											<p className="text-sm text-muted-foreground">
-												{item.matcher_type}: <code>{item.matcher_value}</code> ·{" "}
-												{item.delivery_channel} ·{" "}
-												{item.enabled ? "enabled" : "paused"}
+												{matcherLabelMap.get(item.matcher_type) ??
+													item.matcher_type}
+												: <code>{item.matcher_value}</code> ·{" "}
+												{deliveryLabelMap.get(item.delivery_channel) ??
+													item.delivery_channel}{" "}
+												· {item.enabled ? copy.enabledState : copy.pausedState}
 											</p>
 											<p className="text-xs text-muted-foreground">
-												Updated: {formatDateTime(item.updated_at)}
+												{copy.updatedPrefix}: {formatDateTime(item.updated_at)}
 											</p>
 										</div>
 										<div className="flex flex-wrap gap-3">
@@ -246,14 +256,14 @@ export default async function WatchlistsPage({
 												<Link
 													href={`/watchlists?watchlist_id=${encodeURIComponent(item.id)}`}
 												>
-													Edit
+													{copy.editButton}
 												</Link>
 											</Button>
 											<Button asChild variant="outline" size="sm">
 												<Link
 													href={`/trends?watchlist_id=${encodeURIComponent(item.id)}`}
 												>
-													View trend
+													{copy.viewTrendButton}
 												</Link>
 											</Button>
 											<form action={deleteWatchlistAction}>
@@ -270,7 +280,7 @@ export default async function WatchlistsPage({
 													readOnly
 												/>
 												<Button type="submit" variant="ghost" size="sm">
-													Delete
+													{copy.deleteButton}
 												</Button>
 											</form>
 										</div>
@@ -285,7 +295,7 @@ export default async function WatchlistsPage({
 			{trendWatchlist && trendResult.payload ? (
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Recent movement</CardTitle>
+						<CardTitle>{copy.recentMovementTitle}</CardTitle>
 						<CardDescription>{copy.recentMovementDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
@@ -299,7 +309,7 @@ export default async function WatchlistsPage({
 										<p className="font-medium">{run.title}</p>
 										<p className="text-sm text-muted-foreground">
 											{run.platform} · {formatDateTime(run.created_at)} ·
-											matched cards: {run.matched_card_count}
+											{copy.matchedCardsPrefix}: {run.matched_card_count}
 										</p>
 									</div>
 									<Button
@@ -311,13 +321,15 @@ export default async function WatchlistsPage({
 										<Link
 											href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}
 										>
-											Open job
+											{copy.openJobButton}
 										</Link>
 									</Button>
 								</div>
 								<p className="mt-3 text-sm text-muted-foreground">
-									Added topics: {run.added_topics.join(", ") || "none"} ·
-									Removed topics: {run.removed_topics.join(", ") || "none"}
+									{copy.addedTopicsPrefix}:{" "}
+									{run.added_topics.join(", ") || copy.noneValue} ·{" "}
+									{copy.removedTopicsPrefix}:{" "}
+									{run.removed_topics.join(", ") || copy.noneValue}
 								</p>
 							</div>
 						))}

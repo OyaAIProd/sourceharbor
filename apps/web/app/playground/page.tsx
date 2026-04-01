@@ -14,12 +14,15 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { getLocaleMessages } from "@/lib/i18n/messages";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: "Playground",
-	description:
-		"Read-only SourceHarbor playground built on clearly labeled sample corpus and demo bundle data.",
-};
+const playgroundCopy = getLocaleMessages().playgroundPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: playgroundCopy.metadataTitle,
+	description: playgroundCopy.metadataDescription,
+	route: "playground",
+});
 
 async function loadSampleCorpus() {
 	const configuredRoot = process.env.SOURCE_HARBOR_REPO_ROOT?.trim();
@@ -89,9 +92,9 @@ export default async function PlaygroundPage() {
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Playground</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Read-only sample playground
+					{copy.heroTitle}
 				</h1>
 				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
@@ -105,10 +108,10 @@ export default async function PlaygroundPage() {
 					<p>{copy.boundaryDescription}</p>
 					<div className="flex flex-wrap gap-3">
 						<Button asChild variant="outline" size="sm">
-							<Link href="/search">Open real Search</Link>
+							<Link href="/search">{copy.openSearchButton}</Link>
 						</Button>
 						<Button asChild variant="outline" size="sm">
-							<Link href="/proof">Open proof ladder</Link>
+							<Link href="/proof">{copy.openProofButton}</Link>
 						</Button>
 					</div>
 				</CardContent>
@@ -195,7 +198,9 @@ export default async function PlaygroundPage() {
 							<p className="font-medium">
 								{sample.example_trend.watchlist_name}
 							</p>
-							<p>Recent runs: {sample.example_trend.recent_runs.length}</p>
+							<p>
+								{copy.recentRunsLabel}: {sample.example_trend.recent_runs.length}
+							</p>
 						</div>
 					</CardContent>
 				</Card>
@@ -203,7 +208,7 @@ export default async function PlaygroundPage() {
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<CardTitle>Example bundle shape</CardTitle>
+					<CardTitle>{copy.exampleBundleTitle}</CardTitle>
 					<CardDescription>{copy.exampleBundleDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm text-muted-foreground">

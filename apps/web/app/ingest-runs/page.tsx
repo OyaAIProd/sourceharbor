@@ -17,10 +17,15 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-	title: getLocaleMessages().ingestRunsPage.metadataTitle,
-};
+const ingestRunsCopy = getLocaleMessages().ingestRunsPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: ingestRunsCopy.metadataTitle,
+	description: ingestRunsCopy.metadataDescription,
+	route: "ingestRuns",
+});
 
 type IngestRunsPageProps = {
 	searchParams?: SearchParamsInput;
@@ -55,7 +60,7 @@ export default async function IngestRunsPage({
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Intake</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>
@@ -72,14 +77,14 @@ export default async function IngestRunsPage({
 						<FormInputField
 							id="run-id-field"
 							name="run_id"
-							label="Run ID"
+							label={copy.runIdLabel}
 							type="text"
 							placeholder="11111111-1111-1111-1111-111111111111"
 							defaultValue={runId}
 							data-field-kind="identifier"
 							fieldClassName="min-w-[280px] flex-1"
 						/>
-						<Button type="submit">Search</Button>
+						<Button type="submit">{copy.searchButton}</Button>
 					</form>
 				</CardContent>
 			</Card>
