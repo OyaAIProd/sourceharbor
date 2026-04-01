@@ -44,8 +44,34 @@ is_truthy() {
 apply_psql_migrations() {
   local psql_url="$1"
   local migration
+  local migration_name
+  local migration_applied
+  psql "$psql_url" -v ON_ERROR_STOP=1 <<'SQL' >/dev/null
+CREATE TABLE IF NOT EXISTS sourceharbor_schema_migrations (
+  migration_name TEXT PRIMARY KEY,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+SQL
   for migration in $(cd "$ROOT_DIR" && ls infra/migrations/*.sql | sort); do
-    psql "$psql_url" -v ON_ERROR_STOP=1 -f "$ROOT_DIR/$migration" >/dev/null
+    migration_name="$(basename "$migration")"
+    migration_applied="$(
+      psql "$psql_url" -Atq <<SQL
+SELECT 1
+FROM sourceharbor_schema_migrations
+WHERE migration_name = '${migration_name}'
+LIMIT 1;
+SQL
+    )"
+    if [[ "$migration_applied" == "1" ]]; then
+      continue
+    fi
+    psql "$psql_url" -v ON_ERROR_STOP=1 <<SQL >/dev/null
+BEGIN;
+\i '$ROOT_DIR/$migration'
+INSERT INTO sourceharbor_schema_migrations (migration_name)
+VALUES ('${migration_name}');
+COMMIT;
+SQL
   done
 }
 

@@ -98,6 +98,18 @@ def test_bootstrap_runtime_snapshot_captures_data_plane_and_temporal_truth() -> 
     assert '"TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE}"' in script
 
 
+def test_bootstrap_tracks_applied_sql_migrations_before_replaying_local_state() -> None:
+    script = (_repo_root() / "scripts" / "runtime" / "bootstrap_full_stack.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert "sourceharbor_schema_migrations" in script
+    assert "migration_name TEXT PRIMARY KEY" in script
+    assert 'migration_name="$(basename "$migration")"' in script
+    assert "\\i '$ROOT_DIR/$migration'" in script
+    assert "INSERT INTO sourceharbor_schema_migrations" in script
+
+
 def test_wave0_local_env_defaults_use_isolated_core_postgres_and_worker_queue() -> None:
     env_example = (_repo_root() / ".env.example").read_text(encoding="utf-8")
 
