@@ -17,11 +17,13 @@ const ROUTE_NAME_MAP: Array<{ href: string; label: string }> = [
 	{ href: "/watchlists", label: "Watchlists" },
 	{ href: "/trends", label: "Trends" },
 	{ href: "/playground", label: "Playground" },
+	{ href: "/proof", label: "Proof" },
 	{ href: "/knowledge", label: "Knowledge" },
 	{ href: "/jobs", label: "Jobs" },
 	{ href: "/ingest-runs", label: "Ingest runs" },
 	{ href: "/feed", label: "Digest feed" },
 	{ href: "/settings", label: "Settings" },
+	{ href: "/use-cases", label: "Use cases" },
 ];
 
 function getRouteLabel(pathname: string | null): string {

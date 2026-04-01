@@ -24,6 +24,10 @@ const MESSAGES = {
 				title: "Digest feed loading",
 				message: "Loading the digest feed. Please wait.",
 			},
+			jobs: {
+				title: "Job trace loading",
+				message: "Loading job details. Please wait.",
+			},
 			settings: {
 				title: "Settings loading",
 				message: "Loading notification settings. Please wait.",
@@ -863,6 +867,10 @@ const MESSAGES = {
 			feed: {
 				title: "Digest feed loading",
 				message: "Loading the digest feed. Please wait.",
+			},
+			jobs: {
+				title: "Job trace loading",
+				message: "Loading job details. Please wait.",
 			},
 			settings: {
 				title: "设置加载中",

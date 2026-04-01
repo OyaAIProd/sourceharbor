@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { metadata as askMetadata } from "@/app/ask/page";
 import { metadata as feedMetadata } from "@/app/feed/page";
+import { metadata as jobsMetadata } from "@/app/jobs/page";
 import { metadata as mcpMetadata } from "@/app/mcp/page";
+import { metadata as playgroundMetadata } from "@/app/playground/page";
+import { metadata as proofMetadata } from "@/app/proof/page";
 import { metadata as searchMetadata } from "@/app/search/page";
 import { metadata as subscriptionsMetadata } from "@/app/subscriptions/page";
+import { metadata as trendsMetadata } from "@/app/trends/page";
 import { generateMetadata as generateUseCaseMetadata } from "@/app/use-cases/[slug]/page";
+import { metadata as watchlistsMetadata } from "@/app/watchlists/page";
 
 function toKeywordList(value: unknown): string[] {
 	if (Array.isArray(value)) {
@@ -92,6 +97,54 @@ describe("route metadata", () => {
 				"Codex workflow",
 				"AI research pipeline",
 			]),
+		);
+	});
+
+	it("keeps compounder and proof metadata aligned to the reusable control-tower story", () => {
+		expect(watchlistsMetadata.title).toBe("Watchlists");
+		expect(watchlistsMetadata.description).toMatch(/watchlists/i);
+		expect(toKeywordList(watchlistsMetadata.keywords)).toEqual(
+			expect.arrayContaining([
+				"AI trend watchlist",
+				"Codex updates tracking",
+				"Claude Code tracking",
+			]),
+		);
+
+		expect(trendsMetadata.title).toBe("Trends");
+		expect(trendsMetadata.description).toMatch(/Cross-run trend/i);
+		expect(toKeywordList(trendsMetadata.keywords)).toEqual(
+			expect.arrayContaining([
+				"cross-run trend",
+				"topic diff",
+				"AI workflow trend",
+			]),
+		);
+
+		expect(proofMetadata.title).toBe("Proof");
+		expect(proofMetadata.description).toMatch(/proof boundary/i);
+		expect(toKeywordList(proofMetadata.keywords)).toEqual(
+			expect.arrayContaining([
+				"proof boundary",
+				"local supervisor proof",
+				"release readiness",
+			]),
+		);
+
+		expect(playgroundMetadata.title).toBe("Playground");
+		expect(playgroundMetadata.description).toMatch(/sample corpus/i);
+		expect(toKeywordList(playgroundMetadata.keywords)).toEqual(
+			expect.arrayContaining([
+				"sample playground",
+				"demo corpus",
+				"evidence bundle example",
+			]),
+		);
+
+		expect(jobsMetadata.title).toBe("Job Trace");
+		expect(jobsMetadata.description).toMatch(/job trace/i);
+		expect(toKeywordList(jobsMetadata.keywords)).toEqual(
+			expect.arrayContaining(["job trace", "pipeline trace", "artifact index"]),
 		);
 	});
 });

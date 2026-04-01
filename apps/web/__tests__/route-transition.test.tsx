@@ -125,6 +125,17 @@ describe("RouteTransition", () => {
 		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Trends");
 	});
 
+	it("maps proof route to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/proof");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>证明边界</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Proof");
+	});
+
 	it("maps nested ingest runs routes to the dedicated label", () => {
 		usePathnameMock.mockReturnValue("/ingest-runs/run-1");
 		render(
@@ -148,6 +159,19 @@ describe("RouteTransition", () => {
 
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"Switched to: Digest feed",
+		);
+	});
+
+	it("maps use-case routes to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/use-cases/codex");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>Codex operator workflow</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Use cases",
 		);
 	});
 
