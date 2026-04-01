@@ -289,7 +289,8 @@ function normalizeRetrievalSearchResponse(
 				) {
 					return null;
 				}
-				const normalizedSource = source as RetrievalSearchResponse["items"][number]["source"];
+				const normalizedSource =
+					source as RetrievalSearchResponse["items"][number]["source"];
 				return {
 					job_id: jobId,
 					video_id: videoId,
