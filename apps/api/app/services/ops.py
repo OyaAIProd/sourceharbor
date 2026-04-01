@@ -543,7 +543,7 @@ class OpsService:
                     ),
                     last_seen_at=job.get("updated_at"),
                     href=f"/jobs?job_id={job.get('id')}",
-                    action_label="查看任务",
+                    action_label="Open job",
                 )
             )
 
@@ -557,7 +557,7 @@ class OpsService:
                     status_label=str(run.get("status") or "unknown"),
                     last_seen_at=run.get("created_at"),
                     href=f"/ingest-runs?run_id={run.get('id')}",
-                    action_label="查看摄取",
+                    action_label="Open ingest run",
                 )
             )
 
@@ -575,7 +575,7 @@ class OpsService:
                     status_label=str(delivery.get("status") or "unknown"),
                     last_seen_at=delivery.get("created_at"),
                     href="#notification-readiness",
-                    action_label="查看通知诊断",
+                    action_label="Open notification readiness",
                 )
             )
 
@@ -596,7 +596,7 @@ class OpsService:
                     status_label=last_status,
                     last_seen_at=provider.get("last_checked_at"),
                     href="#provider-health",
-                    action_label="查看 provider",
+                    action_label="Open provider health",
                 )
             )
 
@@ -605,10 +605,10 @@ class OpsService:
                 continue
             severity = "critical" if gate["status"] == "blocked" else "warning"
             href = "#hardening-gates"
-            action_label = "查看 gate"
+            action_label = "Open gate"
             if gate_name == "notifications":
                 href = "/settings"
-                action_label = "打开设置"
+                action_label = "Open settings"
             items.append(
                 self._inbox_item(
                     kind="hardening_gate",
@@ -618,7 +618,7 @@ class OpsService:
                     status_label=str(gate["status"]),
                     last_seen_at=None,
                     href=href,
-                    action_label=action_label,
+                    action_label=action_label if gate_name == "notifications" else "Open gate",
                 )
             )
         return items

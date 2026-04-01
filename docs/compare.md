@@ -51,3 +51,14 @@ This differentiation gives the repo a stronger public label:
 > SourceHarbor is the GitHub-native control tower for long-form knowledge pipelines.
 
 That label is easier to remember, easier to share, and easier to star than a vague "AI information hub" description.
+
+## Ecosystem Fit
+
+| Ecosystem | Fit level | Why |
+| --- | --- | --- |
+| **MCP** | **Primary** | real, shipped surface today through `./bin/dev-mcp` and `apps/mcp/server.py` |
+| **Codex** | **Primary** | strong fit for source-first local workflows that want to use MCP or HTTP against the same operator truth |
+| **Claude Code** | **Primary** | same fit pattern as Codex: local, MCP-aware, API-capable, and proof-first |
+| **OpenHands** | Secondary / comparison | adjacent as an agent-runtime ecosystem, but SourceHarbor is not a generic software-task agent |
+| **OpenCode** | Secondary / comparison | adjacent as a coding/automation workflow surface, but not a primary product identity here |
+| **OpenClaw** | Not front-door material today | repo-side proof is not strong enough to justify a primary binding |

@@ -92,7 +92,7 @@ describe("RouteTransition", () => {
 		usePathnameMock.mockReturnValue("/ops");
 		render(
 			<RouteTransition>
-				<h1 data-route-heading>运营诊断</h1>
+				<h1 data-route-heading>Ops inbox</h1>
 			</RouteTransition>,
 		);
 

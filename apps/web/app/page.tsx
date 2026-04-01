@@ -25,15 +25,16 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 
-export const metadata: Metadata = { title: "首页" };
+export const metadata: Metadata = { title: "Command Center" };
 
 type DashboardPageProps = {
 	searchParams?: SearchParamsInput;
 };
 
 const POLL_PLATFORM_OPTIONS = [
-	{ value: "", label: "全部" },
+	{ value: "", label: "All" },
 	{ value: "youtube", label: "YouTube" },
 	{ value: "bilibili", label: "Bilibili" },
 ];
@@ -44,10 +45,10 @@ const PROCESS_PLATFORM_OPTIONS = [
 ];
 
 const PROCESS_MODE_OPTIONS = [
-	{ value: "full", label: "完整" },
-	{ value: "text_only", label: "纯文本" },
-	{ value: "refresh_comments", label: "刷新评论" },
-	{ value: "refresh_llm", label: "刷新 LLM" },
+	{ value: "full", label: "Full run" },
+	{ value: "text_only", label: "Text only" },
+	{ value: "refresh_comments", label: "Refresh comments" },
+	{ value: "refresh_llm", label: "Refresh LLM outputs" },
 ];
 
 function renderAlert(status: string, code: string) {
@@ -113,6 +114,9 @@ function DashboardStatusBadge({ status }: { status: string | null }) {
 export default async function DashboardPage({
 	searchParams,
 }: DashboardPageProps) {
+	const messages = getLocaleMessages();
+	const copy = messages.dashboard;
+	const builderCopy = messages.builderSurfaces;
 	const { status, code } = await resolveSearchParams(searchParams, [
 		"status",
 		"code",
@@ -161,11 +165,10 @@ export default async function DashboardPage({
 			<div className="folo-page-header">
 				<p className="folo-page-kicker">SourceHarbor Command Center</p>
 				<h1 className="folo-page-title" data-route-heading>
-					运营总览
+					{copy.heroTitle}
 				</h1>
 				<p className="folo-page-subtitle">
-					AI knowledge pipeline and MCP server for YouTube, Bilibili, and RSS.
-					从这里打开搜索、提问、任务追踪和订阅操作，而不是只把它当成内部仪表盘。
+					{copy.heroSubtitle}
 				</p>
 			</div>
 
@@ -177,12 +180,12 @@ export default async function DashboardPage({
 					aria-live="assertive"
 				>
 					<CardHeader className="gap-2">
-						<CardTitle className="text-base">加载失败</CardTitle>
+						<CardTitle className="text-base">{copy.loadErrorTitle}</CardTitle>
 						<CardDescription>{getFlashMessage(loadErrorCode)}</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
 						<Button asChild variant="outline" size="sm">
-							<Link href="/">重试当前页面</Link>
+							<Link href="/">{copy.retryCurrentPage}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -194,52 +197,63 @@ export default async function DashboardPage({
 			>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Search front door</CardTitle>
-						<CardDescription>
-							Search digests, knowledge cards, transcripts, and related evidence
-							from one operator-facing route.
-						</CardDescription>
+						<CardTitle>{copy.frontDoors.searchTitle}</CardTitle>
+						<CardDescription>{copy.frontDoors.searchDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
-							<Link href="/search">Open Search</Link>
+							<Link href="/search">{copy.frontDoors.searchCta}</Link>
 						</Button>
 						<Button asChild variant="outline">
-							<Link href="/knowledge">Open Knowledge</Link>
+							<Link href="/knowledge">{copy.frontDoors.knowledgeCta}</Link>
 						</Button>
 					</CardContent>
 				</Card>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Ask your sources</CardTitle>
-						<CardDescription>
-							Truthful MVP: ask a question, get grounded evidence, then jump to
-							job trace, feed, knowledge, or the original source.
-						</CardDescription>
+						<CardTitle>{copy.frontDoors.askTitle}</CardTitle>
+						<CardDescription>{copy.frontDoors.askDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
-							<Link href="/ask">Open Ask</Link>
+							<Link href="/ask">{copy.frontDoors.askCta}</Link>
 						</Button>
 						<p className="text-sm text-muted-foreground">
-							No hidden answer layer yet. Grounded citations first.
+							{copy.frontDoors.askHint}
 						</p>
 					</CardContent>
 				</Card>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>MCP front door</CardTitle>
-						<CardDescription>
-							SourceHarbor already exposes an agent-facing MCP surface on top of
-							the same API and pipeline state.
-						</CardDescription>
+						<CardTitle>{copy.frontDoors.mcpTitle}</CardTitle>
+						<CardDescription>{copy.frontDoors.mcpDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
-							<Link href="/mcp">Open MCP quickstart</Link>
+							<Link href="/mcp">{copy.frontDoors.mcpCta}</Link>
 						</Button>
 						<Button asChild variant="outline">
-							<Link href="/jobs">Inspect job evidence</Link>
+							<Link href="/jobs">{copy.frontDoors.jobCta}</Link>
+						</Button>
+					</CardContent>
+				</Card>
+			</section>
+
+			<section aria-label="SourceHarbor builder entry points">
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>{builderCopy.title}</CardTitle>
+						<CardDescription>{builderCopy.subtitle}</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/mcp">{builderCopy.mcpCta}</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/use-cases/codex">{builderCopy.codexCta}</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/use-cases/claude-code">{builderCopy.claudeCodeCta}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -251,54 +265,48 @@ export default async function DashboardPage({
 			>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Watchlists and trends</CardTitle>
+						<CardTitle>{copy.compounders.watchlistsTitle}</CardTitle>
 						<CardDescription>
-							Save a topic, claim kind, or source watchlist, then come back to a
-							real cross-run trend instead of redoing the same search by hand.
+							{copy.compounders.watchlistsDescription}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
-							<Link href="/watchlists">Open Watchlists</Link>
+							<Link href="/watchlists">{copy.compounders.watchlistsCta}</Link>
 						</Button>
 						<Button asChild variant="outline">
-							<Link href="/trends">Open Trends</Link>
+							<Link href="/trends">{copy.compounders.trendsCta}</Link>
 						</Button>
 					</CardContent>
 				</Card>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Evidence bundle</CardTitle>
-						<CardDescription>
-							Carry a run forward as an internal bundle with digest, trace
-							summary, knowledge cards, and artifact manifest instead of pasting
-							screenshots into chat.
-						</CardDescription>
+						<CardTitle>{copy.compounders.bundleTitle}</CardTitle>
+						<CardDescription>{copy.compounders.bundleDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
-							<Link href="/jobs">Open Job Trace</Link>
+							<Link href="/jobs">{copy.compounders.bundleCta}</Link>
 						</Button>
 						<p className="text-sm text-muted-foreground">
-							Download the bundle from any job detail page.
+							{copy.compounders.bundleHint}
 						</p>
 					</CardContent>
 				</Card>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Sample playground</CardTitle>
+						<CardTitle>{copy.compounders.playgroundTitle}</CardTitle>
 						<CardDescription>
-							Explore a clearly labeled demo corpus and use-case pages without
-							pretending they are live operator results.
+							{copy.compounders.playgroundDescription}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
-							<Link href="/playground">Open Playground</Link>
+							<Link href="/playground">{copy.compounders.playgroundCta}</Link>
 						</Button>
 						<Button asChild variant="outline">
 							<Link href="/use-cases/research-pipeline">
-								Open use case pages
+								{copy.compounders.useCasesCta}
 							</Link>
 						</Button>
 					</CardContent>
@@ -307,14 +315,16 @@ export default async function DashboardPage({
 
 			<section
 				className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-				aria-label="关键指标"
+				aria-label={copy.metricsRegionLabel}
 			>
 				<Card className="folo-surface overflow-hidden border-border/70">
 					<CardHeader className="gap-2">
-						<CardDescription>订阅数</CardDescription>
+						<CardDescription>{copy.metrics.subscriptions.title}</CardDescription>
 						{renderMetricValue(
 							subscriptions.length,
-							subscriptionsUnavailable ? "订阅数数据暂不可用" : undefined,
+							subscriptionsUnavailable
+								? copy.metrics.subscriptions.unavailable
+								: undefined,
 						)}
 					</CardHeader>
 					<CardContent className="space-y-2 pt-0">
@@ -324,22 +334,26 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								数据暂不可用
+								{copy.metrics.unavailableOutput}
 							</output>
 						) : null}
 						{subscriptions.length === 0 && !subscriptionsUnavailable ? (
 							<Button asChild variant="link" size="sm" className="h-auto px-0">
-								<Link href="/subscriptions">添加第一个订阅 →</Link>
+								<Link href="/subscriptions">
+									{copy.metrics.subscriptions.emptyCta}
+								</Link>
 							</Button>
 						) : null}
 					</CardContent>
 				</Card>
 				<Card className="folo-surface overflow-hidden border-border/70">
 					<CardHeader className="gap-2">
-						<CardDescription>已发现视频</CardDescription>
+						<CardDescription>{copy.metrics.discoveredVideos.title}</CardDescription>
 						{renderMetricValue(
 							videos.length,
-							videosUnavailable ? "已发现视频数据暂不可用" : undefined,
+							videosUnavailable
+								? copy.metrics.discoveredVideos.unavailable
+								: undefined,
 						)}
 					</CardHeader>
 					<CardContent className="pt-0">
@@ -349,7 +363,7 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								数据暂不可用
+								{copy.metrics.unavailableOutput}
 							</output>
 						) : null}
 					</CardContent>
@@ -362,10 +376,10 @@ export default async function DashboardPage({
 					}
 				>
 					<CardHeader className="gap-2">
-						<CardDescription>运行中/排队</CardDescription>
+						<CardDescription>{copy.metrics.runningJobs.title}</CardDescription>
 						{renderMetricValue(
 							runningJobs,
-							videosUnavailable ? "运行中/排队数据暂不可用" : undefined,
+							videosUnavailable ? copy.metrics.runningJobs.unavailable : undefined,
 						)}
 					</CardHeader>
 					<CardContent className="pt-0">
@@ -375,7 +389,7 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								数据暂不可用
+								{copy.metrics.unavailableOutput}
 							</output>
 						) : null}
 					</CardContent>
@@ -388,10 +402,10 @@ export default async function DashboardPage({
 					}
 				>
 					<CardHeader className="gap-2">
-						<CardDescription>失败任务</CardDescription>
+						<CardDescription>{copy.metrics.failedJobs.title}</CardDescription>
 						{renderMetricValue(
 							failedJobs,
-							videosUnavailable ? "失败任务数据暂不可用" : undefined,
+							videosUnavailable ? copy.metrics.failedJobs.unavailable : undefined,
 						)}
 					</CardHeader>
 					<CardContent className="space-y-2 pt-0">
@@ -401,7 +415,7 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								数据暂不可用
+								{copy.metrics.unavailableOutput}
 							</output>
 						) : null}
 						{!videosUnavailable && failedJobs > 0 ? (
@@ -412,7 +426,7 @@ export default async function DashboardPage({
 									size="sm"
 									className="h-auto px-0"
 								>
-									<Link href="/jobs">查看失败任务 →</Link>
+									<Link href="/jobs">{copy.metrics.failedJobs.openFailed}</Link>
 								</Button>
 								<Button
 									asChild
@@ -420,7 +434,7 @@ export default async function DashboardPage({
 									size="sm"
 									className="h-auto px-0"
 								>
-									<Link href="/ops">打开运营诊断 →</Link>
+									<Link href="/ops">{copy.metrics.failedJobs.openOps}</Link>
 								</Button>
 							</div>
 						) : null}
@@ -431,9 +445,9 @@ export default async function DashboardPage({
 			<section className="grid gap-4 lg:grid-cols-2">
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<h2 className="text-xl font-semibold">拉取采集</h2>
+						<h2 className="text-xl font-semibold">{copy.pollIngest.title}</h2>
 						<CardDescription id="poll-ingest-help">
-							触发后会进入任务队列。可在任务页查看执行进度和失败原因。
+							{copy.pollIngest.description}
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -446,14 +460,14 @@ export default async function DashboardPage({
 							/>
 							<FormSelectField
 								id="poll-platform"
-								label="平台（可选）"
+								label={copy.pollIngest.platformLabel}
 								name="platform"
 								defaultValue=""
 								options={POLL_PLATFORM_OPTIONS}
 							/>
 							<FormInputField
 								id="poll-max-new-videos"
-								label="最多拉取视频数"
+								label={copy.pollIngest.maxNewVideosLabel}
 								name="max_new_videos"
 								type="number"
 								min={1}
@@ -462,13 +476,13 @@ export default async function DashboardPage({
 							/>
 							<div className="flex flex-wrap items-center gap-3">
 								<SubmitButton
-									pendingLabel="触发中…"
-									statusText="正在触发采集任务"
+									pendingLabel={copy.pollIngest.submitPending}
+									statusText={copy.pollIngest.submitStatus}
 								>
-									触发采集
+									{copy.pollIngest.submit}
 								</SubmitButton>
 								<Button asChild variant="outline" size="sm">
-									<Link href="/jobs">查看任务队列 →</Link>
+									<Link href="/jobs">{copy.pollIngest.queueLink}</Link>
 								</Button>
 							</div>
 						</form>
@@ -477,9 +491,9 @@ export default async function DashboardPage({
 
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<h2 className="text-xl font-semibold">处理单个视频</h2>
+						<h2 className="text-xl font-semibold">{copy.processVideo.title}</h2>
 						<CardDescription id="process-video-help">
-							提交后将生成新任务。可在“最近视频”或任务页追踪状态。
+							{copy.processVideo.description}
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -496,7 +510,7 @@ export default async function DashboardPage({
 							/>
 							<FormSelectField
 								id="process-platform"
-								label="平台 *"
+								label={copy.processVideo.platformLabel}
 								name="platform"
 								defaultValue="youtube"
 								options={PROCESS_PLATFORM_OPTIONS}
@@ -504,7 +518,7 @@ export default async function DashboardPage({
 							/>
 							<FormInputField
 								id="process-url"
-								label="视频链接 *"
+								label={copy.processVideo.urlLabel}
 								name="url"
 								type="url"
 								required
@@ -513,22 +527,26 @@ export default async function DashboardPage({
 							/>
 							<FormSelectField
 								id="process-mode"
-								label="模式 *"
+								label={copy.processVideo.modeLabel}
 								name="mode"
 								defaultValue="full"
 								options={PROCESS_MODE_OPTIONS}
 								required
 							/>
-							<FormCheckboxField id="force-run" name="force" label="强制执行" />
+							<FormCheckboxField
+								id="force-run"
+								name="force"
+								label={copy.processVideo.forceLabel}
+							/>
 							<div className="flex flex-wrap items-center gap-3">
 								<SubmitButton
-									pendingLabel="创建任务中…"
-									statusText="正在创建视频处理任务"
+									pendingLabel={copy.processVideo.submitPending}
+									statusText={copy.processVideo.submitStatus}
 								>
-									开始处理
+									{copy.processVideo.submit}
 								</SubmitButton>
 								<Button asChild variant="outline" size="sm">
-									<Link href="/jobs">查看任务详情 →</Link>
+									<Link href="/jobs">{copy.processVideo.jobDetailLink}</Link>
 								</Button>
 							</div>
 						</form>
@@ -539,14 +557,14 @@ export default async function DashboardPage({
 			<section>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<h2 className="text-xl font-semibold">最近摄取运行</h2>
+						<h2 className="text-xl font-semibold">{copy.ingestRuns.title}</h2>
 						<CardDescription>
-							把它理解成“最近几次进货记录”。如果你刚触发了采集，这里应该最先告诉你它有没有真的发车。
+							{copy.ingestRuns.description}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						<Button asChild variant="link" size="sm" className="h-auto px-0">
-							<Link href="/ingest-runs">查看全部摄取运行 →</Link>
+							<Link href="/ingest-runs">{copy.ingestRuns.viewAll}</Link>
 						</Button>
 						{ingestRunsUnavailable ? (
 							<output
@@ -554,7 +572,7 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								摄取运行数据暂不可用。
+								{copy.ingestRuns.unavailable}
 							</output>
 						) : null}
 						{!ingestRunsUnavailable && ingestRuns.length === 0 ? (
@@ -563,29 +581,29 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								暂无摄取运行。
+								{copy.ingestRuns.empty}
 							</output>
 						) : null}
 						{!ingestRunsUnavailable && ingestRuns.length > 0 ? (
 							<div className="overflow-x-auto rounded-lg border border-border/70">
 								<table className="min-w-[720px] w-full text-sm">
-									<caption className="sr-only">最近摄取运行列表</caption>
+									<caption className="sr-only">{copy.ingestRuns.caption}</caption>
 									<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 										<tr>
 											<th scope="col" className="px-4 py-3 font-medium">
 												Run ID
 											</th>
 											<th scope="col" className="px-4 py-3 font-medium">
-												平台
+												{copy.ingestRuns.platform}
 											</th>
 											<th scope="col" className="px-4 py-3 font-medium">
-												状态
+												{copy.ingestRuns.status}
 											</th>
 											<th scope="col" className="px-4 py-3 font-medium">
-												新任务
+												{copy.ingestRuns.newJobs}
 											</th>
 											<th scope="col" className="px-4 py-3 font-medium">
-												候选条目
+												{copy.ingestRuns.candidates}
 											</th>
 										</tr>
 									</thead>
@@ -603,7 +621,7 @@ export default async function DashboardPage({
 												<td className="px-4 py-3 align-top">
 													{run.platform
 														? toPlatformLabel(run.platform)
-														: "全部"}
+														: copy.ingestRuns.allPlatforms}
 												</td>
 												<td className="px-4 py-3 align-top">
 													<DashboardStatusBadge status={run.status} />
@@ -628,13 +646,13 @@ export default async function DashboardPage({
 				<Card className="folo-surface border-border/70">
 					<CardHeader className="flex flex-row items-start justify-between gap-4">
 						<div className="space-y-2">
-							<h2 className="text-xl font-semibold">最近视频</h2>
+							<h2 className="text-xl font-semibold">{copy.recentVideos.title}</h2>
 							<CardDescription>
-								仅展示最近 10 条视频，点击任务 ID 可查看完整流水线详情。
+								{copy.recentVideos.description}
 							</CardDescription>
 						</div>
 						<Button asChild variant="link" size="sm" className="h-auto px-0">
-							<Link href="/jobs">查看全部任务 →</Link>
+							<Link href="/jobs">{copy.recentVideos.viewAll}</Link>
 						</Button>
 					</CardHeader>
 					<CardContent className="space-y-3">
@@ -644,7 +662,7 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								暂无视频。
+								{copy.recentVideos.empty}
 							</output>
 						) : null}
 						{videos.length === 0 && loadErrorCode ? (
@@ -653,26 +671,26 @@ export default async function DashboardPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								当前无法加载视频列表。
+								{copy.recentVideos.unavailable}
 							</output>
 						) : null}
 						{videos.length > 0 ? (
 							<div className="overflow-x-auto rounded-lg border border-border/70">
 								<table className="min-w-[680px] w-full text-sm">
-									<caption className="sr-only">最近视频列表</caption>
+									<caption className="sr-only">{copy.recentVideos.caption}</caption>
 									<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 										<tr>
 											<th scope="col" className="px-4 py-3 font-medium">
-												标题
+												{copy.recentVideos.titleColumn}
 											</th>
 											<th scope="col" className="px-4 py-3 font-medium">
-												平台
+												{copy.recentVideos.platformColumn}
 											</th>
 											<th scope="col" className="px-4 py-3 font-medium">
-												状态
+												{copy.recentVideos.statusColumn}
 											</th>
 											<th scope="col" className="px-4 py-3 font-medium">
-												最近任务
+												{copy.recentVideos.lastJobColumn}
 											</th>
 										</tr>
 									</thead>

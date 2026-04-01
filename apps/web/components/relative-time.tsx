@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatCountPattern, getLocaleMessages } from "@/lib/i18n/messages";
 
 type Props = {
 	dateTime: string;
 };
 
 function formatRelative(dateTime: string): string {
+	const copy = getLocaleMessages().relativeTime;
 	const date = new Date(dateTime);
 	if (Number.isNaN(date.getTime())) {
 		return dateTime;
@@ -20,27 +22,27 @@ function formatRelative(dateTime: string): string {
 		const futureDay = Math.floor(futureHour / 24);
 
 		if (futureSec < 60) {
-			return "马上";
+			return copy.soon;
 		}
 		if (futureMin < 60) {
-			return `${Math.max(1, futureMin)} 分钟后`;
+			return formatCountPattern(copy.minuteFuture, Math.max(1, futureMin));
 		}
 		if (futureHour < 24) {
-			return `${Math.max(1, futureHour)} 小时后`;
+			return formatCountPattern(copy.hourFuture, Math.max(1, futureHour));
 		}
 		if (futureDay < 2) {
-			return "明天";
+			return copy.tomorrow;
 		}
 		if (futureDay < 7) {
-			return `${futureDay} 天后`;
+			return formatCountPattern(copy.dayFuture, futureDay);
 		}
 		if (futureDay < 30) {
-			return `${Math.floor(futureDay / 7)} 周后`;
+			return formatCountPattern(copy.weekFuture, Math.floor(futureDay / 7));
 		}
 		if (futureDay < 365) {
-			return `${Math.floor(futureDay / 30)} 个月后`;
+			return formatCountPattern(copy.monthFuture, Math.floor(futureDay / 30));
 		}
-		return `${Math.floor(futureDay / 365)} 年后`;
+		return formatCountPattern(copy.yearFuture, Math.floor(futureDay / 365));
 	}
 
 	const diffSec = Math.floor(diffMs / 1000);
@@ -49,32 +51,33 @@ function formatRelative(dateTime: string): string {
 	const diffDay = Math.floor(diffHour / 24);
 
 	if (diffSec < 60) {
-		return "刚刚";
+		return copy.justNow;
 	}
 	if (diffMin < 60) {
-		return `${diffMin} 分钟前`;
+		return formatCountPattern(copy.minutePast, diffMin);
 	}
 	if (diffHour < 24) {
-		return `${diffHour} 小时前`;
+		return formatCountPattern(copy.hourPast, diffHour);
 	}
 	if (diffDay < 7) {
-		return `${diffDay} 天前`;
+		return formatCountPattern(copy.dayPast, diffDay);
 	}
 	if (diffDay < 30) {
-		return `${Math.floor(diffDay / 7)} 周前`;
+		return formatCountPattern(copy.weekPast, Math.floor(diffDay / 7));
 	}
 	if (diffDay < 365) {
-		return `${Math.floor(diffDay / 30)} 个月前`;
+		return formatCountPattern(copy.monthPast, Math.floor(diffDay / 30));
 	}
-	return `${Math.floor(diffDay / 365)} 年前`;
+	return formatCountPattern(copy.yearPast, Math.floor(diffDay / 365));
 }
 
 function formatAbsolute(dateTime: string): string {
+	const copy = getLocaleMessages().relativeTime;
 	const date = new Date(dateTime);
 	if (Number.isNaN(date.getTime())) {
 		return dateTime;
 	}
-	return date.toLocaleString("zh-CN", {
+	return date.toLocaleString(copy.absoluteLocale, {
 		year: "numeric",
 		month: "2-digit",
 		day: "2-digit",

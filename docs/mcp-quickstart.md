@@ -8,6 +8,12 @@ In plain language:
 - API is the shared service contract
 - MCP is the agent-facing doorway into that same system
 
+This is the strongest ecosystem binding for SourceHarbor today:
+
+- **Codex** and **Claude Code** are a real fit because they can talk through MCP or HTTP while staying source-first and local-proof-first
+- **OpenHands** and **OpenCode** are worth mentioning as ecosystem neighbors, but they are not the best primary product label for this repo
+- **OpenClaw** should stay out of the front door until there is a stronger repo-proven integration story
+
 ## Start MCP Locally
 
 ```bash
@@ -44,3 +50,6 @@ Think of MCP as the control panel for assistants:
 - agents use MCP
 
 All three surfaces point at the same pipeline state.
+
+If you want the honest builder-facing map instead of just the quickstart, read
+[builders.md](./builders.md).

@@ -143,7 +143,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 				document.querySelectorAll('[data-slot="card"]').length,
 			).toBeGreaterThanOrEqual(7);
 
-			const metricRegion = screen.getByRole("region", { name: "关键指标" });
+			const metricRegion = screen.getByRole("region", { name: "Key metrics" });
 			const metrics = Array.from(
 				metricRegion.querySelectorAll('[data-slot="card"]'),
 			);
@@ -161,29 +161,29 @@ describe("dashboard/settings/subscriptions pages", () => {
 				within(metrics[3] as HTMLElement).getByText("1"),
 			).toBeInTheDocument();
 			expect(
-				screen.getByRole("link", { name: "查看失败任务 →" }),
+				screen.getByRole("link", { name: "Open failed jobs →" }),
 			).toHaveAttribute("href", "/jobs");
 
 			const recentIngestTable = screen
-				.getByText("最近摄取运行")
+				.getByText("Recent ingest runs")
 				.closest('[data-slot="card"]');
 			expect(recentIngestTable).not.toBeNull();
 			expect(screen.getByText("run-1")).toBeInTheDocument();
 			expect(
-				screen.getByRole("link", { name: "查看全部摄取运行 →" }),
+				screen.getByRole("link", { name: "Open all ingest runs →" }),
 			).toHaveAttribute("href", "/ingest-runs");
-			expect(screen.getByText("新任务").tagName).toBe("TH");
-			expect(screen.getByText("候选条目").tagName).toBe("TH");
+			expect(screen.getByText("New jobs").tagName).toBe("TH");
+			expect(screen.getByText("Candidates").tagName).toBe("TH");
 			expect(screen.getAllByText("Queued").length).toBeGreaterThanOrEqual(1);
 
 			const tables = screen.getAllByRole("table");
 			expect(tables).toHaveLength(2);
 			const recentVideoTable = tables[1] as HTMLElement;
 			expect(
-				within(recentVideoTable).getByText("最近视频列表"),
+				within(recentVideoTable).getByText("Recent video list"),
 			).toBeInTheDocument();
-			expect(within(recentVideoTable).getByText("标题").tagName).toBe("TH");
-			expect(within(recentVideoTable).getByText("标题")).toHaveAttribute(
+			expect(within(recentVideoTable).getByText("Title").tagName).toBe("TH");
+			expect(within(recentVideoTable).getByText("Title")).toHaveAttribute(
 				"scope",
 				"col",
 			);
@@ -208,7 +208,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			);
 
 			const pollForm = screen
-				.getByRole("button", { name: "触发采集" })
+				.getByRole("button", { name: "Run ingest poll" })
 				.closest("form");
 			expect(pollForm).not.toBeNull();
 			expect(pollForm).not.toHaveAttribute("method");
@@ -219,7 +219,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("");
 			expect(
 				within(pollForm as HTMLElement).getByRole("spinbutton", {
-					name: "最多拉取视频数",
+					name: "Maximum new videos",
 				}),
 			).toHaveValue(50);
 			expect(
@@ -229,15 +229,15 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("test-session-token");
 			expect(
 				within(pollForm as HTMLElement).getByRole("button", {
-					name: "触发采集",
+					name: "Run ingest poll",
 				}),
 			).toHaveAttribute("type", "submit");
 			expect(
-				screen.getByRole("link", { name: "查看任务队列 →" }),
+				screen.getByRole("link", { name: "Open job queue →" }),
 			).toHaveAttribute("href", "/jobs");
 
 			const processForm = screen
-				.getByRole("button", { name: "开始处理" })
+				.getByRole("button", { name: "Start processing" })
 				.closest("form");
 			expect(processForm).not.toBeNull();
 			expect(processForm).toHaveAttribute("data-auto-disable-required", "true");
@@ -249,7 +249,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("youtube");
 			expect(
 				within(processForm as HTMLElement).getByRole("textbox", {
-					name: "视频链接 *",
+					name: "Source URL *",
 				}),
 			).toBeRequired();
 			expect(
@@ -259,7 +259,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("full");
 			expect(
 				within(processForm as HTMLElement).getByRole("checkbox", {
-					name: "强制执行",
+					name: "Force rerun",
 				}),
 			).not.toBeChecked();
 			expect(
@@ -269,14 +269,14 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("test-session-token");
 			expect(
 				within(processForm as HTMLElement).getByRole("button", {
-					name: "开始处理",
+					name: "Start processing",
 				}),
 			).toHaveAttribute("type", "submit");
 			expect(
-				screen.getByRole("link", { name: "查看任务详情 →" }),
+				screen.getByRole("link", { name: "Open job detail →" }),
 			).toHaveAttribute("href", "/jobs");
 			expect(
-				screen.getByRole("link", { name: "查看全部任务 →" }),
+				screen.getByRole("link", { name: "Open all jobs →" }),
 			).toHaveAttribute("href", "/jobs");
 		},
 		PAGE_TEST_TIMEOUT_MS,
@@ -295,13 +295,17 @@ describe("dashboard/settings/subscriptions pages", () => {
 				"The request failed. Please try again later.",
 			);
 			expect(
-				screen.getByRole("link", { name: "重试当前页面" }),
+				screen.getByRole("link", { name: "Retry this page" }),
 			).toHaveAttribute("href", "/");
-			expect(screen.getByText("当前无法加载视频列表。")).toBeInTheDocument();
-			expect(screen.getAllByText("数据暂不可用")).toHaveLength(4);
-			expect(screen.getByText("摄取运行数据暂不可用。")).toBeInTheDocument();
+			expect(
+				screen.getByText("Unable to load the video list right now."),
+			).toBeInTheDocument();
+			expect(screen.getAllByText("Data unavailable")).toHaveLength(4);
+			expect(
+				screen.getByText("Ingest run data is temporarily unavailable."),
+			).toBeInTheDocument();
 
-			const metricRegion = screen.getByRole("region", { name: "关键指标" });
+			const metricRegion = screen.getByRole("region", { name: "Key metrics" });
 			const metrics = Array.from(
 				metricRegion.querySelectorAll('[data-slot="card"]'),
 			);
@@ -338,9 +342,9 @@ describe("dashboard/settings/subscriptions pages", () => {
 			expect(successFlash).toHaveAttribute("aria-live", "polite");
 			expect(successFlash).toHaveAttribute("aria-atomic", "true");
 			expect(
-				screen.getByRole("link", { name: "添加第一个订阅 →" }),
+				screen.getByRole("link", { name: "Add your first subscription →" }),
 			).toHaveAttribute("href", "/subscriptions");
-			expect(screen.getByText("暂无视频。")).toBeInTheDocument();
+			expect(screen.getByText("No videos yet.")).toBeInTheDocument();
 		},
 		PAGE_TEST_TIMEOUT_MS,
 	);
@@ -557,40 +561,38 @@ describe("dashboard/settings/subscriptions pages", () => {
 			expect(
 				screen.getByText("Notification settings saved."),
 			).toBeInTheDocument();
-			expect(screen.getByLabelText("收件人邮箱")).toHaveValue(
+			expect(screen.getByLabelText("Recipient email")).toHaveValue(
 				"ops@example.com",
 			);
-			expect(screen.getByRole("checkbox", { name: "启用通知" })).toBeChecked();
 			expect(
-				screen.getByRole("checkbox", { name: "启用每日摘要" }),
+				screen.getByRole("checkbox", { name: "Enable notifications" }),
+			).toBeChecked();
+			expect(
+				screen.getByRole("checkbox", { name: "Enable daily digest" }),
 			).toBeChecked();
 			expect(
 				screen.getByRole("spinbutton", {
-					name: "每日摘要发送时间（UTC 小时）",
+					name: "Daily digest send hour (UTC)",
 				}),
 			).toHaveValue(8);
 			expect(
 				screen.getByRole("spinbutton", {
-					name: "每日摘要发送时间（UTC 小时）",
+					name: "Daily digest send hour (UTC)",
 				}),
 			).toBeEnabled();
 			expect(
-				screen.getByRole("checkbox", { name: "启用失败告警" }),
+				screen.getByRole("checkbox", { name: "Enable failure alerts" }),
 			).toBeChecked();
+			expect(screen.getByText(/Local-time preview:/)).toBeInTheDocument();
 			expect(
-				screen.getByText(
-					/本地时间预览：本字段使用 UTC 小时。换算公式为「本地时间 = UTC 时间 \+ 时区偏移」。\s*例如 UTC\+8 用户可将本地目标小时减 8 后填写（如本地 09:00 → UTC 01:00）。/,
-				),
+				screen.getByText("Current default recipient: ops@example.com"),
 			).toBeInTheDocument();
 			expect(
-				screen.getByText("当前默认收件人：ops@example.com"),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "发送测试邮件" }),
+				screen.getByRole("button", { name: "Send test email" }),
 			).toBeInTheDocument();
 
 			const configForm = screen
-				.getByRole("button", { name: "保存配置" })
+				.getByRole("button", { name: "Save configuration" })
 				.closest("form");
 			expect(configForm).not.toBeNull();
 			expect(configForm).not.toHaveAttribute("method");
@@ -601,12 +603,12 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("test-session-token");
 			expect(
 				within(configForm as HTMLElement).getByRole("button", {
-					name: "保存配置",
+					name: "Save configuration",
 				}),
 			).toHaveAttribute("type", "submit");
 
 			const sendTestForm = screen
-				.getByRole("button", { name: "发送测试邮件" })
+				.getByRole("button", { name: "Send test email" })
 				.closest("form");
 			expect(sendTestForm).not.toBeNull();
 			expect(sendTestForm).not.toHaveAttribute("method");
@@ -617,7 +619,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 			).toHaveValue("test-session-token");
 			expect(
 				within(sendTestForm as HTMLElement).getByRole("button", {
-					name: "发送测试邮件",
+					name: "Send test email",
 				}),
 			).toHaveAttribute("type", "submit");
 		},
@@ -635,22 +637,24 @@ describe("dashboard/settings/subscriptions pages", () => {
 				"The request failed. Please try again later.",
 			);
 			expect(
-				screen.getByRole("link", { name: "重试当前页面" }),
+				screen.getByRole("link", { name: "Retry this page" }),
 			).toHaveAttribute("href", "/settings");
 			expect(
-				screen.getByRole("button", { name: "保存配置" }),
+				screen.getByRole("button", { name: "Save configuration" }),
 			).toBeInTheDocument();
-			expect(screen.getByRole("checkbox", { name: "启用通知" })).toBeChecked();
 			expect(
-				screen.getByRole("checkbox", { name: "启用每日摘要" }),
+				screen.getByRole("checkbox", { name: "Enable notifications" }),
+			).toBeChecked();
+			expect(
+				screen.getByRole("checkbox", { name: "Enable daily digest" }),
 			).not.toBeChecked();
 			expect(
 				screen.getByRole("spinbutton", {
-					name: "每日摘要发送时间（UTC 小时）",
+					name: "Daily digest send hour (UTC)",
 				}),
 			).toBeDisabled();
 			expect(
-				screen.getByRole("checkbox", { name: "启用失败告警" }),
+				screen.getByRole("checkbox", { name: "Enable failure alerts" }),
 			).toBeChecked();
 		},
 		PAGE_TEST_TIMEOUT_MS,

@@ -58,6 +58,34 @@ export const USE_CASE_PAGES = {
 			{ href: "/playground", label: "Open sample playground" },
 		],
 	},
+	codex: {
+		title: "Codex operator workflow",
+		subtitle:
+			"Use SourceHarbor from Codex through MCP or HTTP without duplicating the product's operator truth.",
+		why: [
+			"Codex is a strong fit when you want a coding or ops agent to inspect real jobs, artifacts, retrieval results, and readiness gates instead of scraping screenshots.",
+			"SourceHarbor already exposes the same state to Web, API, and MCP, so Codex can stay on the real control plane.",
+		],
+		links: [
+			{ href: "/mcp", label: "Open MCP quickstart" },
+			{ href: "/ops", label: "Open Ops inbox" },
+			{ href: "/search", label: "Open Search" },
+		],
+	},
+	"claude-code": {
+		title: "Claude Code workflow",
+		subtitle:
+			"Use SourceHarbor as a source-first MCP and API substrate for Claude Code-style local workflows.",
+		why: [
+			"Claude Code is a better fit than a generic chat shell because SourceHarbor already has inspectable jobs, artifacts, retrieval, and operator surfaces.",
+			"The honest story is not 'another assistant'; it is a reusable AI knowledge runtime that Claude Code can query through governed surfaces.",
+		],
+		links: [
+			{ href: "/mcp", label: "Open MCP quickstart" },
+			{ href: "/use-cases/research-pipeline", label: "Open research pipeline use case" },
+			{ href: "/playground", label: "Open sample playground" },
+		],
+	},
 	"research-pipeline": {
 		title: "AI research pipeline",
 		subtitle:

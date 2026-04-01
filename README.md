@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>AI knowledge pipeline and MCP server for YouTube, Bilibili, and RSS.</strong>
+  <strong>AI knowledge control tower and MCP server for YouTube, Bilibili, and RSS.</strong>
 </p>
 
 <p align="center">
@@ -30,6 +30,8 @@
   <a href="./docs/index.md">Docs Home</a>
   ·
   <a href="./docs/mcp-quickstart.md">MCP Quickstart</a>
+  ·
+  <a href="./docs/builders.md">Builders</a>
   ·
   <a href="./docs/samples/README.md">Sample Corpus</a>
   ·
@@ -54,6 +56,13 @@ knowledge cards, traceable job runs, and MCP-ready operations. It stays
 source-first and proof-first: you can inspect it, run it locally, and verify
 each surface instead of trusting product copy on vibes alone.
 
+It is strongest when you read it as a control tower for source intake:
+
+- operators use the Web command center
+- system builders use the HTTP API
+- Codex, Claude Code, and other MCP-aware workflows use the MCP surface
+- all three point at the same jobs, artifacts, retrieval index, and operator truth
+
 ## Front Doors
 
 The fastest way to understand the product is to open the highest-value rooms first:
@@ -63,8 +72,20 @@ The fastest way to understand the product is to open the highest-value rooms fir
 | **Search** | Operator-facing evidence search over digests, knowledge cards, transcripts, and related artifacts | Real Web route after local boot: `/search` |
 | **Ask your sources** | Truthful MVP: grounded search with citation jumps, not a hidden answer generator | Real Web route after local boot: `/ask` + [grounded contract](./docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md) |
 | **MCP** | Agent-facing surface on top of the same API and pipeline state | [docs/mcp-quickstart.md](./docs/mcp-quickstart.md) + `./bin/dev-mcp` |
-| **Ops / doctor** | First-run diagnosis and operator triage for runtime truth, failed jobs, ingest issues, and live-hardening gates | `./bin/doctor` + `/ops` after local boot + [docs/runtime-truth.md](./docs/runtime-truth.md) |
+| **Ops / doctor** | First-run diagnosis, operator triage, and next-step guidance for runtime truth, failed jobs, ingest issues, and live-hardening gates | `./bin/doctor` + `/ops` after local boot + [docs/runtime-truth.md](./docs/runtime-truth.md) |
 | **Compounders** | Watchlists, trends, evidence bundles, and read-only sample playgrounds that make SourceHarbor worth coming back to | `/watchlists`, `/trends`, `/playground`, and `/use-cases/*` |
+
+## Builder Entry Points
+
+SourceHarbor is not just a Web app. It already has multiple access layers for builders and agent workflows:
+
+| Entry point | Who it is for | Current truth |
+| --- | --- | --- |
+| **Codex / Claude Code workflows** | local operators who want an AI coding or operations agent to query and drive the same system truth | honest fit today through MCP + HTTP API, documented in [docs/builders.md](./docs/builders.md) |
+| **Read-only MCP** | agent workflows and assistant clients that need governed access to jobs, artifacts, retrieval, ingest, reports, and notifications | real surface today via [`./bin/dev-mcp`](./docs/mcp-quickstart.md) |
+| **HTTP API contract** | product builders, automation, and future SDK consumers | real contract today via [`contracts/source/openapi.yaml`](./contracts/source/openapi.yaml) |
+| **Shared Web client/types** | the current TypeScript consumer layer inside the repo | real layer today in `apps/web/lib/api/client.ts` and `apps/web/lib/api/types.ts` |
+| **Future SDK path** | external packages that should stay thin and truthful | documented as a next step in [docs/builders.md](./docs/builders.md), not marketed as already shipped |
 
 ## What It Does Not Claim Today
 

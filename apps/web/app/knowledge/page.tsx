@@ -14,8 +14,11 @@ import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 
-export const metadata: Metadata = { title: "Knowledge" };
+export const metadata: Metadata = {
+	title: getLocaleMessages().knowledgePage.metadataTitle,
+};
 
 type KnowledgePageProps = {
 	searchParams?: SearchParamsInput;
@@ -63,6 +66,7 @@ function toMetadataTokens(
 export default async function KnowledgePage({
 	searchParams,
 }: KnowledgePageProps) {
+	const copy = getLocaleMessages().knowledgePage;
 	const {
 		job_id: jobId,
 		video_id: videoId,
@@ -208,21 +212,15 @@ export default async function KnowledgePage({
 			<div className="folo-page-header">
 				<p className="folo-page-kicker">SourceHarbor Knowledge Layer</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Knowledge
+					{copy.heroTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					把它理解成“从 digest
-					里提炼出来的长期资产层”。这里更像知识卡片柜，而不是一次性的阅读流。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<h2 className="text-xl font-semibold">Filter knowledge cards</h2>
-					<CardDescription>
-						用 `job_id`、`video_id`、`card_type`
-						来缩小范围。你可以把它理解成先选抽屉，再看里面的卡片。
-					</CardDescription>
+					<h2 className="text-xl font-semibold">{copy.filterTitle}</h2>
+					<CardDescription>{copy.filterDescription}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form method="GET" className="grid gap-4 lg:grid-cols-2">
@@ -273,10 +271,10 @@ export default async function KnowledgePage({
 						/>
 						<div className="flex flex-wrap items-center gap-3 lg:col-span-2">
 							<Button type="submit" variant="hero" size="sm">
-								Filter
+								{copy.filterButton}
 							</Button>
 							<Button asChild variant="ghost" size="sm">
-								<Link href="/knowledge">Clear</Link>
+								<Link href="/knowledge">{copy.clearButton}</Link>
 							</Button>
 						</div>
 					</form>
@@ -287,19 +285,19 @@ export default async function KnowledgePage({
 				<section className="grid gap-4 md:grid-cols-3">
 					<Card className="folo-surface border-border/70">
 						<CardHeader>
-							<p className="text-sm text-muted-foreground">Total cards</p>
+							<p className="text-sm text-muted-foreground">{copy.totalCards}</p>
 							<p className="text-3xl font-semibold">{totalCards}</p>
 						</CardHeader>
 					</Card>
 					<Card className="folo-surface border-border/70">
 						<CardHeader>
-							<p className="text-sm text-muted-foreground">Unique jobs</p>
+							<p className="text-sm text-muted-foreground">{copy.uniqueJobs}</p>
 							<p className="text-3xl font-semibold">{uniqueJobs}</p>
 						</CardHeader>
 					</Card>
 					<Card className="folo-surface border-border/70">
 						<CardHeader>
-							<p className="text-sm text-muted-foreground">Card types</p>
+							<p className="text-sm text-muted-foreground">{copy.cardTypes}</p>
 							<p className="text-3xl font-semibold">{uniqueCardTypes}</p>
 						</CardHeader>
 					</Card>
@@ -308,19 +306,17 @@ export default async function KnowledgePage({
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<h2 className="text-xl font-semibold">Knowledge cards</h2>
+					<h2 className="text-xl font-semibold">{copy.sectionTitle}</h2>
 					<CardDescription>
-						当前展示最近抽取出的知识卡片。你也可以从{" "}
-						<Link href="/jobs">Job Trace</Link> 继续回到单次运行详情。
+						{copy.sectionDescription}{" "}
+						<Link href="/jobs">{copy.jobTraceCta}</Link>.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					{error ? (
-						<p className="text-sm text-muted-foreground">
-							当前无法加载知识卡片。
-						</p>
+						<p className="text-sm text-muted-foreground">{copy.loadError}</p>
 					) : cards.length === 0 ? (
-						<p className="text-sm text-muted-foreground">暂无知识卡片。</p>
+						<p className="text-sm text-muted-foreground">{copy.empty}</p>
 					) : (
 						<>
 							<div className="flex flex-wrap gap-2">

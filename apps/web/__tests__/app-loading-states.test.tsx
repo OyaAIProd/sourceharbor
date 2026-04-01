@@ -19,8 +19,8 @@ const LOADING_CASES: LoadingCase[] = [
 	{
 		name: "dashboard loading",
 		Component: AppLoading,
-		heading: "页面加载中",
-		message: "正在加载首页内容，请稍候。",
+		heading: "Dashboard loading",
+		message: "Loading the command center. Please wait.",
 		describedBy: "app-loading-message",
 	},
 	{
@@ -33,8 +33,8 @@ const LOADING_CASES: LoadingCase[] = [
 	{
 		name: "settings loading",
 		Component: SettingsLoading,
-		heading: "设置加载中",
-		message: "正在加载设置项，请稍候。",
+		heading: "Settings loading",
+		message: "Loading notification settings. Please wait.",
 		describedBy: "settings-loading-message",
 	},
 	{

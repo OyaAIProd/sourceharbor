@@ -30,7 +30,7 @@ describe("SyncNowButton", () => {
 
 	it("renders idle label", () => {
 		render(<SyncNowButton />);
-		expect(screen.getByRole("button", { name: "立即同步" })).toHaveAttribute(
+		expect(screen.getByRole("button", { name: "Sync now" })).toHaveAttribute(
 			"data-variant",
 			"hero",
 		);
@@ -45,17 +45,17 @@ describe("SyncNowButton", () => {
 		);
 
 		render(<SyncNowButton />);
-		const button = screen.getByRole("button", { name: "立即同步" });
+		const button = screen.getByRole("button", { name: "Sync now" });
 
 		fireEvent.click(button);
 		fireEvent.click(button);
 
 		await waitFor(() =>
 			expect(
-				screen.getByRole("button", { name: "同步中…" }),
+				screen.getByRole("button", { name: "Syncing…" }),
 			).toBeInTheDocument(),
 		);
-		expect(screen.getByRole("button", { name: "同步中…" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Syncing…" })).toBeDisabled();
 		expect(mockPollIngest).toHaveBeenCalledTimes(1);
 		expect(mockPollIngest).toHaveBeenCalledWith({});
 
@@ -69,12 +69,12 @@ describe("SyncNowButton", () => {
 		render(<SyncNowButton />);
 
 		await act(async () => {
-			fireEvent.click(screen.getByRole("button", { name: "立即同步" }));
+			fireEvent.click(screen.getByRole("button", { name: "Sync now" }));
 		});
 
 		await waitFor(() =>
 			expect(
-				screen.getByRole("button", { name: "同步完成" }),
+				screen.getByRole("button", { name: "Sync complete" }),
 			).toBeInTheDocument(),
 		);
 		expect(mockPollIngest).toHaveBeenCalledTimes(1);
@@ -82,7 +82,7 @@ describe("SyncNowButton", () => {
 		await waitFor(
 			() => {
 				expect(
-					screen.getByRole("button", { name: "立即同步" }),
+					screen.getByRole("button", { name: "Sync now" }),
 				).toBeInTheDocument();
 				expect(mockRefresh).toHaveBeenCalled();
 			},
@@ -102,17 +102,17 @@ describe("SyncNowButton", () => {
 		expect(status).toHaveAttribute("aria-live", "polite");
 
 		await act(async () => {
-			fireEvent.click(screen.getByRole("button", { name: "立即同步" }));
+			fireEvent.click(screen.getByRole("button", { name: "Sync now" }));
 		});
 
 		await waitFor(() =>
 			expect(
-				screen.getByRole("button", { name: "同步失败，重试" }),
+				screen.getByRole("button", { name: "Sync failed, retry" }),
 			).toBeInTheDocument(),
 		);
 		expect(status).toHaveAttribute("aria-live", "assertive");
 		expect(
-			screen.getByRole("button", { name: "同步失败，重试" }),
+			screen.getByRole("button", { name: "Sync failed, retry" }),
 		).toHaveAttribute("data-variant", "destructive");
 	});
 
@@ -122,19 +122,19 @@ describe("SyncNowButton", () => {
 		render(<SyncNowButton />);
 
 		await act(async () => {
-			fireEvent.click(screen.getByRole("button", { name: "立即同步" }));
+			fireEvent.click(screen.getByRole("button", { name: "Sync now" }));
 		});
 
 		await waitFor(() =>
 			expect(
-				screen.getByRole("button", { name: "同步失败，重试" }),
+				screen.getByRole("button", { name: "Sync failed, retry" }),
 			).toBeInTheDocument(),
 		);
 		expect(
-			screen.getByRole("button", { name: "同步失败，重试" }),
+			screen.getByRole("button", { name: "Sync failed, retry" }),
 		).toHaveAttribute("data-variant", "destructive");
 		expect(
-			screen.getByRole("button", { name: "同步失败，重试" }),
+			screen.getByRole("button", { name: "Sync failed, retry" }),
 		).toHaveAttribute("data-feedback-state", "error");
 		expect(mockPollIngest).toHaveBeenCalledTimes(1);
 		expect(mockRefresh).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe("SyncNowButton", () => {
 		await waitFor(
 			() => {
 				expect(
-					screen.getByRole("button", { name: "同步失败，重试" }),
+					screen.getByRole("button", { name: "Sync failed, retry" }),
 				).toBeInTheDocument();
 			},
 			{
@@ -151,18 +151,18 @@ describe("SyncNowButton", () => {
 		);
 
 		await act(async () => {
-			fireEvent.click(screen.getByRole("button", { name: "同步失败，重试" }));
+			fireEvent.click(screen.getByRole("button", { name: "Sync failed, retry" }));
 		});
 
 		await waitFor(() =>
 			expect(
-				screen.getByRole("button", { name: "同步完成" }),
+				screen.getByRole("button", { name: "Sync complete" }),
 			).toBeInTheDocument(),
 		);
 		await waitFor(
 			() => {
 				expect(
-					screen.getByRole("button", { name: "立即同步" }),
+					screen.getByRole("button", { name: "Sync now" }),
 				).toBeInTheDocument();
 				expect(mockRefresh).toHaveBeenCalledTimes(1);
 			},
@@ -183,11 +183,11 @@ describe("SyncNowButton", () => {
 		render(<SyncNowButton />);
 
 		await act(async () => {
-			fireEvent.click(screen.getByRole("button", { name: "立即同步" }));
+			fireEvent.click(screen.getByRole("button", { name: "Sync now" }));
 		});
 
 		const loadingButton = await screen.findByRole("button", {
-			name: "同步中…",
+			name: "Syncing…",
 		});
 		expect(loadingButton).toHaveAttribute("data-variant", "secondary");
 		expect(loadingButton).toHaveAttribute("data-feedback-state", "loading");
@@ -195,25 +195,27 @@ describe("SyncNowButton", () => {
 			'[data-part="status-hint"][data-state="loading"]',
 		);
 		expect(loadingHint).not.toBeNull();
-		expect(loadingHint).toHaveTextContent("正在拉取与分析新内容，请稍候。");
+		expect(loadingHint).toHaveTextContent(
+			"Fetching and analyzing new content. Please wait.",
+		);
 
 		await act(async () => {
 			resolveFirstSync();
 		});
 
-		const doneButton = await screen.findByRole("button", { name: "同步完成" });
+		const doneButton = await screen.findByRole("button", { name: "Sync complete" });
 		expect(doneButton).toHaveAttribute("data-variant", "success");
 		expect(doneButton).toHaveAttribute("data-feedback-state", "done");
 		const doneHint = document.querySelector(
 			'[data-part="status-hint"][data-state="done"]',
 		);
 		expect(doneHint).not.toBeNull();
-		expect(doneHint).toHaveTextContent("同步完成，列表即将刷新。");
+		expect(doneHint).toHaveTextContent("Sync complete. Refreshing the list next.");
 		expect(doneHint).not.toHaveClass("status-chip-feedback");
 
 		const idleButton = await screen.findByRole(
 			"button",
-			{ name: "立即同步" },
+			{ name: "Sync now" },
 			{ timeout: 2500 },
 		);
 		expect(idleButton).toHaveAttribute("data-variant", "hero");
@@ -223,15 +225,21 @@ describe("SyncNowButton", () => {
 		});
 
 		const errorButton = await screen.findByRole("button", {
-			name: "同步失败，重试",
+			name: "Sync failed, retry",
 		});
 		expect(errorButton).toHaveAttribute("data-variant", "destructive");
 		expect(errorButton).toHaveAttribute("data-feedback-state", "error");
+		expect(errorButton).toHaveAttribute(
+			"title",
+			"Sync failed. Press Enter or Space to retry.",
+		);
 		const errorHint = document.querySelector(
 			'[data-part="status-hint"][data-state="error"]',
 		);
 		expect(errorHint).not.toBeNull();
-		expect(errorHint).toHaveTextContent("同步失败，请检查网络后重试。");
+		expect(errorHint).toHaveTextContent(
+			"Sync failed. Check the network or API health, then retry.",
+		);
 		expect(errorHint).not.toHaveClass("status-chip-feedback");
 	}, 8000);
 });

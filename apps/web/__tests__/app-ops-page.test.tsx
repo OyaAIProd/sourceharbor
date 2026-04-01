@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -123,7 +123,7 @@ describe("ops inbox page", () => {
 					status_label: "failed",
 					last_seen_at: "2026-03-31T09:30:00Z",
 					href: "/jobs?job_id=job-1",
-					action_label: "查看任务",
+					action_label: "Open job",
 				},
 			],
 		});
@@ -131,10 +131,10 @@ describe("ops inbox page", () => {
 		render(await OpsPage());
 
 		expect(
-			screen.getByRole("heading", { name: "运营诊断" }),
+			screen.getByRole("heading", { name: "Ops inbox", level: 1 }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("heading", { name: "Ops inbox" }),
+			screen.getByRole("heading", { name: "Ops inbox", level: 3 }),
 		).toBeInTheDocument();
 		expect(screen.getByText("AI Weekly")).toBeInTheDocument();
 		expect(
@@ -143,7 +143,15 @@ describe("ops inbox page", () => {
 			),
 		).toBeInTheDocument();
 		expect(screen.getByText("Provider timeout")).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: "查看任务 →" })).toHaveAttribute(
+		const inboxSection = screen
+			.getByRole("heading", { name: "Ops inbox", level: 3 })
+			.closest('[data-slot="card"]');
+		expect(inboxSection).not.toBeNull();
+		expect(
+			within(inboxSection as HTMLElement).getByRole("link", {
+				name: "Open job →",
+			}),
+		).toHaveAttribute(
 			"href",
 			"/jobs?job_id=job-1",
 		);

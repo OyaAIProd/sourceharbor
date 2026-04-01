@@ -43,7 +43,7 @@ vi.mock("@/components/relative-time", () => ({
 }));
 
 vi.mock("@/components/sync-now-button", () => ({
-	SyncNowButton: () => <button type="button">立即同步</button>,
+	SyncNowButton: () => <button type="button">Sync now</button>,
 }));
 
 vi.mock("@/lib/api/client", () => ({

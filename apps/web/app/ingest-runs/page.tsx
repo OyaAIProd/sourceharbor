@@ -12,12 +12,15 @@ import {
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/format";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
 
-export const metadata: Metadata = { title: "Ingest Runs" };
+export const metadata: Metadata = {
+	title: getLocaleMessages().ingestRunsPage.metadataTitle,
+};
 
 type IngestRunsPageProps = {
 	searchParams?: SearchParamsInput;
@@ -30,6 +33,7 @@ function RunStatusBadge({ status }: { status: string }) {
 export default async function IngestRunsPage({
 	searchParams,
 }: IngestRunsPageProps) {
+	const copy = getLocaleMessages().ingestRunsPage;
 	const { run_id: runId } = await resolveSearchParams(searchParams, [
 		"run_id",
 	] as const);
@@ -53,19 +57,15 @@ export default async function IngestRunsPage({
 			<div className="folo-page-header">
 				<p className="folo-page-kicker">SourceHarbor Intake</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Ingest Runs
+					{copy.heroTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					把它理解成“摄取批次账本”。这里专门看每次拉取到底发没发车、进了多少候选、建了多少任务。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<h2 className="text-xl font-semibold">Find an ingest run</h2>
-					<CardDescription>
-						输入 `run_id` 可以看某次摄取详情；不输入时显示最近的运行批次。
-					</CardDescription>
+					<h2 className="text-xl font-semibold">{copy.filterTitle}</h2>
+					<CardDescription>{copy.filterDescription}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form method="GET" className="flex flex-wrap items-end gap-3">
@@ -87,8 +87,8 @@ export default async function IngestRunsPage({
 			{error ? (
 				<Card className="folo-surface border-destructive/40 bg-destructive/5">
 					<CardHeader>
-						<h2 className="text-xl font-semibold">Load failed</h2>
-						<CardDescription>当前无法加载 ingest runs。</CardDescription>
+						<h2 className="text-xl font-semibold">{copy.loadErrorTitle}</h2>
+						<CardDescription>{copy.loadErrorDescription}</CardDescription>
 					</CardHeader>
 				</Card>
 			) : null}
@@ -98,40 +98,36 @@ export default async function IngestRunsPage({
 					<Card className="folo-surface border-border/70">
 						<CardHeader className="flex flex-row items-start justify-between gap-4">
 							<div className="space-y-2">
-								<h2 className="text-xl font-semibold">Recent ingest runs</h2>
-								<CardDescription>
-									最近 10 次摄取批次，方便快速判断当前 intake 是否正常工作。
-								</CardDescription>
+								<h2 className="text-xl font-semibold">{copy.sectionTitle}</h2>
+								<CardDescription>{copy.sectionDescription}</CardDescription>
 							</div>
 						</CardHeader>
 						<CardContent className="space-y-3">
 							{runs.length === 0 ? (
-								<p className="text-sm text-muted-foreground">
-									暂无 ingest runs。
-								</p>
+								<p className="text-sm text-muted-foreground">{copy.empty}</p>
 							) : (
 								<div className="overflow-x-auto rounded-lg border border-border/70">
 									<table className="min-w-[760px] w-full text-sm">
-										<caption className="sr-only">Recent ingest runs</caption>
+										<caption className="sr-only">{copy.sectionTitle}</caption>
 										<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 											<tr>
 												<th scope="col" className="px-4 py-3 font-medium">
 													Run ID
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Platform
+													{copy.platform}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Status
+													{copy.status}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Jobs
+													{copy.jobs}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Candidates
+													{copy.candidates}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Created
+													{copy.created}
 												</th>
 											</tr>
 										</thead>
@@ -146,7 +142,9 @@ export default async function IngestRunsPage({
 															{run.id}
 														</Link>
 													</td>
-													<td className="px-4 py-3">{run.platform ?? "all"}</td>
+													<td className="px-4 py-3">
+														{run.platform ?? copy.allPlatforms}
+													</td>
 													<td className="px-4 py-3">
 														<RunStatusBadge status={run.status} />
 													</td>
@@ -170,10 +168,8 @@ export default async function IngestRunsPage({
 				<section>
 					<Card className="folo-surface border-border/70">
 						<CardHeader>
-							<h2 className="text-xl font-semibold">Run detail</h2>
-							<CardDescription>
-								这一块更像“本次进货记录的详细账单”。
-							</CardDescription>
+							<h2 className="text-xl font-semibold">{copy.detailTitle}</h2>
+							<CardDescription>{copy.detailDescription}</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -260,9 +256,7 @@ export default async function IngestRunsPage({
 									</table>
 								</div>
 							) : (
-								<p className="text-sm text-muted-foreground">
-									当前 run 还没有 item 详情。
-								</p>
+								<p className="text-sm text-muted-foreground">{copy.detailEmpty}</p>
 							)}
 						</CardContent>
 					</Card>

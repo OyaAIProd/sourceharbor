@@ -11,7 +11,8 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
-import type { OpsGate, OpsInboxItem } from "@/lib/api/types";
+import { getLocaleMessages } from "@/lib/i18n/messages";
+import type { OpsGate, OpsInboxItem, OpsInboxResponse } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -141,7 +142,87 @@ function InboxRow({ item }: { item: OpsInboxItem }) {
 	);
 }
 
+type OpsNextStep = {
+	title: string;
+	detail: string;
+	href: string;
+	actionLabel: string;
+	status: string;
+};
+
+function buildNextSteps(
+	payload: OpsInboxResponse,
+	copy: ReturnType<typeof getLocaleMessages>["ops"],
+): OpsNextStep[] {
+	const steps: OpsNextStep[] = [];
+	const pushStep = (step: OpsNextStep) => {
+		if (steps.some((existing) => existing.title === step.title && existing.href === step.href)) {
+			return;
+		}
+		steps.push(step);
+	};
+
+	const gateActions: Array<{
+		key: keyof OpsInboxResponse["gates"];
+		title: string;
+		href: string;
+		actionLabel: string;
+	}> = [
+		{
+			key: "notifications",
+			title: "Notifications",
+			href: "/settings",
+			actionLabel: "Open settings",
+		},
+		{
+			key: "retrieval",
+			title: "Retrieval",
+			href: "/search",
+			actionLabel: "Open Search",
+		},
+		{
+			key: "ui_audit",
+			title: "UI audit",
+			href: "/ops#hardening-gates",
+			actionLabel: copy.nextSteps.openAction,
+		},
+		{
+			key: "computer_use",
+			title: "Computer use",
+			href: "/ops#hardening-gates",
+			actionLabel: copy.nextSteps.openAction,
+		},
+	];
+
+	for (const gateAction of gateActions) {
+		const gate = payload.gates[gateAction.key];
+		if (gate.status === "ready" || gate.status === "ok") {
+			continue;
+		}
+		pushStep({
+			title: `${copy.nextSteps.gatePrefix}: ${gateAction.title}`,
+			detail: gate.next_step || gate.summary,
+			href: gateAction.href,
+			actionLabel: gateAction.actionLabel,
+			status: gate.status,
+		});
+	}
+
+	for (const item of payload.inbox_items.slice(0, 2)) {
+		pushStep({
+			title: `${copy.nextSteps.triagePrefix}: ${item.title}`,
+			detail: item.detail,
+			href: item.href,
+			actionLabel: item.action_label,
+			status: item.severity,
+		});
+	}
+
+	return steps.slice(0, 4);
+}
+
 export default async function OpsPage() {
+	const copy = getLocaleMessages().ops;
 	const payload = await apiClient
 		.getOpsInbox({ limit: 6, window_hours: 24 })
 		.catch(() => null);
@@ -152,22 +233,18 @@ export default async function OpsPage() {
 				<div className="folo-page-header">
 					<p className="folo-page-kicker">SourceHarbor Ops</p>
 					<h1 className="folo-page-title" data-route-heading>
-						运营诊断
+						{copy.heroTitle}
 					</h1>
-					<p className="folo-page-subtitle">
-						先看异常，再跳到对应账本。这里不是新仪表盘，而是值班入口。
-					</p>
+					<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 				</div>
 				<Card className="folo-surface border-destructive/40 bg-destructive/5">
 					<CardHeader className="gap-2">
-						<CardTitle className="text-base">当前无法汇总运营诊断</CardTitle>
-						<CardDescription>
-							请先确认 API health 和 full-stack 状态，再重试当前页面。
-						</CardDescription>
+						<CardTitle className="text-base">{copy.loadErrorTitle}</CardTitle>
+						<CardDescription>{copy.loadErrorDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
 						<Button asChild variant="outline" size="sm">
-							<Link href="/">返回 command center</Link>
+							<Link href="/">{copy.backToDashboard}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -181,17 +258,16 @@ export default async function OpsPage() {
 			return status === "warn" || status === "fail";
 		},
 	);
+	const nextSteps = buildNextSteps(payload, copy);
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
 				<p className="folo-page-kicker">SourceHarbor Ops</p>
 				<h1 className="folo-page-title" data-route-heading>
-					运营诊断
+					{copy.heroTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					先看异常，再跳到对应账本。这里不是新仪表盘，而是值班入口。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			{payload.failed_jobs.status !== "ok" ||
@@ -199,15 +275,12 @@ export default async function OpsPage() {
 			payload.notification_deliveries.status !== "ok" ? (
 				<Card className="folo-surface border-amber-300/70 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/15">
 					<CardHeader className="gap-2">
-						<CardTitle className="text-base">部分诊断数据暂不可用</CardTitle>
-						<CardDescription>
-							这页保留已成功加载的异常项。先看 API health 和 doctor
-							结果，再决定是否要重跑整页诊断。
-						</CardDescription>
+						<CardTitle className="text-base">{copy.partialDataTitle}</CardTitle>
+						<CardDescription>{copy.partialDataDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
 						<Button asChild variant="outline" size="sm">
-							<Link href="/">返回 command center</Link>
+							<Link href="/">{copy.backToDashboard}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -215,27 +288,27 @@ export default async function OpsPage() {
 
 			<section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 				<SummaryCard
-					title="待处理异常"
+					title={copy.summary.attentionItems.title}
 					value={payload.overview.attention_items}
-					description="按值班优先级聚合后的异常总数。"
+					description={copy.summary.attentionItems.description}
 					status={buildSummaryStatus(payload.overview.attention_items)}
 				/>
 				<SummaryCard
-					title="失败任务"
+					title={copy.summary.failedJobs.title}
 					value={payload.overview.failed_jobs}
-					description="失败或 degraded 的任务需要先回到 job trace 查账。"
+					description={copy.summary.failedJobs.description}
 					status={buildSummaryStatus(payload.overview.failed_jobs)}
 				/>
 				<SummaryCard
-					title="失败摄取"
+					title={copy.summary.failedIngest.title}
 					value={payload.overview.failed_ingest_runs}
-					description="最近 ingest runs 里真正没发车或半路失败的批次。"
+					description={copy.summary.failedIngest.description}
 					status={buildSummaryStatus(payload.overview.failed_ingest_runs)}
 				/>
 				<SummaryCard
-					title="通知 / Gate"
+					title={copy.summary.notificationGate.title}
 					value={payload.overview.notification_or_gate_issues}
-					description="通知链路、provider health 和 hardening gate 的异常总和。"
+					description={copy.summary.notificationGate.description}
 					status={buildSummaryStatus(
 						payload.overview.notification_or_gate_issues,
 					)}
@@ -245,16 +318,13 @@ export default async function OpsPage() {
 			<section id="ops-inbox">
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Ops inbox</CardTitle>
-						<CardDescription>
-							把它理解成值班收件箱。每条异常都给一个主跳转，不逼你先猜该去
-							Jobs、Ingest Runs 还是 Settings。
-						</CardDescription>
+						<CardTitle>{copy.inbox.title}</CardTitle>
+						<CardDescription>{copy.inbox.description}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{payload.inbox_items.length === 0 ? (
 							<p className="text-sm text-muted-foreground">
-								当前没有需要值班处理的异常。最近任务、摄取、通知链路都在可接受范围内。
+								{copy.inbox.empty}
 							</p>
 						) : (
 							<div className="overflow-x-auto rounded-lg border border-border/70">
@@ -301,18 +371,48 @@ export default async function OpsPage() {
 				<GateCard title="Computer use" gate={payload.gates.computer_use} />
 			</section>
 
+			<section>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>{copy.nextSteps.title}</CardTitle>
+						<CardDescription>{copy.nextSteps.description}</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-3 text-sm text-muted-foreground">
+						{nextSteps.length === 0 ? (
+							<p>{copy.nextSteps.noActions}</p>
+						) : (
+							<ul className="space-y-3">
+								{nextSteps.map((step) => (
+									<li
+										key={`${step.title}-${step.href}`}
+										className="rounded-lg border border-border/60 bg-muted/20 p-3"
+									>
+										<div className="flex items-center justify-between gap-3">
+											<p className="font-medium text-foreground">{step.title}</p>
+											<ReadinessBadge label={step.status} status={step.status} />
+										</div>
+										<p>{step.detail}</p>
+										<Button asChild variant="link" size="sm" className="mt-2 h-auto px-0">
+											<Link href={step.href}>{step.actionLabel} →</Link>
+										</Button>
+									</li>
+								))}
+							</ul>
+						)}
+					</CardContent>
+				</Card>
+			</section>
+
 			<section className="grid gap-4 lg:grid-cols-2">
 				<Card id="provider-health" className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Provider health</CardTitle>
-						<CardDescription>
-							这是系统是不是整体歪了的快速视图。黄色表示需要人工确认，红色表示最近有明确失败。
-						</CardDescription>
+						<CardTitle>{copy.providerHealth.title}</CardTitle>
+						<CardDescription>{copy.providerHealth.description}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{providerIssues.length === 0 ? (
 							<p className="text-sm text-muted-foreground">
-								当前没有 provider health 异常记录。
+								{copy.providerHealth.empty}
 							</p>
 						) : (
 							<ul className="space-y-3 text-sm text-muted-foreground">
@@ -333,7 +433,7 @@ export default async function OpsPage() {
 										<p>
 											{provider.last_message ||
 												provider.last_error_kind ||
-												"Provider health requires operator attention."}
+												copy.providerHealth.defaultMessage}
 										</p>
 									</li>
 								))}
@@ -347,16 +447,16 @@ export default async function OpsPage() {
 					className="folo-surface border-border/70"
 				>
 					<CardHeader>
-						<CardTitle>Notification readiness</CardTitle>
+						<CardTitle>{copy.notificationReadiness.title}</CardTitle>
 						<CardDescription>
-							把“通知配置没填好”和“通知发送失败”拆开看，避免把两类问题混成一句“通知坏了”。
+							{copy.notificationReadiness.description}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
 						<p>{payload.gates.notifications.summary}</p>
 						<p>{payload.gates.notifications.next_step}</p>
 						{payload.notification_deliveries.items.length === 0 ? (
-							<p>当前没有待处理的 notification deliveries。</p>
+							<p>{copy.notificationReadiness.empty}</p>
 						) : (
 							<ul className="space-y-2">
 								{payload.notification_deliveries.items.map((item) => (

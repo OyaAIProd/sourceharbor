@@ -26,12 +26,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/format";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
 
-export const metadata: Metadata = { title: "设置" };
+export const metadata: Metadata = { title: "Settings" };
 
 type SettingsPageProps = {
 	searchParams?: SearchParamsInput;
@@ -40,6 +41,7 @@ type SettingsPageProps = {
 export default async function SettingsPage({
 	searchParams,
 }: SettingsPageProps) {
+	const copy = getLocaleMessages().settings;
 	const { status, code } = await resolveSearchParams(searchParams, [
 		"status",
 		"code",
@@ -74,11 +76,9 @@ export default async function SettingsPage({
 			<div className="folo-page-header">
 				<p className="folo-page-kicker">SourceHarbor Settings</p>
 				<h1 className="folo-page-title" data-route-heading>
-					通知设置
+					{copy.heroTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					管理摘要通知、失败告警与测试邮件发送策略，保障运营触达链路稳定可控。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			{alert}
@@ -89,7 +89,7 @@ export default async function SettingsPage({
 					aria-live="assertive"
 				>
 					<CardHeader className="gap-2">
-						<CardTitle className="text-base">加载失败</CardTitle>
+						<CardTitle className="text-base">{copy.loadErrorTitle}</CardTitle>
 						<CardDescription>
 							{getFlashMessage(
 								loadError.startsWith("ERR_") ? loadError : "ERR_REQUEST_FAILED",
@@ -98,7 +98,7 @@ export default async function SettingsPage({
 					</CardHeader>
 					<CardContent className="pt-0">
 						<Button asChild variant="outline" size="sm">
-							<Link href="/settings">重试当前页面</Link>
+							<Link href="/settings">{copy.retryCurrentPage}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -106,11 +106,12 @@ export default async function SettingsPage({
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader className="gap-2">
-					<h2 className="text-xl font-semibold">通知配置</h2>
+					<h2 className="text-xl font-semibold">{copy.configSectionTitle}</h2>
 					{config ? (
 						<CardDescription>
-							创建时间：{formatDateTime(config.created_at)} | 更新时间：
-							{formatDateTime(config.updated_at)}
+							{copy.configDates
+								.replace("{createdAt}", formatDateTime(config.created_at) || "-")
+								.replace("{updatedAt}", formatDateTime(config.updated_at) || "-")}
 						</CardDescription>
 					) : null}
 				</CardHeader>
@@ -124,26 +125,26 @@ export default async function SettingsPage({
 						/>
 						<FormCheckboxField
 							name="enabled"
-							label="启用通知"
+							label={copy.enabledLabel}
 							defaultChecked={config?.enabled ?? true}
 						/>
 						<FormInputField
 							id="to_email"
 							name="to_email"
-							label="收件人邮箱"
+							label={copy.toEmailLabel}
 							type="email"
 							defaultValue={config?.to_email ?? ""}
 							placeholder="ops@example.com"
 						/>
 						<FormCheckboxField
 							name="daily_digest_enabled"
-							label="启用每日摘要"
+							label={copy.dailyDigestLabel}
 							defaultChecked={config?.daily_digest_enabled ?? false}
 						/>
 						<FormInputField
 							id="daily_digest_hour_utc"
 							name="daily_digest_hour_utc"
-							label="每日摘要发送时间（UTC 小时）"
+							label={copy.dailyDigestHourLabel}
 							type="number"
 							min={0}
 							max={23}
@@ -154,17 +155,15 @@ export default async function SettingsPage({
 							disabled={!config?.daily_digest_enabled}
 						/>
 						<FormFieldHint id="daily-digest-hour-utc-help">
-							本地时间预览：本字段使用 UTC 小时。换算公式为「本地时间 = UTC 时间
-							+ 时区偏移」。 例如 UTC+8 用户可将本地目标小时减 8 后填写（如本地
-							09:00 → UTC 01:00）。
+							{copy.dailyDigestHint}
 						</FormFieldHint>
 						<FormCheckboxField
 							name="failure_alert_enabled"
-							label="启用失败告警"
+							label={copy.failureAlertLabel}
 							defaultChecked={config?.failure_alert_enabled ?? true}
 						/>
-						<SubmitButton pendingLabel="保存中…" statusText="正在保存通知配置">
-							保存配置
+						<SubmitButton pendingLabel={copy.savePending} statusText={copy.saveStatus}>
+							{copy.saveButton}
 						</SubmitButton>
 					</form>
 				</CardContent>
@@ -172,12 +171,11 @@ export default async function SettingsPage({
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader className="gap-2">
-					<h2 className="text-xl font-semibold">发送测试通知</h2>
+					<h2 className="text-xl font-semibold">{copy.testSectionTitle}</h2>
 					<CardDescription>
-						当前默认收件人：
 						{config?.to_email
-							? config.to_email
-							: "未设置，请先在上方通知配置中填写收件人邮箱。"}
+							? copy.testRecipientDescription.replace("{email}", config.to_email)
+							: copy.testRecipientMissing}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -191,28 +189,28 @@ export default async function SettingsPage({
 						<FormInputField
 							id="test_to_email"
 							name="to_email"
-							label="覆盖收件人（可选）"
+							label={copy.overrideRecipientLabel}
 							type="email"
-							placeholder="留空则使用已配置的收件人"
+							placeholder={copy.overrideRecipientPlaceholder}
 						/>
 						<FormInputField
 							id="test_subject"
 							name="subject"
-							label="主题（可选）"
+							label={copy.subjectLabel}
 							type="text"
-							placeholder="AI 信息中枢测试通知"
+							placeholder={copy.subjectPlaceholder}
 						/>
 						<FormField>
-							<FormFieldLabel htmlFor="test_body">正文（可选）</FormFieldLabel>
+							<FormFieldLabel htmlFor="test_body">{copy.bodyLabel}</FormFieldLabel>
 							<Textarea
 								id="test_body"
 								name="body"
 								rows={4}
-								placeholder="这是来自 AI 信息中枢的测试通知邮件。"
+								placeholder={copy.bodyPlaceholder}
 							/>
 						</FormField>
-						<SubmitButton pendingLabel="发送中…" statusText="正在发送测试通知">
-							发送测试邮件
+						<SubmitButton pendingLabel={copy.sendPending} statusText={copy.sendStatus}>
+							{copy.sendButton}
 						</SubmitButton>
 					</form>
 				</CardContent>

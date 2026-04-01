@@ -24,11 +24,11 @@ describe("SubmitButton", () => {
 	it("renders idle submit state with composed aria-describedby", () => {
 		render(
 			<SubmitButton aria-describedby="external-help" className="primary">
-				保存配置
+				Save configuration
 			</SubmitButton>,
 		);
 
-		const button = screen.getByRole("button", { name: "保存配置" });
+		const button = screen.getByRole("button", { name: "Save configuration" });
 		const statusOutput = screen.getByRole("status");
 		const describedBy = button.getAttribute("aria-describedby") ?? "";
 
@@ -46,8 +46,11 @@ describe("SubmitButton", () => {
 		useFormStatusMock.mockReturnValue({ pending: true });
 
 		render(
-			<SubmitButton pendingLabel="保存中…" statusText="正在保存通知配置">
-				保存配置
+			<SubmitButton
+				pendingLabel="Saving…"
+				statusText="Saving notification settings. Please wait."
+			>
+				Save configuration
 			</SubmitButton>,
 		);
 
@@ -59,18 +62,20 @@ describe("SubmitButton", () => {
 		expect(button).toHaveAttribute("aria-disabled", "true");
 		expect(button).toHaveAttribute("aria-busy", "true");
 		expect(button).toHaveAttribute("data-feedback-state", "pending");
-		expect(within(button).getByText("保存中…")).toBeInTheDocument();
-		expect(within(button).getByText("正在提交，请稍候。")).toHaveClass(
+		expect(within(button).getByText("Saving…")).toBeInTheDocument();
+		expect(within(button).getByText("Submitting. Please wait.")).toHaveClass(
 			"sr-only",
 		);
-		expect(statusOutput).toHaveTextContent("正在保存通知配置");
+		expect(statusOutput).toHaveTextContent(
+			"Saving notification settings. Please wait.",
+		);
 	});
 
 	it("falls back to pending label when statusText is omitted", () => {
 		useFormStatusMock.mockReturnValue({ pending: true });
 
-		render(<SubmitButton pendingLabel="创建任务中…">开始处理</SubmitButton>);
+		render(<SubmitButton pendingLabel="Creating job…">Start processing</SubmitButton>);
 
-		expect(screen.getByRole("status")).toHaveTextContent("创建任务中…");
+		expect(screen.getByRole("status")).toHaveTextContent("Creating job…");
 	});
 });

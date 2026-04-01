@@ -5,6 +5,7 @@ import { useId } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,14 +20,16 @@ type SubmitButtonProps = Omit<
 export function SubmitButton({
 	children,
 	className,
-	pendingLabel = "提交中…",
+	pendingLabel,
 	statusText,
 	"aria-describedby": ariaDescribedBy,
 	...props
 }: SubmitButtonProps) {
+	const copy = getLocaleMessages().submitButton;
 	const { pending } = useFormStatus();
 	const statusId = useId();
 	const state = pending ? "pending" : "idle";
+	const resolvedPendingLabel = pendingLabel ?? "Submitting…";
 	const buttonLabel = pending ? (
 		<span
 			className="inline-flex items-center gap-2"
@@ -40,12 +43,12 @@ export function SubmitButton({
 				data-state={state}
 				aria-hidden="true"
 			>
-				处理中
+				{copy.pendingBadge}
 			</Badge>
 			<span data-part="button-label" data-state={state}>
-				{pendingLabel}
+				{resolvedPendingLabel}
 			</span>
-			<span className="sr-only">正在提交，请稍候。</span>
+			<span className="sr-only">{copy.pendingSrOnly}</span>
 		</span>
 	) : (
 		<span
@@ -58,7 +61,7 @@ export function SubmitButton({
 			</span>
 		</span>
 	);
-	const pendingStatusText = statusText ?? pendingLabel;
+	const pendingStatusText = statusText ?? resolvedPendingLabel;
 	const buttonClassName = cn("min-w-[8.5rem] rounded-xl shadow-sm", className);
 	const describedBy =
 		[ariaDescribedBy, statusId].filter(Boolean).join(" ") || undefined;
