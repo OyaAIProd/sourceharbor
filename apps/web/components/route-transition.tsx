@@ -10,6 +10,13 @@ type RouteTransitionProps = {
 const ROUTE_NAME_MAP: Array<{ href: string; label: string }> = [
 	{ href: "/", label: "Home" },
 	{ href: "/subscriptions", label: "Subscriptions" },
+	{ href: "/search", label: "Search" },
+	{ href: "/ask", label: "Ask" },
+	{ href: "/mcp", label: "MCP Quickstart" },
+	{ href: "/ops", label: "Ops inbox" },
+	{ href: "/watchlists", label: "Watchlists" },
+	{ href: "/trends", label: "Trends" },
+	{ href: "/playground", label: "Playground" },
 	{ href: "/knowledge", label: "Knowledge" },
 	{ href: "/jobs", label: "Jobs" },
 	{ href: "/ingest-runs", label: "Ingest runs" },

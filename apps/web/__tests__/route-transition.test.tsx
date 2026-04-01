@@ -66,6 +66,69 @@ describe("RouteTransition", () => {
 		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Page");
 	});
 
+	it("maps search route to the front-door label", () => {
+		usePathnameMock.mockReturnValue("/search");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>搜索入口</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Search",
+		);
+	});
+
+	it("maps ask route to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/ask");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>提问入口</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Ask");
+	});
+
+	it("maps ops route to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/ops");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>运营诊断</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Ops inbox",
+		);
+	});
+
+	it("maps watchlists route to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/watchlists");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>追踪清单</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Watchlists",
+		);
+	});
+
+	it("maps trends route to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/trends");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>连续变化</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Trends",
+		);
+	});
+
 	it("maps nested ingest runs routes to the dedicated label", () => {
 		usePathnameMock.mockReturnValue("/ingest-runs/run-1");
 		render(

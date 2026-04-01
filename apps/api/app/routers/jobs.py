@@ -96,6 +96,22 @@ class KnowledgeCardResponse(BaseModel):
     order_index: int
 
 
+class JobEvidenceBundleResponse(BaseModel):
+    bundle_kind: str
+    sharing_scope: str
+    sample: bool
+    generated_at: datetime
+    proof_boundary: str
+    job: dict[str, Any]
+    trace_summary: dict[str, Any]
+    digest: str | None = None
+    digest_meta: dict[str, Any] | None = None
+    comparison: dict[str, Any] | None = None
+    knowledge_cards: list[dict[str, Any]]
+    artifact_manifest: dict[str, str]
+    step_summary: list[dict[str, Any]]
+
+
 @router.get("/{job_id}", response_model=JobResponse)
 def get_job(job_id: uuid.UUID, db: Session = Depends(get_db)):
     service = JobsService(db)
@@ -172,3 +188,12 @@ def get_job_knowledge_cards(job_id: uuid.UUID, db: Session = Depends(get_db)):
     if payload is None:
         raise HTTPException(status_code=404, detail="job not found")
     return [KnowledgeCardResponse(**item) for item in payload]
+
+
+@router.get("/{job_id}/bundle", response_model=JobEvidenceBundleResponse)
+def get_job_evidence_bundle(job_id: uuid.UUID, db: Session = Depends(get_db)):
+    service = JobsService(db)
+    payload = service.build_evidence_bundle(job_id=job_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="job not found")
+    return JobEvidenceBundleResponse(**payload)

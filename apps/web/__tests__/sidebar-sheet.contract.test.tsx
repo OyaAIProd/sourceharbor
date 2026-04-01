@@ -167,6 +167,15 @@ describe("Sidebar + Sheet contract", () => {
 				"page",
 			);
 			expect(
+				screen.getByRole("link", { name: "Ops inbox" }),
+			).toHaveAttribute("href", "/ops");
+			expect(
+				screen.getByRole("link", { name: "Watchlists" }),
+			).toHaveAttribute("href", "/watchlists");
+			expect(
+				screen.getByRole("link", { name: "Trends" }),
+			).toHaveAttribute("href", "/trends");
+			expect(
 				screen.queryByRole("link", { name: "Disabled Source" }),
 			).toBeNull();
 			expect(
@@ -419,6 +428,33 @@ describe("Sidebar + Sheet contract", () => {
 			expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
 				"aria-current",
 				"page",
+			);
+		},
+		SIDEBAR_TIMEOUT_MS,
+	);
+
+	it(
+		"shows Search and Ask in primary navigation and marks Search active on search routes",
+		() => {
+			usePathnameMock.mockReturnValue("/search");
+			useSearchParamsMock.mockReturnValue(createSearchParams(""));
+
+			render(
+				<Sidebar
+					subscriptions={[]}
+					apiHealthState="healthy"
+					apiHealthUrl="http://127.0.0.1:9000/healthz"
+					apiHealthLabel="Healthy"
+				/>,
+			);
+
+			expect(screen.getByRole("link", { name: "Search" })).toHaveAttribute(
+				"aria-current",
+				"page",
+			);
+			expect(screen.getByRole("link", { name: "Ask" })).toHaveAttribute(
+				"href",
+				"/ask",
 			);
 		},
 		SIDEBAR_TIMEOUT_MS,

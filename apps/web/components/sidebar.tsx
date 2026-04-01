@@ -1,16 +1,21 @@
 "use client";
 
 import {
+	Activity,
 	Home,
 	Inbox,
 	Layers3,
 	List,
 	ListTodo,
 	Menu,
+	MessageSquare,
+	LineChart,
 	PanelLeftClose,
 	Plus,
+	Search,
 	Settings,
 	Sparkles,
+	BookmarkPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -132,6 +137,84 @@ function SidebarNavContent({
 				>
 					<Sparkles className="size-4 shrink-0 opacity-80" aria-hidden />
 					<span className={collapsed ? "sr-only" : undefined}>Digest feed</span>
+				</Link>
+				<Link
+					href="/search"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/search")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/search") ? "page" : undefined}
+				>
+					<Search className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Search</span>
+				</Link>
+				<Link
+					href="/ask"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/ask")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/ask") ? "page" : undefined}
+				>
+					<MessageSquare className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Ask</span>
+				</Link>
+				<Link
+					href="/mcp"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/mcp")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/mcp") ? "page" : undefined}
+				>
+					<List className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>MCP Quickstart</span>
+				</Link>
+				<Link
+					href="/ops"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/ops")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/ops") ? "page" : undefined}
+				>
+					<Activity className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Ops inbox</span>
+				</Link>
+				<Link
+					href="/watchlists"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/watchlists")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/watchlists") ? "page" : undefined}
+				>
+					<BookmarkPlus className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Watchlists</span>
+				</Link>
+				<Link
+					href="/trends"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/trends")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/trends") ? "page" : undefined}
+				>
+					<LineChart className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Trends</span>
 				</Link>
 				<Link
 					href="/knowledge"

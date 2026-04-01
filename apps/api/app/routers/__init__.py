@@ -6,10 +6,12 @@ from . import (
     ingest,
     jobs,
     notifications,
+    ops,
     retrieval,
     subscriptions,
     ui_audit,
     videos,
+    watchlists,
     workflows,
 )
 
@@ -21,9 +23,11 @@ __all__ = [
     "ingest",
     "jobs",
     "notifications",
+    "ops",
     "retrieval",
     "subscriptions",
     "ui_audit",
     "videos",
+    "watchlists",
     "workflows",
 ]

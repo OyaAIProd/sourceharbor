@@ -9,19 +9,26 @@ import type {
 	IngestRunSummary,
 	Job,
 	JobCompare,
+	JobEvidenceBundle,
 	JobStatus,
 	KnowledgeCard,
 	NotificationConfig,
 	NotificationConfigUpdateRequest,
 	NotificationSendResponse,
 	NotificationTestRequest,
+	OpsInboxResponse,
 	Platform,
+	RetrievalSearchMode,
+	RetrievalSearchResponse,
 	Subscription,
 	SubscriptionUpsertRequest,
 	SubscriptionUpsertResponse,
 	Video,
 	VideoProcessRequest,
 	VideoProcessResponse,
+	Watchlist,
+	WatchlistTrendResponse,
+	WatchlistUpsertRequest,
 } from "@/lib/api/types";
 import { buildApiUrl, sanitizeExternalUrl } from "@/lib/api/url";
 
@@ -240,7 +247,69 @@ function normalizeKnowledgeCards(payload: unknown): KnowledgeCard[] {
 				updated_at: asString(record.updated_at) || undefined,
 			};
 		})
-		.filter((item): item is KnowledgeCard => item !== null);
+			.filter((item): item is KnowledgeCard => item !== null);
+}
+
+function normalizeRetrievalSearchResponse(
+	payload: unknown,
+): RetrievalSearchResponse {
+	const parsed = asObject(payload);
+	const rawItems = Array.isArray(parsed?.items) ? parsed.items : [];
+	return {
+		query: asString(parsed?.query),
+		top_k:
+			typeof parsed?.top_k === "number" && Number.isFinite(parsed.top_k)
+				? parsed.top_k
+				: 0,
+		filters: Object.fromEntries(
+			Object.entries(asObject(parsed?.filters) ?? {})
+				.filter(([, value]) => typeof value === "string" && value.trim())
+				.map(([key, value]) => [key, String(value)]),
+		),
+		items: rawItems
+			.map((item): RetrievalSearchResponse["items"][number] | null => {
+				const record = asObject(item);
+				if (!record) {
+					return null;
+				}
+				const jobId = asString(record.job_id).trim();
+				const videoId = asString(record.video_id).trim();
+				const source = asString(record.source).trim().toLowerCase();
+				const snippet = asString(record.snippet).trim();
+				if (!jobId || !videoId || !source || !snippet) {
+					return null;
+				}
+				if (
+					source !== "digest" &&
+					source !== "transcript" &&
+					source !== "outline" &&
+					source !== "knowledge_cards" &&
+					source !== "comments" &&
+					source !== "meta"
+				) {
+					return null;
+				}
+				return {
+					job_id: jobId,
+					video_id: videoId,
+					platform: asString(record.platform),
+					video_uid: asString(record.video_uid),
+					source_url: asString(record.source_url),
+					title: asString(record.title) || null,
+					kind: asString(record.kind),
+					mode: asString(record.mode) || null,
+					source,
+					snippet,
+					score:
+						typeof record.score === "number" && Number.isFinite(record.score)
+							? record.score
+							: 0,
+				};
+			})
+			.filter(
+				(item): item is RetrievalSearchResponse["items"][number] => item !== null,
+			),
+	};
 }
 
 function assertSafeExternalUrl(raw: string): string {
@@ -543,6 +612,11 @@ export const apiClient = {
 		return requestJson<JobCompare>(`/api/v1/jobs/${safeJobId}/compare`);
 	},
 
+	getJobEvidenceBundle(jobId: string) {
+		const safeJobId = encodeURIComponent(assertSafeIdentifier(jobId));
+		return requestJson<JobEvidenceBundle>(`/api/v1/jobs/${safeJobId}/bundle`);
+	},
+
 	getJobKnowledgeCards(jobId: string) {
 		const safeJobId = encodeURIComponent(assertSafeIdentifier(jobId));
 		return requestJson<KnowledgeCard[]>(
@@ -569,10 +643,74 @@ export const apiClient = {
 		);
 	},
 
+	searchRetrieval(payload: {
+		query: string;
+		top_k?: number;
+		mode?: RetrievalSearchMode;
+		filters?: Record<string, string>;
+	}) {
+		return requestJson<RetrievalSearchResponse>(
+			"/api/v1/retrieval/search",
+			{
+				method: "POST",
+				body: {
+					query: payload.query,
+					top_k: payload.top_k ?? 8,
+					mode: payload.mode ?? "keyword",
+					filters: payload.filters ?? {},
+				},
+			},
+			undefined,
+			normalizeRetrievalSearchResponse,
+		);
+	},
+
 	getArtifactMarkdown,
 
 	getNotificationConfig() {
 		return requestJson<NotificationConfig>("/api/v1/notifications/config");
+	},
+
+	getOpsInbox(params?: { limit?: number; window_hours?: number }) {
+		return requestJson<OpsInboxResponse>("/api/v1/ops/inbox", {}, params);
+	},
+
+	listWatchlists() {
+		return requestJson<Watchlist[]>("/api/v1/watchlists");
+	},
+
+	upsertWatchlist(
+		payload: WatchlistUpsertRequest,
+		options?: { writeAccessToken?: string | null },
+	) {
+		return requestJson<Watchlist>("/api/v1/watchlists", {
+			method: "POST",
+			body: payload,
+			writeAccessToken: options?.writeAccessToken,
+		});
+	},
+
+	deleteWatchlist(
+		watchlistId: string,
+		options?: { writeAccessToken?: string | null },
+	) {
+		const safeId = encodeURIComponent(assertSafeIdentifier(watchlistId));
+		return requestJson<void>(`/api/v1/watchlists/${safeId}`, {
+			method: "DELETE",
+			writeAccessToken: options?.writeAccessToken,
+		});
+	},
+
+	getWatchlistTrend(
+		watchlistId: string,
+		params?: { limit_runs?: number; limit_cards?: number },
+	) {
+		const safeId = encodeURIComponent(assertSafeIdentifier(watchlistId));
+		return requestJson<WatchlistTrendResponse>(
+			`/api/v1/watchlists/${safeId}/trend`,
+			{},
+			params,
+		);
 	},
 
 	updateNotificationConfig(

@@ -306,6 +306,191 @@ export type NotificationSendResponse = {
 	created_at: string;
 };
 
+export type ProviderHealthSummary = {
+	provider: string;
+	ok: number;
+	warn: number;
+	fail: number;
+	last_status: string | null;
+	last_checked_at: string | null;
+	last_error_kind: string | null;
+	last_message: string | null;
+};
+
+export type ProviderHealthResponse = {
+	window_hours: number;
+	providers: ProviderHealthSummary[];
+};
+
+export type OpsListSection<T> = {
+	status: string;
+	total: number;
+	error: string | null;
+	items: T[];
+};
+
+export type OpsJobIssue = {
+	id: string;
+	title: string;
+	platform: string;
+	status: string;
+	pipeline_final_status: string | null;
+	error_message: string | null;
+	degradation_count: number;
+	updated_at: string | null;
+};
+
+export type OpsIngestIssue = {
+	id: string;
+	platform: string;
+	status: string;
+	error_message: string | null;
+	jobs_created: number;
+	candidates_count: number;
+	created_at: string | null;
+};
+
+export type OpsNotificationDelivery = {
+	id: string;
+	kind: string;
+	status: string;
+	recipient_email: string;
+	subject: string;
+	attempt_count: number;
+	next_retry_at: string | null;
+	last_error_kind: string | null;
+	error_message: string | null;
+	created_at: string | null;
+};
+
+export type OpsGate = {
+	status: string;
+	summary: string;
+	next_step: string;
+	details: Record<string, unknown>;
+};
+
+export type OpsInboxItem = {
+	kind: string;
+	severity: string;
+	title: string;
+	detail: string;
+	status_label: string;
+	last_seen_at: string | null;
+	href: string;
+	action_label: string;
+};
+
+export type OpsInboxResponse = {
+	generated_at: string;
+	overview: {
+		attention_items: number;
+		failed_jobs: number;
+		failed_ingest_runs: number;
+		notification_or_gate_issues: number;
+	};
+	failed_jobs: OpsListSection<OpsJobIssue>;
+	failed_ingest_runs: OpsListSection<OpsIngestIssue>;
+	notification_deliveries: OpsListSection<OpsNotificationDelivery>;
+	provider_health: ProviderHealthResponse;
+	gates: {
+		retrieval: OpsGate;
+		notifications: OpsGate;
+		ui_audit: OpsGate;
+		computer_use: OpsGate;
+	};
+	inbox_items: OpsInboxItem[];
+};
+
+export type WatchlistMatcherType =
+	| "topic_key"
+	| "claim_kind"
+	| "platform"
+	| "source_match";
+
+export type WatchlistDeliveryChannel = "dashboard" | "email";
+
+export type Watchlist = {
+	id: string;
+	name: string;
+	matcher_type: WatchlistMatcherType;
+	matcher_value: string;
+	delivery_channel: WatchlistDeliveryChannel;
+	enabled: boolean;
+	created_at: string;
+	updated_at: string;
+};
+
+export type WatchlistUpsertRequest = {
+	id?: string | null;
+	name: string;
+	matcher_type: WatchlistMatcherType;
+	matcher_value: string;
+	delivery_channel?: WatchlistDeliveryChannel;
+	enabled?: boolean;
+};
+
+export type WatchlistTrendCard = {
+	card_id: string;
+	job_id: string;
+	video_id: string;
+	platform: string;
+	video_title: string | null;
+	source_url: string | null;
+	created_at: string;
+	card_type: string;
+	card_title: string | null;
+	card_body: string;
+	source_section: string;
+	topic_key: string | null;
+	topic_label: string | null;
+	claim_kind: string | null;
+};
+
+export type WatchlistTrendRun = {
+	job_id: string;
+	video_id: string;
+	platform: string;
+	title: string;
+	source_url: string | null;
+	created_at: string;
+	matched_card_count: number;
+	cards: WatchlistTrendCard[];
+	topics: string[];
+	claim_kinds: string[];
+	added_topics: string[];
+	removed_topics: string[];
+	added_claim_kinds: string[];
+	removed_claim_kinds: string[];
+};
+
+export type WatchlistTrendResponse = {
+	watchlist: Watchlist;
+	summary: {
+		recent_runs: number;
+		matched_cards: number;
+		matcher_type: string;
+		matcher_value: string;
+	};
+	timeline: WatchlistTrendRun[];
+};
+
+export type JobEvidenceBundle = {
+	bundle_kind: string;
+	sharing_scope: string;
+	sample: boolean;
+	generated_at: string;
+	proof_boundary: string;
+	job: Record<string, unknown>;
+	trace_summary: Record<string, unknown>;
+	digest: string | null;
+	digest_meta: Record<string, unknown> | null;
+	comparison: Record<string, unknown> | null;
+	knowledge_cards: Record<string, unknown>[];
+	artifact_manifest: Record<string, string>;
+	step_summary: Record<string, unknown>[];
+};
+
 export type ContentType = "video" | "article";
 
 export type DigestFeedItem = {
@@ -334,4 +519,35 @@ export type FeedFeedbackUpdateRequest = {
 	job_id: string;
 	saved: boolean;
 	feedback_label?: "useful" | "noisy" | "dismissed" | "archived" | null;
+};
+
+export type RetrievalSearchMode = "keyword" | "semantic" | "hybrid";
+
+export type RetrievalHitSource =
+	| "digest"
+	| "transcript"
+	| "outline"
+	| "knowledge_cards"
+	| "comments"
+	| "meta";
+
+export type RetrievalHit = {
+	job_id: string;
+	video_id: string;
+	platform: string;
+	video_uid: string;
+	source_url: string;
+	title: string | null;
+	kind: string;
+	mode: string | null;
+	source: RetrievalHitSource;
+	snippet: string;
+	score: number;
+};
+
+export type RetrievalSearchResponse = {
+	query: string;
+	top_k: number;
+	filters: Record<string, string>;
+	items: RetrievalHit[];
 };

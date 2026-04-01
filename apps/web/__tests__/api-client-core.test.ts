@@ -439,6 +439,53 @@ describe("apiClient core behavior", () => {
 		]);
 	});
 
+	it("normalizes retrieval search responses and filters malformed hits", async () => {
+		vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					query: "agent workflows",
+					top_k: 8,
+					filters: { platform: "youtube", ignored: 2 },
+					items: [
+						{
+							job_id: "job-1",
+							video_id: "video-1",
+							platform: "youtube",
+							video_uid: "vid-1",
+							source_url: "https://www.youtube.com/watch?v=abc",
+							title: "AI Weekly",
+							kind: "video_digest_v1",
+							mode: "full",
+							source: "knowledge_cards",
+							snippet: "Agent workflows with retry loops.",
+							score: 1.8,
+						},
+						{
+							job_id: "",
+							video_id: "video-2",
+							source: "digest",
+							snippet: "bad row",
+						},
+					],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.searchRetrieval({
+			query: "agent workflows",
+			mode: "keyword",
+			top_k: 8,
+			filters: { platform: "youtube" },
+		});
+
+		expect(payload.query).toBe("agent workflows");
+		expect(payload.filters).toEqual({ platform: "youtube" });
+		expect(payload.items).toHaveLength(1);
+		expect(payload.items[0]?.source).toBe("knowledge_cards");
+		expect(payload.items[0]?.snippet).toContain("Agent workflows");
+	});
+
 	it("supports plain text artifact markdown endpoint", async () => {
 		const fetchSpy = vi
 			.spyOn(globalThis, "fetch")

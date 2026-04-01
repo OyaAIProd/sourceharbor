@@ -6,6 +6,7 @@ import os
 import sqlite3
 import tempfile
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -526,6 +527,80 @@ class JobsService:
         if not isinstance(payload, list):
             return []
         return [item for item in payload if isinstance(item, dict)]
+
+    def build_evidence_bundle(self, *, job_id: uuid.UUID) -> dict[str, Any] | None:
+        row = self.get_job(job_id)
+        if row is None:
+            return None
+
+        steps = self.get_steps(job_id)
+        step_summary = [
+            {
+                "name": item["name"],
+                "status": item["status"],
+                "attempt": item["attempt"],
+                "started_at": item["started_at"],
+                "finished_at": item["finished_at"],
+                "error": item.get("error"),
+            }
+            for item in steps
+        ]
+        comparison = self.compare_with_previous(job_id=job_id)
+        knowledge_cards = self.get_knowledge_cards(job_id=job_id) or []
+        digest_payload = self.get_artifact_payload(job_id=job_id, video_url=None) or {}
+
+        llm_required, llm_gate_passed, hard_fail_reason = self.resolve_llm_gate_fields(
+            llm_required=getattr(row, "llm_required", None),
+            llm_gate_passed=getattr(row, "llm_gate_passed", None),
+            hard_fail_reason=getattr(row, "hard_fail_reason", None),
+            steps=steps,
+        )
+        pipeline_final_status = self.get_pipeline_final_status(job_id, fallback_status=row.status)
+        artifacts_index = self.get_artifacts_index(
+            artifact_root=row.artifact_root,
+            artifact_digest_md=row.artifact_digest_md,
+            steps=steps,
+        )
+
+        return {
+            "bundle_kind": "sourceharbor_job_evidence_bundle_v1",
+            "sharing_scope": "internal",
+            "sample": False,
+            "generated_at": datetime.now(UTC).isoformat(),
+            "proof_boundary": (
+                "Internal evidence bundle only. Do not treat this as hosted proof, release proof, "
+                "or a durable public document."
+            ),
+            "job": {
+                "id": str(row.id),
+                "video_id": str(row.video_id),
+                "kind": row.kind,
+                "status": row.status,
+                "pipeline_final_status": pipeline_final_status,
+                "mode": row.mode,
+                "created_at": row.created_at.isoformat(),
+                "updated_at": row.updated_at.isoformat(),
+                "error_message": row.error_message,
+            },
+            "trace_summary": {
+                "step_count": len(step_summary),
+                "degradations": self.get_degradations(
+                    artifact_root=row.artifact_root,
+                    artifact_digest_md=row.artifact_digest_md,
+                    steps=steps,
+                ),
+                "notification_retry": self.get_notification_retry(job_id),
+                "llm_required": llm_required,
+                "llm_gate_passed": llm_gate_passed,
+                "hard_fail_reason": hard_fail_reason,
+            },
+            "digest": digest_payload.get("markdown"),
+            "digest_meta": digest_payload.get("meta"),
+            "comparison": comparison,
+            "knowledge_cards": knowledge_cards,
+            "artifact_manifest": artifacts_index,
+            "step_summary": step_summary,
+        }
 
     def _read_digest_text(self, digest_path: str | None) -> str | None:
         if not isinstance(digest_path, str) or not digest_path.strip():

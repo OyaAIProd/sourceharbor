@@ -24,10 +24,12 @@ from .routers import (
     jobs,
     knowledge,
     notifications,
+    ops,
     retrieval,
     subscriptions,
     ui_audit,
     videos,
+    watchlists,
     workflows,
 )
 
@@ -235,9 +237,11 @@ app.include_router(knowledge.router)
 app.include_router(videos.router)
 app.include_router(notifications.router)
 app.include_router(notifications.reports_router)
+app.include_router(ops.router)
 app.include_router(artifacts.router)
 app.include_router(health.router)
 app.include_router(workflows.router)
 app.include_router(retrieval.router)
 app.include_router(computer_use.router)
 app.include_router(ui_audit.router)
+app.include_router(watchlists.router)

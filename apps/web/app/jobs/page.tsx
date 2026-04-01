@@ -217,6 +217,19 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 										View in digest feed
 									</Link>
 								</Button>
+								<Button
+									asChild
+									variant="link"
+									size="sm"
+									className="h-auto px-0"
+								>
+									<a href={`/api/v1/jobs/${encodeURIComponent(job.id)}/bundle`}>
+										Download evidence bundle
+									</a>
+								</Button>
+								<p className="text-sm text-muted-foreground">
+									Evidence bundles are for internal reuse and async collaboration. They are not public release proof.
+								</p>
 							</CardContent>
 						</Card>
 					</section>

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 		template: "%s | SourceHarbor",
 	},
 	description:
-		"Monitor subscriptions, run ingestion, inspect digest pipelines, and operate SourceHarbor from one command center.",
+		"AI knowledge pipeline and MCP server for YouTube, Bilibili, and RSS. Search evidence, inspect jobs, and operate SourceHarbor from one command center.",
 };
 
 const HEALTH_TIMEOUT_MS = 2000;
