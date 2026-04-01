@@ -289,6 +289,7 @@ function normalizeRetrievalSearchResponse(
 				) {
 					return null;
 				}
+				const normalizedSource = source as RetrievalSearchResponse["items"][number]["source"];
 				return {
 					job_id: jobId,
 					video_id: videoId,
@@ -298,7 +299,7 @@ function normalizeRetrievalSearchResponse(
 					title: asString(record.title) || null,
 					kind: asString(record.kind),
 					mode: asString(record.mode) || null,
-					source,
+					source: normalizedSource,
 					snippet,
 					score:
 						typeof record.score === "number" && Number.isFinite(record.score)

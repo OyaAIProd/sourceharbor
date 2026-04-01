@@ -177,7 +177,6 @@ api_base_cli=""
 if [[ "$API_BASE_EXPLICIT" == "1" ]]; then
   api_base_cli="$API_BASE"
 fi
-API_BASE="$(resolve_route_value_local "SOURCE_HARBOR_API_BASE_URL" "$api_base_cli" "http://127.0.0.1:9000")"
 API_BASE="$(
   resolve_runtime_route_value_with_sources \
     "$ROOT_DIR" \

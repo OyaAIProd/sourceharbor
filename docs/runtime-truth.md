@@ -85,7 +85,7 @@ What `./bin/doctor` is **not** for:
 
 ## Live Hardening Truth
 
-Wave 2 keeps four capabilities honest:
+Wave 2 keeps five capabilities honest:
 
 | Capability | Honest status rule |
 | --- | --- |

@@ -13,7 +13,7 @@ import {
 import { USE_CASE_PAGES, type UseCaseSlug } from "@/lib/demo-content";
 
 type UseCasePageProps = {
-	params: Promise<{ slug: string }>;
+	params: { slug: string };
 };
 
 export async function generateStaticParams() {
@@ -23,7 +23,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
 	params,
 }: UseCasePageProps): Promise<Metadata> {
-	const { slug } = await params;
+	const { slug } = params;
 	const content = USE_CASE_PAGES[slug as UseCaseSlug];
 	if (!content) {
 		return {};
@@ -35,7 +35,7 @@ export async function generateMetadata({
 }
 
 export default async function UseCasePage({ params }: UseCasePageProps) {
-	const { slug } = await params;
+	const { slug } = params;
 	const content = USE_CASE_PAGES[slug as UseCaseSlug];
 	if (!content) {
 		notFound();
