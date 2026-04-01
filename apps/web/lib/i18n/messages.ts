@@ -902,8 +902,35 @@ const MESSAGES = {
 			mcpCta: "Open MCP quickstart",
 			codexCta: "Open Codex workflow",
 			claudeCodeCta: "Open Claude Code workflow",
-			builderCta: "Open builder guide",
-			compareCta: "See ecosystem fit",
+			proofCta: "Inspect proof ladder",
+			researchCta: "Open research pipeline",
+			highlightPills: [
+				"MCP-native",
+				"Codex-ready",
+				"Claude Code-ready",
+				"HTTP API",
+				"Proof-first",
+			],
+			cards: {
+				reuse: {
+					title: "One control plane, three real doors",
+					description:
+						"Web, HTTP API, and MCP all point to the same jobs, artifacts, grounded search, and operator truth.",
+					bullets: ["Search + Ask", "MCP + API", "Shared TypeScript client"],
+				},
+				proof: {
+					title: "Receipts before vibes",
+					description:
+						"Proof, runtime truth, and project status explain what is already real, what is gated, and what is still a deliberate bet.",
+					bullets: ["Proof boundary", "Runtime truth", "Project status"],
+				},
+				compounders: {
+					title: "Worth coming back to",
+					description:
+						"Watchlists, trends, bundles, and the sample playground make SourceHarbor feel like a reusable research product instead of a one-shot summarizer.",
+					bullets: ["Watchlists", "Trends", "Bundles"],
+				},
+			},
 		},
 	},
 	"zh-CN": {
@@ -1788,8 +1815,35 @@ const MESSAGES = {
 			mcpCta: "打开 MCP quickstart",
 			codexCta: "打开 Codex workflow",
 			claudeCodeCta: "打开 Claude Code workflow",
-			builderCta: "打开 builder guide",
-			compareCta: "查看生态匹配",
+			proofCta: "查看 proof ladder",
+			researchCta: "打开 research pipeline",
+			highlightPills: [
+				"MCP-native",
+				"Codex-ready",
+				"Claude Code-ready",
+				"HTTP API",
+				"Proof-first",
+			],
+			cards: {
+				reuse: {
+					title: "一套控制平面，三个真实入口",
+					description:
+						"Web、HTTP API 和 MCP 都指向同一套 jobs、artifacts、grounded search 与 operator truth。",
+					bullets: ["Search + Ask", "MCP + API", "共享 TypeScript client"],
+				},
+				proof: {
+					title: "先看证据，再谈气氛",
+					description:
+						"Proof、runtime truth 和 project status 会明确告诉你哪些已经真实存在，哪些仍受外部条件限制，哪些还只是刻意保留的 bet。",
+					bullets: ["Proof boundary", "Runtime truth", "Project status"],
+				},
+				compounders: {
+					title: "值得反复回来用",
+					description:
+						"Watchlists、trends、bundles 和 sample playground 让 SourceHarbor 更像可复用的 research product，而不是一次性 summarizer。",
+					bullets: ["Watchlists", "Trends", "Bundles"],
+				},
+			},
 		},
 	},
 } as const;

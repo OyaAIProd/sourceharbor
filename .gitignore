@@ -35,6 +35,7 @@ build/
 coverage/
 tmp/
 .tmp/
+docs/specs/
 
 # os/editor
 .DS_Store

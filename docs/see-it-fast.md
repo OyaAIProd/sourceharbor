@@ -20,6 +20,14 @@ If you like what you see here, the next step is [run it locally](./start-here.md
   />
 </p>
 
+<p>
+  <img
+    src="./assets/sourceharbor-builder-loop.svg"
+    alt="SourceHarbor builder-facing loop showing how Codex, Claude Code, MCP clients, and operators reuse the same jobs, retrieval, and proof surfaces."
+    width="100%"
+  />
+</p>
+
 ## The 20-Second Mental Model
 
 SourceHarbor is not just a summarizer.
@@ -115,3 +123,20 @@ If you want confidence without booting the full stack yet:
 4. Read [architecture.md](./architecture.md) if you want the system map.
 
 If you want a real local run after that, go to [start-here.md](./start-here.md).
+
+## Why This Attracts Builders
+
+If you are evaluating whether this repo is worth starring, forking, or maintaining, this is the shortest honest filter:
+
+| You care about... | SourceHarbor answer |
+| --- | --- |
+| **Codex / Claude Code fit** | already exposed through MCP + HTTP API, with real Search / Ask / Job Trace surfaces behind it |
+| **AI product truth instead of AI vibes** | proof, runtime truth, and project status all explain what is shipped, what is gated, and what is still a bet |
+| **A repo that feels like a product, not a pile of scripts** | command center, digest feed, job trace, watchlists, trends, bundles, and sample playground all exist as coherent front doors |
+| **A contribution surface that is understandable** | builder docs, compare docs, see-it-fast, and public truth surfaces reduce the amount of archaeology required before contributing |
+
+The honest lure is not "AI magic." It is that SourceHarbor already gives builders:
+
+- a **Codex / Claude Code-friendly** MCP and HTTP API surface
+- a **proof-first** story that names external gates instead of hiding them
+- a **compounder layer** worth revisiting when you care about watchlists, trends, and evidence bundles

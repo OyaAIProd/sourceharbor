@@ -63,6 +63,31 @@ It is strongest when you read it as a control tower for source intake:
 - Codex, Claude Code, and other MCP-aware workflows use the MCP surface
 - all three point at the same jobs, artifacts, retrieval index, and operator truth
 
+<p align="center">
+  <img
+    src="./docs/assets/sourceharbor-developer-flywheel.svg"
+    alt="SourceHarbor developer flywheel showing sources, job trace, knowledge cards, grounded search, MCP and API reuse, and the operator loop."
+    width="100%"
+  />
+</p>
+
+## Why Developers Lean In
+
+This is the part that makes SourceHarbor more than a pretty README:
+
+| If you are... | What pulls you in | Why it feels different |
+| --- | --- | --- |
+| **A builder chasing Codex / Claude Code workflows** | one repo already exposes MCP, HTTP API, and a shared operator truth | you do not have to invent a fake assistant shell just to reach real jobs, artifacts, and retrieval |
+| **An operator who cares about proof** | job trace, ops inbox, watchlists, trends, and bundle exports all point back to the same pipeline | the repo keeps receipts, not just summaries |
+| **A maintainer deciding whether to contribute** | the product story, runtime truth, and testing story now line up | you can tell what is real, what is gated, and what is still a deliberate bet without re-reading the whole archive |
+
+The hook is simple:
+
+- **Search** gives the evidence surface.
+- **Ask** gives the truthful question-shaped front door.
+- **MCP** gives Codex / Claude Code / builder reuse.
+- **Ops + compounders** make the system worth coming back to instead of treating it like a one-shot summarizer.
+
 ## Front Doors
 
 The fastest way to understand the product is to open the highest-value rooms first:

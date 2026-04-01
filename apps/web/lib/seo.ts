@@ -21,13 +21,18 @@ const CORE_KEYWORDS = [
 	"SourceHarbor",
 	"AI knowledge control tower",
 	"AI knowledge pipeline",
+	"source-first AI workflow",
 	"operator command center",
 	"grounded retrieval",
 	"evidence bundle",
 	"MCP server",
 	"Model Context Protocol",
+	"agentic coding workflow",
+	"AI coding agent",
 	"Codex workflow",
+	"Codex MCP server",
 	"Claude Code workflow",
+	"Claude Code MCP server",
 ];
 
 const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
@@ -36,6 +41,7 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"knowledge intake",
 		"retrieval front door",
 		"builder command center",
+		"AI developer tooling",
 	],
 	ops: [
 		"Ops inbox",
@@ -53,6 +59,7 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"agent control plane",
 		"Codex MCP",
 		"Claude Code MCP",
+		"agentic coding control plane",
 	],
 	knowledge: ["knowledge cards", "AI research memory", "job-linked evidence"],
 	ingestRuns: ["ingest ledger", "source intake", "pipeline intake trace"],
@@ -73,6 +80,7 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"Ask your sources",
 		"retrieval API",
 		"citation-first AI",
+		"AI search for source artifacts",
 	],
 	watchlists: [
 		"AI trend watchlist",
@@ -99,6 +107,7 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"builder workflow",
 		"Codex use case",
 		"Claude Code use case",
+		"AI coding workflow",
 	],
 };
 

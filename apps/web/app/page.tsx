@@ -12,6 +12,7 @@ import {
 } from "@/components/form-field";
 import { mapStatusCssToTone, StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -124,6 +125,11 @@ export default async function DashboardPage({
 	const messages = getLocaleMessages();
 	const copy = messages.dashboard;
 	const builderCopy = messages.builderSurfaces;
+	const builderCards = [
+		builderCopy.cards.reuse,
+		builderCopy.cards.proof,
+		builderCopy.cards.compounders,
+	];
 	const { status, code } = await resolveSearchParams(searchParams, [
 		"status",
 		"code",
@@ -253,25 +259,66 @@ export default async function DashboardPage({
 				<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
 					{copy.sectionHeadings.builderEntryPoints}
 				</h2>
-				<Card className="folo-surface border-border/70">
-					<CardHeader>
-						<CardTitle>{builderCopy.title}</CardTitle>
-						<CardDescription>{builderCopy.subtitle}</CardDescription>
-					</CardHeader>
-					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
-						<Button asChild>
-							<Link href="/mcp">{builderCopy.mcpCta}</Link>
-						</Button>
-						<Button asChild variant="outline">
-							<Link href="/use-cases/codex">{builderCopy.codexCta}</Link>
-						</Button>
-						<Button asChild variant="outline">
-							<Link href="/use-cases/claude-code">
-								{builderCopy.claudeCodeCta}
-							</Link>
-						</Button>
-					</CardContent>
-				</Card>
+				<div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+					<Card className="folo-surface border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background">
+						<CardHeader className="gap-3">
+							<CardTitle>{builderCopy.title}</CardTitle>
+							<CardDescription>{builderCopy.subtitle}</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4 pt-0">
+							<div className="flex flex-wrap gap-2">
+								{builderCopy.highlightPills.map((pill) => (
+									<Badge
+										key={pill}
+										variant="outline"
+										className="border-primary/20"
+									>
+										{pill}
+									</Badge>
+								))}
+							</div>
+							<div className="flex flex-wrap items-center gap-3">
+								<Button asChild variant="hero">
+									<Link href="/mcp">{builderCopy.mcpCta}</Link>
+								</Button>
+								<Button asChild variant="outline">
+									<Link href="/use-cases/codex">{builderCopy.codexCta}</Link>
+								</Button>
+								<Button asChild variant="outline">
+									<Link href="/use-cases/claude-code">
+										{builderCopy.claudeCodeCta}
+									</Link>
+								</Button>
+								<Button asChild variant="outline">
+									<Link href="/proof">{builderCopy.proofCta}</Link>
+								</Button>
+								<Button asChild variant="outline">
+									<Link href="/use-cases/research-pipeline">
+										{builderCopy.researchCta}
+									</Link>
+								</Button>
+							</div>
+						</CardContent>
+					</Card>
+
+					<div className="grid gap-4">
+						{builderCards.map((card) => (
+							<Card key={card.title} className="folo-surface border-border/70">
+								<CardHeader>
+									<CardTitle>{card.title}</CardTitle>
+									<CardDescription>{card.description}</CardDescription>
+								</CardHeader>
+								<CardContent className="flex flex-wrap gap-2 pt-0">
+									{card.bullets.map((bullet) => (
+										<Badge key={bullet} variant="secondary">
+											{bullet}
+										</Badge>
+									))}
+								</CardContent>
+							</Card>
+						))}
+					</div>
+				</div>
 			</section>
 
 			<section

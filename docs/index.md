@@ -10,6 +10,24 @@ SourceHarbor has several layers, but the public entry should stay simple:
 4. **Inspect the proof**
 5. **Dive into architecture only when you need it**
 
+<p>
+  <img
+    src="./assets/sourceharbor-developer-flywheel.svg"
+    alt="SourceHarbor developer flywheel showing source intake, job trace, Search and Ask, MCP and API reuse, and the operator loop."
+    width="100%"
+  />
+</p>
+
+## Why Builders Keep Reading
+
+This is the shortest honest explanation for why the repo feels more product-shaped than script-shaped:
+
+| Builder question | Fastest truthful answer | Where to verify it |
+| :-- | :-- | :-- |
+| **Can I use this with Codex or Claude Code right now?** | Yes, through the existing MCP and HTTP API surfaces. | [mcp-quickstart.md](./mcp-quickstart.md), [builders.md](./builders.md) |
+| **Is the AI story grounded or just decorative copy?** | Search, Ask, proof, runtime truth, and project status are kept on the same story line. | [proof.md](./proof.md), [project-status.md](./project-status.md), [runtime-truth.md](./runtime-truth.md) |
+| **Is there anything worth revisiting after the first run?** | Yes: watchlists, trends, bundles, playground, and use-case pages form the compounder layer. | [runtime-truth.md](./runtime-truth.md), [samples/README.md](./samples/README.md) |
+
 ## Start By Goal
 
 | If you want to... | Start here | What you get |

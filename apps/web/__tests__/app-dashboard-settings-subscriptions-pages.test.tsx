@@ -142,6 +142,20 @@ describe("dashboard/settings/subscriptions pages", () => {
 			expect(
 				document.querySelectorAll('[data-slot="card"]').length,
 			).toBeGreaterThanOrEqual(7);
+			expect(
+				screen.getByText("Build with Codex, Claude Code, and MCP clients"),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("link", { name: "Inspect proof ladder" }),
+			).toHaveAttribute("href", "/proof");
+			expect(
+				screen.getByRole("link", { name: "Open research pipeline" }),
+			).toHaveAttribute("href", "/use-cases/research-pipeline");
+			expect(
+				screen.getByText("One control plane, three real doors"),
+			).toBeInTheDocument();
+			expect(screen.getByText("Receipts before vibes")).toBeInTheDocument();
+			expect(screen.getByText("Worth coming back to")).toBeInTheDocument();
 
 			const metricRegion = screen.getByRole("region", { name: "Key metrics" });
 			const metrics = Array.from(

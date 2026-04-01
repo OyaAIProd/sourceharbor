@@ -17,6 +17,8 @@ The goal is simple:
 | `docs/assets/sourceharbor-hero.svg` | `svg` | `hero` | `README.md`<br>`docs/see-it-fast.md` | `repository-tracked-source-file` | `maintainer-assertion-required` | `non-runtime-illustration` | `currently-published-in-repo` | `yes` |
 | `docs/assets/sourceharbor-architecture.svg` | `svg` | `architecture-diagram` | `docs/architecture.md` | `repository-tracked-source-file` | `maintainer-assertion-required` | `non-runtime-illustration` | `currently-published-in-repo` | `yes` |
 | `docs/assets/sourceharbor-studio-preview.svg` | `svg` | `readme-front-door-preview` | `README.md` | `repository-tracked-source-file` | `maintainer-assertion-required` | `non-runtime-illustration` | `currently-published-in-repo` | `yes` |
+| `docs/assets/sourceharbor-developer-flywheel.svg` | `svg` | `builder-flywheel` | `README.md`<br>`docs/index.md` | `repository-tracked-source-file` | `maintainer-assertion-required` | `non-runtime-illustration` | `currently-published-in-repo` | `yes` |
+| `docs/assets/sourceharbor-builder-loop.svg` | `svg` | `builder-loop` | `docs/see-it-fast.md` | `repository-tracked-source-file` | `maintainer-assertion-required` | `non-runtime-illustration` | `currently-published-in-repo` | `yes` |
 | `docs/assets/sourceharbor-social-preview.svg` | `svg` | `social-preview-source` | `config/public/github-profile.json` | `repository-tracked-source-file` | `maintainer-assertion-required` | `non-runtime-illustration` | `repository-declared-profile-asset-source` | `yes` |
 | `docs/assets/sourceharbor-social-preview.png` | `png` | `social-preview-upload` | `config/public/github-profile.json` | `repository-tracked-derived-file` | `maintainer-assertion-required` | `non-runtime-illustration` | `repository-declared-profile-asset` | `yes` |
 

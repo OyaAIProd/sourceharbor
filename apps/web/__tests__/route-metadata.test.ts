@@ -38,8 +38,12 @@ describe("route metadata", () => {
 			expect.arrayContaining([
 				"AI knowledge control tower",
 				"MCP server",
+				"AI coding agent",
+				"agentic coding workflow",
 				"Codex workflow",
+				"Codex MCP server",
 				"Claude Code workflow",
+				"Claude Code MCP server",
 				"job trace",
 				"evidence bundle",
 			]),
@@ -54,6 +58,7 @@ describe("route metadata", () => {
 				"grounded search",
 				"retrieval API",
 				"citation-first AI",
+				"AI search for source artifacts",
 				"Codex workflow",
 				"Claude Code workflow",
 			]),
@@ -79,6 +84,7 @@ describe("route metadata", () => {
 				"MCP quickstart",
 				"Codex MCP",
 				"Claude Code MCP",
+				"agentic coding control plane",
 			]),
 		);
 
@@ -115,6 +121,7 @@ describe("route metadata", () => {
 				"Claude Code workflow",
 				"Claude Code MCP",
 				"Codex workflow",
+				"AI coding workflow",
 				"AI research pipeline",
 			]),
 		);
