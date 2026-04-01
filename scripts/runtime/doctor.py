@@ -6,13 +6,11 @@ import json
 import os
 import socket
 import subprocess
-import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urlsplit
 from urllib.request import urlopen
-
 
 ROOT = Path(__file__).resolve().parents[2]
 RESOLVED_ENV_PATH = ROOT / ".runtime-cache" / "run" / "full-stack" / "resolved.env"

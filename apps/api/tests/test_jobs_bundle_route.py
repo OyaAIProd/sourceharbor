@@ -14,8 +14,8 @@ from apps.api.app.main import app
 
 
 def test_job_bundle_route_returns_bundle(monkeypatch) -> None:
-    from apps.api.app.services.jobs import JobsService
     from apps.api.app.routers import jobs as jobs_router
+    from apps.api.app.services.jobs import JobsService
 
     class StubJobsService:
         def __init__(self, db) -> None:  # noqa: ANN001

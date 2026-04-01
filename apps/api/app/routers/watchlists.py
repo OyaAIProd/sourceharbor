@@ -116,7 +116,7 @@ def delete_watchlist(watchlist_id: str, db: Session = Depends(get_db)):
     deleted = service.delete_watchlist(watchlist_id=watchlist_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="watchlist not found")
-    return None
+    return
 
 
 @router.get("/{watchlist_id}/trend", response_model=WatchlistTrendResponse)
