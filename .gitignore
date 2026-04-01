@@ -3,6 +3,7 @@
 .agent/
 .codex/
 .claude/
+.serena/
 .runtime-cache/
 logs/
 log/

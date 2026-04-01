@@ -414,6 +414,9 @@ def test_disk_space_governance_defaults_and_docs_are_wired() -> None:
 
     assert "audit_targets" in policy
     assert "cleanup_waves" in policy
+    assert 'export CORE_POSTGRES_PORT="${CORE_POSTGRES_PORT:-15432}"' in env_example
+    assert 'export DATABASE_URL="postgresql+psycopg://postgres:postgres@127.0.0.1:${CORE_POSTGRES_PORT}/sourceharbor"' in env_example
+    assert "export TEMPORAL_TASK_QUEUE=sourceharbor-worker" in env_example
     assert "$HOME/.cache/sourceharbor/project-venv" in env_example
     assert "$HOME/.sourceharbor/artifacts" in env_example
     assert "$HOME/.sourceharbor/workspace" in env_example

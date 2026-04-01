@@ -148,6 +148,12 @@ resolve_runtime_route_value() {
     return 0
   fi
 
+  local process_value="${!key:-}"
+  if [[ -n "$process_value" ]]; then
+    printf '%s\n' "$process_value"
+    return 0
+  fi
+
   local resolved_path resolved_value repo_value
   resolved_path="$(get_runtime_resolved_env_path "$root_dir" 2>/dev/null || true)"
   resolved_value="$(read_env_value_from_file "$resolved_path" "$key")"
@@ -159,6 +165,46 @@ resolve_runtime_route_value() {
   repo_value="$(read_env_value_from_file "$root_dir/.env" "$key")"
   if [[ -n "$repo_value" ]]; then
     printf '%s\n' "$repo_value"
+    return 0
+  fi
+
+  printf '%s\n' "$default_value"
+}
+
+resolve_runtime_route_value_with_sources() {
+  local root_dir="${1:-}"
+  local key="${2:-}"
+  local cli_value="${3:-}"
+  local inherited_value="${4:-}"
+  local loaded_value="${5:-}"
+  local default_value="${6:-}"
+
+  if [[ -n "$cli_value" ]]; then
+    printf '%s\n' "$cli_value"
+    return 0
+  fi
+
+  if [[ -n "$inherited_value" ]]; then
+    printf '%s\n' "$inherited_value"
+    return 0
+  fi
+
+  local resolved_path resolved_value repo_value
+  resolved_path="$(get_runtime_resolved_env_path "$root_dir" 2>/dev/null || true)"
+  resolved_value="$(read_env_value_from_file "$resolved_path" "$key")"
+  if [[ -n "$resolved_value" ]]; then
+    printf '%s\n' "$resolved_value"
+    return 0
+  fi
+
+  repo_value="$(read_env_value_from_file "$root_dir/.env" "$key")"
+  if [[ -n "$repo_value" ]]; then
+    printf '%s\n' "$repo_value"
+    return 0
+  fi
+
+  if [[ -n "$loaded_value" ]]; then
+    printf '%s\n' "$loaded_value"
     return 0
   fi
 

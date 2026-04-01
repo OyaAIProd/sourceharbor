@@ -5,6 +5,16 @@ SCRIPT_NAME="full_stack"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUN_DIR="$ROOT_DIR/.runtime-cache/run/full-stack"
 LOG_DIR="$ROOT_DIR/.runtime-cache/logs/components/full-stack"
+inherited_env_profile="${ENV_PROFILE-}"
+inherited_api_port="${API_PORT-}"
+inherited_web_port="${WEB_PORT-}"
+inherited_sourceharbor_api_base_url="${SOURCE_HARBOR_API_BASE_URL-}"
+inherited_next_public_api_base_url="${NEXT_PUBLIC_API_BASE_URL-}"
+inherited_core_postgres_port="${CORE_POSTGRES_PORT-}"
+inherited_database_url="${DATABASE_URL-}"
+inherited_temporal_target_host="${TEMPORAL_TARGET_HOST-}"
+inherited_temporal_namespace="${TEMPORAL_NAMESPACE-}"
+inherited_temporal_task_queue="${TEMPORAL_TASK_QUEUE-}"
 
 # shellcheck source=./scripts/runtime/logging.sh
 source "$ROOT_DIR/scripts/runtime/logging.sh"
@@ -12,7 +22,7 @@ sourceharbor_log_init "components" "$SCRIPT_NAME" "$LOG_DIR/full-stack.jsonl"
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 LAST_FAILURE_REASON_FILE="$RUN_DIR/last_failure_reason"
 
-ENV_PROFILE="${ENV_PROFILE:-local}"
+ENV_PROFILE="${inherited_env_profile:-local}"
 API_PORT="9000"
 WEB_PORT="3000"
 API_HEALTH_URL="http://127.0.0.1:${API_PORT}/healthz"
@@ -57,6 +67,63 @@ source "$ROOT_DIR/scripts/lib/load_env.sh"
 source "$ROOT_DIR/scripts/lib/temporal_ready.sh"
 load_repo_env "$ROOT_DIR" "$SCRIPT_NAME" "$ENV_PROFILE"
 
+normalize_database_url_driver() {
+  local url="${1:-}"
+  if [[ "$url" == postgresql://* ]]; then
+    printf 'postgresql+psycopg://%s\n' "${url#postgresql://}"
+    return 0
+  fi
+  printf '%s\n' "$url"
+}
+
+normalize_runtime_database_url() {
+  local raw_url="${1:-}"
+  local target_port="${2:-15432}"
+  local default_password="${3:-postgres}"
+  DATABASE_URL_TO_NORMALIZE="$raw_url" \
+  TARGET_DATABASE_PORT="$target_port" \
+  TARGET_DATABASE_PASSWORD="$default_password" \
+    python3 - <<'PY'
+from urllib.parse import urlsplit, urlunsplit
+import os
+
+raw = (os.environ.get("DATABASE_URL_TO_NORMALIZE") or "").strip()
+target_port = (os.environ.get("TARGET_DATABASE_PORT") or "15432").strip()
+default_password = os.environ.get("TARGET_DATABASE_PASSWORD", "postgres")
+
+if not raw:
+    raw = f"postgresql+psycopg://postgres:{default_password}@127.0.0.1:{target_port}/sourceharbor"
+
+if raw.startswith("postgresql://"):
+    raw = "postgresql+psycopg://" + raw[len("postgresql://"):]
+
+parsed = urlsplit(raw)
+scheme = parsed.scheme or "postgresql+psycopg"
+if scheme == "postgresql":
+    scheme = "postgresql+psycopg"
+
+hostname = parsed.hostname or "127.0.0.1"
+database_name = parsed.path.lstrip("/") or "sourceharbor"
+
+if hostname in {"localhost", "127.0.0.1"}:
+    username = parsed.username or "postgres"
+    password = parsed.password or default_password
+    netloc = f"{username}:{password}@127.0.0.1:{target_port}"
+    print(urlunsplit((scheme, netloc, f"/{database_name}", parsed.query, parsed.fragment)))
+else:
+    print(urlunsplit((scheme, parsed.netloc, parsed.path, parsed.query, parsed.fragment)))
+PY
+}
+
+normalize_temporal_task_queue() {
+  local queue="${1:-}"
+  if [[ -z "$queue" || "$queue" == "sourceharbor" ]]; then
+    printf 'sourceharbor-worker\n'
+    return 0
+  fi
+  printf '%s\n' "$queue"
+}
+
 api_port_cli=""
 web_port_cli=""
 api_health_url_cli=""
@@ -70,18 +137,35 @@ if [[ "$API_HEALTH_URL_EXPLICIT" == "1" ]]; then
   api_health_url_cli="$API_HEALTH_URL"
 fi
 
-API_PORT="$(resolve_runtime_route_value "$ROOT_DIR" "API_PORT" "$api_port_cli" "9000")"
-WEB_PORT="$(resolve_runtime_route_value "$ROOT_DIR" "WEB_PORT" "$web_port_cli" "3000")"
-SOURCE_HARBOR_API_BASE_URL="$(resolve_runtime_route_value "$ROOT_DIR" "SOURCE_HARBOR_API_BASE_URL" "" "http://127.0.0.1:${API_PORT}")"
-NEXT_PUBLIC_API_BASE_URL="$(resolve_runtime_route_value "$ROOT_DIR" "NEXT_PUBLIC_API_BASE_URL" "" "http://127.0.0.1:${API_PORT}")"
-API_HEALTH_URL="$(resolve_runtime_route_value "$ROOT_DIR" "API_HEALTH_URL" "$api_health_url_cli" "${SOURCE_HARBOR_API_BASE_URL}/healthz")"
+API_PORT="$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "API_PORT" "$api_port_cli" "$inherited_api_port" "${API_PORT:-}" "9000")"
+WEB_PORT="$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "WEB_PORT" "$web_port_cli" "$inherited_web_port" "${WEB_PORT:-}" "3000")"
+SOURCE_HARBOR_API_BASE_URL="$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "SOURCE_HARBOR_API_BASE_URL" "" "$inherited_sourceharbor_api_base_url" "${SOURCE_HARBOR_API_BASE_URL:-}" "http://127.0.0.1:${API_PORT}")"
+NEXT_PUBLIC_API_BASE_URL="$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "NEXT_PUBLIC_API_BASE_URL" "" "$inherited_next_public_api_base_url" "${NEXT_PUBLIC_API_BASE_URL:-}" "http://127.0.0.1:${API_PORT}")"
+if [[ -n "$api_health_url_cli" ]]; then
+  API_HEALTH_URL="$api_health_url_cli"
+else
+  API_HEALTH_URL="${SOURCE_HARBOR_API_BASE_URL}/healthz"
+fi
+CORE_POSTGRES_PORT="$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "CORE_POSTGRES_PORT" "" "$inherited_core_postgres_port" "${CORE_POSTGRES_PORT:-}" "15432")"
+DATABASE_URL="$(normalize_runtime_database_url "$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "DATABASE_URL" "" "$inherited_database_url" "${DATABASE_URL:-}" "postgresql+psycopg://postgres:postgres@127.0.0.1:${CORE_POSTGRES_PORT}/sourceharbor")" "$CORE_POSTGRES_PORT" "${CORE_POSTGRES_PASSWORD:-postgres}")"
+TEMPORAL_TARGET_HOST="$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "TEMPORAL_TARGET_HOST" "" "$inherited_temporal_target_host" "${TEMPORAL_TARGET_HOST:-}" "127.0.0.1:7233")"
+TEMPORAL_NAMESPACE="$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "TEMPORAL_NAMESPACE" "" "$inherited_temporal_namespace" "${TEMPORAL_NAMESPACE:-}" "default")"
+TEMPORAL_TASK_QUEUE="$(normalize_temporal_task_queue "$(resolve_runtime_route_value_with_sources "$ROOT_DIR" "TEMPORAL_TASK_QUEUE" "" "$inherited_temporal_task_queue" "${TEMPORAL_TASK_QUEUE:-}" "sourceharbor-worker")")"
 
 export API_PORT WEB_PORT SOURCE_HARBOR_API_BASE_URL NEXT_PUBLIC_API_BASE_URL API_HEALTH_URL
-if [[ -z "${SOURCE_HARBOR_API_KEY:-}" && -z "${CI:-}" && -z "${GITHUB_ACTIONS:-}" ]]; then
-  export SOURCE_HARBOR_API_KEY="sourceharbor-local-dev-token"
+export DATABASE_URL TEMPORAL_TARGET_HOST TEMPORAL_NAMESPACE TEMPORAL_TASK_QUEUE
+local_write_token="${SOURCE_HARBOR_API_KEY:-}"
+if [[ -z "$local_write_token" && -z "${CI:-}" && -z "${GITHUB_ACTIONS:-}" ]]; then
+  local_write_token="sourceharbor-local-dev-token"
 fi
-if [[ -z "${WEB_ACTION_SESSION_TOKEN:-}" && -n "${SOURCE_HARBOR_API_KEY:-}" ]]; then
-  export WEB_ACTION_SESSION_TOKEN="$SOURCE_HARBOR_API_KEY"
+local_web_session_token="${WEB_ACTION_SESSION_TOKEN:-$local_write_token}"
+startup_write_token="${local_write_token:-sourceharbor-local-dev-token}"
+startup_web_session_token="${local_web_session_token:-$startup_write_token}"
+if [[ -n "$local_write_token" ]]; then
+  export SOURCE_HARBOR_API_KEY="$local_write_token"
+fi
+if [[ -n "$local_web_session_token" ]]; then
+  export WEB_ACTION_SESSION_TOKEN="$local_web_session_token"
 fi
 if ! [[ "$API_PORT" =~ ^[0-9]+$ ]] || (( API_PORT <= 0 || API_PORT > 65535 )); then
   echo "[full_stack] --api-port must be an integer in [1,65535]" >&2
@@ -217,14 +301,9 @@ pid_matches_signature() {
   local cmd
   cmd="$(read_pid_cmdline "$pid")"
   [[ -n "$cmd" ]] || return 1
-  # API processes launched through `uv run uvicorn apps.api.app.main:app ...`
-  # do not necessarily keep the repo root in the final command line on macOS.
-  # For worker/web, keeping the repo-root anchor avoids cross-workspace false
-  # positives when other test sandboxes or local repos happen to run matching
-  # helper scripts at the same time.
-  if [[ "$name" != "api" && "$cmd" != *"$ROOT_DIR"* ]]; then
-    return 1
-  fi
+  # `uv run ...` and `next dev` do not necessarily keep the repo root in the
+  # final command line on macOS. Service-specific regex plus the expected port
+  # constraint are a better truth source than a repo-root anchor.
   [[ "$cmd" =~ $pattern ]]
 }
 
@@ -346,6 +425,40 @@ sync_pid_meta_if_needed() {
 
 START_STATE="unknown"
 
+launch_detached_process() {
+  local log_file="$1"
+  shift
+
+  if command -v setsid >/dev/null 2>&1; then
+    nohup setsid "$@" >"$log_file" 2>&1 < /dev/null &
+    printf '%s\n' "$!"
+    return 0
+  fi
+
+  python3 - "$log_file" "$@" <<'PY'
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+
+log_path = sys.argv[1]
+command = sys.argv[2:]
+
+with open(log_path, "ab", buffering=0) as handle:
+    proc = subprocess.Popen(
+        command,
+        stdin=subprocess.DEVNULL,
+        stdout=handle,
+        stderr=handle,
+        preexec_fn=os.setsid,
+        close_fds=True,
+    )
+
+print(proc.pid)
+PY
+}
+
 start_one() {
   local name="$1"
   shift
@@ -358,12 +471,8 @@ start_one() {
     return 0
   fi
   log "starting $name"
-  if command -v setsid >/dev/null 2>&1; then
-    nohup setsid "$@" >"$log_file" 2>&1 &
-  else
-    nohup "$@" >"$log_file" 2>&1 &
-  fi
-  local launched_pid=$!
+  local launched_pid
+  launched_pid="$(launch_detached_process "$log_file" "$@")"
   write_pid_meta "$name" "$launched_pid"
   START_STATE="started"
   return 0
@@ -542,16 +651,19 @@ worker_required_env_check() {
 worker_temporal_preflight_check() {
   local temporal_host="${TEMPORAL_TARGET_HOST:-localhost:7233}"
   if [[ "$temporal_host" != *:* ]]; then
+    printf '[full_stack] DIAGNOSE stage=worker_preflight_temporal conclusion=invalid_temporal_target_host value=%s\n' "$temporal_host" >&2
     log "DIAGNOSE stage=worker_preflight_temporal conclusion=invalid_temporal_target_host value=${temporal_host}"
     return 1
   fi
   local temporal_addr_host="${temporal_host%:*}"
   local temporal_addr_port="${temporal_host##*:}"
   if ! [[ "$temporal_addr_port" =~ ^[0-9]+$ ]]; then
+    printf '[full_stack] DIAGNOSE stage=worker_preflight_temporal conclusion=invalid_temporal_port value=%s\n' "$temporal_addr_port" >&2
     log "DIAGNOSE stage=worker_preflight_temporal conclusion=invalid_temporal_port value=${temporal_addr_port}"
     return 1
   fi
   if ! wait_for_tcp "$temporal_addr_host" "$temporal_addr_port" 60; then
+    printf '[full_stack] DIAGNOSE stage=worker_preflight_temporal conclusion=temporal_unreachable target=%s\n' "$temporal_host" >&2
     log "DIAGNOSE stage=worker_preflight_temporal conclusion=temporal_unreachable target=${temporal_host}"
     return 1
   fi
@@ -561,9 +673,9 @@ worker_temporal_preflight_check() {
 worker_temporal_pollers_ready_check() {
   local timeout="${FULL_STACK_TEMPORAL_POLLER_READY_TIMEOUT_SECONDS:-45}"
   if wait_for_temporal_worker_pollers \
-    "${TEMPORAL_TARGET_HOST:-localhost:7233}" \
-    "${TEMPORAL_NAMESPACE:-default}" \
-    "${TEMPORAL_TASK_QUEUE:-sourceharbor-worker}" \
+    "$TEMPORAL_TARGET_HOST" \
+    "$TEMPORAL_NAMESPACE" \
+    "$TEMPORAL_TASK_QUEUE" \
     "$timeout"; then
     log "worker temporal pollers ready on task queue ${TEMPORAL_TASK_QUEUE}"
     return 0
@@ -591,7 +703,11 @@ refresh_runtime_route_snapshot() {
       "WEB_PORT=${WEB_PORT}" \
       "SOURCE_HARBOR_API_BASE_URL=${SOURCE_HARBOR_API_BASE_URL}" \
       "NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}" \
-      "API_HEALTH_URL=${API_HEALTH_URL}"
+      "API_HEALTH_URL=${API_HEALTH_URL}" \
+      "DATABASE_URL=${DATABASE_URL}" \
+      "TEMPORAL_TARGET_HOST=${TEMPORAL_TARGET_HOST}" \
+      "TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE}" \
+      "TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE}"
   fi
 }
 
@@ -626,7 +742,7 @@ run_up() {
     return 1
   fi
 
-  start_one api "$ROOT_DIR/scripts/dev_api.sh" --host 127.0.0.1 --port "$API_PORT" --no-reload
+  start_one api env DATABASE_URL="$DATABASE_URL" SOURCE_HARBOR_API_KEY="$startup_write_token" WEB_ACTION_SESSION_TOKEN="$startup_web_session_token" TEMPORAL_TARGET_HOST="$TEMPORAL_TARGET_HOST" TEMPORAL_NAMESPACE="$TEMPORAL_NAMESPACE" TEMPORAL_TASK_QUEUE="$TEMPORAL_TASK_QUEUE" "$ROOT_DIR/scripts/dev_api.sh" --host 127.0.0.1 --port "$API_PORT" --no-reload
   if [[ "$START_STATE" == "started" ]]; then
     STARTED_THIS_RUN+=("api")
   fi
@@ -643,7 +759,7 @@ run_up() {
     web_cmd+=("$web_part")
   done < <(build_web_start_command)
 
-  start_one web env NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:${API_PORT}" API_PORT="$API_PORT" "${web_cmd[@]}"
+  start_one web env SOURCE_HARBOR_API_KEY="$startup_write_token" WEB_ACTION_SESSION_TOKEN="$startup_web_session_token" NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:${API_PORT}" API_PORT="$API_PORT" "${web_cmd[@]}"
   if [[ "$START_STATE" == "started" ]]; then
     STARTED_THIS_RUN+=("web")
   fi
@@ -654,7 +770,7 @@ run_up() {
   fi
   sync_pid_meta_if_needed "web" >/dev/null 2>&1 || true
 
-  if ! start_one_retry worker 10 2 env TEMPORAL_TARGET_HOST="${TEMPORAL_TARGET_HOST:-localhost:7233}" "$ROOT_DIR/scripts/dev_worker.sh"; then
+  if ! start_one_retry worker 10 2 env DATABASE_URL="$DATABASE_URL" SOURCE_HARBOR_API_KEY="$startup_write_token" WEB_ACTION_SESSION_TOKEN="$startup_web_session_token" TEMPORAL_TARGET_HOST="$TEMPORAL_TARGET_HOST" TEMPORAL_NAMESPACE="$TEMPORAL_NAMESPACE" TEMPORAL_TASK_QUEUE="$TEMPORAL_TASK_QUEUE" "$ROOT_DIR/scripts/dev_worker.sh"; then
     emit_failure_diagnostics "worker_start" "worker_failed_to_start" "worker"
     rollback_started_services
     return 1

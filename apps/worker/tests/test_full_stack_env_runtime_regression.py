@@ -45,6 +45,38 @@ printf '%s\\n' "$(resolve_runtime_route_value "{tmp_path}" "MISSING_KEY" "" "300
     assert proc.stdout.strip().splitlines() == ["18000", "19000", "3000"]
 
 
+def test_resolve_runtime_route_value_with_sources_prefers_snapshot_over_loaded_defaults(
+    tmp_path: Path,
+) -> None:
+    root = _repo_root()
+    (tmp_path / ".runtime-cache" / "run" / "full-stack").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".env").write_text(
+        "export API_PORT='3009'\nexport SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:3009'\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".runtime-cache" / "run" / "full-stack" / "resolved.env").write_text(
+        (
+            "export API_PORT='18000'\n"
+            "export SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:18000'\n"
+        ),
+        encoding="utf-8",
+    )
+
+    probe = f"""
+source "{root}/scripts/lib/load_env.sh"
+printf '%s\\n' "$(resolve_runtime_route_value_with_sources "{tmp_path}" "API_PORT" "" "" "9000" "9000")"
+printf '%s\\n' "$(resolve_runtime_route_value_with_sources "{tmp_path}" "SOURCE_HARBOR_API_BASE_URL" "" "" "http://127.0.0.1:9000" "http://127.0.0.1:9000")"
+printf '%s\\n' "$(resolve_runtime_route_value_with_sources "{tmp_path}" "API_PORT" "" "19000" "9000" "9000")"
+"""
+    proc = _run_bash(probe)
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.strip().splitlines() == [
+        "18000",
+        "http://127.0.0.1:18000",
+        "19000",
+    ]
+
+
 def test_bootstrap_runtime_values_do_not_persist_into_repo_env() -> None:
     script = (_repo_root() / "scripts" / "runtime" / "bootstrap_full_stack.sh").read_text(
         encoding="utf-8"
@@ -55,6 +87,73 @@ def test_bootstrap_runtime_values_do_not_persist_into_repo_env() -> None:
     assert 'upsert_export_env "$ROOT_DIR/.env"' not in script
     assert 'perl -0pi -e "s|export DATABASE_URL=' not in script
     assert "sed -i.bak" not in script
+
+
+def test_bootstrap_runtime_snapshot_captures_data_plane_and_temporal_truth() -> None:
+    script = (_repo_root() / "scripts" / "runtime" / "bootstrap_full_stack.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"DATABASE_URL=${DATABASE_URL}"' in script
+    assert '"CORE_POSTGRES_PORT=${CORE_POSTGRES_PORT}"' in script
+    assert '"TEMPORAL_TARGET_HOST=${TEMPORAL_TARGET_HOST}"' in script
+    assert '"TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE}"' in script
+    assert '"TEMPORAL_TASK_QUEUE=${TEMPORAL_TASK_QUEUE}"' in script
+
+
+def test_wave0_local_env_defaults_use_isolated_core_postgres_and_worker_queue() -> None:
+    env_example = (_repo_root() / ".env.example").read_text(encoding="utf-8")
+
+    assert 'export CORE_POSTGRES_PORT="${CORE_POSTGRES_PORT:-15432}"' in env_example
+    assert (
+        'export DATABASE_URL="postgresql+psycopg://postgres:postgres@127.0.0.1:${CORE_POSTGRES_PORT}/sourceharbor"'
+        in env_example
+    )
+    assert "export TEMPORAL_TASK_QUEUE=sourceharbor-worker" in env_example
+
+
+def test_full_stack_uses_runtime_snapshot_for_data_plane_and_worker_signature() -> None:
+    script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'inherited_api_port="${API_PORT-}"' in script
+    assert 'resolve_runtime_route_value_with_sources "$ROOT_DIR" "API_PORT"' in script
+    assert 'resolve_runtime_route_value_with_sources "$ROOT_DIR" "CORE_POSTGRES_PORT"' in script
+    assert 'resolve_runtime_route_value_with_sources "$ROOT_DIR" "DATABASE_URL"' in script
+    assert 'resolve_runtime_route_value_with_sources "$ROOT_DIR" "TEMPORAL_TARGET_HOST"' in script
+    assert 'resolve_runtime_route_value_with_sources "$ROOT_DIR" "TEMPORAL_NAMESPACE"' in script
+    assert 'resolve_runtime_route_value_with_sources "$ROOT_DIR" "TEMPORAL_TASK_QUEUE"' in script
+    assert "normalize_runtime_database_url" in script
+    assert (
+        'start_one api env DATABASE_URL="$DATABASE_URL" SOURCE_HARBOR_API_KEY="$startup_write_token"'
+        in script
+    )
+    assert (
+        'start_one_retry worker 10 2 env DATABASE_URL="$DATABASE_URL" SOURCE_HARBOR_API_KEY="$startup_write_token"'
+        in script
+    )
+    assert 'if [[ "$name" != "api" && "$cmd" != *"$ROOT_DIR"* ]]; then' not in script
+    assert "Service-specific regex plus the expected port" in script
+
+
+def test_full_stack_uses_python_detach_fallback_when_setsid_is_missing() -> None:
+    script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert "launch_detached_process()" in script
+    assert 'nohup setsid "$@" >"$log_file" 2>&1 < /dev/null &' in script
+    assert "preexec_fn=os.setsid" in script
+    assert 'launched_pid="$(launch_detached_process "$log_file" "$@")"' in script
+
+
+def test_core_services_compose_uses_isolated_local_postgres_port_default() -> None:
+    compose = (_repo_root() / "infra" / "compose" / "core-services.compose.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert '127.0.0.1:${CORE_POSTGRES_PORT:-15432}:5432' in compose
 
 
 def test_full_stack_status_handles_stale_pid_metadata(tmp_path: Path) -> None:
@@ -110,7 +209,17 @@ def test_full_stack_status_handles_stale_pid_metadata(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    proc = _run_bash(f'"{full_stack_target}" status', cwd=tmp_path)
+    proc = _run_bash(
+        f'"{full_stack_target}" status',
+        cwd=tmp_path,
+        env={
+            "API_PORT": "19090",
+            "WEB_PORT": "19091",
+            "SOURCE_HARBOR_API_BASE_URL": "http://127.0.0.1:19090",
+            "NEXT_PUBLIC_API_BASE_URL": "http://127.0.0.1:19090",
+            "API_HEALTH_URL": "http://127.0.0.1:19090/healthz",
+        },
+    )
     assert proc.returncode == 0, proc.stderr
     assert "api: stopped" in proc.stdout
     assert not pid_file.exists()

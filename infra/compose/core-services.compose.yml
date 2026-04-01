@@ -3,7 +3,7 @@ services:
     image: ${STRICT_CI_SERVICE_IMAGE_PGVECTOR_PG16:-pgvector/pgvector:pg16@sha256:7d400e340efb42f4d8c9c12c6427adb253f726881a9985d2a471bf0eed824dff}
     container_name: sourceharbor-core-postgres
     ports:
-      - "${CORE_POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${CORE_POSTGRES_PORT:-15432}:5432"
     environment:
       POSTGRES_DB: sourceharbor
       POSTGRES_USER: postgres
