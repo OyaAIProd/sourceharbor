@@ -32,6 +32,8 @@ LIVE_SMOKE_COMPUTER_USE_STRICT="1"
 LIVE_SMOKE_COMPUTER_USE_SKIP="0"
 LIVE_SMOKE_COMPUTER_USE_SKIP_REASON=""
 YOUTUBE_SMOKE_URL="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+inherited_api_base="${SOURCE_HARBOR_API_BASE_URL-}"
+inherited_web_port="${WEB_PORT-}"
 
 usage() {
   cat <<'EOF'
@@ -176,9 +178,26 @@ if [[ "$API_BASE_EXPLICIT" == "1" ]]; then
   api_base_cli="$API_BASE"
 fi
 API_BASE="$(resolve_route_value_local "SOURCE_HARBOR_API_BASE_URL" "$api_base_cli" "http://127.0.0.1:9000")"
+API_BASE="$(
+  resolve_runtime_route_value_with_sources \
+    "$ROOT_DIR" \
+    "SOURCE_HARBOR_API_BASE_URL" \
+    "$api_base_cli" \
+    "$inherited_api_base" \
+    "${SOURCE_HARBOR_API_BASE_URL:-}" \
+    "http://127.0.0.1:9000"
+)"
 
 if [[ "$WEB_BASE_EXPLICIT" != "1" ]]; then
-  resolved_web_port="$(resolve_route_value_local "WEB_PORT" "" "3001")"
+  resolved_web_port="$(
+    resolve_runtime_route_value_with_sources \
+      "$ROOT_DIR" \
+      "WEB_PORT" \
+      "" \
+      "$inherited_web_port" \
+      "${WEB_PORT:-}" \
+      "3001"
+  )"
   WEB_BASE="http://127.0.0.1:${resolved_web_port}"
 fi
 if [[ "$LIVE_SMOKE_API_BASE_URL_EXPLICIT" != "1" ]]; then

@@ -153,7 +153,7 @@ def test_core_services_compose_uses_isolated_local_postgres_port_default() -> No
         encoding="utf-8"
     )
 
-    assert '127.0.0.1:${CORE_POSTGRES_PORT:-15432}:5432' in compose
+    assert "127.0.0.1:${CORE_POSTGRES_PORT:-15432}:5432" in compose
 
 
 def test_full_stack_status_handles_stale_pid_metadata(tmp_path: Path) -> None:
@@ -251,8 +251,55 @@ def test_api_base_resolution_is_unified_across_scripts() -> None:
 
     assert "resolve_route_value_local" in smoke_full_stack
     assert '"SOURCE_HARBOR_API_BASE_URL"' in smoke_full_stack
-    assert "resolve_runtime_route_value" in smoke_full_stack
+    assert "resolve_runtime_route_value_with_sources" in smoke_full_stack
     assert '--api-base-url "$API_BASE"' in smoke_full_stack
+
+
+def test_smoke_full_stack_prefers_runtime_snapshot_over_loaded_env_defaults(
+    tmp_path: Path,
+) -> None:
+    root = _repo_root()
+    (tmp_path / ".runtime-cache" / "run" / "full-stack").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".env").write_text(
+        "export SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:9000'\nexport WEB_PORT='3001'\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".runtime-cache" / "run" / "full-stack" / "resolved.env").write_text(
+        (
+            "export SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:18000'\n"
+            "export WEB_PORT='13000'\n"
+        ),
+        encoding="utf-8",
+    )
+
+    probe = f"""
+source "{root}/scripts/lib/load_env.sh"
+load_env_file "{tmp_path}/.env" smoke_test
+printf '%s\\n' "$(
+  resolve_runtime_route_value_with_sources \
+    "{tmp_path}" \
+    "SOURCE_HARBOR_API_BASE_URL" \
+    "" \
+    "" \
+    "${{SOURCE_HARBOR_API_BASE_URL:-}}" \
+    "http://127.0.0.1:9000"
+)"
+printf '%s\\n' "$(
+  resolve_runtime_route_value_with_sources \
+    "{tmp_path}" \
+    "WEB_PORT" \
+    "" \
+    "" \
+    "${{WEB_PORT:-}}" \
+    "3001"
+)"
+"""
+    proc = _run_bash(probe)
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.strip().splitlines() == [
+        "http://127.0.0.1:18000",
+        "13000",
+    ]
 
 
 def test_http_api_helper_and_notification_scripts_use_local_write_token_headers() -> None:
