@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
 from datetime import UTC, datetime
@@ -13,6 +14,9 @@ from ..config import Settings
 from ..models import NotificationConfig
 from ..security import sanitize_exception_detail
 from .health import HealthService
+
+logger = logging.getLogger(__name__)
+OPS_SECTION_ERROR_MESSAGE = "diagnostic data temporarily unavailable"
 
 
 def build_retrieval_gate(
@@ -347,7 +351,11 @@ class OpsService:
             total = int(self.db.execute(count_statement).scalar_one())
         except DBAPIError as exc:
             self.db.rollback()
-            return self._error_section(error=sanitize_exception_detail(exc))
+            logger.exception(
+                "ops_failed_jobs_unavailable",
+                extra={"error": sanitize_exception_detail(exc), "section": "failed_jobs"},
+            )
+            return self._error_section(error=OPS_SECTION_ERROR_MESSAGE)
 
         items = []
         for row in rows:
@@ -396,7 +404,11 @@ class OpsService:
             total = int(self.db.execute(count_statement).scalar_one())
         except DBAPIError as exc:
             self.db.rollback()
-            return self._error_section(error=sanitize_exception_detail(exc))
+            logger.exception(
+                "ops_failed_ingest_runs_unavailable",
+                extra={"error": sanitize_exception_detail(exc), "section": "failed_ingest_runs"},
+            )
+            return self._error_section(error=OPS_SECTION_ERROR_MESSAGE)
 
         items = []
         for row in rows:
@@ -445,7 +457,14 @@ class OpsService:
             total = int(self.db.execute(count_statement).scalar_one())
         except DBAPIError as exc:
             self.db.rollback()
-            return self._error_section(error=sanitize_exception_detail(exc))
+            logger.exception(
+                "ops_notification_deliveries_unavailable",
+                extra={
+                    "error": sanitize_exception_detail(exc),
+                    "section": "notification_deliveries",
+                },
+            )
+            return self._error_section(error=OPS_SECTION_ERROR_MESSAGE)
 
         items = []
         for row in rows:

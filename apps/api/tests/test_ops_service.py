@@ -412,6 +412,54 @@ def test_load_failed_jobs_redacts_db_error_details() -> None:
 
     assert payload["status"] == "unavailable"
     assert payload["total"] == 0
-    assert "postgresql://***:***@" in payload["error"]
+    assert payload["error"] == "diagnostic data temporarily unavailable"
+    assert "super-secret" not in payload["error"]
+    assert payload["items"] == []
+
+
+def test_load_failed_ingest_runs_redacts_db_error_details() -> None:
+    module = _load_ops_module()
+
+    class BrokenDb:
+        def execute(self, *_args, **_kwargs):  # noqa: ANN002, ANN003
+            raise DBAPIError(
+                "SELECT 1",
+                {},
+                Exception("postgresql://ops:super-secret@127.0.0.1:5432/sourceharbor"),
+            )
+
+        def rollback(self) -> None:
+            return None
+
+    service = module.OpsService(BrokenDb())
+    payload = service._load_failed_ingest_runs(limit=5)
+
+    assert payload["status"] == "unavailable"
+    assert payload["total"] == 0
+    assert payload["error"] == "diagnostic data temporarily unavailable"
+    assert "super-secret" not in payload["error"]
+    assert payload["items"] == []
+
+
+def test_load_notification_deliveries_redacts_db_error_details() -> None:
+    module = _load_ops_module()
+
+    class BrokenDb:
+        def execute(self, *_args, **_kwargs):  # noqa: ANN002, ANN003
+            raise DBAPIError(
+                "SELECT 1",
+                {},
+                Exception("postgresql://ops:super-secret@127.0.0.1:5432/sourceharbor"),
+            )
+
+        def rollback(self) -> None:
+            return None
+
+    service = module.OpsService(BrokenDb())
+    payload = service._load_notification_deliveries(limit=5)
+
+    assert payload["status"] == "unavailable"
+    assert payload["total"] == 0
+    assert payload["error"] == "diagnostic data temporarily unavailable"
     assert "super-secret" not in payload["error"]
     assert payload["items"] == []
