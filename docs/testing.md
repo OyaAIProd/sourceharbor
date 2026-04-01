@@ -5,8 +5,10 @@ SourceHarbor uses layered verification.
 Think of it like product evidence in layers:
 
 1. **Fast checks** catch broken contracts and fake tests
-2. **Core suites** verify Python surfaces and shared behavior
-3. **Full-stack smoke** proves the operator path end to end
+2. **Doctor** classifies first-run blockers before you burn time on deeper smoke
+3. **Core suites** verify Python surfaces and shared behavior
+4. **Supervisor clean path** proves the repo-managed operator path locally
+5. **Long live smoke** extends into secret and provider gates on purpose
 
 ## Fast Local Checks
 
@@ -17,8 +19,23 @@ python3 scripts/governance/check_route_contract_alignment.py
 python3 scripts/governance/check_public_entrypoint_references.py
 python3 scripts/governance/check_local_private_ledger_migration.py
 python3 scripts/governance/check_external_lane_contract.py
-npm --prefix apps/web run lint
+eval "$(bash scripts/ci/prepare_web_runtime.sh --shell-exports)"
+( cd "$WEB_RUNTIME_WEB_DIR" && npm run lint )
 ```
+
+## First-Run Doctor
+
+```bash
+./bin/doctor
+```
+
+What it tells you:
+
+- env contract vs runtime blockers
+- DB target and split-brain risk
+- Temporal reachability
+- API / worker / web readiness
+- write-token and secret gates for live validation
 
 What they cover:
 
@@ -41,19 +58,47 @@ What it covers:
 - worker pipeline logic
 - MCP tool contracts
 
-## Full-Stack Smoke
+## Supervisor Clean Path
 
 ```bash
 ./bin/bootstrap-full-stack
 ./bin/full-stack up
+source .runtime-cache/run/full-stack/resolved.env
+./bin/full-stack status
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/healthz"
+curl -I "http://127.0.0.1:${WEB_PORT}/ops"
+```
+
+What it proves:
+
+- the repo-managed local stack can boot
+- the runtime route snapshot matches the services you are actually talking to
+- API, worker, and web are visible to the local supervisor
+- the public quickstart story is grounded in runnable local commands
+
+Important local-truth notes:
+
+- do not assume `9000/3000`; bootstrap/full-stack may move to other free ports and record them in `.runtime-cache/run/full-stack/resolved.env`
+- the default local Postgres path is container-first on `CORE_POSTGRES_PORT=15432`
+- if your machine already has a host Postgres on `127.0.0.1:5432`, that is a different data plane from the core-services container path
+
+## Long Live Smoke Lane
+
+```bash
 ./bin/smoke-full-stack --offline-fallback 0
 ```
 
 What it proves:
 
-- the local stack can boot
-- the main runtime surfaces can talk to each other
-- the public quickstart story is grounded in runnable commands
+- the stricter live lane can run after the local supervisor path is already healthy
+- YouTube, Resend, and Gemini-backed checks are wired into a repeatable command
+- provider-side gates stay explicit instead of being hand-waved as local repo truth
+
+Important boundary:
+
+- passing the supervisor clean path means the repo is locally runnable
+- passing the long live-smoke lane requires additional provider and sender conditions
+- failing the long live-smoke lane does **not** automatically mean the local bootstrap/up/status path is broken
 
 ## Git Hooks
 

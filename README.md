@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>Turn YouTube, Bilibili, and RSS sources into readable digests, traceable job runs, and searchable knowledge for operators and agents.</strong>
+  <strong>AI knowledge pipeline and MCP server for YouTube, Bilibili, and RSS.</strong>
 </p>
 
 <p align="center">
@@ -29,7 +29,13 @@
   ·
   <a href="./docs/index.md">Docs Home</a>
   ·
+  <a href="./docs/mcp-quickstart.md">MCP Quickstart</a>
+  ·
+  <a href="./docs/samples/README.md">Sample Corpus</a>
+  ·
   <a href="./docs/proof.md">Proof</a>
+  ·
+  <a href="./docs/project-status.md">Project Status</a>
   ·
   <a href="./docs/compare.md">Why It Stands Out</a>
   ·
@@ -43,9 +49,54 @@
   <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/xiaojiou176-open/sourceharbor?style=social" />
 </p>
 
-SourceHarbor helps you subscribe to long-form sources, pull fresh items, turn
-them into digests, inspect every step, ship artifacts, and reuse the same
-knowledge surface through the command center, API, and MCP.
+SourceHarbor helps you turn long-form sources into grounded search results,
+knowledge cards, traceable job runs, and MCP-ready operations. It stays
+source-first and proof-first: you can inspect it, run it locally, and verify
+each surface instead of trusting product copy on vibes alone.
+
+## Front Doors
+
+The fastest way to understand the product is to open the highest-value rooms first:
+
+| Front door | What it means | Current truth |
+| --- | --- | --- |
+| **Search** | Operator-facing evidence search over digests, knowledge cards, transcripts, and related artifacts | Real Web route after local boot: `/search` |
+| **Ask your sources** | Truthful MVP: grounded search with citation jumps, not a hidden answer generator | Real Web route after local boot: `/ask` + [grounded contract](./docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md) |
+| **MCP** | Agent-facing surface on top of the same API and pipeline state | [docs/mcp-quickstart.md](./docs/mcp-quickstart.md) + `./bin/dev-mcp` |
+| **Ops / doctor** | First-run diagnosis and operator triage for runtime truth, failed jobs, ingest issues, and live-hardening gates | `./bin/doctor` + `/ops` after local boot + [docs/runtime-truth.md](./docs/runtime-truth.md) |
+| **Compounders** | Watchlists, trends, evidence bundles, and read-only sample playgrounds that make SourceHarbor worth coming back to | `/watchlists`, `/trends`, `/playground`, and `/use-cases/*` |
+
+## What It Does Not Claim Today
+
+Think of this as the label on the box, not fine print:
+
+- SourceHarbor is **not** presented as a hosted SaaS or online signup product.
+- Agent Autopilot is **not** a shipped capability; it remains a bounded spike direction.
+- Hosted Team Workspace is **not** a current promise; it remains a deferred bet.
+
+If you need the explicit bet boundaries, read:
+
+- [Agent Autopilot Spike](./docs/blueprints/2026-03-31-agent-autopilot-spike.md)
+- [Hosted Readiness Spike](./docs/blueprints/2026-03-31-hosted-readiness-spike.md)
+
+## Compounder Layer
+
+These are the surfaces that make SourceHarbor reusable instead of one-and-done:
+
+| Compounder | What it does | Current truth |
+| --- | --- | --- |
+| **Watchlists** | Save a topic, claim kind, or source matcher as a durable tracking object | Real route: `/watchlists` |
+| **Trends** | Compare recent matched runs for a watchlist and show what was added or removed | Real route: `/trends` |
+| **Evidence bundle** | Export one job as a reusable internal bundle with digest, trace summary, knowledge cards, and artifact manifest | Real route on demand: `/api/v1/jobs/<job-id>/bundle` |
+| **Playground** | Explore clearly labeled sample corpus and demo outputs without pretending they are live operator state | Real route: `/playground` + [docs/samples/README.md](./docs/samples/README.md) |
+| **Use-case pages** | Route newcomer traffic into truthful capability stories for YouTube, Bilibili, RSS, MCP, and research workflows | Real routes: `/use-cases/youtube`, `/use-cases/bilibili`, `/use-cases/rss`, `/use-cases/mcp-use-cases`, `/use-cases/research-pipeline` |
+
+## Future Directions Under Evaluation
+
+These are real directions, but they are **not** current product claims:
+
+- **Agent Autopilot** is currently a spike topic, not a shipped capability. The most honest next slice is human-approved workflow orchestration, not silent autonomy. See [docs/blueprints/2026-03-31-agent-autopilot-spike.md](./docs/blueprints/2026-03-31-agent-autopilot-spike.md).
+- **Hosted or managed SourceHarbor** is also a spike topic, not a current promise. Today the repository remains source-first and local-proof-first. See [docs/blueprints/2026-03-31-hosted-readiness-spike.md](./docs/blueprints/2026-03-31-hosted-readiness-spike.md).
 
 ## First Practical Win
 
@@ -65,6 +116,14 @@ There are three honest first paths:
 
 > Truth route, in plain English:
 > `README.md` is the front door, [`docs/start-here.md`](./docs/start-here.md) is the first real run, [`docs/proof.md`](./docs/proof.md) is the proof ladder, `docs/generated/*` pages are render-only pointers, and `.agents/Plans/*` files are historical execution archives rather than current public truth.
+
+Current non-promises:
+
+- SourceHarbor is **not** described here as a turnkey hosted team workspace.
+- Agent autopilot remains a bounded spike direction, not a shipped product capability.
+- Those future-direction boundaries live in [docs/reference/project-positioning.md](./docs/reference/project-positioning.md) and the Prompt 5 spike blueprints under [docs/blueprints/](./docs/blueprints/).
+
+If you want the shortest honest summary of what is already real, what is still gated, and what remains future direction, read [docs/project-status.md](./docs/project-status.md).
 
 ## See It In 30 Seconds
 
@@ -97,7 +156,7 @@ For the lightweight evaluation path, go to [docs/see-it-fast.md](./docs/see-it-f
 
 ## Why Star SourceHarbor Now
 
-- **It solves the full loop, not a single step.** SourceHarbor handles subscription intake, ingestion, digest production, artifact indexing, notifications, and retrieval in one system.
+- **It solves the full loop, not a single step.** SourceHarbor handles subscription intake, ingestion, digest production, artifact indexing, retrieval, and notification-ready outbound lanes in one system.
 - **It exposes proof, not vague claims.** Jobs, artifacts, step summaries, CI, and local verification paths are all first-class public surfaces.
 - **It is ready for operators and agents at the same time.** Humans use the command center. Agents use API and MCP. Both point at the same pipeline.
 - **It is already shaped like a real product.** The repository is source-first and inspectable, but the public surface is now optimized around outcomes rather than internal wiring.
@@ -108,8 +167,9 @@ For the lightweight evaluation path, go to [docs/see-it-fast.md](./docs/see-it-f
 | :-- | :-- | :-- |
 | **Subscriptions** | Track YouTube, Bilibili, and RSS sources | Build a durable intake layer instead of pasting one-off URLs |
 | **Digest feed** | Read generated summaries in a single operator flow | Turn long-form content into an actionable daily reading stream |
+| **Search & Ask** | Search evidence and ask grounded questions across the same knowledge surface | Make the knowledge layer visible instead of keeping retrieval buried in API/MCP |
 | **Job trace** | Inspect pipeline status, retries, degradations, and artifacts | Debug with evidence instead of guessing what happened |
-| **Notifications** | Send video digests and daily digests to email | Push results outward instead of trapping them in a database |
+| **Notifications** | Configure and send digests outward when the notification lane is enabled | Push results outward instead of trapping them in a database |
 | **Retrieval** | Search over generated artifacts | Reuse digests as a searchable knowledge layer |
 | **MCP tools** | Expose ingestion, jobs, artifacts, search, and notifications to agents | Let assistants act on the same system without custom glue code |
 
@@ -143,11 +203,38 @@ UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/proj
 bash scripts/ci/prepare_web_runtime.sh >/dev/null
 ./bin/bootstrap-full-stack
 ./bin/full-stack up
+source .runtime-cache/run/full-stack/resolved.env
 ```
 
-Open the operator UI:
+Read the resolved local routes:
 
-- `http://127.0.0.1:3000`
+- API: `${SOURCE_HARBOR_API_BASE_URL}`
+- Web: `http://127.0.0.1:${WEB_PORT}`
+
+The clean local path is container-first for Postgres. By default `.env.example`
+uses `CORE_POSTGRES_PORT=15432` together with
+`postgresql+psycopg://postgres:postgres@127.0.0.1:${CORE_POSTGRES_PORT}/sourceharbor`
+so a host Postgres on `127.0.0.1:5432` does not silently become the active data
+plane.
+
+Open the operator UI at the resolved web URL:
+
+- `http://127.0.0.1:${WEB_PORT}`
+
+If you only need the repo-managed local proof, stop at the supervisor checks
+first:
+
+```bash
+./bin/full-stack status
+./bin/doctor
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/healthz"
+curl -I "http://127.0.0.1:${WEB_PORT}/ops"
+```
+
+`./bin/smoke-full-stack --offline-fallback 0` is the stricter long live-smoke
+lane. It goes beyond local supervisor proof and can still stop on provider-side
+YouTube preflight or Resend sender configuration even after the local stack is
+healthy.
 
 ### 2. Set the local write token for direct API calls
 
@@ -155,12 +242,16 @@ Open the operator UI:
 export SOURCE_HARBOR_API_KEY="${SOURCE_HARBOR_API_KEY:-sourceharbor-local-dev-token}"
 ```
 
+If you launch the API outside `./bin/full-stack up`, export both
+`SOURCE_HARBOR_API_KEY` and `WEB_ACTION_SESSION_TOKEN` **before** starting the
+API process so write routes and web actions share the same local token contract.
+
 ### 3. Queue a first processing run
 
 Replace the sample URL with any public YouTube or Bilibili video:
 
 ```bash
-curl -sS -X POST http://127.0.0.1:9000/api/v1/videos/process \
+curl -sS -X POST "${SOURCE_HARBOR_API_BASE_URL}/api/v1/videos/process" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: ${SOURCE_HARBOR_API_KEY}" \
   -d '{
@@ -175,10 +266,17 @@ curl -sS -X POST http://127.0.0.1:9000/api/v1/videos/process \
 ### 4. Inspect the resulting job and feed
 
 ```bash
-curl -sS http://127.0.0.1:9000/api/v1/videos | jq
-curl -sS http://127.0.0.1:9000/api/v1/feed/digests | jq
-curl -sS http://127.0.0.1:9000/api/v1/jobs/<job-id> | jq
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/api/v1/videos" | jq
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/api/v1/feed/digests" | jq
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/api/v1/jobs/<job-id>" | jq
 ```
+
+Open these front-door routes after the stack is up:
+
+- `/search` for grounded search
+- `/ask` for the truthful Ask MVP
+- `/mcp` for the in-product MCP front door
+- `/ops` for operator diagnostics and hardening gates
 
 ### 5. Run the repo smoke path
 
@@ -205,7 +303,7 @@ SourceHarbor is built around the full knowledge flow:
 2. **Process** each item into job-backed artifacts
 3. **Read** results in a digest feed
 4. **Search** generated knowledge later
-5. **Deliver** updates through notifications
+5. **Deliver** updates through configured notifications when the outbound lane is enabled
 6. **Reuse** the same surface through MCP and API
 
 See the full comparison in [docs/compare.md](./docs/compare.md).
@@ -215,17 +313,26 @@ See the full comparison in [docs/compare.md](./docs/compare.md).
 This repository does not ask you to trust product copy on its own.
 
 - **Proof of behavior:** [docs/start-here.md](./docs/start-here.md)
+- **Proof of runtime truth:** [docs/runtime-truth.md](./docs/runtime-truth.md)
 - **Proof of architecture:** [docs/architecture.md](./docs/architecture.md)
 - **Proof of verification:** [docs/testing.md](./docs/testing.md)
 - **Proof of current public claims:** [docs/proof.md](./docs/proof.md)
 
-GitHub profile description, homepage, topics, discussions, and social preview intent are tracked in `config/public/github-profile.json`, but the live GitHub settings still require GitHub-side verification.
+GitHub profile intent is tracked in `config/public/github-profile.json`. The
+description, homepage, and topics were re-checked live, but they are
+intentionally still kept on a more conservative remote-main-safe wording until
+the newer local front doors are actually landed on remote `main`.
 
 Generated docs under `docs/generated/` can point you toward runtime-owned evidence, but they are not the current verdict themselves. Historical plans under `.agents/Plans/` explain past execution context only and should not be read as the current public truth route.
 
 > SourceHarbor is a public, source-first engineering repository.
 >
 > It is inspectable, and you can run it locally. It is not marketed as a turnkey hosted product, and external distribution claims are valid only when live remote workflows prove them for the current `main` commit.
+
+For local verification, the repo-managed route snapshot under
+`.runtime-cache/run/full-stack/resolved.env` is the runtime truth for API/Web
+ports. Do not assume any process already listening on `9000`, `3000`, or
+`5432` belongs to the clean-path stack.
 
 ## Documentation Map
 
@@ -235,6 +342,7 @@ Start where you are:
 - **I want the no-boot product tour:** [docs/see-it-fast.md](./docs/see-it-fast.md)
 - **I want to see a real local result:** [docs/start-here.md](./docs/start-here.md)
 - **I want the system map:** [docs/architecture.md](./docs/architecture.md)
+- **I want the MCP quickstart:** [docs/mcp-quickstart.md](./docs/mcp-quickstart.md)
 - **I want proof and verification commands:** [docs/proof.md](./docs/proof.md)
 - **I want testing and CI details:** [docs/testing.md](./docs/testing.md)
 - **I want positioning and trade-offs:** [docs/compare.md](./docs/compare.md)

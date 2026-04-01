@@ -111,6 +111,7 @@ If you want confidence without booting the full stack yet:
 
 1. Read [README.md](../README.md) for the public story.
 2. Read [proof.md](./proof.md) for the evidence ladder.
-3. Read [architecture.md](./architecture.md) if you want the system map.
+3. Read [samples/README.md](./samples/README.md) if you want the clearly labeled sample corpus path.
+4. Read [architecture.md](./architecture.md) if you want the system map.
 
 If you want a real local run after that, go to [start-here.md](./start-here.md).

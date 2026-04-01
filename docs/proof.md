@@ -12,7 +12,9 @@ These prove that the public narrative maps to visible product surfaces:
 
 - [README.md](../README.md)
 - [docs/start-here.md](./start-here.md)
+- [docs/runtime-truth.md](./runtime-truth.md)
 - [docs/architecture.md](./architecture.md)
+- [docs/mcp-quickstart.md](./mcp-quickstart.md)
 - the web command center routes
 - the API route map
 - the MCP tool map
@@ -28,11 +30,13 @@ What this layer answers:
 These prove that the repo is not just presentation:
 
 ```bash
-curl -sS http://127.0.0.1:9000/healthz
+source .runtime-cache/run/full-stack/resolved.env
+./bin/full-stack status
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/healthz"
 python3 scripts/governance/check_env_contract.py --strict
 python3 scripts/governance/check_test_assertions.py
-npm --prefix apps/web run lint
-./bin/smoke-full-stack --offline-fallback 0
+eval "$(bash scripts/ci/prepare_web_runtime.sh --shell-exports)"
+( cd "$WEB_RUNTIME_WEB_DIR" && npm run lint )
 ```
 
 What this layer answers:
@@ -40,6 +44,23 @@ What this layer answers:
 - Does the stack boot locally?
 - Are the public contracts wired?
 - Are tests and lint gates meaningful?
+
+Local-proof boundary:
+
+- use the repo-managed route snapshot under `.runtime-cache/run/full-stack/resolved.env` as the current local API/Web truth
+- do not assume any process already listening on `9000`, `3000`, or `5432` belongs to the clean-path stack
+- host Postgres and container Postgres are different data planes; the clean local path is container-first and defaults to `CORE_POSTGRES_PORT=15432`
+
+If you want the stricter long live-smoke lane, run:
+
+```bash
+./bin/smoke-full-stack --offline-fallback 0
+```
+
+That command goes beyond the base local supervisor proof above. It intentionally
+enters provider-backed checks such as YouTube preflight and sender
+configuration, so a failure there does not automatically mean the repo-managed
+local stack is broken.
 
 ## Proof Layer 3: Runtime Artifact Evidence
 
@@ -74,6 +95,41 @@ What this layer answers:
 - Is the release surface active and legible?
 - Do the live GitHub profile settings still match the tracked repo intent?
 
+Fresh Dawn Closure note:
+
+- current `main` has fresh successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs
+- live GitHub description, homepage, and topics were re-checked, but they were kept on a more conservative remote-main-safe wording because the newer local front doors are not landed on remote `main`
+- latest tagged release `v0.1.1` still lags current `main`, so release-side proof is not the same thing as current-branch proof
+
+## Future-direction Truth
+
+This page should also protect readers from a different kind of drift:
+
+- a credible spike is not the same thing as a shipped capability
+- a workflow that can run locally is not the same thing as hosted readiness
+- a sample playground is not the same thing as a live managed product
+
+Current spike-only directions:
+
+- [Agent Autopilot spike](./blueprints/2026-03-31-agent-autopilot-spike.md)
+- [Hosted readiness spike](./blueprints/2026-03-31-hosted-readiness-spike.md)
+
+Those documents describe what might be worth exploring next. They do **not**
+upgrade the current public proof layer on their own.
+
+Current blocker truth is also more specific than raw key presence:
+
+- Gemini-backed lanes already have maintainer-local proof; other environments
+  still need Gemini access if they want the same layer.
+- Resend provider auth can exist while live delivery is still blocked by missing
+  sender configuration such as `RESEND_FROM_EMAIL`.
+- The strict YouTube live-smoke probe is still bounded by provider-side project
+  enablement or policy, not just whether a non-empty key string exists.
+
+If you want the shortest honest board of what is already real, what is still
+secret-gated, and what stays in the spike bucket, read
+[project-status.md](./project-status.md).
+
 ## What Counts As Publicly Honest
 
 These are fair claims:
@@ -88,13 +144,15 @@ These require stronger evidence:
 - production-ready hosted service
 - turnkey managed deployment
 - externally verified distribution on every release
-- live GitHub profile settings applied and verified against `config/public/github-profile.json`
+- fully current remote distribution proof, including a current tagged release and any release-side verification tied to it
 
 Tracked manifests and public presentation assets are inputs to this layer, not proof on their own.
 
 For the tracked render-only pointer into the external lane, see [docs/generated/external-lane-truth-entry.md](./generated/external-lane-truth-entry.md). That page is a signpost, not the verdict.
 
 Historical plans under `.agents/Plans/` are archived execution context only. They can explain how the repo arrived here, but they must not be treated as the current public truth for SourceHarbor.
+
+For the shortest current-state summary of what is shipped, what is still gated, and what remains future direction, read [project-status.md](./project-status.md).
 
 ## Short Version
 
@@ -103,3 +161,5 @@ SourceHarbor can be boldly presented, but it must stay truthful:
 - **sell the result first**
 - **show the proof right after**
 - **never swap local proof for remote proof**
+- **use the runtime truth map when docs, ports, and old memories disagree**
+- **use `project-status.md` when you need the current shipped-vs-gated scoreboard**

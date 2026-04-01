@@ -17,7 +17,12 @@ SourceHarbor has several layers, but the public entry should stay simple:
 | **Understand the product in 3 minutes** | [README.md](../README.md) | The product story, quick value, and star-worthy reasons |
 | **Get the fastest no-boot preview** | [see-it-fast.md](./see-it-fast.md) | The command center, digest feed, and job trace path without setup |
 | **Run the shortest truthful path** | [start-here.md](./start-here.md) | A result-first local flow ending in jobs, feed, and proof |
+| **Open the MCP front door** | [mcp-quickstart.md](./mcp-quickstart.md) | Startup, representative tools, and the relation between MCP, API, and Web |
+| **Try the read-only sample playground** | [samples/README.md](./samples/README.md) | Clearly labeled sample corpus and demo surfaces |
+| **Open the compounder layer** | [runtime-truth.md](./runtime-truth.md) | How watchlists, trends, bundles, and sample surfaces fit the current truth |
+| **See what is done vs still a bet** | [project-status.md](./project-status.md) | The shortest truthful status board for delivered, gated, sample-only, and future-direction surfaces |
 | **Check what is publicly provable today** | [proof.md](./proof.md) | Commands, boundaries, and evidence layers |
+| **See what is still a future-direction spike** | [2026-03-31-agent-autopilot-spike.md](./blueprints/2026-03-31-agent-autopilot-spike.md) and [2026-03-31-hosted-readiness-spike.md](./blueprints/2026-03-31-hosted-readiness-spike.md) | What is worth exploring next without pretending it already exists |
 | **Understand the moving parts** | [architecture.md](./architecture.md) | API, worker, MCP, web, and shared surfaces |
 | **See how verification works** | [testing.md](./testing.md) | Local checks, CI checks, and smoke paths |
 | **Compare SourceHarbor to other repo shapes** | [compare.md](./compare.md) | Differentiation, trade-offs, and why this repo is product-shaped |

@@ -13,11 +13,11 @@ Think of it like a guided first local run:
 
 ## What You Should See By The End
 
-- the web command center at `http://127.0.0.1:3000`
-- the API health endpoint responding at `http://127.0.0.1:9000/healthz`
+- the web command center at the route recorded in `.runtime-cache/run/full-stack/resolved.env`
+- the API health endpoint recorded in `.runtime-cache/run/full-stack/resolved.env`, with the default local path staying on `9000` only when that port is still free
 - at least one queued or completed processing job
 - a digest feed entry or an inspectable job payload
-- a smoke command you can rerun as public proof
+- a local supervisor check you can rerun before you decide whether to open the long live-smoke lane
 
 ## Run Locally: Fastest Result Path
 
@@ -30,17 +30,38 @@ UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/proj
 bash scripts/ci/prepare_web_runtime.sh >/dev/null
 ```
 
+The default local database path is container-first:
+
+- `CORE_POSTGRES_PORT=15432`
+- `DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:${CORE_POSTGRES_PORT}/sourceharbor`
+
+This avoids a silent split-brain when your machine already has a host Postgres
+on `127.0.0.1:5432`.
+
 ### 2. Bootstrap the local stack
 
 ```bash
 ./bin/bootstrap-full-stack
 ./bin/full-stack up
+source .runtime-cache/run/full-stack/resolved.env
 ```
 
 Open:
 
-- web command center: `http://127.0.0.1:3000`
-- API health: `http://127.0.0.1:9000/healthz`
+- web command center: `http://127.0.0.1:${WEB_PORT}`
+- API health: `${SOURCE_HARBOR_API_BASE_URL}/healthz`
+
+If anything feels off before you continue, run:
+
+```bash
+./bin/doctor
+```
+
+Why source the runtime snapshot:
+
+- bootstrap/full-stack may move off `9000/3000` when those ports are already occupied
+- the snapshot is the repo-managed local truth for API/Web routes
+- if the snapshot and actual services disagree, run `./bin/full-stack down` and restart the clean path
 
 ### 3. Set the local write token
 
@@ -52,12 +73,22 @@ For local development, use:
 export SOURCE_HARBOR_API_KEY="${SOURCE_HARBOR_API_KEY:-sourceharbor-local-dev-token}"
 ```
 
+If you start the API outside the repo-managed `./bin/full-stack up` path, also
+export:
+
+```bash
+export WEB_ACTION_SESSION_TOKEN="${WEB_ACTION_SESSION_TOKEN:-$SOURCE_HARBOR_API_KEY}"
+```
+
+That keeps direct write calls and web server actions on the same local token
+contract instead of creating a false auth blocker.
+
 ### 4. Queue a first video job
 
 Replace the sample URL with any public YouTube or Bilibili URL you can access:
 
 ```bash
-curl -sS -X POST http://127.0.0.1:9000/api/v1/videos/process \
+curl -sS -X POST "${SOURCE_HARBOR_API_BASE_URL}/api/v1/videos/process" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: ${SOURCE_HARBOR_API_KEY}" \
   -d '{
@@ -78,10 +109,10 @@ What this gives you:
 ### 5. Inspect the result surfaces
 
 ```bash
-curl -sS http://127.0.0.1:9000/api/v1/videos | jq
-curl -sS http://127.0.0.1:9000/api/v1/feed/digests | jq
-curl -sS http://127.0.0.1:9000/api/v1/jobs/<job-id> | jq
-curl -sS -X POST http://127.0.0.1:9000/api/v1/retrieval/search \
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/api/v1/videos" | jq
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/api/v1/feed/digests" | jq
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/api/v1/jobs/<job-id>" | jq
+curl -sS -X POST "${SOURCE_HARBOR_API_BASE_URL}/api/v1/retrieval/search" \
   -H "Content-Type: application/json" \
   -d '{"query":"summary","top_k":5,"mode":"keyword"}' | jq
 ```
@@ -89,8 +120,12 @@ curl -sS -X POST http://127.0.0.1:9000/api/v1/retrieval/search \
 Open these UI views:
 
 - `/` for the command center
+- `/ops` for operator diagnostics and live-hardening gates
+- `/search` for grounded search across SourceHarbor artifacts
+- `/ask` for the truthful Ask MVP
 - `/feed` for the digest reading flow
 - `/jobs?job_id=<job-id>` for pipeline trace and artifacts
+- `/mcp` for the MCP front door and quickstart
 - `/settings` for notifications and test sends
 
 ## Operator Path: Continuous Intake
@@ -107,21 +142,41 @@ That path is what turns SourceHarbor from a one-shot processor into a knowledge 
 
 ## Minimum Verification
 
-These are the smallest checks that support the public story:
+These are the smallest checks that support the local supervisor story:
 
 ```bash
-curl -sS http://127.0.0.1:9000/healthz
+source .runtime-cache/run/full-stack/resolved.env
+./bin/full-stack status
+curl -sS "${SOURCE_HARBOR_API_BASE_URL}/healthz"
+curl -I "http://127.0.0.1:${WEB_PORT}/ops"
 python3 scripts/governance/check_env_contract.py --strict
 python3 scripts/governance/check_test_assertions.py
-npm --prefix apps/web run lint
+./bin/doctor
+eval "$(bash scripts/ci/prepare_web_runtime.sh --shell-exports)"
+( cd "$WEB_RUNTIME_WEB_DIR" && npm run lint )
+```
+
+## Optional Long Live Smoke Lane
+
+When you intentionally want the stricter live lane, run:
+
+```bash
 ./bin/smoke-full-stack --offline-fallback 0
 ```
+
+That command is not the same thing as the local supervisor proof above. It
+continues into external provider checks and can still stop on current
+YouTube/Resend/Gemini-side gates even after `bootstrap -> up -> status ->
+doctor` is already healthy.
 
 ## Boundaries
 
 - This repository is **inspectable and runnable locally**, but not marketed as a turnkey hosted product.
 - Local proof is different from remote release proof.
 - Public screenshots and diagrams are presentation assets, not a substitute for live verification.
+- For the shortest delivered-vs-bet summary, read [project-status.md](./project-status.md).
+- For the exhaustive Prompt 1-5 closeout ledger, read [2026-03-31-program-closeout-matrix.md](./blueprints/2026-03-31-program-closeout-matrix.md).
+- Agent autopilot and hosted workspace directions remain spike artifacts, not current operator promises. See [reference/project-positioning.md](./reference/project-positioning.md) and the related files in [blueprints/](./blueprints/).
 
 ## Public Trust Links
 
@@ -137,3 +192,4 @@ npm --prefix apps/web run lint
 - Public artifact exposure: [docs/reference/public-artifact-exposure.md](./reference/public-artifact-exposure.md)
 
 For the explicit evidence ladder, go to [proof.md](./proof.md).
+For the storage/runtime truth split, read [runtime-truth.md](./runtime-truth.md).

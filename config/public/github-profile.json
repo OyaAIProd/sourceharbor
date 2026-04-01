@@ -1,13 +1,16 @@
 {
-  "description": "Turn YouTube, Bilibili, and RSS sources into readable digests, traceable job runs, and searchable knowledge for operators and agents.",
+  "description": "AI knowledge pipeline and MCP server for YouTube, Bilibili, and RSS, with grounded search, operator diagnostics, evidence bundles, and sample playgrounds.",
   "homepage": "https://github.com/xiaojiou176-open/sourceharbor?tab=readme-ov-file#see-it-in-30-seconds",
   "topics": [
     "sourceharbor",
+    "source-first",
     "knowledge-pipeline",
+    "knowledge-base",
     "digest",
     "retrieval",
     "mcp",
     "ai-agents",
+    "research-automation",
     "youtube",
     "bilibili",
     "rss",

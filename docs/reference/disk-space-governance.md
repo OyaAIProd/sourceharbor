@@ -246,6 +246,34 @@ Dry-run a specific cleanup wave:
 ./bin/disk-space-cleanup --wave repo-tmp
 ```
 
+Repo-side runtime maintenance is a different lane from cleanup waves.
+
+Use it when you want to normalize and inspect `.runtime-cache/**` without
+manually deleting directories:
+
+```bash
+./bin/runtime-cache-maintenance
+./bin/runtime-cache-maintenance --apply
+```
+
+Read the runtime tree with these rules:
+
+- `.runtime-cache/run/*` is live runtime state, not default cleanup
+- `.runtime-cache/logs/*` is structured log storage with governed retention, not
+  generic trash
+- `.runtime-cache/reports/*` is the machine-report layer; keep it as report
+  truth unless a cleanup wave explicitly reclassifies it
+- `.runtime-cache/evidence/*` is debug and proof evidence with governed
+  retention, not a scratch bucket
+- `.runtime-cache/tmp/*` is short-lived scratch space, but it only becomes a
+  cleanup candidate after the wave gate proves quiet-window, lock-clear, and
+  rebuildability conditions
+
+In plain language: do not hand-delete `.runtime-cache/` just because it is
+large. Use `runtime-cache-maintenance` for repo-side maintenance, and use
+`disk-space-cleanup --wave ...` when you are intentionally executing the
+governed cleanup plan.
+
 JSON output for automation:
 
 ```bash

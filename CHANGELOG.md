@@ -7,6 +7,14 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+### Added
+
+- first-run doctor and operator diagnostics surfaces for local runtime truth
+- watchlists and cross-run trend pages for persistent tracking
+- job evidence bundle export for internal reuse and async collaboration
+- read-only sample corpus and playground surfaces
+- truthful use-case landing pages for YouTube, Bilibili, RSS, MCP, and research pipeline discovery
+
 ### Changed
 
 - docs governance now treats `pre-commit` as a first-class required check and stops misreading workflow event rows as branch-protection checks
