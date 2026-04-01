@@ -4,11 +4,11 @@ import os
 
 from fastapi.testclient import TestClient
 
-os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/sourceharbor-watchlists-route.db")
-os.environ.setdefault("TEMPORAL_TARGET_HOST", "127.0.0.1:7233")
-os.environ.setdefault("TEMPORAL_NAMESPACE", "default")
-os.environ.setdefault("TEMPORAL_TASK_QUEUE", "sourceharbor-worker")
-os.environ.setdefault("SQLITE_STATE_PATH", "/tmp/sourceharbor-watchlists-route-state.db")
+os.environ["DATABASE_URL"] = "sqlite:////tmp/sourceharbor-watchlists-route.db"
+os.environ["TEMPORAL_TARGET_HOST"] = "127.0.0.1:7233"
+os.environ["TEMPORAL_NAMESPACE"] = "default"
+os.environ["TEMPORAL_TASK_QUEUE"] = "sourceharbor-worker"
+os.environ["SQLITE_STATE_PATH"] = "/tmp/sourceharbor-watchlists-route-state.db"
 
 from apps.api.app.main import app
 

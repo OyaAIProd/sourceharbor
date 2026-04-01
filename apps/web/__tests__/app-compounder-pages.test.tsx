@@ -142,7 +142,7 @@ describe("compounder pages", () => {
 	it("renders truthful use-case page", async () => {
 		render(
 			await UseCasePage({
-				params: Promise.resolve({ slug: "youtube" }),
+				params: { slug: "youtube" },
 			}),
 		);
 
