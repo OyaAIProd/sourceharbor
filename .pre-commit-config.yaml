@@ -91,7 +91,7 @@ repos:
         always_run: true
       - id: runtime-outputs
         name: runtime-outputs
-        entry: bash -lc 'python3 scripts/runtime/clean_source_runtime_residue.py --apply >/dev/null && python3 scripts/governance/check_runtime_outputs.py'
+        entry: bash -lc 'python3 scripts/runtime/clean_source_runtime_residue.py --apply --write-report "${TMPDIR:-/tmp}/source-runtime-residue.json" >/dev/null && python3 scripts/governance/check_runtime_outputs.py'
         language: system
         pass_filenames: false
         always_run: true
