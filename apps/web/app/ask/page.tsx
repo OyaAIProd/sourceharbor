@@ -65,7 +65,7 @@ function EvidenceCard({ hit }: { hit: RetrievalHit }) {
 				</div>
 				<div className="space-y-2">
 					<h2 className="text-xl font-semibold">
-						{hit.title?.trim() || "Grounded evidence"}
+						{hit.title?.trim() || askCopy.groundedEvidenceTitle}
 					</h2>
 					<CardDescription>{hit.snippet}</CardDescription>
 				</div>
@@ -134,75 +134,78 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Ask Front Door</p>
+				<p className="folo-page-kicker">{askCopy.askKicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Ask your sources
+					{askCopy.askTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					Ask in natural language, but keep the answer honest. This Wave 1 MVP
-					returns grounded evidence packs you can inspect and jump through
-					instead of pretending SourceHarbor already has a fully grounded answer
-					engine.
-				</p>
+				<p className="folo-page-subtitle">{askCopy.askSubtitle}</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<h2 className="text-xl font-semibold">Truthful Ask MVP</h2>
+					<h2 className="text-xl font-semibold">{askCopy.askTruthTitle}</h2>
 					<CardDescription>
 						Current contract: retrieval-first, citation-first, and operator
-						auditable. Future answer-layer work is tracked in the Ask contract
-						artifact rather than being faked in the UI today. `keyword` is the
-						most trustworthy default path; `semantic` and `hybrid` stay
-						experimental until corpus quality and answer-layer grounding are
-						re-proved.
+						auditable. {askCopy.askTruthPrimary} {askCopy.askTruthSecondary}{" "}
+						{askCopy.askTruthNote} {askCopy.askContractPrimary}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
 					<div className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-						Ask contract artifact:{" "}
+						{askCopy.askContractArtifactLabel}:{" "}
 						<code>
 							docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md
 						</code>
 					</div>
 					<Button asChild variant="ghost" size="sm">
-						<Link href="/search">Open raw search →</Link>
+						<Link href="/search">{askCopy.openRawSearchButton} →</Link>
 					</Button>
 				</CardContent>
 			</Card>
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<h2 className="text-xl font-semibold">Ask a grounded question</h2>
+					<h2 className="text-xl font-semibold">{askCopy.askFormTitle}</h2>
 				</CardHeader>
 				<CardContent>
 					<form method="GET" className="grid gap-4 lg:grid-cols-2">
 						<FormInputField
 							id="ask-question"
 							name="question"
-							label="Question"
+							label={askCopy.questionLabel}
 							type="search"
-							placeholder="What changed in the latest runs? Which sources mention agent workflows?"
+							placeholder={askCopy.questionPlaceholder}
 							defaultValue={safeQuestion}
 						/>
 						<FormSelectField
 							name="mode"
-							label="Evidence mode"
+							label={askCopy.groundingModeLabel}
 							defaultValue={safeMode}
-							options={MODE_OPTIONS}
+							options={MODE_OPTIONS.map((option) => ({
+								...option,
+								label:
+									option.value === "keyword"
+										? askCopy.modeOptions.keyword
+										: option.value === "semantic"
+											? askCopy.modeOptions.semantic
+											: askCopy.modeOptions.hybrid,
+							}))}
 						/>
 						<FormInputField
 							id="ask-top-k"
 							name="top_k"
-							label="Evidence budget"
+							label={askCopy.topKLabel}
 							type="number"
 							min={1}
 							max={12}
 							defaultValue={String(safeTopK)}
 						/>
-						<div className="flex items-end">
+						<div className="flex items-end gap-3">
 							<Button type="submit" variant="hero" size="sm">
-								Find grounded evidence
+								{askCopy.askButton}
+							</Button>
+							<Button asChild variant="ghost" size="sm">
+								<Link href="/ask">{askCopy.clearButton}</Link>
 							</Button>
 						</div>
 					</form>

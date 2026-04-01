@@ -441,6 +441,8 @@ const MESSAGES = {
 			askTruthNote: "It does not synthesize a free-form answer layer yet.",
 			searchTruthCta: "Open Ask mode",
 			askTruthCta: "Open Ask details",
+			openRawSearchButton: "Open raw search",
+			askContractArtifactLabel: "Ask contract artifact",
 			searchContractTitle: "Result contract",
 			askContractTitle: "Best current use",
 			searchContractPrimary:
@@ -462,6 +464,7 @@ const MESSAGES = {
 				"Current retrieval request failed. Retry first, then inspect API health if it still fails.",
 			noResults:
 				"No grounded results yet. That usually means the current corpus is empty or the query is too narrow.",
+			groundedEvidenceTitle: "Grounded evidence",
 			openJobTraceButton: "Open job trace",
 			openKnowledgeCardsButton: "Open knowledge cards",
 			openFeedEntryButton: "Open feed entry",
@@ -1127,6 +1130,8 @@ const MESSAGES = {
 			askTruthNote: "当前不会合成一个 free-form answer layer。",
 			searchTruthCta: "打开 Ask mode",
 			askTruthCta: "打开 Ask details",
+			openRawSearchButton: "Open raw search",
+			askContractArtifactLabel: "Ask contract artifact",
 			searchContractTitle: "Result contract",
 			askContractTitle: "Best current use",
 			searchContractPrimary:
@@ -1147,6 +1152,7 @@ const MESSAGES = {
 			requestFailed: "当前 retrieval 请求失败。先重试，再看 API health。",
 			noResults:
 				"当前还没有 grounded results。通常表示语料为空，或查询条件太窄。",
+			groundedEvidenceTitle: "Grounded evidence",
 			openJobTraceButton: "Open job trace",
 			openKnowledgeCardsButton: "Open knowledge cards",
 			openFeedEntryButton: "Open feed entry",
