@@ -192,9 +192,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 		if (safeSource) {
 			query.source = safeSource;
 		}
-		if (
-			CATEGORY_KEYS.includes(category as (typeof CATEGORY_KEYS)[number])
-		) {
+		if (CATEGORY_KEYS.includes(category as (typeof CATEGORY_KEYS)[number])) {
 			query.category = category as (typeof CATEGORY_KEYS)[number];
 		}
 		if (safeFeedback) {
@@ -404,9 +402,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 				<section className="folo-panel folo-surface folo-empty-panel">
 					<p className="folo-empty-title">{copy.emptyTitle}</p>
 					<p className="folo-empty-description">
-						{isFiltered
-							? copy.emptyFiltered
-							: copy.emptyUnfiltered}
+						{isFiltered ? copy.emptyFiltered : copy.emptyUnfiltered}
 					</p>
 					{!isFiltered ? (
 						<Button asChild variant="hero" size="sm" data-interaction="cta">

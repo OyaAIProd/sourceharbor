@@ -54,16 +54,8 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"Codex MCP",
 		"Claude Code MCP",
 	],
-	knowledge: [
-		"knowledge cards",
-		"AI research memory",
-		"job-linked evidence",
-	],
-	ingestRuns: [
-		"ingest ledger",
-		"source intake",
-		"pipeline intake trace",
-	],
+	knowledge: ["knowledge cards", "AI research memory", "job-linked evidence"],
+	ingestRuns: ["ingest ledger", "source intake", "pipeline intake trace"],
 	feed: [
 		"digest feed",
 		"reading flow",
@@ -100,17 +92,8 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"local supervisor proof",
 		"release readiness",
 	],
-	playground: [
-		"sample playground",
-		"demo corpus",
-		"evidence bundle example",
-	],
-	jobs: [
-		"job trace",
-		"pipeline trace",
-		"run compare",
-		"artifact index",
-	],
+	playground: ["sample playground", "demo corpus", "evidence bundle example"],
+	jobs: ["job trace", "pipeline trace", "run compare", "artifact index"],
 	useCases: [
 		"AI research pipeline",
 		"builder workflow",

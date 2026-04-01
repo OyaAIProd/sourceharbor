@@ -213,7 +213,9 @@ export default async function WatchlistsPage({
 							<p>{copy.alertFallback}</p>
 						)}
 						<Button asChild variant="outline" size="sm">
-							<Link href="/settings">{copy.openNotificationSettingsButton}</Link>
+							<Link href="/settings">
+								{copy.openNotificationSettingsButton}
+							</Link>
 						</Button>
 					</CardContent>
 				</Card>

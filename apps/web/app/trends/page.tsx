@@ -60,11 +60,11 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
-				<Card className="folo-surface border-border/70">
-					<CardHeader>
-						<CardTitle>{copy.chooseTitle}</CardTitle>
-						<CardDescription>{copy.chooseDescription}</CardDescription>
-					</CardHeader>
+			<Card className="folo-surface border-border/70">
+				<CardHeader>
+					<CardTitle>{copy.chooseTitle}</CardTitle>
+					<CardDescription>{copy.chooseDescription}</CardDescription>
+				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
 					{watchlists.length === 0 ? (
 						<p className="text-sm text-muted-foreground">{copy.empty}</p>
@@ -95,8 +95,7 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 							{copy.matcherLabel}: {trend.summary.matcher_type} ={" "}
 							<code>{trend.summary.matcher_value}</code> ·{" "}
 							{copy.recentRunsLabel}: {trend.summary.recent_runs} ·{" "}
-							{copy.matchedCardsLabel}:{" "}
-							{trend.summary.matched_cards}
+							{copy.matchedCardsLabel}: {trend.summary.matched_cards}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">

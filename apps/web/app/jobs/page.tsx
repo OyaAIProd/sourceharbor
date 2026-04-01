@@ -90,9 +90,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					{copy.heroSubtitle}
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
@@ -315,9 +313,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 					<section className="grid gap-4 lg:grid-cols-2">
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">
-									{copy.compareTitle}
-								</h2>
+								<h2 className="text-xl font-semibold">{copy.compareTitle}</h2>
 								<CardDescription>{copy.compareDescription}</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-3">
@@ -369,9 +365,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">
-									{copy.knowledgeTitle}
-								</h2>
+								<h2 className="text-xl font-semibold">{copy.knowledgeTitle}</h2>
 								<CardDescription>{copy.knowledgeDescription}</CardDescription>
 							</CardHeader>
 							<CardContent>
@@ -413,20 +407,20 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									</p>
 								) : (
 									<ul className="space-y-2 text-sm">
-												{job.degradations.map((item, index) => {
-													const degradationStatus =
-														typeof item.status === "string"
-															? toDisplayStatus(item.status).label
-															: copy.naValue;
-													return (
-														<li
-															key={`${item.step ?? "unknown"}-${index}`}
-															className="leading-6"
-														>
-															<strong>{item.step ?? copy.unknownValue}</strong>:{" "}
-															{item.reason ?? degradationStatus}
-														</li>
-													);
+										{job.degradations.map((item, index) => {
+											const degradationStatus =
+												typeof item.status === "string"
+													? toDisplayStatus(item.status).label
+													: copy.naValue;
+											return (
+												<li
+													key={`${item.step ?? "unknown"}-${index}`}
+													className="leading-6"
+												>
+													<strong>{item.step ?? copy.unknownValue}</strong>:{" "}
+													{item.reason ?? degradationStatus}
+												</li>
+											);
 										})}
 									</ul>
 								)}

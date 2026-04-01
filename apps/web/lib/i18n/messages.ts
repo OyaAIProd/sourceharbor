@@ -410,8 +410,7 @@ const MESSAGES = {
 			clearButton: "Clear",
 			retryCurrentPageButton: "Retry current page",
 			emptyTitle: "No AI digest entries yet",
-			emptyFiltered:
-				"No results match the current filters. Try clearing them.",
+			emptyFiltered: "No results match the current filters. Try clearing them.",
 			emptyUnfiltered:
 				"There are no processed videos or articles yet. Add a subscription and trigger intake first.",
 			goToSubscriptionsButton: "Go to subscriptions",
@@ -1222,8 +1221,7 @@ const MESSAGES = {
 			clearButton: "Clear",
 			retryCurrentPageButton: "Retry current page",
 			emptyTitle: "No AI digest entries yet",
-			emptyFiltered:
-				"没有条目匹配当前过滤条件。可以先清空过滤器再试。",
+			emptyFiltered: "没有条目匹配当前过滤条件。可以先清空过滤器再试。",
 			emptyUnfiltered:
 				"当前还没有处理完成的视频或文章。先添加订阅，再触发 intake。",
 			goToSubscriptionsButton: "Go to subscriptions",
@@ -1296,8 +1294,7 @@ const MESSAGES = {
 			currentTitle: "Current subscriptions",
 			loadedPrefix: "Loaded",
 			loadedSuffix: "subscriptions.",
-			currentDescription:
-				"可一次选择多行做批量分类更新。操作条会出现在底部。",
+			currentDescription: "可一次选择多行做批量分类更新。操作条会出现在底部。",
 			platformOptions: {
 				youtube: "YouTube",
 				bilibili: "Bilibili",
@@ -1416,7 +1413,8 @@ const MESSAGES = {
 			saveDescription:
 				"当前支持 `topic_key`、`claim_kind`、`platform` 和 `source_match`。Wave 1 先做 persistent tracking，再把更深的 external alerts 接进来。",
 			nameLabel: "名称",
-			namePlaceholder: "重试策略、AI workflow、YouTube AI 频道、Claude Code 更新...",
+			namePlaceholder:
+				"重试策略、AI workflow、YouTube AI 频道、Claude Code 更新...",
 			watchTypeLabel: "追踪类型",
 			matcherValueLabel: "匹配值",
 			matcherValuePlaceholder:

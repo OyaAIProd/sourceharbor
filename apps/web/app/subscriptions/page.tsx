@@ -40,11 +40,7 @@ type SubscriptionsPageProps = {
 };
 
 const PLATFORM_KEYS = ["youtube", "bilibili"] as const;
-const SOURCE_TYPE_KEYS = [
-	"url",
-	"youtube_channel_id",
-	"bilibili_uid",
-] as const;
+const SOURCE_TYPE_KEYS = ["url", "youtube_channel_id", "bilibili_uid"] as const;
 const ADAPTER_TYPE_KEYS = ["rsshub_route", "rss_generic"] as const;
 const CATEGORY_KEYS = ["misc", "tech", "creator", "macro", "ops"] as const;
 
@@ -77,25 +73,25 @@ export default async function SubscriptionsPage({
 	const copy = getLocaleMessages().subscriptionsPage;
 	const platformOptions = PLATFORM_KEYS.map((value) => ({
 		value,
-		label: copy.platformOptions[
-			value as keyof typeof copy.platformOptions
-		],
+		label: copy.platformOptions[value as keyof typeof copy.platformOptions],
 	}));
 	const sourceTypeOptions = SOURCE_TYPE_KEYS.map((value) => ({
 		value,
-		label: copy.sourceTypeOptions[
-			value === "url"
-				? "url"
-				: value === "youtube_channel_id"
-					? "youtubeChannelId"
-					: "bilibiliUid"
-		],
+		label:
+			copy.sourceTypeOptions[
+				value === "url"
+					? "url"
+					: value === "youtube_channel_id"
+						? "youtubeChannelId"
+						: "bilibiliUid"
+			],
 	}));
 	const adapterTypeOptions = ADAPTER_TYPE_KEYS.map((value) => ({
 		value,
-		label: copy.adapterTypeOptions[
-			value === "rsshub_route" ? "rsshubRoute" : "rssGeneric"
-		],
+		label:
+			copy.adapterTypeOptions[
+				value === "rsshub_route" ? "rsshubRoute" : "rssGeneric"
+			],
 	}));
 	const categoryOptions = CATEGORY_KEYS.map((value) => ({
 		value,
@@ -256,8 +252,7 @@ export default async function SubscriptionsPage({
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								{copy.loadedPrefix} {subscriptions.length}{" "}
-								{copy.loadedSuffix}
+								{copy.loadedPrefix} {subscriptions.length} {copy.loadedSuffix}
 							</output>
 							<p className="text-sm text-muted-foreground">
 								{copy.currentDescription}

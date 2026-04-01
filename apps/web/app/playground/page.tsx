@@ -199,7 +199,8 @@ export default async function PlaygroundPage() {
 								{sample.example_trend.watchlist_name}
 							</p>
 							<p>
-								{copy.recentRunsLabel}: {sample.example_trend.recent_runs.length}
+								{copy.recentRunsLabel}:{" "}
+								{sample.example_trend.recent_runs.length}
 							</p>
 						</div>
 					</CardContent>
