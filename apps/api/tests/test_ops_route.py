@@ -126,6 +126,26 @@ def test_ops_inbox_route_sanitizes_internal_errors(monkeypatch) -> None:
     response = client.get("/api/v1/ops/inbox")
 
     assert response.status_code == 503
-    assert response.json()["detail"].startswith("ops inbox unavailable:")
-    assert "***REDACTED***" in response.json()["detail"]
+    assert response.json()["detail"] == "ops inbox unavailable"
+    assert "***REDACTED***" not in response.json()["detail"]
     assert "super-secret" not in response.json()["detail"]
+
+
+def test_ops_inbox_route_uses_generic_bad_request_detail(monkeypatch) -> None:
+    from apps.api.app.routers import ops as ops_router
+
+    class InvalidOpsService:
+        def __init__(self, db) -> None:  # noqa: ANN001
+            self.db = db
+
+        def get_inbox(self, *, limit=5, window_hours=24):  # noqa: ANN001
+            del limit, window_hours
+            raise ValueError("window_hours invalid for ops@example.com?token=secret-value")
+
+    monkeypatch.setattr(ops_router, "OpsService", InvalidOpsService)
+
+    client = TestClient(app)
+    response = client.get("/api/v1/ops/inbox")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "invalid ops inbox request"
