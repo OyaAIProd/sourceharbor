@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..db import get_db
+from ..security import sanitize_exception_detail
 from ..services.ops import OpsService
 
 router = APIRouter(prefix="/api/v1/ops", tags=["ops"])
@@ -16,4 +17,12 @@ def get_ops_inbox(
     db: Session = Depends(get_db),
 ):
     service = OpsService(db)
-    return service.get_inbox(limit=limit, window_hours=window_hours)
+    try:
+        return service.get_inbox(limit=limit, window_hours=window_hours)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=sanitize_exception_detail(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"ops inbox unavailable: {sanitize_exception_detail(exc)}",
+        ) from exc

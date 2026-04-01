@@ -105,3 +105,27 @@ def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
     payload = response.json()
     assert payload["overview"]["failed_jobs"] == 1
     assert payload["gates"]["retrieval"]["status"] == "blocked"
+
+
+def test_ops_inbox_route_sanitizes_internal_errors(monkeypatch) -> None:
+    from apps.api.app.routers import ops as ops_router
+
+    class ExplodingOpsService:
+        def __init__(self, db) -> None:  # noqa: ANN001
+            self.db = db
+
+        def get_inbox(self, *, limit=5, window_hours=24):  # noqa: ANN001
+            del limit, window_hours
+            raise RuntimeError(
+                "db password=postgresql://ops:super-secret@127.0.0.1:5432/sourceharbor"
+            )
+
+    monkeypatch.setattr(ops_router, "OpsService", ExplodingOpsService)
+
+    client = TestClient(app)
+    response = client.get("/api/v1/ops/inbox")
+
+    assert response.status_code == 503
+    assert response.json()["detail"].startswith("ops inbox unavailable:")
+    assert "***REDACTED***" in response.json()["detail"]
+    assert "super-secret" not in response.json()["detail"]
