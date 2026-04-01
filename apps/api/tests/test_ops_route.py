@@ -34,10 +34,30 @@ def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
                 "notification_deliveries": {"status": "ok", "total": 0, "error": None, "items": []},
                 "provider_health": {"window_hours": window_hours, "providers": []},
                 "gates": {
-                    "retrieval": {"status": "blocked", "summary": "x", "next_step": "x", "details": {}},
-                    "notifications": {"status": "warn", "summary": "x", "next_step": "x", "details": {}},
-                    "ui_audit": {"status": "ready", "summary": "x", "next_step": "x", "details": {}},
-                    "computer_use": {"status": "blocked", "summary": "x", "next_step": "x", "details": {}},
+                    "retrieval": {
+                        "status": "blocked",
+                        "summary": "x",
+                        "next_step": "x",
+                        "details": {},
+                    },
+                    "notifications": {
+                        "status": "warn",
+                        "summary": "x",
+                        "next_step": "x",
+                        "details": {},
+                    },
+                    "ui_audit": {
+                        "status": "ready",
+                        "summary": "x",
+                        "next_step": "x",
+                        "details": {},
+                    },
+                    "computer_use": {
+                        "status": "blocked",
+                        "summary": "x",
+                        "next_step": "x",
+                        "details": {},
+                    },
                 },
                 "inbox_items": [],
             }
@@ -59,9 +79,19 @@ def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
             "provider_health": {"window_hours": 24, "providers": []},
             "gates": {
                 "retrieval": {"status": "blocked", "summary": "x", "next_step": "x", "details": {}},
-                "notifications": {"status": "warn", "summary": "x", "next_step": "x", "details": {}},
+                "notifications": {
+                    "status": "warn",
+                    "summary": "x",
+                    "next_step": "x",
+                    "details": {},
+                },
                 "ui_audit": {"status": "ready", "summary": "x", "next_step": "x", "details": {}},
-                "computer_use": {"status": "blocked", "summary": "x", "next_step": "x", "details": {}},
+                "computer_use": {
+                    "status": "blocked",
+                    "summary": "x",
+                    "next_step": "x",
+                    "details": {},
+                },
             },
             "inbox_items": [],
         },

@@ -55,10 +55,7 @@ def test_resolve_runtime_route_value_with_sources_prefers_snapshot_over_loaded_d
         encoding="utf-8",
     )
     (tmp_path / ".runtime-cache" / "run" / "full-stack" / "resolved.env").write_text(
-        (
-            "export API_PORT='18000'\n"
-            "export SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:18000'\n"
-        ),
+        ("export API_PORT='18000'\nexport SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:18000'\n"),
         encoding="utf-8",
     )
 
@@ -113,9 +110,7 @@ def test_wave0_local_env_defaults_use_isolated_core_postgres_and_worker_queue() 
 
 
 def test_full_stack_uses_runtime_snapshot_for_data_plane_and_worker_signature() -> None:
-    script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(
-        encoding="utf-8"
-    )
+    script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(encoding="utf-8")
 
     assert 'inherited_api_port="${API_PORT-}"' in script
     assert 'resolve_runtime_route_value_with_sources "$ROOT_DIR" "API_PORT"' in script
@@ -138,9 +133,7 @@ def test_full_stack_uses_runtime_snapshot_for_data_plane_and_worker_signature() 
 
 
 def test_full_stack_uses_python_detach_fallback_when_setsid_is_missing() -> None:
-    script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(
-        encoding="utf-8"
-    )
+    script = (_repo_root() / "scripts" / "runtime" / "full_stack.sh").read_text(encoding="utf-8")
 
     assert "launch_detached_process()" in script
     assert 'nohup setsid "$@" >"$log_file" 2>&1 < /dev/null &' in script
@@ -265,10 +258,7 @@ def test_smoke_full_stack_prefers_runtime_snapshot_over_loaded_env_defaults(
         encoding="utf-8",
     )
     (tmp_path / ".runtime-cache" / "run" / "full-stack" / "resolved.env").write_text(
-        (
-            "export SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:18000'\n"
-            "export WEB_PORT='13000'\n"
-        ),
+        ("export SOURCE_HARBOR_API_BASE_URL='http://127.0.0.1:18000'\nexport WEB_PORT='13000'\n"),
         encoding="utf-8",
     )
 

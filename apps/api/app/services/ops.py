@@ -162,12 +162,12 @@ def build_notifications_gate(
         "status": "ready",
         "summary": "Notification send path, recipient config, and provider secrets are all present.",
         "next_step": "Run a minimal live test send and confirm the delivery record moves to sent.",
-            "details": {
-                "notification_enabled": notification_enabled,
-                "config_enabled": config_enabled,
-                "resend_api_key_present": resend_api_key_present,
-                "resend_from_email_present": resend_from_email_present,
-                "to_email_present": True,
+        "details": {
+            "notification_enabled": notification_enabled,
+            "config_enabled": config_enabled,
+            "resend_api_key_present": resend_api_key_present,
+            "resend_from_email_present": resend_from_email_present,
+            "to_email_present": True,
         },
     }
 
@@ -538,7 +538,9 @@ class OpsService:
                     severity=severity,
                     title=str(job.get("title") or "Failed job"),
                     detail=str(detail),
-                    status_label=str(job.get("pipeline_final_status") or job.get("status") or "unknown"),
+                    status_label=str(
+                        job.get("pipeline_final_status") or job.get("status") or "unknown"
+                    ),
                     last_seen_at=job.get("updated_at"),
                     href=f"/jobs?job_id={job.get('id')}",
                     action_label="查看任务",

@@ -247,7 +247,9 @@ class WatchlistsService:
                     {
                         "id": str(item.get("id") or "").strip(),
                         "name": str(item.get("name") or "").strip(),
-                        "matcher_type": self._normalize_matcher_type(str(item.get("matcher_type") or "")),
+                        "matcher_type": self._normalize_matcher_type(
+                            str(item.get("matcher_type") or "")
+                        ),
                         "matcher_value": str(item.get("matcher_value") or "").strip(),
                         "delivery_channel": self._normalize_delivery_channel(
                             str(item.get("delivery_channel") or "")
@@ -259,7 +261,11 @@ class WatchlistsService:
                 )
             except ValueError:
                 continue
-        return [item for item in normalized_items if item["id"] and item["name"] and item["matcher_value"]]
+        return [
+            item
+            for item in normalized_items
+            if item["id"] and item["name"] and item["matcher_value"]
+        ]
 
     def _write_watchlists(self, config: NotificationConfig, items: list[dict[str, Any]]) -> None:
         raw = config.category_rules if isinstance(config.category_rules, dict) else {}
@@ -276,7 +282,9 @@ class WatchlistsService:
             return normalized
 
         category_rules = {
-            key: value for key, value in raw.items() if isinstance(value, dict) and key != "watchlists"
+            key: value
+            for key, value in raw.items()
+            if isinstance(value, dict) and key != "watchlists"
         }
         normalized: dict[str, Any] = {"category_rules": category_rules}
         default_rule = raw.get("default_rule")
