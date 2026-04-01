@@ -116,9 +116,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 									: "agent workflow, retry policy, knowledge cards..."
 							}
 							defaultValue={queryValue}
-							hint={
-								askIntent ? copy.askHint : copy.searchHint
-							}
+							hint={askIntent ? copy.askHint : copy.searchHint}
 						/>
 						<FormSelectField
 							name="mode"
@@ -164,17 +162,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 						</h2>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
+						<p>{askIntent ? copy.askTruthPrimary : copy.searchTruthPrimary}</p>
 						<p>
-							{askIntent ? copy.askTruthPrimary : copy.searchTruthPrimary}
+							{askIntent ? copy.askTruthSecondary : copy.searchTruthSecondary}
 						</p>
-						<p>
-							{askIntent
-								? copy.askTruthSecondary
-								: copy.searchTruthSecondary}
-						</p>
-						{askIntent ? (
-							<p>{copy.askTruthNote}</p>
-						) : null}
+						{askIntent ? <p>{copy.askTruthNote}</p> : null}
 						<Button asChild variant="outline" size="sm">
 							<Link href={askIntent ? "/ask" : "/ask"}>
 								{askIntent ? copy.askTruthCta : copy.searchTruthCta}
@@ -190,9 +182,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
 						<p>
-							{askIntent
-								? copy.askContractPrimary
-								: copy.searchContractPrimary}
+							{askIntent ? copy.askContractPrimary : copy.searchContractPrimary}
 						</p>
 						<p>
 							{askIntent
@@ -223,9 +213,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 						</p>
 					) : null}
 					{!error && queryValue && results.length === 0 ? (
-						<p className="text-sm text-muted-foreground">
-							{copy.noResults}
-						</p>
+						<p className="text-sm text-muted-foreground">{copy.noResults}</p>
 					) : null}
 					{results.map((item, index) => (
 						<Card

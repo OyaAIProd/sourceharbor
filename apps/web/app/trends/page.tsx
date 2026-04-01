@@ -64,9 +64,7 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
 					{watchlists.length === 0 ? (
-						<p className="text-sm text-muted-foreground">
-							{copy.empty}
-						</p>
+						<p className="text-sm text-muted-foreground">{copy.empty}</p>
 					) : (
 						watchlists.map((item) => (
 							<Button

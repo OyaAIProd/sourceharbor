@@ -52,7 +52,8 @@ const MESSAGES = {
 			error: {
 				buttonLabel: "Sync failed, retry",
 				badgeLabel: "Retry needed",
-				statusLabel: "Sync failed. Check the network or API health, then retry.",
+				statusLabel:
+					"Sync failed. Check the network or API health, then retry.",
 				liveStatusLabel:
 					"Sync failed. Check the network or API health, then retry.",
 				retryTitle: "Sync failed. Press Enter or Space to retry.",
@@ -284,12 +285,12 @@ const MESSAGES = {
 			savePending: "Saving…",
 			saveStatus: "Saving notification settings. Please wait.",
 			testSectionTitle: "Send test notification",
-			testRecipientDescription:
-				"Current default recipient: {email}",
+			testRecipientDescription: "Current default recipient: {email}",
 			testRecipientMissing:
 				"Current default recipient: not set yet. Add one above before sending a test message.",
 			overrideRecipientLabel: "Override recipient (optional)",
-			overrideRecipientPlaceholder: "Leave blank to use the configured recipient",
+			overrideRecipientPlaceholder:
+				"Leave blank to use the configured recipient",
 			subjectLabel: "Subject (optional)",
 			subjectPlaceholder: "SourceHarbor test notification",
 			bodyLabel: "Body (optional)",
@@ -407,7 +408,8 @@ const MESSAGES = {
 			searchResultsPrefix: "Showing cited retrieval results",
 			askResultsPrefix: "Evidence candidates",
 			searchRunPrompt: "Run a query to inspect grounded retrieval results.",
-			askRunPrompt: "Run a grounded question to inspect grounded retrieval results.",
+			askRunPrompt:
+				"Run a grounded question to inspect grounded retrieval results.",
 			requestFailed:
 				"Current retrieval request failed. Retry first, then inspect API health if it still fails.",
 			noResults:
@@ -483,8 +485,7 @@ const MESSAGES = {
 		formValidation: {
 			required: "请先填写并修正必填项后再提交。",
 			requireOne: "请至少填写一项必填来源后再提交。",
-			requireOneExclusive:
-				"当前只能填写一项来源，请清空多余输入后再提交。",
+			requireOneExclusive: "当前只能填写一项来源，请清空多余输入后再提交。",
 		},
 		loading: {
 			app: { title: "页面加载中", message: "正在加载首页内容，请稍候。" },
@@ -686,7 +687,8 @@ const MESSAGES = {
 				},
 				failedJobs: {
 					title: "失败任务",
-					description: "这些任务应该优先把你送回 job trace，而不是先去别的地方猜。",
+					description:
+						"这些任务应该优先把你送回 job trace，而不是先去别的地方猜。",
 				},
 				failedIngest: {
 					title: "失败摄取",
@@ -694,7 +696,8 @@ const MESSAGES = {
 				},
 				notificationGate: {
 					title: "通知 / Gate",
-					description: "通知 readiness、provider health 和 hardening gate 的合计。",
+					description:
+						"通知 readiness、provider health 和 hardening gate 的合计。",
 				},
 			},
 			inbox: {
@@ -837,8 +840,7 @@ const MESSAGES = {
 				"`keyword` 目前最稳。`semantic` 和 `hybrid` 已接线，但仍按 experimental 呈现。",
 			askFormDescription:
 				"先把问题收敛成 cited retrieval，再跳回 job trace、knowledge cards 和原始来源。",
-			searchHint:
-				"每条结果都应该能回跳到 job trace、knowledge 或 source URL。",
+			searchHint: "每条结果都应该能回跳到 job trace、knowledge 或 source URL。",
 			askHint: "这个 MVP 先返回 grounded evidence candidates。",
 			searchTruthTitle: "Current truth",
 			askTruthTitle: "Grounded Ask mode",
@@ -868,9 +870,11 @@ const MESSAGES = {
 			searchResultsPrefix: "Showing cited retrieval results",
 			askResultsPrefix: "Evidence candidates",
 			searchRunPrompt: "先跑一个 query，再检查 grounded retrieval results。",
-			askRunPrompt: "先跑一个 grounded question，再检查 grounded retrieval results。",
+			askRunPrompt:
+				"先跑一个 grounded question，再检查 grounded retrieval results。",
 			requestFailed: "当前 retrieval 请求失败。先重试，再看 API health。",
-			noResults: "当前还没有 grounded results。通常表示语料为空，或查询条件太窄。",
+			noResults:
+				"当前还没有 grounded results。通常表示语料为空，或查询条件太窄。",
 			experimentalMode: "experimental mode",
 		},
 		watchlistsPage: {
@@ -966,11 +970,16 @@ function mergeMessages<T extends Record<string, unknown>>(
 	return output as T;
 }
 
-export function getLocaleMessages(locale: SupportedLocale = DEFAULT_LOCALE): AppMessages {
+export function getLocaleMessages(
+	locale: SupportedLocale = DEFAULT_LOCALE,
+): AppMessages {
 	if (locale === "en") {
 		return MESSAGES.en;
 	}
-	return mergeMessages(MESSAGES.en, MESSAGES[locale] as Record<string, unknown>);
+	return mergeMessages(
+		MESSAGES.en,
+		MESSAGES[locale] as Record<string, unknown>,
+	);
 }
 
 export function formatCountPattern(pattern: string, count: number): string {

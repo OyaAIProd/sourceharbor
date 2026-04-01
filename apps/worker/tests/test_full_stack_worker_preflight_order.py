@@ -79,6 +79,15 @@ def _wait_for_tcp_ready(port: int, *, timeout_seconds: float = 2.0) -> None:
     raise AssertionError(f"temporary TCP server on port {port} did not become ready")
 
 
+def _wait_for_path_absent(path: Path, *, timeout_seconds: float = 2.0) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        if not path.exists():
+            return
+        time.sleep(0.05)
+    raise AssertionError(f"path still exists after timeout: {path}")
+
+
 def test_full_stack_up_fails_worker_env_preflight_before_any_service_start(
     tmp_path: Path,
 ) -> None:
@@ -277,7 +286,7 @@ PY
     worker_pid = tmp_path / ".runtime-cache" / "run" / "full-stack" / "worker.pid"
     last_failure_reason = tmp_path / ".runtime-cache" / "run" / "full-stack" / "last_failure_reason"
 
-    assert not worker_pid.exists()
+    _wait_for_path_absent(worker_pid)
     if last_failure_reason.exists():
         failure_text = last_failure_reason.read_text(encoding="utf-8")
         assert (

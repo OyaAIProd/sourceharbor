@@ -256,7 +256,9 @@ export default async function IngestRunsPage({
 									</table>
 								</div>
 							) : (
-								<p className="text-sm text-muted-foreground">{copy.detailEmpty}</p>
+								<p className="text-sm text-muted-foreground">
+									{copy.detailEmpty}
+								</p>
 							)}
 						</CardContent>
 					</Card>

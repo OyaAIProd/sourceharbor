@@ -151,7 +151,9 @@ describe("SyncNowButton", () => {
 		);
 
 		await act(async () => {
-			fireEvent.click(screen.getByRole("button", { name: "Sync failed, retry" }));
+			fireEvent.click(
+				screen.getByRole("button", { name: "Sync failed, retry" }),
+			);
 		});
 
 		await waitFor(() =>
@@ -203,14 +205,18 @@ describe("SyncNowButton", () => {
 			resolveFirstSync();
 		});
 
-		const doneButton = await screen.findByRole("button", { name: "Sync complete" });
+		const doneButton = await screen.findByRole("button", {
+			name: "Sync complete",
+		});
 		expect(doneButton).toHaveAttribute("data-variant", "success");
 		expect(doneButton).toHaveAttribute("data-feedback-state", "done");
 		const doneHint = document.querySelector(
 			'[data-part="status-hint"][data-state="done"]',
 		);
 		expect(doneHint).not.toBeNull();
-		expect(doneHint).toHaveTextContent("Sync complete. Refreshing the list next.");
+		expect(doneHint).toHaveTextContent(
+			"Sync complete. Refreshing the list next.",
+		);
 		expect(doneHint).not.toHaveClass("status-chip-feedback");
 
 		const idleButton = await screen.findByRole(

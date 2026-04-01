@@ -151,9 +151,6 @@ describe("ops inbox page", () => {
 			within(inboxSection as HTMLElement).getByRole("link", {
 				name: "Open job →",
 			}),
-		).toHaveAttribute(
-			"href",
-			"/jobs?job_id=job-1",
-		);
+		).toHaveAttribute("href", "/jobs?job_id=job-1");
 	});
 });

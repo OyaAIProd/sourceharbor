@@ -118,9 +118,7 @@ export function SyncNowButton({ sessionToken }: SyncNowButtonProps) {
 				data-state={state}
 				data-feedback-state={state}
 				data-interaction="cta"
-				title={
-					state === "error" ? copy.error.retryTitle : undefined
-				}
+				title={state === "error" ? copy.error.retryTitle : undefined}
 			>
 				<span
 					className="inline-flex items-center gap-2"

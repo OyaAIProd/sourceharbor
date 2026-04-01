@@ -11,9 +11,9 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
-import { getLocaleMessages } from "@/lib/i18n/messages";
 import type { OpsGate, OpsInboxItem, OpsInboxResponse } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 
 export const metadata: Metadata = {
 	title: "Ops Inbox",
@@ -156,7 +156,12 @@ function buildNextSteps(
 ): OpsNextStep[] {
 	const steps: OpsNextStep[] = [];
 	const pushStep = (step: OpsNextStep) => {
-		if (steps.some((existing) => existing.title === step.title && existing.href === step.href)) {
+		if (
+			steps.some(
+				(existing) =>
+					existing.title === step.title && existing.href === step.href,
+			)
+		) {
 			return;
 		}
 		steps.push(step);
@@ -388,11 +393,21 @@ export default async function OpsPage() {
 										className="rounded-lg border border-border/60 bg-muted/20 p-3"
 									>
 										<div className="flex items-center justify-between gap-3">
-											<p className="font-medium text-foreground">{step.title}</p>
-											<ReadinessBadge label={step.status} status={step.status} />
+											<p className="font-medium text-foreground">
+												{step.title}
+											</p>
+											<ReadinessBadge
+												label={step.status}
+												status={step.status}
+											/>
 										</div>
 										<p>{step.detail}</p>
-										<Button asChild variant="link" size="sm" className="mt-2 h-auto px-0">
+										<Button
+											asChild
+											variant="link"
+											size="sm"
+											className="mt-2 h-auto px-0"
+										>
 											<Link href={step.href}>{step.actionLabel} →</Link>
 										</Button>
 									</li>

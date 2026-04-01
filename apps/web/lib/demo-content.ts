@@ -82,7 +82,10 @@ export const USE_CASE_PAGES = {
 		],
 		links: [
 			{ href: "/mcp", label: "Open MCP quickstart" },
-			{ href: "/use-cases/research-pipeline", label: "Open research pipeline use case" },
+			{
+				href: "/use-cases/research-pipeline",
+				label: "Open research pipeline use case",
+			},
 			{ href: "/playground", label: "Open sample playground" },
 		],
 	},

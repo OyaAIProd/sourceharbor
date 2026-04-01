@@ -110,8 +110,14 @@ export default async function SettingsPage({
 					{config ? (
 						<CardDescription>
 							{copy.configDates
-								.replace("{createdAt}", formatDateTime(config.created_at) || "-")
-								.replace("{updatedAt}", formatDateTime(config.updated_at) || "-")}
+								.replace(
+									"{createdAt}",
+									formatDateTime(config.created_at) || "-",
+								)
+								.replace(
+									"{updatedAt}",
+									formatDateTime(config.updated_at) || "-",
+								)}
 						</CardDescription>
 					) : null}
 				</CardHeader>
@@ -162,7 +168,10 @@ export default async function SettingsPage({
 							label={copy.failureAlertLabel}
 							defaultChecked={config?.failure_alert_enabled ?? true}
 						/>
-						<SubmitButton pendingLabel={copy.savePending} statusText={copy.saveStatus}>
+						<SubmitButton
+							pendingLabel={copy.savePending}
+							statusText={copy.saveStatus}
+						>
 							{copy.saveButton}
 						</SubmitButton>
 					</form>
@@ -174,7 +183,10 @@ export default async function SettingsPage({
 					<h2 className="text-xl font-semibold">{copy.testSectionTitle}</h2>
 					<CardDescription>
 						{config?.to_email
-							? copy.testRecipientDescription.replace("{email}", config.to_email)
+							? copy.testRecipientDescription.replace(
+									"{email}",
+									config.to_email,
+								)
 							: copy.testRecipientMissing}
 					</CardDescription>
 				</CardHeader>
@@ -201,7 +213,9 @@ export default async function SettingsPage({
 							placeholder={copy.subjectPlaceholder}
 						/>
 						<FormField>
-							<FormFieldLabel htmlFor="test_body">{copy.bodyLabel}</FormFieldLabel>
+							<FormFieldLabel htmlFor="test_body">
+								{copy.bodyLabel}
+							</FormFieldLabel>
 							<Textarea
 								id="test_body"
 								name="body"
@@ -209,7 +223,10 @@ export default async function SettingsPage({
 								placeholder={copy.bodyPlaceholder}
 							/>
 						</FormField>
-						<SubmitButton pendingLabel={copy.sendPending} statusText={copy.sendStatus}>
+						<SubmitButton
+							pendingLabel={copy.sendPending}
+							statusText={copy.sendStatus}
+						>
 							{copy.sendButton}
 						</SubmitButton>
 					</form>

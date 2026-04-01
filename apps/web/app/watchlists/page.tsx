@@ -219,13 +219,9 @@ export default async function WatchlistsPage({
 				</CardHeader>
 				<CardContent className="space-y-3">
 					{watchlistsResult.error ? (
-						<p className="text-sm text-muted-foreground">
-							{copy.currentError}
-						</p>
+						<p className="text-sm text-muted-foreground">{copy.currentError}</p>
 					) : watchlists.length === 0 ? (
-						<p className="text-sm text-muted-foreground">
-							{copy.currentEmpty}
-						</p>
+						<p className="text-sm text-muted-foreground">{copy.currentEmpty}</p>
 					) : (
 						<ul className="space-y-3">
 							{watchlists.map((item) => (
@@ -289,7 +285,7 @@ export default async function WatchlistsPage({
 			{trendWatchlist && trendResult.payload ? (
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-					<CardTitle>Recent movement</CardTitle>
+						<CardTitle>Recent movement</CardTitle>
 						<CardDescription>{copy.recentMovementDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">

@@ -124,9 +124,10 @@ describe("search and MCP front doors", () => {
 		expect(
 			screen.getByText("sourceharbor.retrieval.search"),
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole("link", { name: "Open Search" }),
-		).toHaveAttribute("href", "/search");
+		expect(screen.getByRole("link", { name: "Open Search" })).toHaveAttribute(
+			"href",
+			"/search",
+		);
 		expect(screen.getByRole("link", { name: "Open Ask" })).toHaveAttribute(
 			"href",
 			"/ask",

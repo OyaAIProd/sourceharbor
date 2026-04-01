@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-import os
-
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-os.environ["DATABASE_URL"] = "sqlite:////tmp/sourceharbor-watchlists-route.db"
-os.environ["TEMPORAL_TARGET_HOST"] = "127.0.0.1:7233"
-os.environ["TEMPORAL_NAMESPACE"] = "default"
-os.environ["TEMPORAL_TASK_QUEUE"] = "sourceharbor-worker"
-os.environ["SQLITE_STATE_PATH"] = "/tmp/sourceharbor-watchlists-route-state.db"
-
-from apps.api.app.main import app
 
 
 def test_watchlists_routes(monkeypatch) -> None:
+    from apps.api.app.db import get_db
     from apps.api.app.routers import watchlists as watchlists_router
 
     class StubWatchlistsService:
@@ -96,6 +88,13 @@ def test_watchlists_routes(monkeypatch) -> None:
     )
     monkeypatch.setattr(watchlists_router, "WatchlistsService", StubWatchlistsService)
 
+    def _fake_db():
+        return object()
+
+    app = FastAPI()
+    app.include_router(watchlists_router.router)
+    app.dependency_overrides[get_db] = _fake_db
+
     client = TestClient(app)
     list_response = client.get("/api/v1/watchlists")
     assert list_response.status_code == 200
@@ -104,3 +103,77 @@ def test_watchlists_routes(monkeypatch) -> None:
     trend_response = client.get("/api/v1/watchlists/wl-1/trend")
     assert trend_response.status_code == 200
     assert trend_response.json()["summary"]["recent_runs"] == 2
+
+
+def test_watchlists_upsert_maps_value_error_to_400(monkeypatch) -> None:
+    from apps.api.app.db import get_db
+    from apps.api.app.routers import watchlists as watchlists_router
+
+    class StubWatchlistsService:
+        def __init__(self, db) -> None:  # noqa: ANN001
+            self.db = db
+
+        def upsert_watchlist(self, **kwargs):  # noqa: ANN003
+            raise ValueError("invalid matcher_type")
+
+    def _fake_db():
+        return object()
+
+    def _allow_write():
+        return None
+
+    app = FastAPI()
+    app.include_router(watchlists_router.router)
+    app.dependency_overrides[get_db] = _fake_db
+    app.dependency_overrides[watchlists_router.require_write_access] = _allow_write
+    monkeypatch.setattr(watchlists_router, "WatchlistsService", StubWatchlistsService)
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/watchlists",
+        json={
+            "name": "Retry policy",
+            "matcher_type": "topic_key",
+            "matcher_value": "retry-policy",
+            "delivery_channel": "dashboard",
+            "enabled": True,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "invalid matcher_type"
+
+
+def test_watchlists_delete_and_trend_return_404_when_missing(monkeypatch) -> None:
+    from apps.api.app.db import get_db
+    from apps.api.app.routers import watchlists as watchlists_router
+
+    class StubWatchlistsService:
+        def __init__(self, db) -> None:  # noqa: ANN001
+            self.db = db
+
+        def delete_watchlist(self, *, watchlist_id: str) -> bool:
+            return False
+
+        def get_watchlist_trend(self, *, watchlist_id, limit_runs=3, limit_cards=18):  # noqa: ANN001
+            return None
+
+    def _fake_db():
+        return object()
+
+    def _allow_write():
+        return None
+
+    app = FastAPI()
+    app.include_router(watchlists_router.router)
+    app.dependency_overrides[get_db] = _fake_db
+    app.dependency_overrides[watchlists_router.require_write_access] = _allow_write
+    monkeypatch.setattr(watchlists_router, "WatchlistsService", StubWatchlistsService)
+
+    client = TestClient(app)
+
+    delete_response = client.delete("/api/v1/watchlists/wl-missing")
+    assert delete_response.status_code == 404
+
+    trend_response = client.get("/api/v1/watchlists/wl-missing/trend")
+    assert trend_response.status_code == 404

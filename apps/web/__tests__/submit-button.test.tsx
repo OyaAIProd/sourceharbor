@@ -74,7 +74,11 @@ describe("SubmitButton", () => {
 	it("falls back to pending label when statusText is omitted", () => {
 		useFormStatusMock.mockReturnValue({ pending: true });
 
-		render(<SubmitButton pendingLabel="Creating job…">Start processing</SubmitButton>);
+		render(
+			<SubmitButton pendingLabel="Creating job…">
+				Start processing
+			</SubmitButton>,
+		);
 
 		expect(screen.getByRole("status")).toHaveTextContent("Creating job…");
 	});

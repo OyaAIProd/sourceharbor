@@ -26,6 +26,8 @@ class _JobsRepoStub:
         self.db = SimpleNamespace(execute=lambda *_args, **_kwargs: None, rollback=lambda: None)
 
     def get(self, job_id: uuid.UUID) -> object:
+        if self.job is None:
+            return None
         self.job.job_id = job_id
         return self.job
 
@@ -40,6 +42,75 @@ class _JobsRepoStub:
     def get_artifact_digest_md_by_video_url(self, *, video_url: str) -> str | None:
         self.last_digest_video_url = video_url
         return self.digest_by_url_path
+
+
+def test_build_evidence_bundle_returns_none_when_job_is_missing() -> None:
+    service = _service()
+    repo = _JobsRepoStub()
+    repo.job = None
+    service.repo = repo
+
+    assert service.build_evidence_bundle(job_id=uuid.uuid4()) is None
+
+
+def test_build_evidence_bundle_uses_current_helpers_and_shapes_payload() -> None:
+    service = _service()
+    job_id = uuid.uuid4()
+    row = SimpleNamespace(
+        id=job_id,
+        video_id=uuid.uuid4(),
+        kind="video_digest_v1",
+        status="succeeded",
+        mode="full",
+        created_at=jobs_module.datetime.now(jobs_module.UTC),
+        updated_at=jobs_module.datetime.now(jobs_module.UTC),
+        error_message=None,
+        artifact_root="/tmp/artifacts",
+        artifact_digest_md="/tmp/artifacts/digest.md",
+        llm_required=True,
+        llm_gate_passed=True,
+        hard_fail_reason=None,
+    )
+    repo = _JobsRepoStub()
+    repo.job = row
+    service.repo = repo
+    steps = [
+        {
+            "name": "collect",
+            "status": "succeeded",
+            "attempt": 1,
+            "started_at": "2026-04-01T10:00:00Z",
+            "finished_at": "2026-04-01T10:01:00Z",
+            "error": None,
+        }
+    ]
+    service.get_steps = lambda job_id: steps
+    service.compare_with_previous = lambda job_id: {"has_previous": False}
+    service.get_knowledge_cards = lambda job_id: [{"id": "card-1"}]
+    service.get_artifact_payload = lambda job_id, video_url=None: {
+        "markdown": "# Digest",
+        "meta": {"source": "artifact"},
+    }
+    service.resolve_llm_gate_fields = lambda **kwargs: (True, True, None)
+    service.get_pipeline_final_status = lambda job_id, fallback_status: "succeeded"
+    service.get_artifacts_index = lambda artifact_root, artifact_digest_md, steps: {
+        "digest": "digest.md"
+    }
+    service.get_degradations = lambda artifact_root, artifact_digest_md, steps: []
+    service.get_notification_retry = lambda job_id: {"status": "idle"}
+
+    payload = service.build_evidence_bundle(job_id=job_id)
+
+    assert payload is not None
+    assert payload["bundle_kind"] == "sourceharbor_job_evidence_bundle_v1"
+    assert payload["job"]["id"] == str(job_id)
+    assert payload["trace_summary"]["step_count"] == 1
+    assert payload["trace_summary"]["notification_retry"] == {"status": "idle"}
+    assert payload["digest"] == "# Digest"
+    assert payload["comparison"] == {"has_previous": False}
+    assert payload["knowledge_cards"] == [{"id": "card-1"}]
+    assert payload["artifact_manifest"] == {"digest": "digest.md"}
+    assert payload["step_summary"] == steps
 
 
 def test_extract_thought_metadata_supports_legacy_payload() -> None:

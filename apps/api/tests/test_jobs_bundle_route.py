@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-import os
-
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/sourceharbor-bundle-route.db")
-os.environ.setdefault("TEMPORAL_TARGET_HOST", "127.0.0.1:7233")
-os.environ.setdefault("TEMPORAL_NAMESPACE", "default")
-os.environ.setdefault("TEMPORAL_TASK_QUEUE", "sourceharbor-worker")
-os.environ.setdefault("SQLITE_STATE_PATH", "/tmp/sourceharbor-bundle-route-state.db")
-
-from apps.api.app.main import app
 
 
 def test_job_bundle_route_returns_bundle(monkeypatch) -> None:
+    from apps.api.app.db import get_db
     from apps.api.app.routers import jobs as jobs_router
     from apps.api.app.services.jobs import JobsService
 
@@ -59,8 +51,38 @@ def test_job_bundle_route_returns_bundle(monkeypatch) -> None:
     )
     monkeypatch.setattr(jobs_router, "JobsService", StubJobsService)
 
+    def _fake_db():
+        return object()
+
+    app = FastAPI()
+    app.include_router(jobs_router.router)
+    app.dependency_overrides[get_db] = _fake_db
+
     client = TestClient(app)
     response = client.get("/api/v1/jobs/11111111-1111-1111-1111-111111111111/bundle")
 
     assert response.status_code == 200
     assert response.json()["bundle_kind"] == "sourceharbor_job_evidence_bundle_v1"
+
+
+def test_job_bundle_route_returns_404_when_bundle_is_missing(monkeypatch) -> None:
+    from apps.api.app.db import get_db
+    from apps.api.app.routers import jobs as jobs_router
+    from apps.api.app.services.jobs import JobsService
+
+    def _missing_bundle(self, job_id):  # noqa: ANN001, ARG001
+        return None
+
+    monkeypatch.setattr(JobsService, "build_evidence_bundle", _missing_bundle)
+
+    def _fake_db():
+        return object()
+
+    app = FastAPI()
+    app.include_router(jobs_router.router)
+    app.dependency_overrides[get_db] = _fake_db
+
+    client = TestClient(app)
+    response = client.get("/api/v1/jobs/11111111-1111-1111-1111-111111111111/bundle")
+
+    assert response.status_code == 404

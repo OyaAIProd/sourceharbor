@@ -692,6 +692,7 @@ rollback_started_services() {
     local service_name="${STARTED_THIS_RUN[$i]}"
     log "rollback: stopping ${service_name}"
     stop_one "$service_name"
+    rm -f "$(pid_meta_file "$service_name")"
   done
   STARTED_THIS_RUN=()
 }

@@ -21,11 +21,11 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
-import { getLocaleMessages } from "@/lib/i18n/messages";
 
 export const metadata: Metadata = { title: "Command Center" };
 
@@ -167,9 +167,7 @@ export default async function DashboardPage({
 				<h1 className="folo-page-title" data-route-heading>
 					{copy.heroTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					{copy.heroSubtitle}
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			{renderAlert(status, code)}
@@ -198,7 +196,9 @@ export default async function DashboardPage({
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<CardTitle>{copy.frontDoors.searchTitle}</CardTitle>
-						<CardDescription>{copy.frontDoors.searchDescription}</CardDescription>
+						<CardDescription>
+							{copy.frontDoors.searchDescription}
+						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
@@ -253,7 +253,9 @@ export default async function DashboardPage({
 							<Link href="/use-cases/codex">{builderCopy.codexCta}</Link>
 						</Button>
 						<Button asChild variant="outline">
-							<Link href="/use-cases/claude-code">{builderCopy.claudeCodeCta}</Link>
+							<Link href="/use-cases/claude-code">
+								{builderCopy.claudeCodeCta}
+							</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -282,7 +284,9 @@ export default async function DashboardPage({
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<CardTitle>{copy.compounders.bundleTitle}</CardTitle>
-						<CardDescription>{copy.compounders.bundleDescription}</CardDescription>
+						<CardDescription>
+							{copy.compounders.bundleDescription}
+						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
@@ -319,7 +323,9 @@ export default async function DashboardPage({
 			>
 				<Card className="folo-surface overflow-hidden border-border/70">
 					<CardHeader className="gap-2">
-						<CardDescription>{copy.metrics.subscriptions.title}</CardDescription>
+						<CardDescription>
+							{copy.metrics.subscriptions.title}
+						</CardDescription>
 						{renderMetricValue(
 							subscriptions.length,
 							subscriptionsUnavailable
@@ -348,7 +354,9 @@ export default async function DashboardPage({
 				</Card>
 				<Card className="folo-surface overflow-hidden border-border/70">
 					<CardHeader className="gap-2">
-						<CardDescription>{copy.metrics.discoveredVideos.title}</CardDescription>
+						<CardDescription>
+							{copy.metrics.discoveredVideos.title}
+						</CardDescription>
 						{renderMetricValue(
 							videos.length,
 							videosUnavailable
@@ -379,7 +387,9 @@ export default async function DashboardPage({
 						<CardDescription>{copy.metrics.runningJobs.title}</CardDescription>
 						{renderMetricValue(
 							runningJobs,
-							videosUnavailable ? copy.metrics.runningJobs.unavailable : undefined,
+							videosUnavailable
+								? copy.metrics.runningJobs.unavailable
+								: undefined,
 						)}
 					</CardHeader>
 					<CardContent className="pt-0">
@@ -405,7 +415,9 @@ export default async function DashboardPage({
 						<CardDescription>{copy.metrics.failedJobs.title}</CardDescription>
 						{renderMetricValue(
 							failedJobs,
-							videosUnavailable ? copy.metrics.failedJobs.unavailable : undefined,
+							videosUnavailable
+								? copy.metrics.failedJobs.unavailable
+								: undefined,
 						)}
 					</CardHeader>
 					<CardContent className="space-y-2 pt-0">
@@ -558,9 +570,7 @@ export default async function DashboardPage({
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<h2 className="text-xl font-semibold">{copy.ingestRuns.title}</h2>
-						<CardDescription>
-							{copy.ingestRuns.description}
-						</CardDescription>
+						<CardDescription>{copy.ingestRuns.description}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						<Button asChild variant="link" size="sm" className="h-auto px-0">
@@ -587,7 +597,9 @@ export default async function DashboardPage({
 						{!ingestRunsUnavailable && ingestRuns.length > 0 ? (
 							<div className="overflow-x-auto rounded-lg border border-border/70">
 								<table className="min-w-[720px] w-full text-sm">
-									<caption className="sr-only">{copy.ingestRuns.caption}</caption>
+									<caption className="sr-only">
+										{copy.ingestRuns.caption}
+									</caption>
 									<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 										<tr>
 											<th scope="col" className="px-4 py-3 font-medium">
@@ -646,10 +658,10 @@ export default async function DashboardPage({
 				<Card className="folo-surface border-border/70">
 					<CardHeader className="flex flex-row items-start justify-between gap-4">
 						<div className="space-y-2">
-							<h2 className="text-xl font-semibold">{copy.recentVideos.title}</h2>
-							<CardDescription>
-								{copy.recentVideos.description}
-							</CardDescription>
+							<h2 className="text-xl font-semibold">
+								{copy.recentVideos.title}
+							</h2>
+							<CardDescription>{copy.recentVideos.description}</CardDescription>
 						</div>
 						<Button asChild variant="link" size="sm" className="h-auto px-0">
 							<Link href="/jobs">{copy.recentVideos.viewAll}</Link>
@@ -677,7 +689,9 @@ export default async function DashboardPage({
 						{videos.length > 0 ? (
 							<div className="overflow-x-auto rounded-lg border border-border/70">
 								<table className="min-w-[680px] w-full text-sm">
-									<caption className="sr-only">{copy.recentVideos.caption}</caption>
+									<caption className="sr-only">
+										{copy.recentVideos.caption}
+									</caption>
 									<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 										<tr>
 											<th scope="col" className="px-4 py-3 font-medium">

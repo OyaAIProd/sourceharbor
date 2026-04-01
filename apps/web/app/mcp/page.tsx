@@ -46,9 +46,7 @@ export default function McpPage() {
 						<pre className="overflow-x-auto rounded-lg border border-border/70 bg-muted/40 p-4 text-sm">
 							<code>./bin/dev-mcp</code>
 						</pre>
-						<p className="text-sm text-muted-foreground">
-							{copy.startNote}
-						</p>
+						<p className="text-sm text-muted-foreground">{copy.startNote}</p>
 					</CardContent>
 				</Card>
 				<Card className="folo-surface border-border/70">

@@ -5,8 +5,8 @@ import { useId } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Badge } from "@/components/ui/badge";
-import { getLocaleMessages } from "@/lib/i18n/messages";
 import { Button } from "@/components/ui/button";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 type SubmitButtonProps = Omit<

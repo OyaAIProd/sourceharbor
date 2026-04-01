@@ -10,11 +10,11 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
-import { getLocaleMessages } from "@/lib/i18n/messages";
 
 export const metadata: Metadata = {
 	title: getLocaleMessages().knowledgePage.metadataTitle,
