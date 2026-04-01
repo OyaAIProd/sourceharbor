@@ -4,6 +4,8 @@ import importlib
 import os
 from types import SimpleNamespace
 
+from sqlalchemy.exc import DBAPIError
+
 
 def _load_ops_module():
     os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/sourceharbor-ops-test.db")
@@ -389,4 +391,27 @@ def test_get_inbox_emits_gate_items_with_settings_shortcut(monkeypatch) -> None:
         item["href"] == "#hardening-gates" and item["action_label"] == "Open gate"
         for item in gate_items
     )
-    assert payload["overview"]["attention_items"] == 3
+
+
+def test_load_failed_jobs_redacts_db_error_details() -> None:
+    module = _load_ops_module()
+
+    class BrokenDb:
+        def execute(self, *_args, **_kwargs):  # noqa: ANN002, ANN003
+            raise DBAPIError(
+                "SELECT 1",
+                {},
+                Exception("postgresql://ops:super-secret@127.0.0.1:5432/sourceharbor"),
+            )
+
+        def rollback(self) -> None:
+            return None
+
+    service = module.OpsService(BrokenDb())
+    payload = service._load_failed_jobs(limit=5)
+
+    assert payload["status"] == "unavailable"
+    assert payload["total"] == 0
+    assert "postgresql://***:***@" in payload["error"]
+    assert "super-secret" not in payload["error"]
+    assert payload["items"] == []

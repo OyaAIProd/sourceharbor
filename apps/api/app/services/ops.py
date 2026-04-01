@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from ..config import Settings
 from ..models import NotificationConfig
+from ..security import sanitize_exception_detail
 from .health import HealthService
 
 
@@ -346,7 +347,7 @@ class OpsService:
             total = int(self.db.execute(count_statement).scalar_one())
         except DBAPIError as exc:
             self.db.rollback()
-            return self._error_section(error=str(exc))
+            return self._error_section(error=sanitize_exception_detail(exc))
 
         items = []
         for row in rows:
@@ -395,7 +396,7 @@ class OpsService:
             total = int(self.db.execute(count_statement).scalar_one())
         except DBAPIError as exc:
             self.db.rollback()
-            return self._error_section(error=str(exc))
+            return self._error_section(error=sanitize_exception_detail(exc))
 
         items = []
         for row in rows:
@@ -444,7 +445,7 @@ class OpsService:
             total = int(self.db.execute(count_statement).scalar_one())
         except DBAPIError as exc:
             self.db.rollback()
-            return self._error_section(error=str(exc))
+            return self._error_section(error=sanitize_exception_detail(exc))
 
         items = []
         for row in rows:
