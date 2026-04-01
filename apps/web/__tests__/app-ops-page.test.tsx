@@ -1,6 +1,5 @@
-import type { AnchorHTMLAttributes, ReactNode } from "react";
-
 import { render, screen } from "@testing-library/react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import OpsPage from "@/app/ops/page";
@@ -131,8 +130,12 @@ describe("ops inbox page", () => {
 
 		render(await OpsPage());
 
-		expect(screen.getByRole("heading", { name: "运营诊断" })).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Ops inbox" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "运营诊断" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Ops inbox" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("AI Weekly")).toBeInTheDocument();
 		expect(
 			screen.getByText(

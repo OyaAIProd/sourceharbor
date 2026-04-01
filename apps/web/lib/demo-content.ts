@@ -10,8 +10,11 @@ export const USE_CASE_PAGES = {
 		links: [
 			{ href: "/search", label: "Open Search" },
 			{ href: "/playground", label: "Open sample playground" },
-			{ href: "https://github.com/xiaojiou176-open/sourceharbor/blob/main/docs/start-here.md", label: "Read local quickstart" }
-		]
+			{
+				href: "https://github.com/xiaojiou176-open/sourceharbor/blob/main/docs/start-here.md",
+				label: "Read local quickstart",
+			},
+		],
 	},
 	bilibili: {
 		title: "Bilibili to knowledge base",
@@ -24,8 +27,8 @@ export const USE_CASE_PAGES = {
 		links: [
 			{ href: "/knowledge", label: "Open Knowledge" },
 			{ href: "/watchlists", label: "Open Watchlists" },
-			{ href: "/playground", label: "Open sample playground" }
-		]
+			{ href: "/playground", label: "Open sample playground" },
+		],
 	},
 	rss: {
 		title: "RSS to AI research pipeline",
@@ -38,8 +41,8 @@ export const USE_CASE_PAGES = {
 		links: [
 			{ href: "/feed", label: "Open Feed" },
 			{ href: "/trends", label: "Open Trends" },
-			{ href: "/ops", label: "Open Ops inbox" }
-		]
+			{ href: "/ops", label: "Open Ops inbox" },
+		],
 	},
 	"mcp-use-cases": {
 		title: "MCP use cases",
@@ -52,8 +55,8 @@ export const USE_CASE_PAGES = {
 		links: [
 			{ href: "/mcp", label: "Open MCP quickstart" },
 			{ href: "/search", label: "Open Search" },
-			{ href: "/playground", label: "Open sample playground" }
-		]
+			{ href: "/playground", label: "Open sample playground" },
+		],
 	},
 	"research-pipeline": {
 		title: "AI research pipeline",
@@ -66,9 +69,9 @@ export const USE_CASE_PAGES = {
 		links: [
 			{ href: "/watchlists", label: "Open Watchlists" },
 			{ href: "/trends", label: "Open Trends" },
-			{ href: "/playground", label: "Open sample playground" }
-		]
-	}
+			{ href: "/playground", label: "Open sample playground" },
+		],
+	},
 } as const;
 
 export type UseCaseSlug = keyof typeof USE_CASE_PAGES;

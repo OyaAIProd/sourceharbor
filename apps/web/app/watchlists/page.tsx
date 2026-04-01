@@ -3,7 +3,10 @@ import Link from "next/link";
 
 import { getActionSessionTokenForForm } from "@/app/action-security";
 import { getFlashMessage } from "@/app/flash-message";
-import { deleteWatchlistAction, upsertWatchlistAction } from "@/app/watchlists/actions";
+import {
+	deleteWatchlistAction,
+	upsertWatchlistAction,
+} from "@/app/watchlists/actions";
 import {
 	FormCheckboxField,
 	FormInputField,
@@ -49,10 +52,15 @@ const DELIVERY_OPTIONS = [
 export default async function WatchlistsPage({
 	searchParams,
 }: WatchlistsPageProps) {
-	const { status, code, watchlist_id: watchlistId } = await resolveSearchParams(
-		searchParams,
-		["status", "code", "watchlist_id"] as const,
-	);
+	const {
+		status,
+		code,
+		watchlist_id: watchlistId,
+	} = await resolveSearchParams(searchParams, [
+		"status",
+		"code",
+		"watchlist_id",
+	] as const);
 	const sessionToken = getActionSessionTokenForForm();
 
 	const [watchlistsResult, opsResult] = await Promise.all([
@@ -68,12 +76,15 @@ export default async function WatchlistsPage({
 
 	const watchlists = watchlistsResult.items;
 	const editingWatchlist = watchlistId.trim()
-		? watchlists.find((item) => item.id === watchlistId.trim()) ?? null
+		? (watchlists.find((item) => item.id === watchlistId.trim()) ?? null)
 		: null;
 	const trendWatchlist = editingWatchlist ?? watchlists[0] ?? null;
 	const trendResult = trendWatchlist
 		? await apiClient
-				.getWatchlistTrend(trendWatchlist.id, { limit_runs: 3, limit_cards: 12 })
+				.getWatchlistTrend(trendWatchlist.id, {
+					limit_runs: 3,
+					limit_cards: 12,
+				})
 				.then((payload) => ({ payload, error: false }))
 				.catch(() => ({ payload: null, error: true }))
 		: { payload: null, error: false };
@@ -102,7 +113,8 @@ export default async function WatchlistsPage({
 					Watchlists
 				</h1>
 				<p className="folo-page-subtitle">
-					把它理解成长期追踪清单。你不是只搜一次就走，而是把值得反复回来看的一类主题、claim 或来源钉住。
+					把它理解成长期追踪清单。你不是只搜一次就走，而是把值得反复回来看的一类主题、claim
+					或来源钉住。
 				</p>
 			</div>
 
@@ -113,12 +125,19 @@ export default async function WatchlistsPage({
 					<CardHeader>
 						<CardTitle>Save a watchlist</CardTitle>
 						<CardDescription>
-							当前支持 `topic_key`、`claim_kind`、`platform` 和 `source match`。第一版先做 persistent tracking，再把 external alerts 接到更深的通知链路。
+							当前支持 `topic_key`、`claim_kind`、`platform` 和 `source
+							match`。第一版先做 persistent tracking，再把 external alerts
+							接到更深的通知链路。
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<form action={upsertWatchlistAction} className="grid gap-4">
-							<input type="hidden" name="session_token" value={sessionToken} suppressHydrationWarning />
+							<input
+								type="hidden"
+								name="session_token"
+								value={sessionToken}
+								suppressHydrationWarning
+							/>
 							<input
 								type="hidden"
 								name="id"
@@ -181,7 +200,8 @@ export default async function WatchlistsPage({
 					<CardHeader>
 						<CardTitle>Alert readiness</CardTitle>
 						<CardDescription>
-							系统现在能把 watchlist 保存下来并在 dashboard 内复用。外发提醒是否 ready，要看通知 gate，而不是看表单有没有提交成功。
+							系统现在能把 watchlist 保存下来并在 dashboard 内复用。外发提醒是否
+							ready，要看通知 gate，而不是看表单有没有提交成功。
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -191,7 +211,9 @@ export default async function WatchlistsPage({
 								<p>{notificationGate.next_step}</p>
 							</>
 						) : (
-							<p>当前拿不到 notification gate，先以 dashboard tracking 为主。</p>
+							<p>
+								当前拿不到 notification gate，先以 dashboard tracking 为主。
+							</p>
 						)}
 						<Button asChild variant="outline" size="sm">
 							<Link href="/settings">Open notification settings</Link>
@@ -204,7 +226,8 @@ export default async function WatchlistsPage({
 				<CardHeader>
 					<CardTitle>Current watchlists</CardTitle>
 					<CardDescription>
-						这些是已经持久化的 tracking objects。它们不是 UI 壳子，而是当前可保存、可读取、可挂趋势页的真实对象。
+						这些是已经持久化的 tracking objects。它们不是 UI
+						壳子，而是当前可保存、可读取、可挂趋势页的真实对象。
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
@@ -214,7 +237,8 @@ export default async function WatchlistsPage({
 						</p>
 					) : watchlists.length === 0 ? (
 						<p className="text-sm text-muted-foreground">
-							还没有 watchlists。先保存一个主题或来源，后面这页才会开始像“持续追踪面板”而不是空白表单。
+							还没有
+							watchlists。先保存一个主题或来源，后面这页才会开始像“持续追踪面板”而不是空白表单。
 						</p>
 					) : (
 						<ul className="space-y-3">
@@ -228,7 +252,8 @@ export default async function WatchlistsPage({
 											<p className="font-medium">{item.name}</p>
 											<p className="text-sm text-muted-foreground">
 												{item.matcher_type}: <code>{item.matcher_value}</code> ·{" "}
-												{item.delivery_channel} · {item.enabled ? "enabled" : "paused"}
+												{item.delivery_channel} ·{" "}
+												{item.enabled ? "enabled" : "paused"}
 											</p>
 											<p className="text-xs text-muted-foreground">
 												Updated: {formatDateTime(item.updated_at)}
@@ -236,12 +261,16 @@ export default async function WatchlistsPage({
 										</div>
 										<div className="flex flex-wrap gap-3">
 											<Button asChild variant="outline" size="sm">
-												<Link href={`/watchlists?watchlist_id=${encodeURIComponent(item.id)}`}>
+												<Link
+													href={`/watchlists?watchlist_id=${encodeURIComponent(item.id)}`}
+												>
 													Edit
 												</Link>
 											</Button>
 											<Button asChild variant="outline" size="sm">
-												<Link href={`/trends?watchlist_id=${encodeURIComponent(item.id)}`}>
+												<Link
+													href={`/trends?watchlist_id=${encodeURIComponent(item.id)}`}
+												>
 													View trend
 												</Link>
 											</Button>
@@ -252,7 +281,12 @@ export default async function WatchlistsPage({
 													value={sessionToken}
 													suppressHydrationWarning
 												/>
-												<input type="hidden" name="watchlist_id" value={item.id} readOnly />
+												<input
+													type="hidden"
+													name="watchlist_id"
+													value={item.id}
+													readOnly
+												/>
 												<Button type="submit" variant="ghost" size="sm">
 													Delete
 												</Button>
@@ -271,7 +305,8 @@ export default async function WatchlistsPage({
 					<CardHeader>
 						<CardTitle>Recent movement</CardTitle>
 						<CardDescription>
-							先看最近 3 次变化，确认这个 watchlist 值不值得继续追。更完整的连续变化视图在 trend page。
+							先看最近 3 次变化，确认这个 watchlist
+							值不值得继续追。更完整的连续变化视图在 trend page。
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
@@ -284,19 +319,26 @@ export default async function WatchlistsPage({
 									<div className="space-y-1">
 										<p className="font-medium">{run.title}</p>
 										<p className="text-sm text-muted-foreground">
-											{run.platform} · {formatDateTime(run.created_at)} · matched cards:{" "}
-											{run.matched_card_count}
+											{run.platform} · {formatDateTime(run.created_at)} ·
+											matched cards: {run.matched_card_count}
 										</p>
 									</div>
-									<Button asChild variant="link" size="sm" className="h-auto px-0">
-										<Link href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}>
+									<Button
+										asChild
+										variant="link"
+										size="sm"
+										className="h-auto px-0"
+									>
+										<Link
+											href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}
+										>
 											Open job
 										</Link>
 									</Button>
 								</div>
 								<p className="mt-3 text-sm text-muted-foreground">
-									Added topics: {run.added_topics.join(", ") || "none"} · Removed
-									topics: {run.removed_topics.join(", ") || "none"}
+									Added topics: {run.added_topics.join(", ") || "none"} ·
+									Removed topics: {run.removed_topics.join(", ") || "none"}
 								</p>
 							</div>
 						))}

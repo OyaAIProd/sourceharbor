@@ -10,10 +10,7 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
-import type {
-	RetrievalHit,
-	RetrievalSearchMode,
-} from "@/lib/api/types";
+import type { RetrievalHit, RetrievalSearchMode } from "@/lib/api/types";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
@@ -88,7 +85,11 @@ function EvidenceCard({ hit }: { hit: RetrievalHit }) {
 }
 
 export default async function AskPage({ searchParams }: AskPageProps) {
-	const { question, mode, top_k: topK } = await resolveSearchParams(searchParams, [
+	const {
+		question,
+		mode,
+		top_k: topK,
+	} = await resolveSearchParams(searchParams, [
 		"question",
 		"mode",
 		"top_k",
@@ -105,7 +106,8 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 			? Math.min(parsedTopK, 12)
 			: 6;
 
-	let results: Awaited<ReturnType<typeof apiClient.searchRetrieval>> | null = null;
+	let results: Awaited<ReturnType<typeof apiClient.searchRetrieval>> | null =
+		null;
 	let error = false;
 
 	if (safeQuestion) {
@@ -148,13 +150,12 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
-						<div className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-							Ask contract artifact:
-							{" "}
-							<code>
-								docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md
-							</code>
-						</div>
+					<div className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+						Ask contract artifact:{" "}
+						<code>
+							docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md
+						</code>
+					</div>
 					<Button asChild variant="ghost" size="sm">
 						<Link href="/search">Open raw search →</Link>
 					</Button>
@@ -243,14 +244,17 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 							<CardHeader>
 								<h2 className="text-xl font-semibold">No cited evidence yet</h2>
 								<CardDescription>
-									Try a narrower question, switch to keyword mode, or process more
-									sources before treating this as a missing capability.
+									Try a narrower question, switch to keyword mode, or process
+									more sources before treating this as a missing capability.
 								</CardDescription>
 							</CardHeader>
 						</Card>
 					) : (
 						results.items.map((hit) => (
-							<EvidenceCard key={`${hit.job_id}-${hit.source}-${hit.snippet}`} hit={hit} />
+							<EvidenceCard
+								key={`${hit.job_id}-${hit.source}-${hit.snippet}`}
+								hit={hit}
+							/>
 						))
 					)}
 				</section>

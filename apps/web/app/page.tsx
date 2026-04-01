@@ -169,8 +169,8 @@ export default async function DashboardPage({
 				</p>
 			</div>
 
-				{renderAlert(status, code)}
-				{loadErrorCode ? (
+			{renderAlert(status, code)}
+			{loadErrorCode ? (
 				<Card
 					className="folo-surface border-destructive/40 bg-destructive/5"
 					role="alert"
@@ -185,116 +185,128 @@ export default async function DashboardPage({
 							<Link href="/">重试当前页面</Link>
 						</Button>
 					</CardContent>
-					</Card>
-				) : null}
+				</Card>
+			) : null}
 
-				<section className="grid gap-4 xl:grid-cols-3" aria-label="SourceHarbor front doors">
-					<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<CardTitle>Search front door</CardTitle>
-							<CardDescription>
-								Search digests, knowledge cards, transcripts, and related evidence
-								from one operator-facing route.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-wrap items-center gap-3 pt-0">
-							<Button asChild>
-								<Link href="/search">Open Search</Link>
-							</Button>
-							<Button asChild variant="outline">
-								<Link href="/knowledge">Open Knowledge</Link>
-							</Button>
-						</CardContent>
-					</Card>
-					<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<CardTitle>Ask your sources</CardTitle>
-							<CardDescription>
-								Truthful MVP: ask a question, get grounded evidence, then jump to
-								job trace, feed, knowledge, or the original source.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-wrap items-center gap-3 pt-0">
-							<Button asChild>
-								<Link href="/ask">Open Ask</Link>
-							</Button>
-							<p className="text-sm text-muted-foreground">
-								No hidden answer layer yet. Grounded citations first.
-							</p>
-						</CardContent>
-					</Card>
-					<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<CardTitle>MCP front door</CardTitle>
-							<CardDescription>
-								SourceHarbor already exposes an agent-facing MCP surface on top of
-								the same API and pipeline state.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-wrap items-center gap-3 pt-0">
-							<Button asChild>
-								<Link href="/mcp">Open MCP quickstart</Link>
-							</Button>
-							<Button asChild variant="outline">
-								<Link href="/jobs">Inspect job evidence</Link>
-							</Button>
-						</CardContent>
-					</Card>
-				</section>
+			<section
+				className="grid gap-4 xl:grid-cols-3"
+				aria-label="SourceHarbor front doors"
+			>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>Search front door</CardTitle>
+						<CardDescription>
+							Search digests, knowledge cards, transcripts, and related evidence
+							from one operator-facing route.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/search">Open Search</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/knowledge">Open Knowledge</Link>
+						</Button>
+					</CardContent>
+				</Card>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>Ask your sources</CardTitle>
+						<CardDescription>
+							Truthful MVP: ask a question, get grounded evidence, then jump to
+							job trace, feed, knowledge, or the original source.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/ask">Open Ask</Link>
+						</Button>
+						<p className="text-sm text-muted-foreground">
+							No hidden answer layer yet. Grounded citations first.
+						</p>
+					</CardContent>
+				</Card>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>MCP front door</CardTitle>
+						<CardDescription>
+							SourceHarbor already exposes an agent-facing MCP surface on top of
+							the same API and pipeline state.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/mcp">Open MCP quickstart</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/jobs">Inspect job evidence</Link>
+						</Button>
+					</CardContent>
+				</Card>
+			</section>
 
-				<section className="grid gap-4 xl:grid-cols-3" aria-label="SourceHarbor compounder surfaces">
-					<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<CardTitle>Watchlists and trends</CardTitle>
-							<CardDescription>
-								Save a topic, claim kind, or source watchlist, then come back to a real cross-run trend instead of redoing the same search by hand.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-wrap items-center gap-3 pt-0">
-							<Button asChild>
-								<Link href="/watchlists">Open Watchlists</Link>
-							</Button>
-							<Button asChild variant="outline">
-								<Link href="/trends">Open Trends</Link>
-							</Button>
-						</CardContent>
-					</Card>
-					<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<CardTitle>Evidence bundle</CardTitle>
-							<CardDescription>
-								Carry a run forward as an internal bundle with digest, trace summary, knowledge cards, and artifact manifest instead of pasting screenshots into chat.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-wrap items-center gap-3 pt-0">
-							<Button asChild>
-								<Link href="/jobs">Open Job Trace</Link>
-							</Button>
-							<p className="text-sm text-muted-foreground">
-								Download the bundle from any job detail page.
-							</p>
-						</CardContent>
-					</Card>
-					<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<CardTitle>Sample playground</CardTitle>
-							<CardDescription>
-								Explore a clearly labeled demo corpus and use-case pages without pretending they are live operator results.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="flex flex-wrap items-center gap-3 pt-0">
-							<Button asChild>
-								<Link href="/playground">Open Playground</Link>
-							</Button>
-							<Button asChild variant="outline">
-								<Link href="/use-cases/research-pipeline">Open use case pages</Link>
-							</Button>
-						</CardContent>
-					</Card>
-				</section>
+			<section
+				className="grid gap-4 xl:grid-cols-3"
+				aria-label="SourceHarbor compounder surfaces"
+			>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>Watchlists and trends</CardTitle>
+						<CardDescription>
+							Save a topic, claim kind, or source watchlist, then come back to a
+							real cross-run trend instead of redoing the same search by hand.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/watchlists">Open Watchlists</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/trends">Open Trends</Link>
+						</Button>
+					</CardContent>
+				</Card>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>Evidence bundle</CardTitle>
+						<CardDescription>
+							Carry a run forward as an internal bundle with digest, trace
+							summary, knowledge cards, and artifact manifest instead of pasting
+							screenshots into chat.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/jobs">Open Job Trace</Link>
+						</Button>
+						<p className="text-sm text-muted-foreground">
+							Download the bundle from any job detail page.
+						</p>
+					</CardContent>
+				</Card>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>Sample playground</CardTitle>
+						<CardDescription>
+							Explore a clearly labeled demo corpus and use-case pages without
+							pretending they are live operator results.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/playground">Open Playground</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/use-cases/research-pipeline">
+								Open use case pages
+							</Link>
+						</Button>
+					</CardContent>
+				</Card>
+			</section>
 
-				<section
-					className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+			<section
+				className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
 				aria-label="关键指标"
 			>
 				<Card className="folo-surface overflow-hidden border-border/70">
@@ -368,9 +380,9 @@ export default async function DashboardPage({
 						) : null}
 					</CardContent>
 				</Card>
-					<Card
-						className={
-							!videosUnavailable && failedJobs > 0
+				<Card
+					className={
+						!videosUnavailable && failedJobs > 0
 							? "folo-surface overflow-hidden border-destructive/40 bg-destructive/5"
 							: "folo-surface overflow-hidden border-border/70"
 					}
@@ -392,18 +404,28 @@ export default async function DashboardPage({
 								数据暂不可用
 							</output>
 						) : null}
-							{!videosUnavailable && failedJobs > 0 ? (
-								<div className="flex flex-wrap items-center gap-3">
-									<Button asChild variant="link" size="sm" className="h-auto px-0">
-										<Link href="/jobs">查看失败任务 →</Link>
-									</Button>
-									<Button asChild variant="link" size="sm" className="h-auto px-0">
-										<Link href="/ops">打开运营诊断 →</Link>
-									</Button>
-								</div>
-							) : null}
-						</CardContent>
-					</Card>
+						{!videosUnavailable && failedJobs > 0 ? (
+							<div className="flex flex-wrap items-center gap-3">
+								<Button
+									asChild
+									variant="link"
+									size="sm"
+									className="h-auto px-0"
+								>
+									<Link href="/jobs">查看失败任务 →</Link>
+								</Button>
+								<Button
+									asChild
+									variant="link"
+									size="sm"
+									className="h-auto px-0"
+								>
+									<Link href="/ops">打开运营诊断 →</Link>
+								</Button>
+							</div>
+						) : null}
+					</CardContent>
+				</Card>
 			</section>
 
 			<section className="grid gap-4 lg:grid-cols-2">

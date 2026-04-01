@@ -121,12 +121,11 @@ describe("search and MCP front doors", () => {
 			screen.getByRole("heading", { name: "MCP Quickstart" }),
 		).toBeInTheDocument();
 		expect(screen.getByText("./bin/dev-mcp")).toBeInTheDocument();
-		expect(screen.getByText("sourceharbor.retrieval.search")).toBeInTheDocument();
+		expect(
+			screen.getByText("sourceharbor.retrieval.search"),
+		).toBeInTheDocument();
 		expect(
 			screen.getByRole("link", { name: "Open Search & Ask" }),
-		).toHaveAttribute(
-			"href",
-			"/search",
-		);
+		).toHaveAttribute("href", "/search");
 	});
 });

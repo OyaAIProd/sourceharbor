@@ -1,6 +1,5 @@
-import type { AnchorHTMLAttributes, ReactNode } from "react";
-
 import { render, screen } from "@testing-library/react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import PlaygroundPage from "@/app/playground/page";
@@ -90,7 +89,8 @@ describe("compounder pages", () => {
 			gates: {
 				notifications: {
 					status: "blocked",
-					summary: "Notification send paths exist, but live delivery is blocked by missing Resend secrets.",
+					summary:
+						"Notification send paths exist, but live delivery is blocked by missing Resend secrets.",
 					next_step: "Provide RESEND_API_KEY.",
 					details: {},
 				},
@@ -105,10 +105,14 @@ describe("compounder pages", () => {
 			}),
 		);
 
-		expect(screen.getByRole("heading", { name: "Watchlists" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Watchlists" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("Retry policy")).toBeInTheDocument();
 		expect(
-			screen.getByText(/Notification send paths exist, but live delivery is blocked/i),
+			screen.getByText(
+				/Notification send paths exist, but live delivery is blocked/i,
+			),
 		).toBeInTheDocument();
 	});
 
@@ -119,7 +123,9 @@ describe("compounder pages", () => {
 			}),
 		);
 
-		expect(screen.getByRole("heading", { name: "Cross-run trend" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Cross-run trend" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("AI Weekly")).toBeInTheDocument();
 		expect(screen.getByText(/Added topics: retry-policy/i)).toBeInTheDocument();
 	});

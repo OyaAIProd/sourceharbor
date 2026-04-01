@@ -77,7 +77,12 @@ export async function upsertWatchlistAction(formData: FormData) {
 export async function deleteWatchlistAction(formData: FormData) {
 	try {
 		await assertActionSession(formData);
-		const watchlistId = z.string().trim().min(1).max(128).parse(formData.get("watchlist_id"));
+		const watchlistId = z
+			.string()
+			.trim()
+			.min(1)
+			.max(128)
+			.parse(formData.get("watchlist_id"));
 		await apiClient.deleteWatchlist(watchlistId, {
 			writeAccessToken: getServerWriteToken(),
 		});

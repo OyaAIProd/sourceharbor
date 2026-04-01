@@ -2,20 +2,20 @@
 
 import {
 	Activity,
+	BookmarkPlus,
 	Home,
 	Inbox,
 	Layers3,
+	LineChart,
 	List,
 	ListTodo,
 	Menu,
 	MessageSquare,
-	LineChart,
 	PanelLeftClose,
 	Plus,
 	Search,
 	Settings,
 	Sparkles,
-	BookmarkPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -175,7 +175,9 @@ function SidebarNavContent({
 					aria-current={pathname.startsWith("/mcp") ? "page" : undefined}
 				>
 					<List className="size-4 shrink-0 opacity-80" aria-hidden />
-					<span className={collapsed ? "sr-only" : undefined}>MCP Quickstart</span>
+					<span className={collapsed ? "sr-only" : undefined}>
+						MCP Quickstart
+					</span>
 				</Link>
 				<Link
 					href="/ops"

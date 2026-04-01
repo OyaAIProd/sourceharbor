@@ -55,7 +55,9 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
 				<CardHeader>
 					<CardTitle>Why this page exists</CardTitle>
 					<CardDescription>
-						These use-case pages are discoverability surfaces, not hosted product promises. Every claim here should route back to real SourceHarbor capability.
+						These use-case pages are discoverability surfaces, not hosted
+						product promises. Every claim here should route back to real
+						SourceHarbor capability.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -69,7 +71,8 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
 				<CardHeader>
 					<CardTitle>Next truthful steps</CardTitle>
 					<CardDescription>
-						Use these links to move from copy into real product surfaces, proof, or sample playgrounds.
+						Use these links to move from copy into real product surfaces, proof,
+						or sample playgrounds.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">

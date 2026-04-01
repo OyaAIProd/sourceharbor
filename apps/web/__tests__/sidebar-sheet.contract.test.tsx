@@ -166,15 +166,18 @@ describe("Sidebar + Sheet contract", () => {
 				"aria-current",
 				"page",
 			);
-			expect(
-				screen.getByRole("link", { name: "Ops inbox" }),
-			).toHaveAttribute("href", "/ops");
-			expect(
-				screen.getByRole("link", { name: "Watchlists" }),
-			).toHaveAttribute("href", "/watchlists");
-			expect(
-				screen.getByRole("link", { name: "Trends" }),
-			).toHaveAttribute("href", "/trends");
+			expect(screen.getByRole("link", { name: "Ops inbox" })).toHaveAttribute(
+				"href",
+				"/ops",
+			);
+			expect(screen.getByRole("link", { name: "Watchlists" })).toHaveAttribute(
+				"href",
+				"/watchlists",
+			);
+			expect(screen.getByRole("link", { name: "Trends" })).toHaveAttribute(
+				"href",
+				"/trends",
+			);
 			expect(
 				screen.queryByRole("link", { name: "Disabled Source" }),
 			).toBeNull();

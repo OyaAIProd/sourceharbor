@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+} from "@/components/ui/card";
 
 export const metadata: Metadata = {
 	title: "MCP",
@@ -27,17 +32,20 @@ export default function McpPage() {
 					MCP Quickstart
 				</h1>
 				<p className="folo-page-subtitle">
-					把它理解成给 Agent 和自动化用的控制面。Web 给运营者，API 给系统集成，MCP
-					给助手和工作流，而它们都指向同一条 pipeline。
+					把它理解成给 Agent 和自动化用的控制面。Web 给运营者，API
+					给系统集成，MCP 给助手和工作流，而它们都指向同一条 pipeline。
 				</p>
 			</div>
 
 			<section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<h2 className="text-xl font-semibold">Start locally in one command</h2>
+						<h2 className="text-xl font-semibold">
+							Start locally in one command
+						</h2>
 						<CardDescription>
-							MCP 不是第二套业务逻辑，而是 agent-facing doorway into the same API-backed system.
+							MCP 不是第二套业务逻辑，而是 agent-facing doorway into the same
+							API-backed system.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
@@ -45,7 +53,8 @@ export default function McpPage() {
 							<code>./bin/dev-mcp</code>
 						</pre>
 						<p className="text-sm text-muted-foreground">
-							This starts the FastMCP server wired in <code>apps/mcp/server.py</code>.
+							This starts the FastMCP server wired in{" "}
+							<code>apps/mcp/server.py</code>.
 						</p>
 					</CardContent>
 				</Card>
@@ -70,22 +79,25 @@ export default function McpPage() {
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
-					<h2 className="text-xl font-semibold">How MCP relates to the rest of the product</h2>
+					<h2 className="text-xl font-semibold">
+						How MCP relates to the rest of the product
+					</h2>
 				</CardHeader>
 				<CardContent className="space-y-3 text-sm text-muted-foreground">
 					<p>
-						Web is the operator-facing command center. API is the shared contract. MCP is
-						the agent-facing surface. SourceHarbor routes MCP through the API instead of
-						letting tools talk straight to the database.
+						Web is the operator-facing command center. API is the shared
+						contract. MCP is the agent-facing surface. SourceHarbor routes MCP
+						through the API instead of letting tools talk straight to the
+						database.
 					</p>
-						<div className="flex flex-wrap gap-3">
-							<Button asChild variant="outline" size="sm">
-								<Link href="/search">Open Search & Ask</Link>
-							</Button>
-							<Button asChild variant="outline" size="sm">
-								<Link href="/ask">Open Ask mode</Link>
-							</Button>
-						</div>
+					<div className="flex flex-wrap gap-3">
+						<Button asChild variant="outline" size="sm">
+							<Link href="/search">Open Search & Ask</Link>
+						</Button>
+						<Button asChild variant="outline" size="sm">
+							<Link href="/ask">Open Ask mode</Link>
+						</Button>
+					</div>
 				</CardContent>
 			</Card>
 		</div>

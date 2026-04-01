@@ -74,9 +74,7 @@ describe("RouteTransition", () => {
 			</RouteTransition>,
 		);
 
-		expect(screen.getByRole("status")).toHaveTextContent(
-			"Switched to: Search",
-		);
+		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Search");
 	});
 
 	it("maps ask route to the dedicated label", () => {
@@ -124,9 +122,7 @@ describe("RouteTransition", () => {
 			</RouteTransition>,
 		);
 
-		expect(screen.getByRole("status")).toHaveTextContent(
-			"Switched to: Trends",
-		);
+		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Trends");
 	});
 
 	it("maps nested ingest runs routes to the dedicated label", () => {

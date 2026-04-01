@@ -28,13 +28,25 @@ function toBadgeStatus(status: string): string {
 	if (normalized === "warning") {
 		return "queued";
 	}
-	if (normalized === "ready" || normalized === "ok" || normalized === "healthy") {
+	if (
+		normalized === "ready" ||
+		normalized === "ok" ||
+		normalized === "healthy"
+	) {
 		return "succeeded";
 	}
-	if (normalized === "warn" || normalized === "queued" || normalized === "timeout_or_unknown") {
+	if (
+		normalized === "warn" ||
+		normalized === "queued" ||
+		normalized === "timeout_or_unknown"
+	) {
 		return "queued";
 	}
-	if (normalized === "blocked" || normalized === "failed" || normalized === "unavailable") {
+	if (
+		normalized === "blocked" ||
+		normalized === "failed" ||
+		normalized === "unavailable"
+	) {
 		return "failed";
 	}
 	if (normalized === "degraded") {
@@ -43,15 +55,12 @@ function toBadgeStatus(status: string): string {
 	return "queued";
 }
 
-function ReadinessBadge({
-	label,
-	status,
-}: {
-	label: string;
-	status: string;
-}) {
+function ReadinessBadge({ label, status }: { label: string; status: string }) {
 	return (
-		<StatusBadge label={label} tone={mapStatusCssToTone(toBadgeStatus(status))} />
+		<StatusBadge
+			label={label}
+			tone={mapStatusCssToTone(toBadgeStatus(status))}
+		/>
 	);
 }
 
@@ -90,13 +99,7 @@ function buildSummaryStatus(value: number): string {
 	return value > 0 ? "blocked" : "ready";
 }
 
-function GateCard({
-	title,
-	gate,
-}: {
-	title: string;
-	gate: OpsGate;
-}) {
+function GateCard({ title, gate }: { title: string; gate: OpsGate }) {
 	return (
 		<Card className="folo-surface border-border/70">
 			<CardHeader className="gap-2">
@@ -172,10 +175,12 @@ export default async function OpsPage() {
 		);
 	}
 
-	const providerIssues = payload.provider_health.providers.filter((provider) => {
-		const status = String(provider.last_status || "").toLowerCase();
-		return status === "warn" || status === "fail";
-	});
+	const providerIssues = payload.provider_health.providers.filter(
+		(provider) => {
+			const status = String(provider.last_status || "").toLowerCase();
+			return status === "warn" || status === "fail";
+		},
+	);
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
@@ -196,7 +201,8 @@ export default async function OpsPage() {
 					<CardHeader className="gap-2">
 						<CardTitle className="text-base">部分诊断数据暂不可用</CardTitle>
 						<CardDescription>
-							这页保留已成功加载的异常项。先看 API health 和 doctor 结果，再决定是否要重跑整页诊断。
+							这页保留已成功加载的异常项。先看 API health 和 doctor
+							结果，再决定是否要重跑整页诊断。
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
@@ -230,7 +236,9 @@ export default async function OpsPage() {
 					title="通知 / Gate"
 					value={payload.overview.notification_or_gate_issues}
 					description="通知链路、provider health 和 hardening gate 的异常总和。"
-					status={buildSummaryStatus(payload.overview.notification_or_gate_issues)}
+					status={buildSummaryStatus(
+						payload.overview.notification_or_gate_issues,
+					)}
 				/>
 			</section>
 
@@ -239,7 +247,8 @@ export default async function OpsPage() {
 					<CardHeader>
 						<CardTitle>Ops inbox</CardTitle>
 						<CardDescription>
-							把它理解成值班收件箱。每条异常都给一个主跳转，不逼你先猜该去 Jobs、Ingest Runs 还是 Settings。
+							把它理解成值班收件箱。每条异常都给一个主跳转，不逼你先猜该去
+							Jobs、Ingest Runs 还是 Settings。
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3">
@@ -333,7 +342,10 @@ export default async function OpsPage() {
 					</CardContent>
 				</Card>
 
-				<Card id="notification-readiness" className="folo-surface border-border/70">
+				<Card
+					id="notification-readiness"
+					className="folo-surface border-border/70"
+				>
 					<CardHeader>
 						<CardTitle>Notification readiness</CardTitle>
 						<CardDescription>

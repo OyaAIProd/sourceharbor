@@ -27,15 +27,21 @@ type TrendsPageProps = {
 };
 
 export default async function TrendsPage({ searchParams }: TrendsPageProps) {
-	const { watchlist_id: watchlistId } = await resolveSearchParams(searchParams, [
-		"watchlist_id",
-	] as const);
+	const { watchlist_id: watchlistId } = await resolveSearchParams(
+		searchParams,
+		["watchlist_id"] as const,
+	);
 	const watchlists = await apiClient.listWatchlists().catch(() => []);
 	const selectedWatchlist =
-		watchlists.find((item) => item.id === watchlistId.trim()) ?? watchlists[0] ?? null;
+		watchlists.find((item) => item.id === watchlistId.trim()) ??
+		watchlists[0] ??
+		null;
 	const trend = selectedWatchlist
 		? await apiClient
-				.getWatchlistTrend(selectedWatchlist.id, { limit_runs: 4, limit_cards: 16 })
+				.getWatchlistTrend(selectedWatchlist.id, {
+					limit_runs: 4,
+					limit_cards: 16,
+				})
 				.catch(() => null)
 		: null;
 
@@ -47,7 +53,8 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 					Cross-run trend
 				</h1>
 				<p className="folo-page-subtitle">
-					这不是 fake analytics。它只展示当前 watchlist 在最近几次 run 里真实匹配到的 topics / claims 变化。
+					这不是 fake analytics。它只展示当前 watchlist 在最近几次 run
+					里真实匹配到的 topics / claims 变化。
 				</p>
 			</div>
 
@@ -55,7 +62,8 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 				<CardHeader>
 					<CardTitle>Choose a watchlist</CardTitle>
 					<CardDescription>
-						第一版先走非常 focused 的 MVP：围绕一个 watchlist，看最近几次 run 发生了什么变化。
+						第一版先走非常 focused 的 MVP：围绕一个 watchlist，看最近几次 run
+						发生了什么变化。
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
@@ -71,7 +79,9 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 								variant={selectedWatchlist?.id === item.id ? "hero" : "outline"}
 								size="sm"
 							>
-								<Link href={`/trends?watchlist_id=${encodeURIComponent(item.id)}`}>
+								<Link
+									href={`/trends?watchlist_id=${encodeURIComponent(item.id)}`}
+								>
 									{item.name}
 								</Link>
 							</Button>
@@ -87,7 +97,8 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 						<CardDescription>
 							Matcher: {trend.summary.matcher_type} ={" "}
 							<code>{trend.summary.matcher_value}</code> · Recent runs:{" "}
-							{trend.summary.recent_runs} · Matched cards: {trend.summary.matched_cards}
+							{trend.summary.recent_runs} · Matched cards:{" "}
+							{trend.summary.matched_cards}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
@@ -100,18 +111,32 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 									<div className="space-y-1">
 										<p className="font-medium">{run.title}</p>
 										<p className="text-sm text-muted-foreground">
-											{run.platform} · {formatDateTime(run.created_at)} · matched cards:{" "}
-											{run.matched_card_count}
+											{run.platform} · {formatDateTime(run.created_at)} ·
+											matched cards: {run.matched_card_count}
 										</p>
 									</div>
 									<div className="flex flex-wrap gap-3">
-										<Button asChild variant="link" size="sm" className="h-auto px-0">
-											<Link href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}>
+										<Button
+											asChild
+											variant="link"
+											size="sm"
+											className="h-auto px-0"
+										>
+											<Link
+												href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}
+											>
 												Open job
 											</Link>
 										</Button>
-										<Button asChild variant="link" size="sm" className="h-auto px-0">
-											<Link href={`/knowledge?job_id=${encodeURIComponent(run.job_id)}`}>
+										<Button
+											asChild
+											variant="link"
+											size="sm"
+											className="h-auto px-0"
+										>
+											<Link
+												href={`/knowledge?job_id=${encodeURIComponent(run.job_id)}`}
+											>
 												Open knowledge
 											</Link>
 										</Button>
@@ -119,9 +144,17 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 								</div>
 								<div className="mt-3 grid gap-2 text-sm text-muted-foreground lg:grid-cols-2">
 									<p>Added topics: {run.added_topics.join(", ") || "none"}</p>
-									<p>Removed topics: {run.removed_topics.join(", ") || "none"}</p>
-									<p>Added claim kinds: {run.added_claim_kinds.join(", ") || "none"}</p>
-									<p>Removed claim kinds: {run.removed_claim_kinds.join(", ") || "none"}</p>
+									<p>
+										Removed topics: {run.removed_topics.join(", ") || "none"}
+									</p>
+									<p>
+										Added claim kinds:{" "}
+										{run.added_claim_kinds.join(", ") || "none"}
+									</p>
+									<p>
+										Removed claim kinds:{" "}
+										{run.removed_claim_kinds.join(", ") || "none"}
+									</p>
 								</div>
 							</div>
 						))}

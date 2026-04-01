@@ -247,7 +247,7 @@ function normalizeKnowledgeCards(payload: unknown): KnowledgeCard[] {
 				updated_at: asString(record.updated_at) || undefined,
 			};
 		})
-			.filter((item): item is KnowledgeCard => item !== null);
+		.filter((item): item is KnowledgeCard => item !== null);
 }
 
 function normalizeRetrievalSearchResponse(
@@ -307,7 +307,8 @@ function normalizeRetrievalSearchResponse(
 				};
 			})
 			.filter(
-				(item): item is RetrievalSearchResponse["items"][number] => item !== null,
+				(item): item is RetrievalSearchResponse["items"][number] =>
+					item !== null,
 			),
 	};
 }

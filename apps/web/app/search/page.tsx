@@ -4,9 +4,17 @@ import Link from "next/link";
 import { FormInputField, FormSelectField } from "@/components/form-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+} from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
-import { resolveSearchParams, type SearchParamsInput } from "@/lib/search-params";
+import {
+	resolveSearchParams,
+	type SearchParamsInput,
+} from "@/lib/search-params";
 
 export const metadata: Metadata = {
 	title: "Search",
@@ -50,9 +58,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 	const askIntent = intent.trim() === "ask";
 	const safePlatform = platform.trim().toLowerCase();
 
-	let payload:
-		| Awaited<ReturnType<typeof apiClient.searchRetrieval>>
-		| null = null;
+	let payload: Awaited<ReturnType<typeof apiClient.searchRetrieval>> | null =
+		null;
 	let error = false;
 	if (queryValue) {
 		try {
@@ -99,7 +106,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form method="GET" className="grid gap-4 lg:grid-cols-[1.7fr_0.8fr_0.5fr_auto]">
+					<form
+						method="GET"
+						className="grid gap-4 lg:grid-cols-[1.7fr_0.8fr_0.5fr_auto]"
+					>
 						<input type="hidden" name="intent" value={askIntent ? "ask" : ""} />
 						<FormInputField
 							name="q"
@@ -174,13 +184,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 							<p>It does not synthesize a free-form answer layer yet.</p>
 						) : null}
 						<Button asChild variant="outline" size="sm">
-							<Link
-								href={
-									askIntent
-										? "/ask"
-										: "/ask"
-								}
-							>
+							<Link href={askIntent ? "/ask" : "/ask"}>
 								{askIntent ? "Open Ask details" : "Open Ask mode"}
 							</Link>
 						</Button>
@@ -221,18 +225,21 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 				<CardContent className="space-y-4">
 					{error ? (
 						<p className="text-sm text-muted-foreground">
-							Current retrieval request failed. Retry first, then inspect API health if
-							it still fails.
+							Current retrieval request failed. Retry first, then inspect API
+							health if it still fails.
 						</p>
 					) : null}
 					{!error && queryValue && results.length === 0 ? (
 						<p className="text-sm text-muted-foreground">
-							No grounded results yet. That usually means the current corpus is empty or
-							the query is too narrow.
+							No grounded results yet. That usually means the current corpus is
+							empty or the query is too narrow.
 						</p>
 					) : null}
 					{results.map((item, index) => (
-						<Card key={`${item.job_id}-${item.source}-${index}`} className="border-border/60">
+						<Card
+							key={`${item.job_id}-${item.source}-${index}`}
+							className="border-border/60"
+						>
 							<CardContent className="space-y-4 pt-6">
 								<div className="flex flex-wrap gap-2">
 									<Badge variant="outline">{humanizeSource(item.source)}</Badge>
@@ -246,27 +253,39 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 									<h3 className="text-lg font-semibold">
 										{item.title?.trim() || `Job ${item.job_id}`}
 									</h3>
-									<p className="text-sm text-muted-foreground">{item.snippet}</p>
+									<p className="text-sm text-muted-foreground">
+										{item.snippet}
+									</p>
 								</div>
 								<div className="flex flex-wrap gap-3">
 									<Button asChild variant="outline" size="sm">
-										<Link href={`/jobs?job_id=${encodeURIComponent(item.job_id)}`}>
+										<Link
+											href={`/jobs?job_id=${encodeURIComponent(item.job_id)}`}
+										>
 											Open job trace
 										</Link>
 									</Button>
 									<Button asChild variant="outline" size="sm">
-										<Link href={`/knowledge?job_id=${encodeURIComponent(item.job_id)}`}>
+										<Link
+											href={`/knowledge?job_id=${encodeURIComponent(item.job_id)}`}
+										>
 											Open knowledge cards
 										</Link>
 									</Button>
 									<Button asChild variant="outline" size="sm">
-										<Link href={`/feed?item=${encodeURIComponent(item.job_id)}`}>
+										<Link
+											href={`/feed?item=${encodeURIComponent(item.job_id)}`}
+										>
 											Open feed entry
 										</Link>
 									</Button>
 									{item.source_url ? (
 										<Button asChild variant="ghost" size="sm">
-											<a href={item.source_url} target="_blank" rel="noreferrer">
+											<a
+												href={item.source_url}
+												target="_blank"
+												rel="noreferrer"
+											>
 												Open source
 											</a>
 										</Button>

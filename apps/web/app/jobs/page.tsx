@@ -228,7 +228,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									</a>
 								</Button>
 								<p className="text-sm text-muted-foreground">
-									Evidence bundles are for internal reuse and async collaboration. They are not public release proof.
+									Evidence bundles are for internal reuse and async
+									collaboration. They are not public release proof.
 								</p>
 							</CardContent>
 						</Card>

@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { Metadata } from "next";
@@ -35,18 +35,49 @@ async function loadSampleCorpus() {
 
 	const filePath =
 		candidateList
-			.map((root) => path.join(root, "docs/samples/sourceharbor-demo-corpus.json"))
+			.map((root) =>
+				path.join(root, "docs/samples/sourceharbor-demo-corpus.json"),
+			)
 			.find((candidate) => existsSync(candidate)) ??
 		path.join(candidateList[0], "docs/samples/sourceharbor-demo-corpus.json");
 	return JSON.parse(await readFile(filePath, "utf-8")) as {
 		label: string;
 		description: string;
 		sources: Array<{ platform: string; title: string; url: string }>;
-		example_jobs: Array<{ job_id: string; platform: string; title: string; pipeline_final_status: string; digest_excerpt: string }>;
-		example_retrieval_results: Array<{ query: string; source: string; snippet: string; job_id: string }>;
-		example_watchlists: Array<{ name: string; matcher_type: string; matcher_value: string }>;
-		example_trend: { watchlist_name: string; recent_runs: Array<{ job_id: string; added_topics: string[]; removed_topics: string[]; added_claim_kinds: string[]; removed_claim_kinds: string[] }> };
-		example_bundle: { bundle_kind: string; sharing_scope: string; proof_boundary: string; contains: string[] };
+		example_jobs: Array<{
+			job_id: string;
+			platform: string;
+			title: string;
+			pipeline_final_status: string;
+			digest_excerpt: string;
+		}>;
+		example_retrieval_results: Array<{
+			query: string;
+			source: string;
+			snippet: string;
+			job_id: string;
+		}>;
+		example_watchlists: Array<{
+			name: string;
+			matcher_type: string;
+			matcher_value: string;
+		}>;
+		example_trend: {
+			watchlist_name: string;
+			recent_runs: Array<{
+				job_id: string;
+				added_topics: string[];
+				removed_topics: string[];
+				added_claim_kinds: string[];
+				removed_claim_kinds: string[];
+			}>;
+		};
+		example_bundle: {
+			bundle_kind: string;
+			sharing_scope: string;
+			proof_boundary: string;
+			contains: string[];
+		};
 	};
 }
 
@@ -61,7 +92,8 @@ export default async function PlaygroundPage() {
 					Read-only sample playground
 				</h1>
 				<p className="folo-page-subtitle">
-					这里展示的是 clearly labeled sample corpus，不是 live production results。它的作用是帮你在不配置整套环境前先感知产品价值。
+					这里展示的是 clearly labeled sample corpus，不是 live production
+					results。它的作用是帮你在不配置整套环境前先感知产品价值。
 				</p>
 			</div>
 
@@ -72,7 +104,8 @@ export default async function PlaygroundPage() {
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm text-muted-foreground">
 					<p>
-						Sample boundary: this playground is read-only and sample-labeled. Do not treat it as current operator state or remote proof.
+						Sample boundary: this playground is read-only and sample-labeled. Do
+						not treat it as current operator state or remote proof.
 					</p>
 					<div className="flex flex-wrap gap-3">
 						<Button asChild variant="outline" size="sm">
@@ -92,7 +125,10 @@ export default async function PlaygroundPage() {
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{sample.sources.map((item) => (
-							<div key={`${item.platform}-${item.title}`} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+							<div
+								key={`${item.platform}-${item.title}`}
+								className="rounded-lg border border-border/60 bg-muted/20 p-3"
+							>
 								<p className="font-medium">{item.title}</p>
 								<p className="text-sm text-muted-foreground">{item.platform}</p>
 								<p className="text-sm text-muted-foreground">{item.url}</p>
@@ -107,12 +143,17 @@ export default async function PlaygroundPage() {
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{sample.example_jobs.map((item) => (
-							<div key={item.job_id} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+							<div
+								key={item.job_id}
+								className="rounded-lg border border-border/60 bg-muted/20 p-3"
+							>
 								<p className="font-medium">{item.title}</p>
 								<p className="text-sm text-muted-foreground">
 									{item.platform} · {item.pipeline_final_status}
 								</p>
-								<p className="text-sm text-muted-foreground">{item.digest_excerpt}</p>
+								<p className="text-sm text-muted-foreground">
+									{item.digest_excerpt}
+								</p>
 							</div>
 						))}
 					</CardContent>
@@ -126,7 +167,10 @@ export default async function PlaygroundPage() {
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{sample.example_retrieval_results.map((item, index) => (
-							<div key={`${item.query}-${index}`} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+							<div
+								key={`${item.query}-${index}`}
+								className="rounded-lg border border-border/60 bg-muted/20 p-3"
+							>
 								<p className="font-medium">{item.query}</p>
 								<p className="text-sm text-muted-foreground">{item.source}</p>
 								<p className="text-sm text-muted-foreground">{item.snippet}</p>
@@ -141,7 +185,10 @@ export default async function PlaygroundPage() {
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
 						{sample.example_watchlists.map((item) => (
-							<div key={`${item.matcher_type}-${item.matcher_value}`} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+							<div
+								key={`${item.matcher_type}-${item.matcher_value}`}
+								className="rounded-lg border border-border/60 bg-muted/20 p-3"
+							>
 								<p className="font-medium">{item.name}</p>
 								<p>
 									{item.matcher_type}: <code>{item.matcher_value}</code>
@@ -149,10 +196,10 @@ export default async function PlaygroundPage() {
 							</div>
 						))}
 						<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-							<p className="font-medium">{sample.example_trend.watchlist_name}</p>
-							<p>
-								Recent runs: {sample.example_trend.recent_runs.length}
+							<p className="font-medium">
+								{sample.example_trend.watchlist_name}
 							</p>
+							<p>Recent runs: {sample.example_trend.recent_runs.length}</p>
 						</div>
 					</CardContent>
 				</Card>
@@ -162,7 +209,8 @@ export default async function PlaygroundPage() {
 				<CardHeader>
 					<CardTitle>Example bundle shape</CardTitle>
 					<CardDescription>
-						Use this as a mental model for what a shareable internal evidence bundle looks like. It is a sample, not a live export.
+						Use this as a mental model for what a shareable internal evidence
+						bundle looks like. It is a sample, not a live export.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm text-muted-foreground">
