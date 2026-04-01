@@ -49,7 +49,7 @@ These surfaces are real, but their strongest proof still depends on external con
 | Notifications / reports | implemented routes and settings exist | verified sender configuration, especially `RESEND_FROM_EMAIL`, plus a target mailbox |
 | UI audit Gemini review | base audit is real and the maintainer env has local Gemini proof | other environments still need Gemini access if they want the review layer |
 | Computer use | contract and service exist, and the maintainer env can reach the provider | valid Gemini access, supported account capability, and a real screenshot/input contract |
-| Long live smoke | repo path exists and the local supervisor path was re-proven in the current maintainer env | YouTube Data API preflight / provider project enablement for the current key |
+| Long live smoke | repo path exists, the repo-managed `bootstrap -> up -> status -> doctor` path was re-proven again, and the short smoke path now passes under the current maintainer env | the strict live-smoke lane still hits a provider-side `quota_or_permission` / `403` response for the current YouTube key/project |
 
 ## Sample And Local-Proof Boundaries
 
@@ -86,7 +86,7 @@ current maintainer re-audit:
 
 - `RESEND_FROM_EMAIL`
 - a verified Resend sender/domain and a real destination mailbox
-- YouTube Data API project enablement or policy approval for the strict live-smoke probe
+- a YouTube key/project state that no longer returns `quota_or_permission` / `403` during the strict live-smoke probe
 - landing the current local closure work on remote `main` before treating the newer front-door surfaces as remote-current truth
 - a new tagged release if you need release-aligned remote distribution proof for the current `main`
 
