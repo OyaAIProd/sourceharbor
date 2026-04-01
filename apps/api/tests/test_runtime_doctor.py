@@ -46,14 +46,10 @@ def test_parse_status_output_extracts_service_states() -> None:
     module = _load_doctor_module()
 
     payload = module.parse_status_output(
-        "\n".join(
-            [
-                "api: running (pid 123)",
-                "worker: stopped",
-                "web: running (pid 456)",
-                "mcp: interactive-only (run ./bin/dev-mcp manually)",
-            ]
-        )
+        "api: running (pid 123)\n"
+        "worker: stopped\n"
+        "web: running (pid 456)\n"
+        "mcp: interactive-only (run ./bin/dev-mcp manually)"
     )
 
     assert payload["api"].startswith("running")
