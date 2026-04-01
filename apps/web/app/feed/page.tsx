@@ -10,53 +10,44 @@ import { ReadingPane } from "@/components/reading-pane";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Digest Feed" };
+const feedCopy = getLocaleMessages().feedPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: feedCopy.metadataTitle,
+	description: feedCopy.metadataDescription,
+	route: "feed",
+});
 
 type FeedPageProps = {
 	searchParams?: SearchParamsInput;
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-	tech: "Tech",
-	creator: "Creator",
-	macro: "Macro",
-	ops: "Ops",
-	misc: "Misc",
-};
-
-const SOURCE_OPTIONS = [
-	{ value: "", label: "All sources" },
-	{ value: "youtube", label: "YouTube" },
-	{ value: "bilibili", label: "Bilibili" },
-	{ value: "rss", label: "RSS" },
+const CATEGORY_KEYS = ["tech", "creator", "macro", "ops", "misc"] as const;
+const SOURCE_KEYS = ["youtube", "bilibili", "rss"] as const;
+const FEEDBACK_KEYS = [
+	"saved",
+	"useful",
+	"noisy",
+	"dismissed",
+	"archived",
 ] as const;
 
-const FEEDBACK_OPTIONS = [
-	{ value: "", label: "All feedback" },
-	{ value: "saved", label: "Saved" },
-	{ value: "useful", label: "Useful" },
-	{ value: "noisy", label: "Noisy" },
-	{ value: "dismissed", label: "Dismissed" },
-	{ value: "archived", label: "Archived" },
-] as const;
+type FeedFeedbackFilter = (typeof FEEDBACK_KEYS)[number] | "";
 
-type FeedFeedbackFilter = (typeof FEEDBACK_OPTIONS)[number]["value"];
+const SORT_KEYS = ["recent", "curated"] as const;
 
-const SORT_OPTIONS = [
-	{ value: "recent", label: "Recent first" },
-	{ value: "curated", label: "Curated first" },
-] as const;
-
-type FeedSortMode = (typeof SORT_OPTIONS)[number]["value"];
+type FeedSortMode = (typeof SORT_KEYS)[number];
 
 function toSourceSelectValue(
 	source: string,
-): (typeof SOURCE_OPTIONS)[number]["value"] {
+): "" | (typeof SOURCE_KEYS)[number] {
 	const normalized = source.trim().toLowerCase();
 	if (
 		normalized === "youtube" ||
@@ -94,6 +85,32 @@ function formatPublishedDateLabel(
 }
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
+	const copy = getLocaleMessages().feedPage;
+	const categoryLabels: Record<(typeof CATEGORY_KEYS)[number], string> = {
+		tech: copy.categoryOptions.tech,
+		creator: copy.categoryOptions.creator,
+		macro: copy.categoryOptions.macro,
+		ops: copy.categoryOptions.ops,
+		misc: copy.categoryOptions.misc,
+	};
+	const sourceOptions = [
+		{ value: "", label: copy.sourceOptions.all },
+		...SOURCE_KEYS.map((value) => ({
+			value,
+			label: copy.sourceOptions[value],
+		})),
+	] as const;
+	const feedbackOptions = [
+		{ value: "", label: copy.feedbackOptions.all },
+		...FEEDBACK_KEYS.map((value) => ({
+			value,
+			label: copy.feedbackOptions[value],
+		})),
+	] as const;
+	const sortOptions = SORT_KEYS.map((value) => ({
+		value,
+		label: copy.sortOptions[value],
+	})) as const;
 	const sessionToken = getActionSessionTokenForForm();
 	const {
 		source,
@@ -176,13 +193,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 			query.source = safeSource;
 		}
 		if (
-			category === "tech" ||
-			category === "creator" ||
-			category === "macro" ||
-			category === "ops" ||
-			category === "misc"
+			CATEGORY_KEYS.includes(category as (typeof CATEGORY_KEYS)[number])
 		) {
-			query.category = category;
+			query.category = category as (typeof CATEGORY_KEYS)[number];
 		}
 		if (safeFeedback) {
 			query.feedback = safeFeedback;
@@ -259,14 +272,11 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 			<div className="folo-page-header">
 				<div className="folo-page-title-row">
 					<div>
-						<p className="folo-page-kicker">SourceHarbor Feed</p>
+						<p className="folo-page-kicker">{copy.kicker}</p>
 						<h1 className="folo-page-title" data-route-heading>
-							Digest Feed
+							{copy.heroTitle}
 						</h1>
-						<p className="folo-page-subtitle">
-							Browse digest entries and body content in one reading flow, with
-							quick source and category filtering when you need it.
-						</p>
+						<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 					</div>
 					<div className="folo-page-toolbar">
 						<SyncNowButton sessionToken={sessionToken} />
@@ -276,16 +286,16 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
 			<section
 				className="folo-panel folo-surface feed-filter-panel"
-				aria-label="Digest filters"
+				aria-label={copy.filterRegionLabel}
 			>
 				<form method="GET" className="feed-filter-form">
 					<input type="hidden" name="item" value={selectedJobId ?? ""} />
 					<div className="feed-filter-selects">
 						<FormSelectField
 							name="source"
-							label="Source"
+							label={copy.filterLabels.source}
 							defaultValue={sourceSelectValue}
-							options={SOURCE_OPTIONS.map((option) => ({
+							options={sourceOptions.map((option) => ({
 								value: option.value,
 								label: option.label,
 							}))}
@@ -295,11 +305,11 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 						/>
 						<FormSelectField
 							name="category"
-							label="Category"
+							label={copy.filterLabels.category}
 							defaultValue={category}
 							options={[
-								{ value: "", label: "All categories" },
-								...Object.entries(CATEGORY_LABELS).map(([key, value]) => ({
+								{ value: "", label: copy.categoryOptions.all },
+								...Object.entries(categoryLabels).map(([key, value]) => ({
 									value: key,
 									label: value,
 								})),
@@ -310,9 +320,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 						/>
 						<FormSelectField
 							name="feedback"
-							label="Feedback"
+							label={copy.filterLabels.feedback}
 							defaultValue={safeFeedback}
-							options={FEEDBACK_OPTIONS.map((option) => ({
+							options={feedbackOptions.map((option) => ({
 								value: option.value,
 								label: option.label,
 							}))}
@@ -322,9 +332,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 						/>
 						<FormSelectField
 							name="sort"
-							label="Sort"
+							label={copy.filterLabels.sort}
 							defaultValue={safeSort}
-							options={SORT_OPTIONS.map((option) => ({
+							options={sortOptions.map((option) => ({
 								value: option.value,
 								label: option.label,
 							}))}
@@ -345,7 +355,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 							data-interaction="control"
 							data-testid="feed-filter-submit"
 						>
-							Filter
+							{copy.filterButton}
 						</Button>
 						{isFiltered ? (
 							<Button
@@ -362,7 +372,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 											: "/feed"
 									}
 								>
-									Clear
+									{copy.clearButton}
 								</Link>
 							</Button>
 						) : null}
@@ -385,22 +395,22 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 						size="sm"
 						data-interaction="link-muted"
 					>
-						<Link href={retryHref}>Retry current page</Link>
+						<Link href={retryHref}>{copy.retryCurrentPageButton}</Link>
 					</Button>
 				</>
 			) : null}
 
 			{!errorCode && items.length === 0 ? (
 				<section className="folo-panel folo-surface folo-empty-panel">
-					<p className="folo-empty-title">No AI digest entries yet</p>
+					<p className="folo-empty-title">{copy.emptyTitle}</p>
 					<p className="folo-empty-description">
 						{isFiltered
-							? "No results match the current filters. Try clearing them."
-							: "There are no processed videos or articles yet. Add a subscription and trigger intake first."}
+							? copy.emptyFiltered
+							: copy.emptyUnfiltered}
 					</p>
 					{!isFiltered ? (
 						<Button asChild variant="hero" size="sm" data-interaction="cta">
-							<Link href="/subscriptions">Go to subscriptions</Link>
+							<Link href="/subscriptions">{copy.goToSubscriptionsButton}</Link>
 						</Button>
 					) : null}
 				</section>
@@ -439,7 +449,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 			{!errorCode && items.length > 0 ? (
 				<nav
 					className="folo-panel folo-surface folo-pagination-shell"
-					aria-label="Pagination"
+					aria-label={copy.paginationLabel}
 				>
 					<div className="folo-pagination-group">
 						{!isFirstPage ? (
@@ -451,7 +461,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 										itemValue: selectedJobId ?? undefined,
 									})}
 								>
-									← Previous page
+									{copy.previousPageButton}
 								</Link>
 							</Button>
 						) : null}
@@ -459,14 +469,15 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 							<span className="folo-filter-label">
 								{safeSource && `${toSourceLabel(safeSource)}`}
 								{safeSource && category ? " · " : ""}
-								{category && `${CATEGORY_LABELS[category] ?? category}`}
+								{category &&
+									`${categoryLabels[category as keyof typeof categoryLabels] ?? category}`}
 								{(safeSource || category) && safeFeedback ? " · " : ""}
 								{safeFeedback &&
-									`${FEEDBACK_OPTIONS.find((option) => option.value === safeFeedback)?.label ?? safeFeedback}`}
+									`${feedbackOptions.find((option) => option.value === safeFeedback)?.label ?? safeFeedback}`}
 								{(safeSource || category || safeFeedback) && safeSubscriptionId
 									? " · "
 									: ""}
-								{safeSubscriptionId ? "Subscription" : ""}
+								{safeSubscriptionId ? copy.subscriptionFilterLabel : ""}
 								{(safeSource ||
 									category ||
 									safeFeedback ||
@@ -475,13 +486,15 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 									? " · "
 									: ""}
 								{safeSort !== "recent"
-									? `${SORT_OPTIONS.find((option) => option.value === safeSort)?.label ?? safeSort}`
+									? `${sortOptions.find((option) => option.value === safeSort)?.label ?? safeSort}`
 									: ""}
 							</span>
 						) : null}
 					</div>
 					<div className="folo-pagination-group">
-						<span className="folo-filter-label">Page {safePage}</span>
+						<span className="folo-filter-label">
+							{copy.pagePrefix} {safePage}
+						</span>
 						{nextCursor !== null ? (
 							<Button asChild variant="surface" size="sm">
 								<Link
@@ -492,7 +505,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 										itemValue: selectedJobId ?? undefined,
 									})}
 								>
-									Next page →
+									{copy.nextPageButton}
 								</Link>
 							</Button>
 						) : null}

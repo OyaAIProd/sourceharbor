@@ -20,40 +20,33 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
 } from "@/lib/search-params";
+import { buildProductMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Subscriptions" };
+const subscriptionsCopy = getLocaleMessages().subscriptionsPage;
+
+export const metadata: Metadata = buildProductMetadata({
+	title: subscriptionsCopy.metadataTitle,
+	description: subscriptionsCopy.metadataDescription,
+	route: "subscriptions",
+});
 
 type SubscriptionsPageProps = {
 	searchParams?: SearchParamsInput;
 };
 
-const PLATFORM_OPTIONS = [
-	{ value: "youtube", label: "YouTube" },
-	{ value: "bilibili", label: "Bilibili" },
-];
-
-const SOURCE_TYPE_OPTIONS = [
-	{ value: "url", label: "Source URL" },
-	{ value: "youtube_channel_id", label: "YouTube channel ID" },
-	{ value: "bilibili_uid", label: "Bilibili user UID" },
-];
-
-const ADAPTER_TYPE_OPTIONS = [
-	{ value: "rsshub_route", label: "RSSHub route" },
-	{ value: "rss_generic", label: "Generic RSS" },
-];
-
-const CATEGORY_OPTIONS = [
-	{ value: "misc", label: "Other" },
-	{ value: "tech", label: "Tech" },
-	{ value: "creator", label: "Creator" },
-	{ value: "macro", label: "Macro" },
-	{ value: "ops", label: "Operations" },
-];
+const PLATFORM_KEYS = ["youtube", "bilibili"] as const;
+const SOURCE_TYPE_KEYS = [
+	"url",
+	"youtube_channel_id",
+	"bilibili_uid",
+] as const;
+const ADAPTER_TYPE_KEYS = ["rsshub_route", "rss_generic"] as const;
+const CATEGORY_KEYS = ["misc", "tech", "creator", "macro", "ops"] as const;
 
 function renderAlert(status: string, code: string) {
 	if (!status || !code) {
@@ -81,6 +74,33 @@ function renderAlert(status: string, code: string) {
 export default async function SubscriptionsPage({
 	searchParams,
 }: SubscriptionsPageProps) {
+	const copy = getLocaleMessages().subscriptionsPage;
+	const platformOptions = PLATFORM_KEYS.map((value) => ({
+		value,
+		label: copy.platformOptions[
+			value as keyof typeof copy.platformOptions
+		],
+	}));
+	const sourceTypeOptions = SOURCE_TYPE_KEYS.map((value) => ({
+		value,
+		label: copy.sourceTypeOptions[
+			value === "url"
+				? "url"
+				: value === "youtube_channel_id"
+					? "youtubeChannelId"
+					: "bilibiliUid"
+		],
+	}));
+	const adapterTypeOptions = ADAPTER_TYPE_KEYS.map((value) => ({
+		value,
+		label: copy.adapterTypeOptions[
+			value === "rsshub_route" ? "rsshubRoute" : "rssGeneric"
+		],
+	}));
+	const categoryOptions = CATEGORY_KEYS.map((value) => ({
+		value,
+		label: copy.categoryOptions[value],
+	}));
 	const { status, code } = await resolveSearchParams(searchParams, [
 		"status",
 		"code",
@@ -98,14 +118,11 @@ export default async function SubscriptionsPage({
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
-				<p className="folo-page-kicker">SourceHarbor Sources</p>
+				<p className="folo-page-kicker">{copy.kicker}</p>
 				<h1 className="folo-page-title" data-route-heading>
-					Subscriptions
+					{copy.heroTitle}
 				</h1>
-				<p className="folo-page-subtitle">
-					Manage source settings, categories, and priority so ingestion and
-					digest pipelines always start from stable inputs.
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			{renderAlert(status, code)}
@@ -116,16 +133,14 @@ export default async function SubscriptionsPage({
 					aria-live="assertive"
 				>
 					<CardHeader className="gap-2">
-						<CardTitle className="text-base">
-							Unable to load subscriptions
-						</CardTitle>
+						<CardTitle className="text-base">{copy.loadErrorTitle}</CardTitle>
 						<CardDescription>
 							{getFlashMessage(subscriptionsResult.errorCode)}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
 						<Button asChild variant="outline" size="sm">
-							<Link href="/subscriptions">Retry this page</Link>
+							<Link href="/subscriptions">{copy.retryCurrentPageButton}</Link>
 						</Button>
 					</CardContent>
 				</Card>
@@ -134,13 +149,8 @@ export default async function SubscriptionsPage({
 			<section>
 				<Card className="folo-surface border-border/70">
 					<CardHeader className="gap-2">
-						<h2 className="text-xl font-semibold">
-							Create or update a subscription
-						</h2>
-						<CardDescription>
-							Choose a source type first, then enter the matching source value.
-							Only fill in Source URL when using Generic RSS.
-						</CardDescription>
+						<h2 className="text-xl font-semibold">{copy.editorTitle}</h2>
+						<CardDescription>{copy.editorDescription}</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<form
@@ -157,61 +167,61 @@ export default async function SubscriptionsPage({
 							<FormSelectField
 								id="platform"
 								name="platform"
-								label="Platform"
+								label={copy.formLabels.platform}
 								defaultValue="youtube"
-								options={PLATFORM_OPTIONS}
+								options={platformOptions}
 							/>
 							<FormSelectField
 								id="source_type"
 								name="source_type"
-								label="Source type"
+								label={copy.formLabels.sourceType}
 								defaultValue="url"
-								options={SOURCE_TYPE_OPTIONS}
+								options={sourceTypeOptions}
 							/>
 							<FormInputField
 								id="source_value"
 								name="source_value"
-								label="Source value"
+								label={copy.formLabels.sourceValue}
 								required
-								placeholder="Channel ID / UID / URL"
+								placeholder={copy.placeholders.sourceValue}
 							/>
 							<FormSelectField
 								id="adapter_type"
 								name="adapter_type"
-								label="Adapter type"
+								label={copy.formLabels.adapterType}
 								defaultValue="rsshub_route"
-								options={ADAPTER_TYPE_OPTIONS}
+								options={adapterTypeOptions}
 							/>
 							<FormInputField
 								id="source_url"
 								name="source_url"
-								label="Source URL (for rss_generic)"
+								label={copy.formLabels.sourceUrl}
 								type="url"
-								placeholder="https://example.com/feed.xml"
+								placeholder={copy.placeholders.sourceUrl}
 							/>
 							<FormInputField
 								id="rsshub_route"
 								name="rsshub_route"
-								label="RSSHub route (optional)"
-								placeholder="/youtube/channel/UCxxxx"
+								label={copy.formLabels.rsshubRoute}
+								placeholder={copy.placeholders.rsshubRoute}
 							/>
 							<FormSelectField
 								id="category"
 								name="category"
-								label="Category"
+								label={copy.formLabels.category}
 								defaultValue="misc"
-								options={CATEGORY_OPTIONS}
+								options={categoryOptions}
 							/>
 							<FormInputField
 								id="tags"
 								name="tags"
-								label="Tags (comma-separated, optional)"
-								placeholder="ai,weekly,high-priority"
+								label={copy.formLabels.tags}
+								placeholder={copy.placeholders.tags}
 							/>
 							<FormInputField
 								id="priority"
 								name="priority"
-								label="Priority (0-100)"
+								label={copy.formLabels.priority}
 								type="number"
 								min={0}
 								max={100}
@@ -219,16 +229,16 @@ export default async function SubscriptionsPage({
 							/>
 							<FormCheckboxField
 								name="enabled"
-								label="Enabled"
+								label={copy.formLabels.enabled}
 								defaultChecked
 								fieldClassName="md:col-span-2"
 							/>
 							<div className="md:col-span-2">
 								<SubmitButton
-									pendingLabel="Saving..."
-									statusText="Saving subscription settings"
+									pendingLabel={copy.savePending}
+									statusText={copy.saveStatus}
 								>
-									Save subscription
+									{copy.saveButton}
 								</SubmitButton>
 							</div>
 						</form>
@@ -239,18 +249,18 @@ export default async function SubscriptionsPage({
 			<section>
 				<Card className="folo-surface border-border/70">
 					<CardHeader className="gap-2">
-						<h2 className="text-xl font-semibold">Current subscriptions</h2>
+						<h2 className="text-xl font-semibold">{copy.currentTitle}</h2>
 						<CardDescription>
 							<output
 								className="text-sm text-muted-foreground"
 								aria-live="polite"
 								aria-atomic="true"
 							>
-								Loaded {subscriptions.length} subscriptions.
+								{copy.loadedPrefix} {subscriptions.length}{" "}
+								{copy.loadedSuffix}
 							</output>
 							<p className="text-sm text-muted-foreground">
-								Select multiple rows to update categories in bulk. The action
-								bar appears at the bottom.
+								{copy.currentDescription}
 							</p>
 						</CardDescription>
 					</CardHeader>

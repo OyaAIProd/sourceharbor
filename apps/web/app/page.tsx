@@ -200,6 +200,9 @@ export default async function DashboardPage({
 				className="grid gap-4 xl:grid-cols-3"
 				aria-label="SourceHarbor front doors"
 			>
+				<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground xl:col-span-3">
+					{copy.sectionHeadings.primaryFrontDoors}
+				</h2>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<CardTitle>{copy.frontDoors.searchTitle}</CardTitle>
@@ -247,6 +250,9 @@ export default async function DashboardPage({
 			</section>
 
 			<section aria-label="SourceHarbor builder entry points">
+				<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+					{copy.sectionHeadings.builderEntryPoints}
+				</h2>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<CardTitle>{builderCopy.title}</CardTitle>
@@ -272,6 +278,9 @@ export default async function DashboardPage({
 				className="grid gap-4 xl:grid-cols-3"
 				aria-label="SourceHarbor compounder surfaces"
 			>
+				<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground xl:col-span-3">
+					{copy.sectionHeadings.compounderSurfaces}
+				</h2>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<CardTitle>{copy.compounders.watchlistsTitle}</CardTitle>
@@ -328,6 +337,9 @@ export default async function DashboardPage({
 				className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
 				aria-label={copy.metricsRegionLabel}
 			>
+				<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:col-span-2 xl:col-span-4">
+					{copy.sectionHeadings.keyMetrics}
+				</h2>
 				<Card className="folo-surface overflow-hidden border-border/70">
 					<CardHeader className="gap-2">
 						<CardDescription>

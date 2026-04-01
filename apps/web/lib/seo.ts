@@ -7,6 +7,8 @@ type SeoRoute =
 	| "mcp"
 	| "knowledge"
 	| "ingestRuns"
+	| "feed"
+	| "subscriptions"
 	| "search"
 	| "watchlists"
 	| "trends"
@@ -61,6 +63,18 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"ingest ledger",
 		"source intake",
 		"pipeline intake trace",
+	],
+	feed: [
+		"digest feed",
+		"reading flow",
+		"AI digest review",
+		"operator reading pane",
+	],
+	subscriptions: [
+		"source subscriptions",
+		"source intake settings",
+		"subscription control plane",
+		"ingestion sources",
 	],
 	search: [
 		"grounded search",

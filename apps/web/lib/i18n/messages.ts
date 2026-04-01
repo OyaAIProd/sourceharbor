@@ -102,6 +102,12 @@ const MESSAGES = {
 				mcpCta: "Open MCP quickstart",
 				jobCta: "Inspect job evidence",
 			},
+			sectionHeadings: {
+				primaryFrontDoors: "Primary front doors",
+				builderEntryPoints: "Builder entry points",
+				compounderSurfaces: "Compounder surfaces",
+				keyMetrics: "Command center metrics",
+			},
 			compounders: {
 				watchlistsTitle: "Watchlists and trends",
 				watchlistsDescription:
@@ -384,6 +390,122 @@ const MESSAGES = {
 			detailDescription:
 				"Treat this section like the itemized receipt for one intake batch.",
 			detailEmpty: "This run does not have item detail yet.",
+		},
+		feedPage: {
+			metadataTitle: "Digest Feed",
+			metadataDescription:
+				"SourceHarbor digest feed for reading entries, filtering source/category/feedback, and moving from feed curation into reading pane, job trace, and evidence.",
+			kicker: "SourceHarbor Feed",
+			heroTitle: "Digest Feed",
+			heroSubtitle:
+				"Browse digest entries and body content in one reading flow, with quick source and category filtering when you need it.",
+			filterRegionLabel: "Digest filters",
+			filterLabels: {
+				source: "Source",
+				category: "Category",
+				feedback: "Feedback",
+				sort: "Sort",
+			},
+			filterButton: "Filter",
+			clearButton: "Clear",
+			retryCurrentPageButton: "Retry current page",
+			emptyTitle: "No AI digest entries yet",
+			emptyFiltered:
+				"No results match the current filters. Try clearing them.",
+			emptyUnfiltered:
+				"There are no processed videos or articles yet. Add a subscription and trigger intake first.",
+			goToSubscriptionsButton: "Go to subscriptions",
+			paginationLabel: "Pagination",
+			pagePrefix: "Page",
+			previousPageButton: "← Previous page",
+			nextPageButton: "Next page →",
+			sourceOptions: {
+				all: "All sources",
+				youtube: "YouTube",
+				bilibili: "Bilibili",
+				rss: "RSS",
+			},
+			feedbackOptions: {
+				all: "All feedback",
+				saved: "Saved",
+				useful: "Useful",
+				noisy: "Noisy",
+				dismissed: "Dismissed",
+				archived: "Archived",
+			},
+			sortOptions: {
+				recent: "Recent first",
+				curated: "Curated first",
+			},
+			categoryOptions: {
+				all: "All categories",
+				tech: "Tech",
+				creator: "Creator",
+				macro: "Macro",
+				ops: "Ops",
+				misc: "Misc",
+			},
+			subscriptionFilterLabel: "Subscription",
+		},
+		subscriptionsPage: {
+			metadataTitle: "Subscriptions",
+			metadataDescription:
+				"SourceHarbor source subscription control surface for YouTube, Bilibili, RSSHub, and RSS feeds, with priority, category, and bulk update workflow.",
+			kicker: "SourceHarbor Sources",
+			heroTitle: "Subscriptions",
+			heroSubtitle:
+				"Manage source settings, categories, and priority so ingestion and digest pipelines always start from stable inputs.",
+			loadErrorTitle: "Unable to load subscriptions",
+			retryCurrentPageButton: "Retry this page",
+			editorTitle: "Create or update a subscription",
+			editorDescription:
+				"Choose a source type first, then enter the matching source value. Only fill in Source URL when using Generic RSS.",
+			formLabels: {
+				platform: "Platform",
+				sourceType: "Source type",
+				sourceValue: "Source value",
+				adapterType: "Adapter type",
+				sourceUrl: "Source URL (for rss_generic)",
+				rsshubRoute: "RSSHub route (optional)",
+				category: "Category",
+				tags: "Tags (comma-separated, optional)",
+				priority: "Priority (0-100)",
+				enabled: "Enabled",
+			},
+			placeholders: {
+				sourceValue: "Channel ID / UID / URL",
+				sourceUrl: "https://example.com/feed.xml",
+				rsshubRoute: "/youtube/channel/UCxxxx",
+				tags: "ai,weekly,high-priority",
+			},
+			saveButton: "Save subscription",
+			savePending: "Saving...",
+			saveStatus: "Saving subscription settings",
+			currentTitle: "Current subscriptions",
+			loadedPrefix: "Loaded",
+			loadedSuffix: "subscriptions.",
+			currentDescription:
+				"Select multiple rows to update categories in bulk. The action bar appears at the bottom.",
+			platformOptions: {
+				youtube: "YouTube",
+				bilibili: "Bilibili",
+			},
+			sourceTypeOptions: {
+				url: "Source URL",
+				youtubeChannelId: "YouTube channel ID",
+				bilibiliUid: "Bilibili user UID",
+			},
+			adapterTypeOptions: {
+				rsshubRoute: "RSSHub route",
+				rssGeneric: "Generic RSS",
+			},
+			categoryOptions: {
+				misc: "Other",
+				tech: "Tech",
+				creator: "Creator",
+				macro: "Macro",
+				ops: "Operations",
+			},
 		},
 		searchPage: {
 			metadataTitle: "Search",
@@ -796,6 +918,12 @@ const MESSAGES = {
 				mcpCta: "打开 MCP quickstart",
 				jobCta: "查看 job 证据",
 			},
+			sectionHeadings: {
+				primaryFrontDoors: "Primary front doors",
+				builderEntryPoints: "Builder entry points",
+				compounderSurfaces: "Compounder surfaces",
+				keyMetrics: "Command center metrics",
+			},
 			compounders: {
 				watchlistsTitle: "Watchlists 与趋势",
 				watchlistsDescription:
@@ -1074,6 +1202,122 @@ const MESSAGES = {
 			detailTitle: "Run 详情",
 			detailDescription: "这一块更像本次 ingest batch 的详细账单。",
 			detailEmpty: "当前 run 还没有 item 详情。",
+		},
+		feedPage: {
+			metadataTitle: "Digest Feed",
+			metadataDescription:
+				"SourceHarbor 的 digest feed，用于阅读条目、按 source/category/feedback 过滤，并从 feed curation 回到 reading pane、job trace 与 evidence。",
+			kicker: "SourceHarbor Feed",
+			heroTitle: "Digest Feed",
+			heroSubtitle:
+				"在一个阅读流里浏览 digest entries 和正文内容；需要时再加 source 与 category 过滤。",
+			filterRegionLabel: "Digest filters",
+			filterLabels: {
+				source: "Source",
+				category: "Category",
+				feedback: "Feedback",
+				sort: "Sort",
+			},
+			filterButton: "Filter",
+			clearButton: "Clear",
+			retryCurrentPageButton: "Retry current page",
+			emptyTitle: "No AI digest entries yet",
+			emptyFiltered:
+				"没有条目匹配当前过滤条件。可以先清空过滤器再试。",
+			emptyUnfiltered:
+				"当前还没有处理完成的视频或文章。先添加订阅，再触发 intake。",
+			goToSubscriptionsButton: "Go to subscriptions",
+			paginationLabel: "Pagination",
+			pagePrefix: "Page",
+			previousPageButton: "← Previous page",
+			nextPageButton: "Next page →",
+			sourceOptions: {
+				all: "All sources",
+				youtube: "YouTube",
+				bilibili: "Bilibili",
+				rss: "RSS",
+			},
+			feedbackOptions: {
+				all: "All feedback",
+				saved: "Saved",
+				useful: "Useful",
+				noisy: "Noisy",
+				dismissed: "Dismissed",
+				archived: "Archived",
+			},
+			sortOptions: {
+				recent: "Recent first",
+				curated: "Curated first",
+			},
+			categoryOptions: {
+				all: "All categories",
+				tech: "Tech",
+				creator: "Creator",
+				macro: "Macro",
+				ops: "Ops",
+				misc: "Misc",
+			},
+			subscriptionFilterLabel: "Subscription",
+		},
+		subscriptionsPage: {
+			metadataTitle: "Subscriptions",
+			metadataDescription:
+				"SourceHarbor 的 source subscription 控制面，管理 YouTube、Bilibili、RSSHub 与 RSS feed 的 priority、category 与 bulk update workflow。",
+			kicker: "SourceHarbor Sources",
+			heroTitle: "Subscriptions",
+			heroSubtitle:
+				"管理 source 设置、分类和优先级，让 ingestion 与 digest pipeline 总是从稳定输入开始。",
+			loadErrorTitle: "Unable to load subscriptions",
+			retryCurrentPageButton: "Retry this page",
+			editorTitle: "Create or update a subscription",
+			editorDescription:
+				"先选 source type，再填写对应 source value。只有在使用 Generic RSS 时才填写 Source URL。",
+			formLabels: {
+				platform: "Platform",
+				sourceType: "Source type",
+				sourceValue: "Source value",
+				adapterType: "Adapter type",
+				sourceUrl: "Source URL (for rss_generic)",
+				rsshubRoute: "RSSHub route (optional)",
+				category: "Category",
+				tags: "Tags (comma-separated, optional)",
+				priority: "Priority (0-100)",
+				enabled: "Enabled",
+			},
+			placeholders: {
+				sourceValue: "Channel ID / UID / URL",
+				sourceUrl: "https://example.com/feed.xml",
+				rsshubRoute: "/youtube/channel/UCxxxx",
+				tags: "ai,weekly,high-priority",
+			},
+			saveButton: "Save subscription",
+			savePending: "Saving...",
+			saveStatus: "Saving subscription settings",
+			currentTitle: "Current subscriptions",
+			loadedPrefix: "Loaded",
+			loadedSuffix: "subscriptions.",
+			currentDescription:
+				"可一次选择多行做批量分类更新。操作条会出现在底部。",
+			platformOptions: {
+				youtube: "YouTube",
+				bilibili: "Bilibili",
+			},
+			sourceTypeOptions: {
+				url: "Source URL",
+				youtubeChannelId: "YouTube channel ID",
+				bilibiliUid: "Bilibili user UID",
+			},
+			adapterTypeOptions: {
+				rsshubRoute: "RSSHub route",
+				rssGeneric: "Generic RSS",
+			},
+			categoryOptions: {
+				misc: "Other",
+				tech: "Tech",
+				creator: "Creator",
+				macro: "Macro",
+				ops: "Operations",
+			},
 		},
 		searchPage: {
 			metadataTitle: "Search",

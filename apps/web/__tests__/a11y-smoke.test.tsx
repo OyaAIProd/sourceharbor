@@ -9,6 +9,7 @@ import SubscriptionsPage from "@/app/subscriptions/page";
 
 const mockListSubscriptions = vi.fn();
 const mockListVideos = vi.fn();
+const mockListIngestRuns = vi.fn();
 const mockGetJob = vi.fn();
 const mockGetDigestFeed = vi.fn();
 const mockGetArtifactMarkdown = vi.fn();
@@ -41,6 +42,7 @@ vi.mock("@/lib/api/client", () => ({
 	apiClient: {
 		listSubscriptions: (...args: unknown[]) => mockListSubscriptions(...args),
 		listVideos: (...args: unknown[]) => mockListVideos(...args),
+		listIngestRuns: (...args: unknown[]) => mockListIngestRuns(...args),
 		getJob: (...args: unknown[]) => mockGetJob(...args),
 		getDigestFeed: (...args: unknown[]) => mockGetDigestFeed(...args),
 		getArtifactMarkdown: (...args: unknown[]) =>
@@ -60,6 +62,7 @@ describe("a11y smoke", () => {
 		vi.clearAllMocks();
 		mockListSubscriptions.mockResolvedValue([]);
 		mockListVideos.mockResolvedValue([]);
+		mockListIngestRuns.mockResolvedValue([]);
 		mockGetNotificationConfig.mockResolvedValue({
 			enabled: true,
 			to_email: "ops@example.com",
