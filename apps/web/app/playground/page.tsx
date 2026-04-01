@@ -13,6 +13,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 
 export const metadata: Metadata = {
 	title: "Playground",
@@ -82,6 +83,7 @@ async function loadSampleCorpus() {
 }
 
 export default async function PlaygroundPage() {
+	const copy = getLocaleMessages().playgroundPage;
 	const sample = await loadSampleCorpus();
 
 	return (
@@ -91,10 +93,7 @@ export default async function PlaygroundPage() {
 				<h1 className="folo-page-title" data-route-heading>
 					Read-only sample playground
 				</h1>
-				<p className="folo-page-subtitle">
-					这里展示的是 clearly labeled sample corpus，不是 live production
-					results。它的作用是帮你在不配置整套环境前先感知产品价值。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
@@ -103,10 +102,7 @@ export default async function PlaygroundPage() {
 					<CardDescription>{sample.description}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm text-muted-foreground">
-					<p>
-						Sample boundary: this playground is read-only and sample-labeled. Do
-						not treat it as current operator state or remote proof.
-					</p>
+					<p>{copy.boundaryDescription}</p>
 					<div className="flex flex-wrap gap-3">
 						<Button asChild variant="outline" size="sm">
 							<Link href="/search">Open real Search</Link>
@@ -121,7 +117,7 @@ export default async function PlaygroundPage() {
 			<section className="grid gap-4 lg:grid-cols-2">
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Sample sources</CardTitle>
+						<CardTitle>{copy.sampleSourcesTitle}</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{sample.sources.map((item) => (
@@ -139,7 +135,7 @@ export default async function PlaygroundPage() {
 
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Example jobs</CardTitle>
+						<CardTitle>{copy.exampleJobsTitle}</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{sample.example_jobs.map((item) => (
@@ -163,7 +159,7 @@ export default async function PlaygroundPage() {
 			<section className="grid gap-4 lg:grid-cols-2">
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Example retrieval results</CardTitle>
+						<CardTitle>{copy.retrievalResultsTitle}</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{sample.example_retrieval_results.map((item, index) => (
@@ -181,7 +177,7 @@ export default async function PlaygroundPage() {
 
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Example watchlists and trend</CardTitle>
+						<CardTitle>{copy.exampleWatchlistsTitle}</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
 						{sample.example_watchlists.map((item) => (
@@ -208,10 +204,7 @@ export default async function PlaygroundPage() {
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
 					<CardTitle>Example bundle shape</CardTitle>
-					<CardDescription>
-						Use this as a mental model for what a shareable internal evidence
-						bundle looks like. It is a sample, not a live export.
-					</CardDescription>
+					<CardDescription>{copy.exampleBundleDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm text-muted-foreground">
 					<p>{sample.example_bundle.bundle_kind}</p>

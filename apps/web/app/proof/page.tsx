@@ -9,6 +9,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 
 export const metadata: Metadata = {
 	title: "Proof",
@@ -36,6 +37,7 @@ const PROOF_LAYERS = [
 ];
 
 export default function ProofPage() {
+	const copy = getLocaleMessages().proofPage;
 	return (
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
@@ -43,10 +45,7 @@ export default function ProofPage() {
 				<h1 className="folo-page-title" data-route-heading>
 					Proof boundary
 				</h1>
-				<p className="folo-page-subtitle">
-					把它理解成“哪些话现在能大胆说，哪些还要看额外证据”的
-					总开关。代码、docs、local runtime 和 remote proof 不是同一层账本。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			<section className="grid gap-4 lg:grid-cols-2">
@@ -65,9 +64,7 @@ export default function ProofPage() {
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
 					<CardTitle>Next truthful jumps</CardTitle>
-					<CardDescription>
-						这些入口都是已经存在的真实 surface，不是额外包装。
-					</CardDescription>
+					<CardDescription>{copy.nextTruthfulJumpsDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
 					<Button asChild variant="outline" size="sm">

@@ -16,6 +16,7 @@ import {
 import { apiClient } from "@/lib/api/client";
 import { buildArtifactAssetUrl } from "@/lib/api/url";
 import { formatDateTime, formatDateTimeWithSeconds } from "@/lib/format";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
@@ -36,6 +37,7 @@ function JobStatusBadge({ status }: { status: string }) {
 }
 
 export default async function JobsPage({ searchParams }: JobsPageProps) {
+	const copy = getLocaleMessages().jobsPage;
 	const { job_id: jobId } = await resolveSearchParams(searchParams, [
 		"job_id",
 	] as const);
@@ -303,9 +305,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 								<h2 className="text-xl font-semibold">
 									Compare to previous run
 								</h2>
-								<CardDescription>
-									把它理解成“这次和上次相比，结果改了多少”。如果没有上一条成功任务，这里会明确告诉你没有可比较对象。
-								</CardDescription>
+								<CardDescription>{copy.compareDescription}</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-3">
 								{jobCompare?.has_previous ? (
@@ -357,10 +357,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
 								<h2 className="text-xl font-semibold">Knowledge cards</h2>
-								<CardDescription>
-									把它理解成“从这次结果里提炼出的长期可复用卡片”。它们比原始
-									digest 更像可积累的知识对象。
-								</CardDescription>
+								<CardDescription>{copy.knowledgeDescription}</CardDescription>
 							</CardHeader>
 							<CardContent>
 								{knowledgeCards.length === 0 ? (

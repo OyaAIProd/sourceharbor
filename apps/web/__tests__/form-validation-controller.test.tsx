@@ -22,19 +22,24 @@ describe("FormValidationController", () => {
 				<FormValidationController />
 				<form data-auto-disable-required="true">
 					<input aria-label="name" name="name" required defaultValue="" />
-					<button type="submit">提交</button>
+					<button type="submit">Submit</button>
 				</form>
 			</>,
 		);
 
-		const button = screen.getByRole("button", { name: "提交" });
+		const button = screen.getByRole("button", { name: "Submit" });
 		expect(button).toBeDisabled();
 		expect(button).toHaveAttribute("aria-disabled", "true");
 		const requiredReason = screen.getByRole("alert");
-		expect(requiredReason).toHaveTextContent("请先填写并修正必填项后再提交。");
+		expect(requiredReason).toHaveTextContent(
+			"Fill in and fix the required fields before submitting.",
+		);
 		expect(requiredReason).toBeVisible();
 		expect(requiredReason).toHaveAttribute("aria-live", "assertive");
-		expect(button).toHaveAttribute("title", "请先填写并修正必填项后再提交。");
+		expect(button).toHaveAttribute(
+			"title",
+			"Fill in and fix the required fields before submitting.",
+		);
 		expect(button).toHaveAttribute("aria-describedby", requiredReason.id);
 
 		const input = screen.getByLabelText("name");
@@ -55,22 +60,27 @@ describe("FormValidationController", () => {
 				<form data-require-one="url,video_id" data-require-one-exclusive="true">
 					<input aria-label="url" name="url" defaultValue="" />
 					<input aria-label="video" name="video_id" defaultValue="" />
-					<button type="submit">运行</button>
+					<button type="submit">Run</button>
 				</form>
 			</>,
 		);
 
-		const submit = screen.getByRole("button", { name: "运行" });
+		const submit = screen.getByRole("button", { name: "Run" });
 		const url = screen.getByLabelText("url");
 		const video = screen.getByLabelText("video");
 		const reason = screen.getByRole("alert");
 
 		expect(submit).toBeDisabled();
-		expect(reason).toHaveTextContent("请至少填写一项必填来源后再提交。");
+		expect(reason).toHaveTextContent(
+			"Fill in at least one required source before submitting.",
+		);
 		expect(reason).toBeVisible();
 		expect(submit).toHaveAttribute("aria-describedby", reason.id);
 		expect(reason).toHaveAttribute("aria-live", "assertive");
-		expect(submit).toHaveAttribute("title", "请至少填写一项必填来源后再提交。");
+		expect(submit).toHaveAttribute(
+			"title",
+			"Fill in at least one required source before submitting.",
+		);
 
 		fireEvent.input(url, { target: { value: "https://example.com/video" } });
 		expect(submit).not.toBeDisabled();
@@ -82,13 +92,13 @@ describe("FormValidationController", () => {
 		fireEvent.input(video, { target: { value: "abc" } });
 		expect(submit).toBeDisabled();
 		expect(reason).toHaveTextContent(
-			"当前只能填写一项来源，请清空多余输入后再提交。",
+			"Only one source can be filled right now. Clear the extra inputs before submitting.",
 		);
 		expect(reason).toBeVisible();
 		expect(submit).toHaveAttribute("aria-describedby", reason.id);
 		expect(submit).toHaveAttribute(
 			"title",
-			"当前只能填写一项来源，请清空多余输入后再提交。",
+			"Only one source can be filled right now. Clear the extra inputs before submitting.",
 		);
 	});
 
@@ -99,7 +109,7 @@ describe("FormValidationController", () => {
 				<form>
 					<label>
 						<input type="checkbox" name="enabled" aria-label="enabled" />
-						启用
+						Enable
 					</label>
 					<input
 						name="email"
@@ -107,7 +117,7 @@ describe("FormValidationController", () => {
 						data-disabled-unless-checked="enabled"
 						defaultValue="a@example.com"
 					/>
-					<button type="submit">保存</button>
+					<button type="submit">Save</button>
 				</form>
 			</>,
 		);
@@ -155,7 +165,7 @@ describe("FormValidationController", () => {
 						data-disabled-unless-checked=""
 						defaultValue="a@example.com"
 					/>
-					<button type="submit">保存</button>
+					<button type="submit">Save</button>
 				</form>
 			</>,
 		);

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/format";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
@@ -27,6 +28,7 @@ type TrendsPageProps = {
 };
 
 export default async function TrendsPage({ searchParams }: TrendsPageProps) {
+	const copy = getLocaleMessages().trendsPage;
 	const { watchlist_id: watchlistId } = await resolveSearchParams(
 		searchParams,
 		["watchlist_id"] as const,
@@ -52,24 +54,18 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 				<h1 className="folo-page-title" data-route-heading>
 					Cross-run trend
 				</h1>
-				<p className="folo-page-subtitle">
-					这不是 fake analytics。它只展示当前 watchlist 在最近几次 run
-					里真实匹配到的 topics / claims 变化。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
 					<CardTitle>Choose a watchlist</CardTitle>
-					<CardDescription>
-						第一版先走非常 focused 的 MVP：围绕一个 watchlist，看最近几次 run
-						发生了什么变化。
-					</CardDescription>
+					<CardDescription>{copy.chooseDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
 					{watchlists.length === 0 ? (
 						<p className="text-sm text-muted-foreground">
-							先去保存至少一个 watchlist，这里才有真正可比的连续变化视图。
+							{copy.empty}
 						</p>
 					) : (
 						watchlists.map((item) => (

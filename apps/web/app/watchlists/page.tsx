@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/format";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
@@ -52,6 +53,7 @@ const DELIVERY_OPTIONS = [
 export default async function WatchlistsPage({
 	searchParams,
 }: WatchlistsPageProps) {
+	const copy = getLocaleMessages().watchlistsPage;
 	const {
 		status,
 		code,
@@ -112,10 +114,7 @@ export default async function WatchlistsPage({
 				<h1 className="folo-page-title" data-route-heading>
 					Watchlists
 				</h1>
-				<p className="folo-page-subtitle">
-					把它理解成长期追踪清单。你不是只搜一次就走，而是把值得反复回来看的一类主题、claim
-					或来源钉住。
-				</p>
+				<p className="folo-page-subtitle">{copy.heroSubtitle}</p>
 			</div>
 
 			{alert}
@@ -124,11 +123,7 @@ export default async function WatchlistsPage({
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<CardTitle>Save a watchlist</CardTitle>
-						<CardDescription>
-							当前支持 `topic_key`、`claim_kind`、`platform` 和 `source
-							match`。第一版先做 persistent tracking，再把 external alerts
-							接到更深的通知链路。
-						</CardDescription>
+						<CardDescription>{copy.saveDescription}</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<form action={upsertWatchlistAction} className="grid gap-4">
@@ -199,10 +194,7 @@ export default async function WatchlistsPage({
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<CardTitle>Alert readiness</CardTitle>
-						<CardDescription>
-							系统现在能把 watchlist 保存下来并在 dashboard 内复用。外发提醒是否
-							ready，要看通知 gate，而不是看表单有没有提交成功。
-						</CardDescription>
+						<CardDescription>{copy.alertDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
 						{notificationGate ? (
@@ -211,9 +203,7 @@ export default async function WatchlistsPage({
 								<p>{notificationGate.next_step}</p>
 							</>
 						) : (
-							<p>
-								当前拿不到 notification gate，先以 dashboard tracking 为主。
-							</p>
+							<p>{copy.alertFallback}</p>
 						)}
 						<Button asChild variant="outline" size="sm">
 							<Link href="/settings">Open notification settings</Link>
@@ -225,20 +215,16 @@ export default async function WatchlistsPage({
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
 					<CardTitle>Current watchlists</CardTitle>
-					<CardDescription>
-						这些是已经持久化的 tracking objects。它们不是 UI
-						壳子，而是当前可保存、可读取、可挂趋势页的真实对象。
-					</CardDescription>
+					<CardDescription>{copy.currentDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					{watchlistsResult.error ? (
 						<p className="text-sm text-muted-foreground">
-							当前无法读取 watchlists。先确认 API health，再重试这页。
+							{copy.currentError}
 						</p>
 					) : watchlists.length === 0 ? (
 						<p className="text-sm text-muted-foreground">
-							还没有
-							watchlists。先保存一个主题或来源，后面这页才会开始像“持续追踪面板”而不是空白表单。
+							{copy.currentEmpty}
 						</p>
 					) : (
 						<ul className="space-y-3">
@@ -303,11 +289,8 @@ export default async function WatchlistsPage({
 			{trendWatchlist && trendResult.payload ? (
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>Recent movement</CardTitle>
-						<CardDescription>
-							先看最近 3 次变化，确认这个 watchlist
-							值不值得继续追。更完整的连续变化视图在 trend page。
-						</CardDescription>
+					<CardTitle>Recent movement</CardTitle>
+						<CardDescription>{copy.recentMovementDescription}</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						{trendResult.payload.timeline.map((run) => (

@@ -2,17 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 
 const FORM_VALIDATION_MESSAGE_NODE_ATTR = "data-form-validation-message";
 const SUBMIT_REASON_BASE_DESCRIBED_BY = "data-submit-base-describedby";
 const FORM_VALIDATION_HINT_BASE_CLASS = "form-validation-hint";
 const FORM_VALIDATION_HINT_ACTIVE_CLASS = "form-validation-hint-active";
-
-const DISABLE_REASON_MESSAGES = {
-	required: "请先填写并修正必填项后再提交。",
-	requireOne: "请至少填写一项必填来源后再提交。",
-	requireOneExclusive: "当前只能填写一项来源，请清空多余输入后再提交。",
-} as const;
 
 let formValidationMessageCounter = 0;
 
@@ -91,6 +86,7 @@ function updateSubmitReasonA11y(
 }
 
 function evaluateForm(form: HTMLFormElement): void {
+	const disableReasonMessages = getLocaleMessages().formValidation;
 	const submit = form.querySelector<HTMLButtonElement | HTMLInputElement>(
 		'button[type="submit"], input[type="submit"]',
 	);
@@ -140,11 +136,11 @@ function evaluateForm(form: HTMLFormElement): void {
 		hasRequireOneExclusiveViolation;
 	let disableReason: string | null = null;
 	if (hasRequireOneExclusiveViolation) {
-		disableReason = DISABLE_REASON_MESSAGES.requireOneExclusive;
+		disableReason = disableReasonMessages.requireOneExclusive;
 	} else if (hasRequireOneViolation) {
-		disableReason = DISABLE_REASON_MESSAGES.requireOne;
+		disableReason = disableReasonMessages.requireOne;
 	} else if (hasRequiredViolation) {
-		disableReason = DISABLE_REASON_MESSAGES.required;
+		disableReason = disableReasonMessages.required;
 	}
 
 	submit.disabled = disabled;

@@ -11,6 +11,7 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
 	type SearchParamsInput,
@@ -41,6 +42,7 @@ function humanizeSource(source: string): string {
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
+	const copy = getLocaleMessages().searchPage;
 	const { q, query, mode, top_k, intent, platform } = await resolveSearchParams(
 		searchParams,
 		["q", "query", "mode", "top_k", "intent", "platform"] as const,
@@ -80,29 +82,23 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 		<div className="folo-page-shell folo-unified-shell">
 			<div className="folo-page-header">
 				<p className="folo-page-kicker">
-					{askIntent
-						? "SourceHarbor Ask Front Door"
-						: "SourceHarbor Search Front Door"}
+					{askIntent ? copy.askKicker : copy.searchKicker}
 				</p>
 				<h1 className="folo-page-title" data-route-heading>
-					{askIntent ? "Ask your sources" : "Search"}
+					{askIntent ? copy.askTitle : copy.searchTitle}
 				</h1>
 				<p className="folo-page-subtitle">
-					{askIntent
-						? "这是一个诚实的 Wave 1 Ask MVP。当前 repo truth 支撑的是 grounded, search-first retrieval，不是 fully generated answer layer。"
-						: "这是面向运营者的真实检索前台。它直接调用 retrieval API，把 digest、transcript、outline 和 knowledge cards 变成可回跳、可审计的结果。"}
+					{askIntent ? copy.askSubtitle : copy.searchSubtitle}
 				</p>
 			</div>
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
 					<h2 className="text-xl font-semibold">
-						{askIntent ? "Ask in grounded mode" : "Search your sources"}
+						{askIntent ? copy.askFormTitle : copy.searchFormTitle}
 					</h2>
 					<CardDescription>
-						{askIntent
-							? "先把问题收敛成 cited retrieval，再跳回 job trace、knowledge cards 和原始来源。"
-							: "`keyword` 是当前最稳的模式。`semantic` 和 `hybrid` 已接线，但仍按 experimental 呈现。"}
+						{askIntent ? copy.askFormDescription : copy.searchFormDescription}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -121,9 +117,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 							}
 							defaultValue={queryValue}
 							hint={
-								askIntent
-									? "This MVP returns grounded evidence candidates first."
-									: "每条结果都应该能回跳到 job trace、knowledge 或 source URL。"
+								askIntent ? copy.askHint : copy.searchHint
 							}
 						/>
 						<FormSelectField
@@ -166,26 +160,24 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<h2 className="text-xl font-semibold">
-							{askIntent ? "Grounded Ask mode" : "Current truth"}
+							{askIntent ? copy.askTruthTitle : copy.searchTruthTitle}
 						</h2>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
 						<p>
-							{askIntent
-								? "What exists today: cited retrieval, job trace, knowledge cards, and original source links."
-								: "Search is a production-facing front door over a real retrieval backend."}
+							{askIntent ? copy.askTruthPrimary : copy.searchTruthPrimary}
 						</p>
 						<p>
 							{askIntent
-								? "What does not exist yet: a verified answer payload with stable citation spans and answer-level hallucination guards."
-								: "Wave 1 keeps the boundary honest: cited retrieval first, stronger answer synthesis later."}
+								? copy.askTruthSecondary
+								: copy.searchTruthSecondary}
 						</p>
 						{askIntent ? (
-							<p>It does not synthesize a free-form answer layer yet.</p>
+							<p>{copy.askTruthNote}</p>
 						) : null}
 						<Button asChild variant="outline" size="sm">
 							<Link href={askIntent ? "/ask" : "/ask"}>
-								{askIntent ? "Open Ask details" : "Open Ask mode"}
+								{askIntent ? copy.askTruthCta : copy.searchTruthCta}
 							</Link>
 						</Button>
 					</CardContent>
@@ -193,19 +185,19 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<h2 className="text-xl font-semibold">
-							{askIntent ? "Best current use" : "Result contract"}
+							{askIntent ? copy.askContractTitle : copy.searchContractTitle}
 						</h2>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm text-muted-foreground">
 						<p>
 							{askIntent
-								? "Use Ask to narrow a question into evidence-backed result candidates, then follow the citations into job trace, knowledge, or original source pages."
-								: "Each hit exposes a snippet, source type, score, and jump targets into a job trace, knowledge page, or original source URL."}
+								? copy.askContractPrimary
+								: copy.searchContractPrimary}
 						</p>
 						<p>
 							{askIntent
-								? "This is truthful by design: no hidden answer layer, no unverifiable synthesis."
-								: "If the corpus is empty, Search should show an honest empty state instead of inventing an answer."}
+								? copy.askContractSecondary
+								: copy.searchContractSecondary}
 						</p>
 					</CardContent>
 				</Card>
@@ -214,25 +206,25 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
 					<h2 className="text-xl font-semibold">
-						{askIntent ? "Grounded result set" : "Results"}
+						{askIntent ? copy.askResultsTitle : copy.searchResultsTitle}
 					</h2>
 					<CardDescription>
 						{queryValue
-							? `${askIntent ? "Evidence candidates" : "Showing cited retrieval results"} for “${queryValue}”.`
-							: `Run ${askIntent ? "a grounded question" : "a query"} to inspect grounded retrieval results.`}
+							? `${askIntent ? copy.askResultsPrefix : copy.searchResultsPrefix} for “${queryValue}”.`
+							: askIntent
+								? copy.askRunPrompt
+								: copy.searchRunPrompt}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					{error ? (
 						<p className="text-sm text-muted-foreground">
-							Current retrieval request failed. Retry first, then inspect API
-							health if it still fails.
+							{copy.requestFailed}
 						</p>
 					) : null}
 					{!error && queryValue && results.length === 0 ? (
 						<p className="text-sm text-muted-foreground">
-							No grounded results yet. That usually means the current corpus is
-							empty or the query is too narrow.
+							{copy.noResults}
 						</p>
 					) : null}
 					{results.map((item, index) => (
@@ -246,7 +238,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 									<Badge variant="outline">{item.platform || "unknown"}</Badge>
 									<Badge variant="outline">score {item.score.toFixed(2)}</Badge>
 									{normalizedMode !== "keyword" ? (
-										<Badge variant="secondary">experimental mode</Badge>
+										<Badge variant="secondary">{copy.experimentalMode}</Badge>
 									) : null}
 								</div>
 								<div className="space-y-2">

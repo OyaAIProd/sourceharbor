@@ -13,56 +13,56 @@ describe("Sheet", () => {
 	it("uses localized close label and can hide the close button", () => {
 		const { rerender } = render(
 			<Sheet>
-				<SheetTrigger>打开</SheetTrigger>
+				<SheetTrigger>Open</SheetTrigger>
 				<SheetContent side="right">
-					<SheetTitle>标题</SheetTitle>
-					<SheetDescription>抽屉内容描述</SheetDescription>
-					<div>内容</div>
+					<SheetTitle>Title</SheetTitle>
+					<SheetDescription>Sheet description</SheetDescription>
+					<div>Content</div>
 				</SheetContent>
 			</Sheet>,
 		);
 
-		fireEvent.click(screen.getByRole("button", { name: "打开" }));
-		expect(screen.getByText("关闭")).toHaveClass("sr-only");
+		fireEvent.click(screen.getByRole("button", { name: "Open" }));
+		expect(screen.getByText("Close")).toHaveClass("sr-only");
 
 		rerender(
 			<Sheet defaultOpen>
 				<SheetContent side="left" showCloseButton={false}>
-					<SheetTitle>标题</SheetTitle>
-					<SheetDescription>抽屉内容描述</SheetDescription>
-					<div>内容</div>
+					<SheetTitle>Title</SheetTitle>
+					<SheetDescription>Sheet description</SheetDescription>
+					<div>Content</div>
 				</SheetContent>
 			</Sheet>,
 		);
 
-		expect(screen.queryByText("关闭")).not.toBeInTheDocument();
+		expect(screen.queryByText("Close")).not.toBeInTheDocument();
 	}, 15_000);
 
 	it("renders top and bottom sheet variants", () => {
 		const { rerender } = render(
 			<Sheet defaultOpen>
 				<SheetContent side="top">
-					<SheetTitle>顶部抽屉</SheetTitle>
-					<SheetDescription>顶部描述</SheetDescription>
+					<SheetTitle>Top sheet</SheetTitle>
+					<SheetDescription>Top description</SheetDescription>
 				</SheetContent>
 			</Sheet>,
 		);
 
 		expect(
-			screen.getByText("顶部抽屉").closest('[data-slot="sheet-content"]'),
+			screen.getByText("Top sheet").closest('[data-slot="sheet-content"]'),
 		).toHaveClass("inset-x-0");
 
 		rerender(
 			<Sheet defaultOpen>
 				<SheetContent side="bottom">
-					<SheetTitle>底部抽屉</SheetTitle>
-					<SheetDescription>底部描述</SheetDescription>
+					<SheetTitle>Bottom sheet</SheetTitle>
+					<SheetDescription>Bottom description</SheetDescription>
 				</SheetContent>
 			</Sheet>,
 		);
 
 		expect(
-			screen.getByText("底部抽屉").closest('[data-slot="sheet-content"]'),
+			screen.getByText("Bottom sheet").closest('[data-slot="sheet-content"]'),
 		).toHaveClass("bottom-0");
 	});
 });
