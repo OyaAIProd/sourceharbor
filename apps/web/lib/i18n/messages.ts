@@ -9,6 +9,28 @@ const MESSAGES = {
 		common: {
 			close: "Close",
 		},
+		routeTransition: {
+			announcementPrefix: "Switched to:",
+			labels: {
+				home: "Home",
+				subscriptions: "Subscriptions",
+				search: "Search",
+				ask: "Ask",
+				mcp: "MCP Quickstart",
+				ops: "Ops inbox",
+				watchlists: "Watchlists",
+				trends: "Trends",
+				playground: "Playground",
+				proof: "Proof",
+				knowledge: "Knowledge",
+				jobs: "Jobs",
+				ingestRuns: "Ingest runs",
+				feed: "Digest feed",
+				settings: "Settings",
+				useCases: "Use cases",
+				page: "Page",
+			},
+		},
 		formValidation: {
 			required: "Fill in and fix the required fields before submitting.",
 			requireOne: "Fill in at least one required source before submitting.",
@@ -359,6 +381,15 @@ const MESSAGES = {
 			filterTitle: "Filter knowledge cards",
 			filterDescription:
 				"Use job, video, card type, topic, and claim filters to narrow the cabinet before you inspect the cards.",
+			filterLabels: {
+				jobId: "Job ID",
+				videoId: "Video ID",
+				cardType: "Card type",
+				topic: "Topic",
+				claimKind: "Claim kind",
+				limit: "Limit",
+			},
+			idPlaceholder: "11111111-1111-1111-1111-111111111111",
 			filterButton: "Filter",
 			clearButton: "Clear",
 			totalCards: "Total cards",
@@ -372,6 +403,13 @@ const MESSAGES = {
 			jobTraceCta: "Job Trace",
 			openJobTraceButton: "Open job trace",
 			openJobTraceAriaPrefix: "Open job trace for",
+			sameTypeButton: "Same type",
+			metaLabels: {
+				job: "Job",
+				video: "Video",
+				order: "Order",
+				topic: "Topic",
+			},
 		},
 		ingestRunsPage: {
 			metadataTitle: "Ingest Runs",
@@ -385,6 +423,7 @@ const MESSAGES = {
 			filterDescription:
 				"Enter a run ID to inspect one intake batch. Leave it empty to review the most recent batches.",
 			runIdLabel: "Run ID",
+			runIdPlaceholder: "11111111-1111-1111-1111-111111111111",
 			searchButton: "Search",
 			loadErrorTitle: "Load failed",
 			loadErrorDescription: "Unable to load ingest runs right now.",
@@ -402,6 +441,20 @@ const MESSAGES = {
 			detailDescription:
 				"Treat this section like the itemized receipt for one intake batch.",
 			detailEmpty: "This run does not have item detail yet.",
+			detailFields: {
+				runId: "Run ID",
+				workflow: "Workflow",
+				jobsCreated: "Jobs created",
+				candidates: "Candidates",
+			},
+			itemsTableCaption: "Ingest run items",
+			itemsTableHeaders: {
+				videoUid: "Video UID",
+				title: "Title",
+				job: "Job",
+				type: "Type",
+				status: "Status",
+			},
 		},
 		feedPage: {
 			metadataTitle: "Digest Feed",
@@ -857,6 +910,28 @@ const MESSAGES = {
 		common: {
 			close: "关闭",
 		},
+		routeTransition: {
+			announcementPrefix: "Switched to:",
+			labels: {
+				home: "Home",
+				subscriptions: "Subscriptions",
+				search: "Search",
+				ask: "Ask",
+				mcp: "MCP Quickstart",
+				ops: "Ops inbox",
+				watchlists: "Watchlists",
+				trends: "Trends",
+				playground: "Playground",
+				proof: "Proof",
+				knowledge: "Knowledge",
+				jobs: "Jobs",
+				ingestRuns: "Ingest runs",
+				feed: "Digest feed",
+				settings: "Settings",
+				useCases: "Use cases",
+				page: "Page",
+			},
+		},
 		formValidation: {
 			required: "请先填写并修正必填项后再提交。",
 			requireOne: "请至少填写一项必填来源后再提交。",
@@ -1198,6 +1273,15 @@ const MESSAGES = {
 			filterTitle: "筛选知识卡片",
 			filterDescription:
 				"用 job、video、card type、topic 和 claim 过滤器先缩小范围，再查看具体卡片。",
+			filterLabels: {
+				jobId: "Job ID",
+				videoId: "Video ID",
+				cardType: "Card type",
+				topic: "Topic",
+				claimKind: "Claim kind",
+				limit: "Limit",
+			},
+			idPlaceholder: "11111111-1111-1111-1111-111111111111",
 			filterButton: "筛选",
 			clearButton: "清空",
 			totalCards: "总卡片数",
@@ -1211,6 +1295,13 @@ const MESSAGES = {
 			jobTraceCta: "Job Trace",
 			openJobTraceButton: "Open job trace",
 			openJobTraceAriaPrefix: "Open job trace for",
+			sameTypeButton: "Same type",
+			metaLabels: {
+				job: "Job",
+				video: "Video",
+				order: "Order",
+				topic: "Topic",
+			},
 		},
 		ingestRunsPage: {
 			metadataTitle: "Ingest Runs",
@@ -1224,6 +1315,7 @@ const MESSAGES = {
 			filterDescription:
 				"输入 run ID 可以查看某次摄取批次；留空时显示最近的批次列表。",
 			runIdLabel: "Run ID",
+			runIdPlaceholder: "11111111-1111-1111-1111-111111111111",
 			searchButton: "Search",
 			loadErrorTitle: "加载失败",
 			loadErrorDescription: "当前无法加载 ingest runs。",
@@ -1240,6 +1332,20 @@ const MESSAGES = {
 			detailTitle: "Run 详情",
 			detailDescription: "这一块更像本次 ingest batch 的详细账单。",
 			detailEmpty: "当前 run 还没有 item 详情。",
+			detailFields: {
+				runId: "Run ID",
+				workflow: "Workflow",
+				jobsCreated: "Jobs created",
+				candidates: "Candidates",
+			},
+			itemsTableCaption: "Ingest run items",
+			itemsTableHeaders: {
+				videoUid: "Video UID",
+				title: "Title",
+				job: "Job",
+				type: "Type",
+				status: "Status",
+			},
 		},
 		feedPage: {
 			metadataTitle: "Digest Feed",

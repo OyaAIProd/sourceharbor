@@ -106,6 +106,23 @@ function dedupeKeywords(keywords: string[]): string[] {
 	return [...new Set(keywords.map((item) => item.trim()).filter(Boolean))];
 }
 
+export function buildAppShellMetadata(): Metadata {
+	return {
+		title: {
+			default: "SourceHarbor Command Center",
+			template: "%s | SourceHarbor",
+		},
+		description:
+			"AI knowledge control tower for grounded retrieval, job trace, MCP workflows, Codex, Claude Code, and source-first operator research.",
+		keywords: dedupeKeywords([
+			...CORE_KEYWORDS,
+			...ROUTE_KEYWORDS.dashboard,
+			"job trace",
+			"evidence bundle",
+		]),
+	};
+}
+
 export function buildProductMetadata({
 	title,
 	description,

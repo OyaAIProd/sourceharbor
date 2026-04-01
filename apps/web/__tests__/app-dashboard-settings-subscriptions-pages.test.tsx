@@ -519,12 +519,19 @@ describe("dashboard/settings/subscriptions pages", () => {
 			expect(
 				screen.getByRole("heading", { name: "Recent ingest runs" }),
 			).toBeInTheDocument();
+			expect(screen.getByLabelText("Run ID")).toHaveValue("run-1");
 			expect(screen.getByRole("link", { name: "run-1" })).toHaveAttribute(
 				"href",
 				"/ingest-runs?run_id=run-1",
 			);
 			expect(screen.getByText("Run detail")).toBeInTheDocument();
+			expect(screen.getByText("Workflow")).toBeInTheDocument();
+			expect(screen.getByText("Jobs created")).toBeInTheDocument();
+			expect(screen.getAllByText("Candidates").length).toBeGreaterThanOrEqual(
+				2,
+			);
 			expect(screen.getByText("Video One")).toBeInTheDocument();
+			expect(screen.getByText("Ingest run items")).toBeInTheDocument();
 			expect(screen.getByRole("link", { name: "job-1" })).toHaveAttribute(
 				"href",
 				"/jobs?job_id=job-1",

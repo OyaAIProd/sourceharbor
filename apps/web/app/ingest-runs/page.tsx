@@ -79,7 +79,7 @@ export default async function IngestRunsPage({
 							name="run_id"
 							label={copy.runIdLabel}
 							type="text"
-							placeholder="11111111-1111-1111-1111-111111111111"
+							placeholder={copy.runIdPlaceholder}
 							defaultValue={runId}
 							data-field-kind="identifier"
 							fieldClassName="min-w-[280px] flex-1"
@@ -180,7 +180,7 @@ export default async function IngestRunsPage({
 							<dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-										Run ID
+										{copy.detailFields.runId}
 									</dt>
 									<dd className="break-all text-sm font-medium">
 										{selectedRun.id}
@@ -188,7 +188,7 @@ export default async function IngestRunsPage({
 								</div>
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-										Workflow
+										{copy.detailFields.workflow}
 									</dt>
 									<dd className="break-all text-sm font-medium">
 										{selectedRun.workflow_id ?? "-"}
@@ -196,7 +196,7 @@ export default async function IngestRunsPage({
 								</div>
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-										Jobs created
+										{copy.detailFields.jobsCreated}
 									</dt>
 									<dd className="text-sm font-medium">
 										{selectedRun.jobs_created}
@@ -204,7 +204,7 @@ export default async function IngestRunsPage({
 								</div>
 								<div className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
 									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-										Candidates
+										{copy.detailFields.candidates}
 									</dt>
 									<dd className="text-sm font-medium">
 										{selectedRun.candidates_count}
@@ -214,23 +214,25 @@ export default async function IngestRunsPage({
 							{selectedRun.items.length > 0 ? (
 								<div className="overflow-x-auto rounded-lg border border-border/70">
 									<table className="min-w-[760px] w-full text-sm">
-										<caption className="sr-only">Ingest run items</caption>
+										<caption className="sr-only">
+											{copy.itemsTableCaption}
+										</caption>
 										<thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
 											<tr>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Video UID
+													{copy.itemsTableHeaders.videoUid}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Title
+													{copy.itemsTableHeaders.title}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Job
+													{copy.itemsTableHeaders.job}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Type
+													{copy.itemsTableHeaders.type}
 												</th>
 												<th scope="col" className="px-4 py-3 font-medium">
-													Status
+													{copy.itemsTableHeaders.status}
 												</th>
 											</tr>
 										</thead>

@@ -232,43 +232,43 @@ export default async function KnowledgePage({
 						<FormInputField
 							id="knowledge-job-id"
 							name="job_id"
-							label="Job ID"
+							label={copy.filterLabels.jobId}
 							type="text"
-							placeholder="11111111-1111-1111-1111-111111111111"
+							placeholder={copy.idPlaceholder}
 							defaultValue={safeJobId}
 							data-field-kind="identifier"
 						/>
 						<FormInputField
 							id="knowledge-video-id"
 							name="video_id"
-							label="Video ID"
+							label={copy.filterLabels.videoId}
 							type="text"
-							placeholder="11111111-1111-1111-1111-111111111111"
+							placeholder={copy.idPlaceholder}
 							defaultValue={safeVideoId}
 							data-field-kind="identifier"
 						/>
 						<FormSelectField
 							name="card_type"
-							label="Card type"
+							label={copy.filterLabels.cardType}
 							defaultValue={safeCardType}
 							options={cardTypeOptions}
 						/>
 						<FormSelectField
 							name="topic_key"
-							label="Topic"
+							label={copy.filterLabels.topic}
 							defaultValue={safeTopicKey}
 							options={topicOptions}
 						/>
 						<FormSelectField
 							name="claim_kind"
-							label="Claim kind"
+							label={copy.filterLabels.claimKind}
 							defaultValue={safeClaimKind}
 							options={claimKindOptions}
 						/>
 						<FormInputField
 							id="knowledge-limit"
 							name="limit"
-							label="Limit"
+							label={copy.filterLabels.limit}
 							type="number"
 							min={1}
 							max={200}
@@ -392,7 +392,7 @@ export default async function KnowledgePage({
 																undefined,
 														})}
 													>
-														Same type
+														{copy.sameTypeButton}
 													</Link>
 												</Button>
 											</div>
@@ -400,15 +400,22 @@ export default async function KnowledgePage({
 										<p className="mt-2 text-muted-foreground">{card.body}</p>
 										<div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
 											{compactId(card.job_id) ? (
-												<span>Job: {compactId(card.job_id)}</span>
+												<span>
+													{copy.metaLabels.job}: {compactId(card.job_id)}
+												</span>
 											) : null}
 											{compactId(card.video_id) ? (
-												<span>Video: {compactId(card.video_id)}</span>
+												<span>
+													{copy.metaLabels.video}: {compactId(card.video_id)}
+												</span>
 											) : null}
-											<span>Order: {card.order_index + 1}</span>
+											<span>
+												{copy.metaLabels.order}: {card.order_index + 1}
+											</span>
 											{card.metadata_json?.topic_label ? (
 												<span>
-													Topic: {String(card.metadata_json.topic_label)}
+													{copy.metaLabels.topic}:{" "}
+													{String(card.metadata_json.topic_label)}
 												</span>
 											) : null}
 										</div>

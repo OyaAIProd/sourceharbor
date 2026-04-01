@@ -11,6 +11,7 @@ import { metadata as subscriptionsMetadata } from "@/app/subscriptions/page";
 import { metadata as trendsMetadata } from "@/app/trends/page";
 import { generateMetadata as generateUseCaseMetadata } from "@/app/use-cases/[slug]/page";
 import { metadata as watchlistsMetadata } from "@/app/watchlists/page";
+import { buildAppShellMetadata } from "@/lib/seo";
 
 function toKeywordList(value: unknown): string[] {
 	if (Array.isArray(value)) {
@@ -26,6 +27,25 @@ function toKeywordList(value: unknown): string[] {
 }
 
 describe("route metadata", () => {
+	it("keeps app-shell metadata aligned to the command-center control-tower story", () => {
+		const metadata = buildAppShellMetadata();
+
+		expect(metadata.title).toMatchObject({
+			default: "SourceHarbor Command Center",
+		});
+		expect(metadata.description).toMatch(/AI knowledge control tower/i);
+		expect(toKeywordList(metadata.keywords)).toEqual(
+			expect.arrayContaining([
+				"AI knowledge control tower",
+				"MCP server",
+				"Codex workflow",
+				"Claude Code workflow",
+				"job trace",
+				"evidence bundle",
+			]),
+		);
+	});
+
 	it("keeps search and ask metadata grounded, retrieval-first, and keyword-rich", () => {
 		expect(searchMetadata.title).toBe("Search");
 		expect(searchMetadata.description).toMatch(/Grounded search/i);

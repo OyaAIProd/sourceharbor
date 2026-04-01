@@ -9,28 +9,11 @@ import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { ThemeProvider } from "@/components/theme-provider";
 import { fetchApiHealthState } from "@/lib/api/health";
 import { buildApiUrl } from "@/lib/api/url";
+import { buildAppShellMetadata } from "@/lib/seo";
 
 import "./globals.css";
 
-export const metadata: Metadata = {
-	title: {
-		default: "SourceHarbor Command Center",
-		template: "%s | SourceHarbor",
-	},
-	description:
-		"AI knowledge control tower for grounded retrieval, job trace, MCP workflows, Codex, Claude Code, and source-first operator research.",
-	keywords: [
-		"SourceHarbor",
-		"AI knowledge control tower",
-		"grounded retrieval",
-		"MCP server",
-		"Model Context Protocol",
-		"Codex workflow",
-		"Claude Code workflow",
-		"job trace",
-		"evidence bundle",
-	],
-};
+export const metadata: Metadata = buildAppShellMetadata();
 
 const HEALTH_TIMEOUT_MS = 2000;
 

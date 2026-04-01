@@ -2,28 +2,33 @@
 
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import { getLocaleMessages } from "@/lib/i18n/messages";
 
 type RouteTransitionProps = {
 	children: ReactNode;
 };
 
-const ROUTE_NAME_MAP: Array<{ href: string; label: string }> = [
-	{ href: "/", label: "Home" },
-	{ href: "/subscriptions", label: "Subscriptions" },
-	{ href: "/search", label: "Search" },
-	{ href: "/ask", label: "Ask" },
-	{ href: "/mcp", label: "MCP Quickstart" },
-	{ href: "/ops", label: "Ops inbox" },
-	{ href: "/watchlists", label: "Watchlists" },
-	{ href: "/trends", label: "Trends" },
-	{ href: "/playground", label: "Playground" },
-	{ href: "/proof", label: "Proof" },
-	{ href: "/knowledge", label: "Knowledge" },
-	{ href: "/jobs", label: "Jobs" },
-	{ href: "/ingest-runs", label: "Ingest runs" },
-	{ href: "/feed", label: "Digest feed" },
-	{ href: "/settings", label: "Settings" },
-	{ href: "/use-cases", label: "Use cases" },
+const routeTransitionCopy = getLocaleMessages().routeTransition;
+const ROUTE_NAME_MAP: Array<{
+	href: string;
+	label: (typeof routeTransitionCopy.labels)[keyof typeof routeTransitionCopy.labels];
+}> = [
+	{ href: "/", label: routeTransitionCopy.labels.home },
+	{ href: "/subscriptions", label: routeTransitionCopy.labels.subscriptions },
+	{ href: "/search", label: routeTransitionCopy.labels.search },
+	{ href: "/ask", label: routeTransitionCopy.labels.ask },
+	{ href: "/mcp", label: routeTransitionCopy.labels.mcp },
+	{ href: "/ops", label: routeTransitionCopy.labels.ops },
+	{ href: "/watchlists", label: routeTransitionCopy.labels.watchlists },
+	{ href: "/trends", label: routeTransitionCopy.labels.trends },
+	{ href: "/playground", label: routeTransitionCopy.labels.playground },
+	{ href: "/proof", label: routeTransitionCopy.labels.proof },
+	{ href: "/knowledge", label: routeTransitionCopy.labels.knowledge },
+	{ href: "/jobs", label: routeTransitionCopy.labels.jobs },
+	{ href: "/ingest-runs", label: routeTransitionCopy.labels.ingestRuns },
+	{ href: "/feed", label: routeTransitionCopy.labels.feed },
+	{ href: "/settings", label: routeTransitionCopy.labels.settings },
+	{ href: "/use-cases", label: routeTransitionCopy.labels.useCases },
 ];
 
 function getRouteLabel(pathname: string | null): string {
@@ -38,7 +43,7 @@ function getRouteLabel(pathname: string | null): string {
 			return route.label;
 		}
 	}
-	return "Page";
+	return routeTransitionCopy.labels.page;
 }
 
 export function RouteTransition({ children }: RouteTransitionProps) {
@@ -104,7 +109,7 @@ export function RouteTransition({ children }: RouteTransitionProps) {
 				<div aria-hidden="true" className="route-progress-bar" />
 			</div>
 			<output className="sr-only" aria-live="polite" aria-atomic="true">
-				Switched to: {routeLabel}
+				{routeTransitionCopy.announcementPrefix} {routeLabel}
 			</output>
 			{children}
 		</div>

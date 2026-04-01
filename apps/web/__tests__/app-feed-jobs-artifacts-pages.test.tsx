@@ -953,6 +953,14 @@ describe("feed/jobs/artifacts pages", () => {
 			expect(
 				screen.getByRole("heading", { name: "Filter knowledge cards" }),
 			).toBeInTheDocument();
+			expect(screen.getByLabelText("Job ID")).toHaveValue("job-1");
+			expect(screen.getByLabelText("Video ID")).toHaveValue("video-1");
+			expect(screen.getByLabelText("Card type")).toHaveTextContent("Takeaway");
+			expect(screen.getByLabelText("Topic")).toHaveTextContent(
+				"Agent / Workflows",
+			);
+			expect(screen.getByLabelText("Claim kind")).toHaveTextContent("Takeaway");
+			expect(screen.getByLabelText("Limit")).toHaveValue(10);
 			expect(screen.getByText("Knowledge cards")).toBeInTheDocument();
 			const totalCardsPanel = screen
 				.getByText("Total cards")
@@ -976,6 +984,16 @@ describe("feed/jobs/artifacts pages", () => {
 				"href",
 				"/knowledge?job_id=job-1&video_id=video-1&card_type=takeaway&topic_key=agent-workflows&claim_kind=takeaway&limit=10",
 			);
+			expect(
+				screen.getAllByRole("link", { name: "Same type" })[0],
+			).toHaveAttribute(
+				"href",
+				"/knowledge?job_id=job-1&video_id=video-1&card_type=takeaway&topic_key=agent-workflows&claim_kind=takeaway&limit=10",
+			);
+			expect(screen.getByText("Job: job-1")).toBeInTheDocument();
+			expect(screen.getByText("Video: video-1")).toBeInTheDocument();
+			expect(screen.getByText("Order: 1")).toBeInTheDocument();
+			expect(screen.getByText("Topic: Agent / Workflows")).toBeInTheDocument();
 			expect(screen.getByRole("link", { name: "Job Trace" })).toHaveAttribute(
 				"href",
 				"/jobs",
