@@ -145,9 +145,9 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 				<CardHeader>
 					<h2 className="text-xl font-semibold">{askCopy.askTruthTitle}</h2>
 					<CardDescription>
-						Current contract: retrieval-first, citation-first, and operator
-						auditable. {askCopy.askTruthPrimary} {askCopy.askTruthSecondary}{" "}
-						{askCopy.askTruthNote} {askCopy.askContractPrimary}
+						{askCopy.askTruthContractLead} {askCopy.askTruthPrimary}{" "}
+						{askCopy.askTruthSecondary} {askCopy.askTruthNote}{" "}
+						{askCopy.askContractPrimary}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
@@ -215,11 +215,8 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 			{error ? (
 				<Card className="folo-surface border-destructive/40 bg-destructive/5">
 					<CardHeader>
-						<h2 className="text-xl font-semibold">Ask failed</h2>
-						<CardDescription>
-							The retrieval layer is present, but this question did not return a
-							valid response. Retry before treating the mode as unavailable.
-						</CardDescription>
+						<h2 className="text-xl font-semibold">{askCopy.askErrorTitle}</h2>
+						<CardDescription>{askCopy.askErrorDescription}</CardDescription>
 					</CardHeader>
 				</Card>
 			) : null}
@@ -227,26 +224,27 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 			{!safeQuestion ? (
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<h2 className="text-xl font-semibold">What to expect</h2>
+						<h2 className="text-xl font-semibold">
+							{askCopy.askExpectationTitle}
+						</h2>
 						<CardDescription>
-							Use this page when you want to ask in natural language without
-							pretending the system already has a grounded answer model. Every
-							result should point you back to job trace, knowledge cards, or the
-							original source.
+							{askCopy.askExpectationDescription}
 						</CardDescription>
 					</CardHeader>
 				</Card>
 			) : null}
 
 			{safeQuestion && results ? (
-				<section className="space-y-4" aria-label="Ask evidence results">
+				<section className="space-y-4" aria-label={askCopy.askResultsAriaLabel}>
 					<Card className="folo-surface border-border/70">
 						<CardHeader>
 							<h2 className="text-xl font-semibold">
-								Best evidence for your question
+								{askCopy.askSummaryTitle}
 							</h2>
 							<CardDescription>
-								Question: <strong>{results.query}</strong> · Evidence hits:{" "}
+								{askCopy.askSummaryQuestionPrefix}:{" "}
+								<strong>{results.query}</strong> ·{" "}
+								{askCopy.askSummaryHitsPrefix}:{" "}
 								<strong>{results.items.length}</strong>
 							</CardDescription>
 						</CardHeader>
@@ -254,10 +252,11 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 					{results.items.length === 0 ? (
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
-								<h2 className="text-xl font-semibold">No cited evidence yet</h2>
+								<h2 className="text-xl font-semibold">
+									{askCopy.askNoEvidenceTitle}
+								</h2>
 								<CardDescription>
-									Try a narrower question, switch to keyword mode, or process
-									more sources before treating this as a missing capability.
+									{askCopy.askNoEvidenceDescription}
 								</CardDescription>
 							</CardHeader>
 						</Card>

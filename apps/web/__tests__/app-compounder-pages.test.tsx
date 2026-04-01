@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import PlaygroundPage from "@/app/playground/page";
 import TrendsPage from "@/app/trends/page";
-import { default as UseCasePage } from "@/app/use-cases/[slug]/page";
+import {
+	generateMetadata as generateUseCaseMetadata,
+	default as UseCasePage,
+} from "@/app/use-cases/[slug]/page";
 import WatchlistsPage from "@/app/watchlists/page";
 
 const mockListWatchlists = vi.fn();
@@ -150,5 +153,18 @@ describe("compounder pages", () => {
 			screen.getByRole("heading", { name: "YouTube to AI digest" }),
 		).toBeInTheDocument();
 		expect(screen.getByText(/discoverability surfaces/i)).toBeInTheDocument();
+	});
+
+	it("supports promised params for use-case runtime and metadata generation", async () => {
+		const params = Promise.resolve({ slug: "codex" });
+
+		const metadata = await generateUseCaseMetadata({ params });
+		render(await UseCasePage({ params }));
+
+		expect(metadata.title).toBe("Codex operator workflow");
+		expect(metadata.description).toMatch(/Codex through MCP or HTTP/i);
+		expect(
+			screen.getByRole("heading", { name: "Codex operator workflow" }),
+		).toBeInTheDocument();
 	});
 });

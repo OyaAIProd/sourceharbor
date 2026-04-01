@@ -20,9 +20,17 @@ const MESSAGES = {
 				title: "Dashboard loading",
 				message: "Loading the command center. Please wait.",
 			},
+			feed: {
+				title: "Digest feed loading",
+				message: "Loading the digest feed. Please wait.",
+			},
 			settings: {
 				title: "Settings loading",
 				message: "Loading notification settings. Please wait.",
+			},
+			subscriptions: {
+				title: "Loading subscriptions",
+				message: "Loading subscription data. Please wait.",
 			},
 		},
 		submitButton: {
@@ -560,6 +568,8 @@ const MESSAGES = {
 			askTruthSecondary:
 				"What does not exist yet: a verified answer payload with stable citation spans and answer-level hallucination guards.",
 			askTruthNote: "It does not synthesize a free-form answer layer yet.",
+			askTruthContractLead:
+				"Current contract: retrieval-first, citation-first, and operator auditable.",
 			searchTruthCta: "Open Ask mode",
 			askTruthCta: "Open Ask details",
 			openRawSearchButton: "Open raw search",
@@ -576,6 +586,18 @@ const MESSAGES = {
 				"This is truthful by design: no hidden answer layer, no unverifiable synthesis.",
 			searchResultsTitle: "Results",
 			askResultsTitle: "Grounded result set",
+			askErrorTitle: "Ask failed",
+			askErrorDescription:
+				"The retrieval layer is present, but this question did not return a valid response. Retry before treating the mode as unavailable.",
+			askExpectationTitle: "What to expect",
+			askExpectationDescription:
+				"Use this page when you want to ask in natural language without pretending the system already has a grounded answer model. Every result should point you back to job trace, knowledge cards, or the original source.",
+			askSummaryTitle: "Best evidence for your question",
+			askSummaryQuestionPrefix: "Question",
+			askSummaryHitsPrefix: "Evidence hits",
+			askNoEvidenceTitle: "No cited evidence yet",
+			askNoEvidenceDescription:
+				"Try a narrower question, switch to keyword mode, or process more sources before treating this as a missing capability.",
 			searchResultsPrefix: "Showing cited retrieval results",
 			askResultsPrefix: "Evidence candidates",
 			searchRunPrompt: "Run a query to inspect grounded retrieval results.",
@@ -585,6 +607,7 @@ const MESSAGES = {
 				"Current retrieval request failed. Retry first, then inspect API health if it still fails.",
 			noResults:
 				"No grounded results yet. That usually means the current corpus is empty or the query is too narrow.",
+			askResultsAriaLabel: "Ask evidence results",
 			groundedEvidenceTitle: "Grounded evidence",
 			openJobTraceButton: "Open job trace",
 			openKnowledgeCardsButton: "Open knowledge cards",
@@ -837,9 +860,17 @@ const MESSAGES = {
 		},
 		loading: {
 			app: { title: "页面加载中", message: "正在加载首页内容，请稍候。" },
+			feed: {
+				title: "Digest feed loading",
+				message: "Loading the digest feed. Please wait.",
+			},
 			settings: {
 				title: "设置加载中",
 				message: "正在加载设置项，请稍候。",
+			},
+			subscriptions: {
+				title: "Loading subscriptions",
+				message: "Loading subscription data. Please wait.",
 			},
 		},
 		submitButton: {
@@ -1369,6 +1400,8 @@ const MESSAGES = {
 			askTruthSecondary:
 				"还没有的是：带稳定 citation spans 和 answer-level hallucination guards 的 answer payload。",
 			askTruthNote: "当前不会合成一个 free-form answer layer。",
+			askTruthContractLead:
+				"Current contract: retrieval-first, citation-first, and operator auditable.",
 			searchTruthCta: "打开 Ask mode",
 			askTruthCta: "打开 Ask details",
 			openRawSearchButton: "Open raw search",
@@ -1385,6 +1418,18 @@ const MESSAGES = {
 				"它之所以诚实，是因为没有隐藏的 answer layer，也没有 unverifiable synthesis。",
 			searchResultsTitle: "Results",
 			askResultsTitle: "Grounded result set",
+			askErrorTitle: "Ask failed",
+			askErrorDescription:
+				"retrieval layer 已存在，但这次问题没有返回有效结果。先重试，不要直接把它当成模式不可用。",
+			askExpectationTitle: "What to expect",
+			askExpectationDescription:
+				"如果你想用自然语言提问，但又不想假装系统已经有 grounded answer model，就用这一页。每条结果都应该把你带回 job trace、knowledge cards 或原始来源。",
+			askSummaryTitle: "Best evidence for your question",
+			askSummaryQuestionPrefix: "Question",
+			askSummaryHitsPrefix: "Evidence hits",
+			askNoEvidenceTitle: "No cited evidence yet",
+			askNoEvidenceDescription:
+				"试着把问题收窄、切回 keyword mode，或者先处理更多 sources，再判断这是不是能力缺口。",
 			searchResultsPrefix: "Showing cited retrieval results",
 			askResultsPrefix: "Evidence candidates",
 			searchRunPrompt: "先跑一个 query，再检查 grounded retrieval results。",
@@ -1393,6 +1438,7 @@ const MESSAGES = {
 			requestFailed: "当前 retrieval 请求失败。先重试，再看 API health。",
 			noResults:
 				"当前还没有 grounded results。通常表示语料为空，或查询条件太窄。",
+			askResultsAriaLabel: "Ask evidence results",
 			groundedEvidenceTitle: "Grounded evidence",
 			openJobTraceButton: "Open job trace",
 			openKnowledgeCardsButton: "Open knowledge cards",
