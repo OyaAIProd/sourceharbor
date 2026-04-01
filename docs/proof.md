@@ -123,8 +123,9 @@ Current blocker truth is also more specific than raw key presence:
   still need Gemini access if they want the same layer.
 - Resend provider auth can exist while live delivery is still blocked by missing
   sender configuration such as `RESEND_FROM_EMAIL`.
-- The strict YouTube live-smoke probe is still bounded by provider-side project
-  enablement or policy, not just whether a non-empty key string exists.
+- The strict YouTube live-smoke probe is still bounded by a provider-side
+  `quota_or_permission` / `403` rejection on the current key/project, not by
+  generic key absence or old repo-local runtime drift.
 
 If you want the shortest honest board of what is already real, what is still
 secret-gated, and what stays in the spike bucket, read
