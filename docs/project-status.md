@@ -100,7 +100,7 @@ machine. The remaining blockers are more specific than \"secret missing\".
 
 Fresh GitHub-side verification now shows:
 
-- current `main` (`2c9e1c82befebba165bf2752db562ed71edad608`) now includes the landed Ask payload refresh from PR `#32` plus the follow-up remote-truth wording refresh from PR `#33`
+- current `main` now includes the landed Ask payload refresh from PR `#32` plus the follow-up remote-truth wording refresh from PR `#33`
 - current `main` has fresh successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs on the landed branch lineage
 - latest release tag `v0.1.1` is still older than current `main`, so release proof and current-branch proof remain different layers
 - the story-aware `/ask`, `/briefings`, and server-owned Ask payload story are no longer local-only; they are now part of remote `main`
