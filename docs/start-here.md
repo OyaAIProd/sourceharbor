@@ -122,10 +122,14 @@ Open these UI views:
 
 - `/` for the command center
 - `/ops` for operator diagnostics and live-hardening gates
+- `/subscriptions` for strong-supported video templates plus generalized RSSHub/RSS intake, backed by the same template catalog contract that the API and MCP surfaces expose
 - `/search` for grounded search across SourceHarbor artifacts
-- `/ask` for the truthful Ask MVP
+- `/ask` for the story-aware, briefing-backed Ask front door, with a server-owned page payload over the answer/change/evidence view
 - `/feed` for the digest reading flow
 - `/jobs?job_id=<job-id>` for pipeline trace and artifacts
+- `/watchlists` for long-lived tracking objects
+- `/trends` for merged stories plus recent evidence runs
+- `/briefings` for the summary-first watchlist briefing: current story, then changes, then evidence drill-down
 - `/mcp` for the MCP front door and quickstart
 - `/settings` for notifications and test sends
 
@@ -134,10 +138,16 @@ Open these UI views:
 If you want the longer-lived workflow instead of one-off processing:
 
 1. Add one or more subscriptions in the web UI or via `POST /api/v1/subscriptions`
-2. Trigger `POST /api/v1/ingest/poll`
-3. Keep the returned `run_id` so you can inspect `GET /api/v1/ingest/runs/<run-id>`
-4. Read the resulting entries in `/feed`
-5. Inspect the job page for retries, degradations, and artifact links
+2. Use the built-in template split honestly:
+   - strong-supported YouTube/Bilibili presets when you want the richer video lane
+   - generalized RSSHub / generic RSS intake when the source universe widens
+   - do not treat generalized intake as route-by-route RSSHub proof
+3. Trigger `POST /api/v1/ingest/poll`
+4. Keep the returned `run_id` so you can inspect `GET /api/v1/ingest/runs/<run-id>`
+5. Read the resulting entries in `/feed`
+6. Inspect `/trends` when you want the merged-story view over repeated themes
+7. Inspect `/briefings` when you want the lower-cognitive-load unified story view for one watchlist
+8. Inspect the job page for retries, degradations, and artifact links
 
 That path is what turns SourceHarbor from a one-shot processor into a knowledge intake system.
 

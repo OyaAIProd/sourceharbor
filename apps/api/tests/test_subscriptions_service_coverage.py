@@ -5,11 +5,14 @@ from typing import Any
 
 import pytest
 
+from apps.api.app.services.subscription_templates import load_subscription_template_catalog
 from apps.api.app.services.subscriptions import (
     SubscriptionsService,
     _derive_rsshub_route,
     _resolve_adapter,
     _validate_subscription_source_url,
+    resolve_subscription_content_profile,
+    resolve_subscription_support_tier,
 )
 
 
@@ -177,6 +180,51 @@ def test_resolve_adapter_defaults_to_rsshub_route_when_adapter_type_is_none() ->
     )
 
 
+def test_subscription_support_profile_distinguishes_strong_video_from_generic_routes() -> None:
+    assert (
+        resolve_subscription_support_tier(platform="youtube", source_type="youtube_channel_id")
+        == "strong_supported"
+    )
+    assert (
+        resolve_subscription_content_profile(
+            platform="youtube",
+            source_type="youtube_channel_id",
+            adapter_type="rsshub_route",
+        )
+        == "video"
+    )
+    assert (
+        resolve_subscription_support_tier(platform="rsshub", source_type="rsshub_route")
+        == "generic_supported"
+    )
+    assert (
+        resolve_subscription_content_profile(
+            platform="rsshub",
+            source_type="rsshub_route",
+            adapter_type="rsshub_route",
+        )
+        == "article"
+    )
+
+
+def test_subscription_template_catalog_exposes_strong_and_generic_templates() -> None:
+    payload = load_subscription_template_catalog()
+
+    assert {item["id"] for item in payload["support_tiers"]} == {
+        "strong_supported",
+        "generic_supported",
+    }
+    template_ids = {item["id"] for item in payload["templates"]}
+    assert "youtube_channel" in template_ids
+    assert "generic_rsshub_route" in template_ids
+    generic_feed_template = next(
+        item for item in payload["templates"] if item["id"] == "generic_rss_feed"
+    )
+    assert generic_feed_template["source_value_placeholder"] == "https://example.com/feed.xml"
+    assert generic_feed_template["source_url_placeholder"] == "https://example.com/feed.xml"
+    assert generic_feed_template["source_url_required"] is False
+
+
 def test_subscriptions_service_requires_db_when_repo_missing() -> None:
     with pytest.raises(ValueError, match=r"^db is required when repo is not provided$"):
         SubscriptionsService(db=None, repo=None)
@@ -258,6 +306,24 @@ def test_subscriptions_service_normalizes_fields_and_delegates_to_repo() -> None
     assert payload2["source_url"] == "https://example.com/route.xml"
     assert payload2["rsshub_route"] == "/youtube/channel/UC-DERIVE-001"
     assert payload2["category"] == "misc"
+
+    payload3, created3 = service.upsert_subscription(
+        platform=" RSSHub ",
+        source_type=" RSSHUB_ROUTE ",
+        source_value="/36kr/newsflashes",
+        adapter_type="rsshub_route",
+        source_url=None,
+        rsshub_route=None,
+        category=" misc ",
+        tags=[" generic "],
+        priority=80,
+        enabled=True,
+    )
+
+    assert created3 is True
+    assert payload3["platform"] == "rsshub"
+    assert payload3["source_type"] == "rsshub_route"
+    assert payload3["rsshub_route"] == "/36kr/newsflashes"
     assert payload2["priority"] == 0
 
     payload3, created3 = service.upsert_subscription(

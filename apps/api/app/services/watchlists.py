@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
+from hashlib import sha256
 from typing import Any
-from uuid import uuid4
+from urllib.parse import urlencode
+from uuid import UUID, uuid4
 
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
@@ -157,7 +159,396 @@ class WatchlistsService:
                 "matcher_value": watchlist["matcher_value"],
             },
             "timeline": timeline,
+            "merged_stories": self._build_merged_stories(rows=rows, limit_cards=limit_cards),
         }
+
+    def get_watchlist_briefing(
+        self,
+        *,
+        watchlist_id: str,
+        limit_runs: int = 4,
+        limit_cards: int = 18,
+        limit_stories: int = 4,
+        limit_evidence_per_story: int = 3,
+    ) -> dict[str, Any] | None:
+        trend = self.get_watchlist_trend(
+            watchlist_id=watchlist_id,
+            limit_runs=max(limit_runs, 2),
+            limit_cards=max(limit_cards, limit_stories * max(limit_evidence_per_story, 1)),
+        )
+        if trend is None:
+            return None
+
+        timeline = list(trend.get("timeline") or [])[:limit_runs]
+        merged_stories = list(trend.get("merged_stories") or [])[:limit_stories]
+        source_urls = {
+            source_url
+            for item in merged_stories
+            for source_url in (item.get("source_urls") or [])
+            if isinstance(source_url, str) and source_url.strip()
+        }
+        platforms = {
+            platform
+            for item in merged_stories
+            for platform in (item.get("platforms") or [])
+            if isinstance(platform, str) and platform.strip()
+        } or {
+            str(run.get("platform") or "").strip()
+            for run in timeline
+            if str(run.get("platform") or "").strip()
+        }
+        latest_run = timeline[0] if timeline else None
+        previous_run = timeline[1] if len(timeline) > 1 else None
+        latest_story_keys = self._story_keys_for_run(
+            merged_stories=merged_stories,
+            job_id=str(latest_run.get("job_id") or "").strip() if latest_run else None,
+        )
+        previous_story_keys = self._story_keys_for_run(
+            merged_stories=merged_stories,
+            job_id=str(previous_run.get("job_id") or "").strip() if previous_run else None,
+        )
+        compare = self._build_briefing_compare(latest_run=latest_run)
+        evidence_stories = [
+            self._build_briefing_evidence_story(
+                watchlist_id=watchlist_id,
+                story=story,
+                latest_run=latest_run,
+                limit_evidence_per_story=limit_evidence_per_story,
+            )
+            for story in merged_stories
+        ]
+
+        return {
+            "watchlist": trend["watchlist"],
+            "summary": {
+                "overview": self._build_briefing_overview(
+                    watchlist=trend["watchlist"],
+                    merged_stories=merged_stories,
+                    source_count=max(len(source_urls), len(platforms)),
+                    run_count=len(timeline),
+                    matched_cards=int(trend["summary"].get("matched_cards") or 0),
+                ),
+                "source_count": max(len(source_urls), len(platforms)),
+                "run_count": len(timeline),
+                "story_count": len(merged_stories),
+                "matched_cards": int(trend["summary"].get("matched_cards") or 0),
+                "primary_story_headline": (
+                    str(merged_stories[0].get("headline") or "").strip() or None
+                    if merged_stories
+                    else None
+                ),
+                "signals": [
+                    self._build_briefing_signal(
+                        story=story,
+                        latest_run=latest_run,
+                        latest_story_keys=latest_story_keys,
+                    )
+                    for story in merged_stories[:3]
+                ],
+            },
+            "differences": {
+                "latest_job_id": str(latest_run.get("job_id") or "").strip() or None
+                if latest_run
+                else None,
+                "previous_job_id": str(previous_run.get("job_id") or "").strip() or None
+                if previous_run
+                else None,
+                "added_topics": list(latest_run.get("added_topics") or []) if latest_run else [],
+                "removed_topics": list(latest_run.get("removed_topics") or [])
+                if latest_run
+                else [],
+                "added_claim_kinds": list(latest_run.get("added_claim_kinds") or [])
+                if latest_run
+                else [],
+                "removed_claim_kinds": list(latest_run.get("removed_claim_kinds") or [])
+                if latest_run
+                else [],
+                "new_story_keys": sorted(latest_story_keys - previous_story_keys),
+                "removed_story_keys": sorted(previous_story_keys - latest_story_keys),
+                "compare": compare,
+            },
+            "evidence": {
+                "suggested_story_id": evidence_stories[0]["story_id"] if evidence_stories else None,
+                "stories": evidence_stories,
+                "featured_runs": [
+                    {
+                        "job_id": run["job_id"],
+                        "video_id": run["video_id"],
+                        "platform": run["platform"],
+                        "title": run["title"],
+                        "source_url": run.get("source_url"),
+                        "created_at": run["created_at"],
+                        "matched_card_count": int(run.get("matched_card_count") or 0),
+                        "routes": self._build_briefing_routes(
+                            watchlist_id=watchlist_id,
+                            job_id=str(run["job_id"]),
+                        ),
+                    }
+                    for run in timeline
+                ],
+            },
+        }
+
+    def _build_briefing_overview(
+        self,
+        *,
+        watchlist: dict[str, Any],
+        merged_stories: list[dict[str, Any]],
+        source_count: int,
+        run_count: int,
+        matched_cards: int,
+    ) -> str:
+        name = str(watchlist.get("name") or "").strip() or "This watchlist"
+        if not merged_stories:
+            return (
+                f"{name} does not have a repeated cross-source story yet. "
+                f"The system still found {matched_cards} matched cards across {run_count} recent runs."
+            )
+        story_labels = [
+            str(
+                item.get("headline") or item.get("topic_label") or item.get("story_key") or ""
+            ).strip()
+            for item in merged_stories[:3]
+        ]
+        story_labels = [item for item in story_labels if item]
+        joined = ", ".join(story_labels)
+        return (
+            f"{name} currently converges on {joined}. "
+            f"These storylines are supported across {source_count} source families and {run_count} recent runs."
+        )
+
+    def _build_briefing_signal(
+        self,
+        *,
+        story: dict[str, Any],
+        latest_run: dict[str, Any] | None,
+        latest_story_keys: set[str],
+    ) -> dict[str, Any]:
+        latest_job_id = str(latest_run.get("job_id") or "").strip() if latest_run else None
+        story_key = str(story.get("story_key") or "").strip()
+        if story_key in latest_story_keys:
+            reason = "Appears in the latest matched run."
+        else:
+            reason = "Most repeated merged storyline across recent runs."
+        return {
+            "story_key": story_key,
+            "headline": str(story.get("headline") or "").strip(),
+            "matched_card_count": int(story.get("matched_card_count") or 0),
+            "latest_run_job_id": latest_job_id
+            if latest_job_id in list(story.get("run_ids") or [])
+            else None,
+            "reason": reason,
+        }
+
+    def _build_briefing_evidence_story(
+        self,
+        *,
+        watchlist_id: str,
+        story: dict[str, Any],
+        latest_run: dict[str, Any] | None,
+        limit_evidence_per_story: int,
+    ) -> dict[str, Any]:
+        cards = list(story.get("cards") or [])[: max(limit_evidence_per_story, 1)]
+        latest_job_id = str(latest_run.get("job_id") or "").strip() if latest_run else None
+        story_run_ids = list(story.get("run_ids") or [])
+        evidence_job_id = (
+            latest_job_id
+            if latest_job_id in story_run_ids
+            else (str(story_run_ids[0]).strip() if story_run_ids else None)
+        )
+        story_id = str(story.get("id") or "").strip() or None
+        topic_key = str(story.get("topic_key") or "").strip() or None
+        return {
+            "story_id": story_id,
+            "story_key": str(story.get("story_key") or "").strip(),
+            "headline": str(story.get("headline") or "").strip(),
+            "topic_key": story.get("topic_key"),
+            "topic_label": story.get("topic_label"),
+            "source_count": len(list(story.get("source_urls") or [])),
+            "run_count": len(list(story.get("run_ids") or [])),
+            "matched_card_count": int(story.get("matched_card_count") or 0),
+            "platforms": list(story.get("platforms") or []),
+            "claim_kinds": list(story.get("claim_kinds") or []),
+            "source_urls": list(story.get("source_urls") or []),
+            "latest_run_job_id": evidence_job_id,
+            "evidence_cards": cards,
+            "routes": self._build_briefing_routes(
+                watchlist_id=watchlist_id,
+                job_id=evidence_job_id,
+                story_id=story_id,
+                topic_key=topic_key,
+            ),
+        }
+
+    def _build_briefing_compare(
+        self, *, latest_run: dict[str, Any] | None
+    ) -> dict[str, Any] | None:
+        latest_job_id = str(latest_run.get("job_id") or "").strip() if latest_run else ""
+        if not latest_job_id:
+            return None
+
+        try:
+            job_uuid = UUID(latest_job_id)
+        except ValueError:
+            return None
+
+        from .jobs import JobsService
+
+        payload = JobsService(self.db).compare_with_previous(job_id=job_uuid)
+        if payload is None:
+            return None
+        diff_markdown = str(payload.get("diff_markdown") or "")
+        excerpt = "\n".join(diff_markdown.splitlines()[:8]).strip() or None
+        stats = payload.get("stats") if isinstance(payload.get("stats"), dict) else {}
+        return {
+            "job_id": latest_job_id,
+            "has_previous": bool(payload.get("has_previous")),
+            "previous_job_id": payload.get("previous_job_id"),
+            "changed": bool(stats.get("changed")) if stats else False,
+            "added_lines": int(stats.get("added_lines") or 0) if stats else 0,
+            "removed_lines": int(stats.get("removed_lines") or 0) if stats else 0,
+            "diff_excerpt": excerpt,
+            "compare_route": f"/jobs?job_id={latest_job_id}",
+        }
+
+    def _build_briefing_routes(
+        self,
+        *,
+        watchlist_id: str,
+        job_id: str | None,
+        story_id: str | None = None,
+        topic_key: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "watchlist_trend": f"/trends?watchlist_id={watchlist_id}",
+            "briefing": self._build_briefing_href(
+                watchlist_id=watchlist_id,
+                story_id=story_id,
+            ),
+            "ask": self._build_ask_href(
+                watchlist_id=watchlist_id,
+                story_id=story_id,
+                topic_key=topic_key,
+            ),
+            "job_compare": f"/jobs?job_id={job_id}" if job_id else None,
+            "job_bundle": f"/api/v1/jobs/{job_id}/bundle" if job_id else None,
+            "job_knowledge_cards": f"/knowledge?job_id={job_id}" if job_id else None,
+        }
+
+    def _build_briefing_href(
+        self,
+        *,
+        watchlist_id: str,
+        story_id: str | None = None,
+    ) -> str:
+        params = {"watchlist_id": watchlist_id}
+        if story_id:
+            params["story_id"] = story_id
+        return f"/briefings?{urlencode(params)}"
+
+    def _build_ask_href(
+        self,
+        *,
+        watchlist_id: str,
+        story_id: str | None = None,
+        topic_key: str | None = None,
+    ) -> str:
+        params = {"watchlist_id": watchlist_id}
+        if story_id:
+            params["story_id"] = story_id
+        if topic_key:
+            params["topic_key"] = topic_key
+        return f"/ask?{urlencode(params)}"
+
+    def _story_keys_for_run(
+        self,
+        *,
+        merged_stories: list[dict[str, Any]],
+        job_id: str | None,
+    ) -> set[str]:
+        if not job_id:
+            return set()
+        return {
+            str(story.get("story_key") or "").strip()
+            for story in merged_stories
+            if job_id in list(story.get("run_ids") or [])
+        }
+
+    def _build_merged_stories(
+        self,
+        *,
+        rows: list[dict[str, Any]],
+        limit_cards: int,
+    ) -> list[dict[str, Any]]:
+        grouped: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            story_key = self._resolve_story_key(row)
+            created_at = str(row.get("created_at") or "").strip()
+            source_url = str(row.get("source_url") or "").strip()
+            platform = str(row.get("platform") or "").strip() or "unknown"
+            claim_kind = str(row.get("claim_kind") or "").strip()
+            topic_key = str(row.get("topic_key") or "").strip()
+            topic_label = str(row.get("topic_label") or "").strip()
+            job_id = str(row.get("job_id") or "").strip()
+
+            group = grouped.setdefault(
+                story_key,
+                {
+                    "id": self._story_id(story_key),
+                    "story_key": story_key,
+                    "headline": self._resolve_story_headline(row),
+                    "topic_key": topic_key or None,
+                    "topic_label": topic_label or None,
+                    "latest_created_at": created_at,
+                    "matched_card_count": 0,
+                    "platforms": set(),
+                    "claim_kinds": set(),
+                    "source_urls": set(),
+                    "run_ids": set(),
+                    "cards": [],
+                },
+            )
+            if created_at and created_at > str(group["latest_created_at"] or ""):
+                group["latest_created_at"] = created_at
+            if topic_key and not group["topic_key"]:
+                group["topic_key"] = topic_key
+            if topic_label and not group["topic_label"]:
+                group["topic_label"] = topic_label
+            if platform:
+                group["platforms"].add(platform)
+            if claim_kind:
+                group["claim_kinds"].add(claim_kind)
+            if source_url:
+                group["source_urls"].add(source_url)
+            if job_id:
+                group["run_ids"].add(job_id)
+            group["matched_card_count"] += 1
+            if len(group["cards"]) < limit_cards:
+                group["cards"].append(row)
+
+        stories = []
+        for item in grouped.values():
+            stories.append(
+                {
+                    "id": item["id"],
+                    "story_key": item["story_key"],
+                    "headline": item["headline"],
+                    "topic_key": item["topic_key"],
+                    "topic_label": item["topic_label"],
+                    "latest_created_at": item["latest_created_at"],
+                    "matched_card_count": item["matched_card_count"],
+                    "platforms": sorted(item["platforms"]),
+                    "claim_kinds": sorted(item["claim_kinds"]),
+                    "source_urls": sorted(item["source_urls"]),
+                    "run_ids": sorted(item["run_ids"]),
+                    "cards": item["cards"],
+                }
+            )
+        stories.sort(
+            key=lambda item: (item["latest_created_at"], item["matched_card_count"]),
+            reverse=True,
+        )
+        return stories
 
     def _load_matching_cards(
         self,
@@ -306,3 +697,26 @@ class WatchlistsService:
         if value not in WATCHLIST_DELIVERY_CHANNELS:
             raise ValueError("invalid delivery_channel")
         return value
+
+    def _resolve_story_key(self, row: dict[str, Any]) -> str:
+        topic_key = str(row.get("topic_key") or "").strip().lower()
+        if topic_key:
+            return f"topic:{topic_key}"
+        source_url = str(row.get("source_url") or "").strip().lower()
+        if source_url:
+            return f"source:{source_url}"
+        card_title = str(row.get("card_title") or "").strip().lower()
+        if card_title:
+            return f"title:{card_title}"
+        card_id = str(row.get("card_id") or "").strip() or "unknown-card"
+        return f"card:{card_id}"
+
+    def _resolve_story_headline(self, row: dict[str, Any]) -> str:
+        for key in ("topic_label", "card_title", "video_title", "source_url"):
+            value = str(row.get(key) or "").strip()
+            if value:
+                return value
+        return "Merged story"
+
+    def _story_id(self, story_key: str) -> str:
+        return sha256(story_key.encode("utf-8")).hexdigest()[:16]

@@ -26,18 +26,9 @@ def test_watchlists_routes(monkeypatch) -> None:
                 }
             ]
 
-        def get_watchlist_trend(self, *, watchlist_id, limit_runs=3, limit_cards=18):  # noqa: ANN001
+        def get_watchlist_trend(self, *, watchlist_id, limit_runs=3, limit_cards=18):  # noqa: ANN001, ARG002
             return {
-                "watchlist": {
-                    "id": watchlist_id,
-                    "name": "Retry policy",
-                    "matcher_type": "topic_key",
-                    "matcher_value": "retry-policy",
-                    "delivery_channel": "dashboard",
-                    "enabled": True,
-                    "created_at": "2026-03-31T10:00:00Z",
-                    "updated_at": "2026-03-31T10:00:00Z",
-                },
+                "watchlist": self.list_watchlists()[0] | {"id": watchlist_id},
                 "summary": {
                     "recent_runs": 2,
                     "matched_cards": 4,
@@ -45,48 +36,116 @@ def test_watchlists_routes(monkeypatch) -> None:
                     "matcher_value": "retry-policy",
                 },
                 "timeline": [],
+                "merged_stories": [
+                    {
+                        "id": "story-1",
+                        "story_key": "topic:retry-policy",
+                        "headline": "Retry Policy",
+                        "topic_key": "retry-policy",
+                        "topic_label": "Retry Policy",
+                        "latest_created_at": "2026-04-01T11:00:00Z",
+                        "matched_card_count": 2,
+                        "platforms": ["youtube", "rss"],
+                        "claim_kinds": ["recommendation"],
+                        "source_urls": ["https://example.com/2"],
+                        "run_ids": ["job-2"],
+                        "cards": [],
+                    }
+                ],
             }
 
-    monkeypatch.setattr(
-        watchlists_router.WatchlistsService,
-        "list_watchlists",
-        lambda self: [
-            {
-                "id": "wl-1",
-                "name": "Retry policy",
-                "matcher_type": "topic_key",
-                "matcher_value": "retry-policy",
-                "delivery_channel": "dashboard",
-                "enabled": True,
-                "created_at": "2026-03-31T10:00:00Z",
-                "updated_at": "2026-03-31T10:00:00Z",
+        def get_watchlist_briefing(
+            self,
+            *,
+            watchlist_id,
+            limit_runs=4,
+            limit_cards=18,
+            limit_stories=4,
+            limit_evidence_per_story=3,
+        ):  # noqa: ANN001, ARG002
+            return {
+                "watchlist": self.list_watchlists()[0] | {"id": watchlist_id},
+                "summary": {
+                    "overview": "Retry policy currently converges across recent sources.",
+                    "source_count": 3,
+                    "run_count": 2,
+                    "story_count": 1,
+                    "matched_cards": 4,
+                    "primary_story_headline": "Retry Policy",
+                    "signals": [
+                        {
+                            "story_key": "topic:retry-policy",
+                            "headline": "Retry Policy",
+                            "matched_card_count": 2,
+                            "latest_run_job_id": "job-2",
+                            "reason": "Appears in the latest matched run.",
+                        }
+                    ],
+                },
+                "differences": {
+                    "latest_job_id": "job-2",
+                    "previous_job_id": "job-1",
+                    "added_topics": ["retry-policy"],
+                    "removed_topics": [],
+                    "added_claim_kinds": ["recommendation"],
+                    "removed_claim_kinds": [],
+                    "new_story_keys": ["topic:retry-policy"],
+                    "removed_story_keys": [],
+                    "compare": {
+                        "job_id": "job-2",
+                        "has_previous": True,
+                        "previous_job_id": "job-1",
+                        "changed": True,
+                        "added_lines": 3,
+                        "removed_lines": 1,
+                        "diff_excerpt": "--- old\n+++ new",
+                        "compare_route": "/jobs?job_id=job-2",
+                    },
+                },
+                "evidence": {
+                    "suggested_story_id": "story-1",
+                    "stories": [
+                        {
+                            "story_id": "story-1",
+                            "story_key": "topic:retry-policy",
+                            "headline": "Retry Policy",
+                            "topic_key": "retry-policy",
+                            "topic_label": "Retry Policy",
+                            "source_count": 3,
+                            "run_count": 2,
+                            "matched_card_count": 2,
+                            "platforms": ["youtube", "rss"],
+                            "claim_kinds": ["recommendation"],
+                            "source_urls": ["https://example.com/2"],
+                            "latest_run_job_id": "job-2",
+                            "evidence_cards": [],
+                            "routes": {
+                                "watchlist_trend": f"/trends?watchlist_id={watchlist_id}",
+                                "job_compare": "/jobs?job_id=job-2",
+                                "job_bundle": "/api/v1/jobs/job-2/bundle",
+                                "job_knowledge_cards": "/knowledge?job_id=job-2",
+                            },
+                        }
+                    ],
+                    "featured_runs": [
+                        {
+                            "job_id": "job-2",
+                            "video_id": "video-2",
+                            "platform": "rss",
+                            "title": "RSS Digest",
+                            "source_url": "https://example.com/2",
+                            "created_at": "2026-04-01T11:00:00Z",
+                            "matched_card_count": 2,
+                            "routes": {
+                                "watchlist_trend": f"/trends?watchlist_id={watchlist_id}",
+                                "job_compare": "/jobs?job_id=job-2",
+                                "job_bundle": "/api/v1/jobs/job-2/bundle",
+                                "job_knowledge_cards": "/knowledge?job_id=job-2",
+                            },
+                        }
+                    ],
+                },
             }
-        ],
-    )
-    monkeypatch.setattr(
-        watchlists_router.WatchlistsService,
-        "get_watchlist_trend",
-        lambda self, watchlist_id, limit_runs=3, limit_cards=18: {  # noqa: ARG005
-            "watchlist": {
-                "id": watchlist_id,
-                "name": "Retry policy",
-                "matcher_type": "topic_key",
-                "matcher_value": "retry-policy",
-                "delivery_channel": "dashboard",
-                "enabled": True,
-                "created_at": "2026-03-31T10:00:00Z",
-                "updated_at": "2026-03-31T10:00:00Z",
-            },
-            "summary": {
-                "recent_runs": 2,
-                "matched_cards": 4,
-                "matcher_type": "topic_key",
-                "matcher_value": "retry-policy",
-            },
-            "timeline": [],
-        },
-    )
-    monkeypatch.setattr(watchlists_router, "WatchlistsService", StubWatchlistsService)
 
     def _fake_db():
         return object()
@@ -94,6 +153,7 @@ def test_watchlists_routes(monkeypatch) -> None:
     app = FastAPI()
     app.include_router(watchlists_router.router)
     app.dependency_overrides[get_db] = _fake_db
+    monkeypatch.setattr(watchlists_router, "WatchlistsService", StubWatchlistsService)
 
     client = TestClient(app)
     list_response = client.get("/api/v1/watchlists")
@@ -102,7 +162,19 @@ def test_watchlists_routes(monkeypatch) -> None:
 
     trend_response = client.get("/api/v1/watchlists/wl-1/trend")
     assert trend_response.status_code == 200
-    assert trend_response.json()["summary"]["recent_runs"] == 2
+    assert trend_response.json()["merged_stories"][0]["story_key"] == "topic:retry-policy"
+
+    briefing_response = client.get("/api/v1/watchlists/wl-1/briefing")
+    assert briefing_response.status_code == 200
+    payload = briefing_response.json()
+    assert payload["summary"]["primary_story_headline"] == "Retry Policy"
+    assert payload["differences"]["compare"]["job_id"] == "job-2"
+    assert payload["differences"]["compare"]["compare_route"] == "/jobs?job_id=job-2"
+    assert payload["evidence"]["stories"][0]["routes"]["job_bundle"] == "/api/v1/jobs/job-2/bundle"
+    assert (
+        payload["evidence"]["stories"][0]["routes"]["job_knowledge_cards"]
+        == "/knowledge?job_id=job-2"
+    )
 
 
 def test_watchlists_upsert_maps_value_error_to_400(monkeypatch) -> None:
@@ -144,7 +216,7 @@ def test_watchlists_upsert_maps_value_error_to_400(monkeypatch) -> None:
     assert response.json()["detail"] == "invalid matcher_type"
 
 
-def test_watchlists_delete_and_trend_return_404_when_missing(monkeypatch) -> None:
+def test_watchlists_delete_trend_and_briefing_return_404_when_missing(monkeypatch) -> None:
     from apps.api.app.db import get_db
     from apps.api.app.routers import watchlists as watchlists_router
 
@@ -155,7 +227,18 @@ def test_watchlists_delete_and_trend_return_404_when_missing(monkeypatch) -> Non
         def delete_watchlist(self, *, watchlist_id: str) -> bool:
             return False
 
-        def get_watchlist_trend(self, *, watchlist_id, limit_runs=3, limit_cards=18):  # noqa: ANN001
+        def get_watchlist_trend(self, *, watchlist_id, limit_runs=3, limit_cards=18):  # noqa: ANN001, ARG002
+            return None
+
+        def get_watchlist_briefing(
+            self,
+            *,
+            watchlist_id,
+            limit_runs=4,
+            limit_cards=18,
+            limit_stories=4,
+            limit_evidence_per_story=3,
+        ):  # noqa: ANN001, ARG002
             return None
 
     def _fake_db():
@@ -177,3 +260,6 @@ def test_watchlists_delete_and_trend_return_404_when_missing(monkeypatch) -> Non
 
     trend_response = client.get("/api/v1/watchlists/wl-missing/trend")
     assert trend_response.status_code == 404
+
+    briefing_response = client.get("/api/v1/watchlists/wl-missing/briefing")
+    assert briefing_response.status_code == 404

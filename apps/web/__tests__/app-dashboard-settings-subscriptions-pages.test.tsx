@@ -7,6 +7,7 @@ import SettingsPage from "@/app/settings/page";
 import SubscriptionsPage from "@/app/subscriptions/page";
 
 const mockListSubscriptions = vi.fn();
+const mockListSubscriptionTemplates = vi.fn();
 const mockListVideos = vi.fn();
 const mockListIngestRuns = vi.fn();
 const mockGetIngestRun = vi.fn();
@@ -46,6 +47,8 @@ vi.mock("@/components/subscription-batch-panel", () => ({
 vi.mock("@/lib/api/client", () => ({
 	apiClient: {
 		listSubscriptions: (...args: unknown[]) => mockListSubscriptions(...args),
+		listSubscriptionTemplates: (...args: unknown[]) =>
+			mockListSubscriptionTemplates(...args),
 		listVideos: (...args: unknown[]) => mockListVideos(...args),
 		listIngestRuns: (...args: unknown[]) => mockListIngestRuns(...args),
 		getIngestRun: (...args: unknown[]) => mockGetIngestRun(...args),
@@ -67,6 +70,98 @@ describe("dashboard/settings/subscriptions pages", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockListSubscriptionTemplates.mockResolvedValue({
+			support_tiers: [
+				{
+					id: "strong_supported",
+					label: "Strong support",
+					description:
+						"Purpose-built video subscriptions with first-class routing and durable identifiers.",
+					content_profile: "video",
+					supports_video_pipeline: true,
+					verification_status: "verified_for_youtube_bilibili_only",
+				},
+				{
+					id: "generic_supported",
+					label: "Generic support",
+					description:
+						"Generic RSSHub or RSS intake substrate for broad article-style coverage without overclaiming route-by-route verification.",
+					content_profile: "article",
+					supports_video_pipeline: false,
+					verification_status: "substrate_ready_not_route_by_route_verified",
+				},
+			],
+			templates: [
+				{
+					id: "youtube_channel",
+					label: "YouTube channel",
+					description:
+						"Strong preset for recurring YouTube intake when you already know the channel ID, handle, or landing URL.",
+					support_tier: "strong_supported",
+					platform: "youtube",
+					source_type: "youtube_channel_id",
+					adapter_type: "rsshub_route",
+					content_profile: "video",
+					category: "creator",
+					source_value_placeholder: "UCxxxx",
+					source_url_placeholder: "https://www.youtube.com/@channel",
+					rsshub_route_hint: "/youtube/channel/UCxxxx",
+					source_url_required: false,
+					supports_video_pipeline: true,
+					fill_now:
+						"Start with the channel ID or a stable channel URL, then keep the RSSHub route aligned.",
+					proof_boundary:
+						"YouTube is a strong path today, but route health still matters if you depend on RSSHub for intake.",
+					evidence_note: "Strongly supported video lane.",
+				},
+				{
+					id: "generic_rsshub_route",
+					label: "Generic RSSHub route",
+					description:
+						"General preset for wider source coverage when RSSHub can normalize a route into a usable feed.",
+					support_tier: "generic_supported",
+					platform: "rsshub",
+					source_type: "rsshub_route",
+					adapter_type: "rsshub_route",
+					content_profile: "article",
+					category: "misc",
+					source_value_placeholder: "/namespace/path",
+					source_url_placeholder: "https://example.com/source",
+					rsshub_route_hint: "/namespace/path",
+					source_url_required: false,
+					supports_video_pipeline: false,
+					fill_now:
+						"Bring the exact RSSHub route you want SourceHarbor to poll, then add a canonical source URL only if it helps operators recognize the feed.",
+					proof_boundary:
+						"Do not assume every RSSHub route is equally solid. Treat each route as proven only after it survives real runs.",
+					evidence_note:
+						"Substrate does not block RSSHub universe, but routes are not claimed as individually verified.",
+				},
+				{
+					id: "generic_rss_feed",
+					label: "Generic RSS or Atom feed",
+					description:
+						"General preset for any source that already exposes a clean RSS or Atom feed without a platform-specific shortcut.",
+					support_tier: "generic_supported",
+					platform: "generic",
+					source_type: "url",
+					adapter_type: "rss_generic",
+					content_profile: "article",
+					category: "misc",
+					source_value_placeholder: "https://example.com/feed.xml",
+					source_url_placeholder: "",
+					rsshub_route_hint: "https://example.com/feed.xml",
+					source_url_required: false,
+					supports_video_pipeline: false,
+					fill_now:
+						"Paste the exact RSS or Atom feed URL into Source value. Leave Source URL empty unless you want to store the same feed URL explicitly.",
+					proof_boundary:
+						"Feed quality varies a lot. If the feed is noisy or incomplete, the intake surface should stay honest about that.",
+					evidence_note:
+						"Use Source value for the exact feed URL; Source URL stays optional unless you want to store the same feed URL explicitly.",
+				},
+			],
+		});
 	});
 
 	it(
@@ -364,7 +459,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 	);
 
 	it(
-		"renders subscriptions page list and batch panel",
+		"renders subscriptions page as a template-driven source intake front door",
 		async () => {
 			mockListSubscriptions.mockResolvedValue([
 				{
@@ -387,7 +482,11 @@ describe("dashboard/settings/subscriptions pages", () => {
 
 			render(
 				await SubscriptionsPage({
-					searchParams: { status: "error", code: "ERR_INVALID_INPUT" },
+					searchParams: {
+						status: "error",
+						code: "ERR_INVALID_INPUT",
+						template: "generic_rsshub_route",
+					},
 				}),
 			);
 
@@ -398,14 +497,25 @@ describe("dashboard/settings/subscriptions pages", () => {
 				"count:1",
 			);
 			expect(
+				screen.getByText("Support levels at a glance"),
+			).toBeInTheDocument();
+			expect(screen.getAllByText("Strong support").length).toBeGreaterThan(0);
+			expect(screen.getAllByText("Generic support").length).toBeGreaterThan(0);
+			expect(
+				screen.getAllByText("Generic RSS or Atom feed").length,
+			).toBeGreaterThan(0);
+			expect(
+				screen.getByRole("link", { name: "Open merged stories" }),
+			).toHaveAttribute("href", "/trends");
+			expect(
 				screen.getByRole("button", { name: "Save subscription" }),
 			).toBeInTheDocument();
 			expect(
 				screen.getByRole("combobox", { name: "Platform" }),
-			).toHaveTextContent("YouTube");
+			).toHaveTextContent("RSSHub");
 			expect(
 				screen.getByRole("combobox", { name: "Source type" }),
-			).toHaveTextContent("Source URL");
+			).toHaveTextContent("RSSHub route");
 			expect(screen.getByLabelText("Source value")).toBeRequired();
 			expect(
 				screen.getByRole("combobox", { name: "Adapter type" }),
@@ -429,12 +539,12 @@ describe("dashboard/settings/subscriptions pages", () => {
 				(subscriptionsForm as HTMLElement).querySelector(
 					'input[type="hidden"][name="platform"]',
 				),
-			).toHaveValue("youtube");
+			).toHaveValue("rsshub");
 			expect(
 				(subscriptionsForm as HTMLElement).querySelector(
 					'input[type="hidden"][name="source_type"]',
 				),
-			).toHaveValue("url");
+			).toHaveValue("rsshub_route");
 			expect(
 				(subscriptionsForm as HTMLElement).querySelector(
 					'input[type="hidden"][name="adapter_type"]',
@@ -455,6 +565,39 @@ describe("dashboard/settings/subscriptions pages", () => {
 					name: "Save subscription",
 				}),
 			).toHaveAttribute("type", "submit");
+		},
+		PAGE_TEST_TIMEOUT_MS,
+	);
+
+	it(
+		"renders generic RSS feed template with feed URL in source value and optional source URL",
+		async () => {
+			mockListSubscriptions.mockResolvedValue([]);
+
+			render(
+				await SubscriptionsPage({
+					searchParams: {
+						template: "generic_rss_feed",
+					},
+				}),
+			);
+
+			expect(
+				screen.getByRole("combobox", { name: "Platform" }),
+			).toHaveTextContent("Generic");
+			expect(
+				screen.getByRole("combobox", { name: "Source type" }),
+			).toHaveTextContent("Source URL");
+			expect(screen.getByLabelText("Source value")).toHaveAttribute(
+				"placeholder",
+				"https://example.com/feed.xml",
+			);
+			expect(screen.getByLabelText("Source URL (optional)")).not.toBeRequired();
+			expect(
+				screen.getAllByText(
+					"Paste the exact RSS or Atom feed URL into Source value. Leave Source URL empty unless you want to store the same feed URL explicitly.",
+				).length,
+			).toBeGreaterThan(0);
 		},
 		PAGE_TEST_TIMEOUT_MS,
 	);

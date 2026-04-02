@@ -10,7 +10,12 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..security import require_write_access, sanitize_exception_detail
 from ..services import SubscriptionsService
-from ..services.source_names import resolve_source_name
+from ..services.source_names import build_source_name_fallback, resolve_source_name
+from ..services.subscription_templates import load_subscription_template_catalog
+from ..services.subscriptions import (
+    resolve_subscription_content_profile,
+    resolve_subscription_support_tier,
+)
 
 router = APIRouter(prefix="/api/v1/subscriptions", tags=["subscriptions"])
 
@@ -34,6 +39,8 @@ class SubscriptionResponse(BaseModel):
     source_type: str
     source_value: str
     source_name: str
+    support_tier: str
+    content_profile: str
     adapter_type: str = "rsshub_route"
     source_url: str | None = None
     rsshub_route: str
@@ -48,17 +55,38 @@ class SubscriptionResponse(BaseModel):
 def _to_subscription_response(row) -> SubscriptionResponse:
     source_type = str(getattr(row, "source_type", "") or "")
     source_value = str(getattr(row, "source_value", "") or "")
+    platform = str(getattr(row, "platform", "") or "")
+    adapter_type = getattr(row, "adapter_type", "rsshub_route")
+    explicit_source_name = str(getattr(row, "source_name", "") or "").strip()
     priority_value = getattr(row, "priority", None)
     resolved_priority = 50 if priority_value is None else int(priority_value)
     return SubscriptionResponse(
         id=row.id,
-        platform=row.platform,
+        platform=platform,
         source_type=source_type,
         source_value=source_value,
         source_name=resolve_source_name(
-            source_type=source_type, source_value=source_value, fallback=source_value
+            source_type=source_type,
+            source_value=source_value,
+            fallback=explicit_source_name
+            or build_source_name_fallback(
+                platform=platform,
+                source_type=source_type,
+                source_value=source_value,
+                source_url=getattr(row, "source_url", None),
+                rsshub_route=getattr(row, "rsshub_route", None),
+            ),
         ),
-        adapter_type=getattr(row, "adapter_type", "rsshub_route"),
+        support_tier=resolve_subscription_support_tier(
+            platform=platform,
+            source_type=source_type,
+        ),
+        content_profile=resolve_subscription_content_profile(
+            platform=platform,
+            source_type=source_type,
+            adapter_type=adapter_type,
+        ),
+        adapter_type=adapter_type,
         source_url=getattr(row, "source_url", None),
         rsshub_route=row.rsshub_route,
         category=getattr(row, "category", "misc"),
@@ -73,6 +101,40 @@ def _to_subscription_response(row) -> SubscriptionResponse:
 class SubscriptionUpsertResponse(BaseModel):
     subscription: SubscriptionResponse
     created: bool
+
+
+class SubscriptionTemplateSupportTier(BaseModel):
+    id: str
+    label: str
+    description: str
+    content_profile: str
+    supports_video_pipeline: bool
+    verification_status: str
+
+
+class SubscriptionTemplate(BaseModel):
+    id: str
+    label: str
+    description: str
+    support_tier: str
+    platform: str
+    source_type: str
+    adapter_type: str
+    content_profile: str
+    category: str | None = None
+    source_value_placeholder: str | None = None
+    source_url_placeholder: str | None = None
+    rsshub_route_hint: str | None = None
+    source_url_required: bool = False
+    supports_video_pipeline: bool = False
+    fill_now: str | None = None
+    proof_boundary: str | None = None
+    evidence_note: str | None = None
+
+
+class SubscriptionTemplateCatalogResponse(BaseModel):
+    support_tiers: list[SubscriptionTemplateSupportTier]
+    templates: list[SubscriptionTemplate]
 
 
 class BatchUpdateCategoryRequest(BaseModel):
@@ -96,6 +158,12 @@ def list_subscriptions(
         platform=platform, category=category, enabled_only=enabled_only
     )
     return [_to_subscription_response(row) for row in rows]
+
+
+@router.get("/templates", response_model=SubscriptionTemplateCatalogResponse)
+def get_subscription_templates():
+    payload = load_subscription_template_catalog()
+    return SubscriptionTemplateCatalogResponse(**payload)
 
 
 @router.post(

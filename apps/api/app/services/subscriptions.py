@@ -18,6 +18,44 @@ _BLOCKED_HOSTS = {
     "169.254.169.254",
 }
 _BLOCKED_HOST_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
+_STRONG_VIDEO_SOURCES = {
+    ("youtube", "youtube_channel_id"),
+    ("bilibili", "bilibili_uid"),
+}
+
+
+def normalize_subscription_platform(raw: str) -> str:
+    return str(raw or "").strip().lower() or "generic"
+
+
+def normalize_subscription_source_type(raw: str) -> str:
+    return str(raw or "").strip().lower() or "rsshub_route"
+
+
+def is_strong_video_subscription(*, platform: str, source_type: str) -> bool:
+    normalized_platform = normalize_subscription_platform(platform)
+    normalized_source_type = normalize_subscription_source_type(source_type)
+    return (normalized_platform, normalized_source_type) in _STRONG_VIDEO_SOURCES
+
+
+def resolve_subscription_support_tier(*, platform: str, source_type: str) -> str:
+    if is_strong_video_subscription(platform=platform, source_type=source_type):
+        return "strong_supported"
+    return "generic_supported"
+
+
+def resolve_subscription_content_profile(
+    *,
+    platform: str,
+    source_type: str,
+    adapter_type: str | None,
+) -> str:
+    normalized_adapter = str(adapter_type or "").strip().lower()
+    if normalized_adapter == "rss_generic":
+        return "article"
+    if is_strong_video_subscription(platform=platform, source_type=source_type):
+        return "video"
+    return "article"
 
 
 def _validate_subscription_source_url(raw_url: str, *, field_name: str) -> str:
@@ -55,6 +93,8 @@ def _validate_subscription_source_url(raw_url: str, *, field_name: str) -> str:
 
 
 def _derive_rsshub_route(platform: str, source_type: str, source_value: str) -> str:
+    platform = normalize_subscription_platform(platform)
+    source_type = normalize_subscription_source_type(source_type)
     if source_type == "url":
         return source_value
     if platform == "bilibili" and source_type == "bilibili_uid":
@@ -130,15 +170,17 @@ class SubscriptionsService:
         priority: int | None,
         enabled: bool,
     ):
-        if source_type == "url":
+        normalized_platform = normalize_subscription_platform(platform)
+        normalized_source_type = normalize_subscription_source_type(source_type)
+        if normalized_source_type == "url":
             _validate_subscription_source_url(source_value, field_name="source_value")
         resolved_adapter_type, resolved_source_url, resolved_route = _resolve_adapter(
             adapter_type=adapter_type,
-            source_type=source_type,
+            source_type=normalized_source_type,
             source_value=source_value,
             source_url=source_url,
             rsshub_route=rsshub_route,
-            platform=platform,
+            platform=normalized_platform,
         )
         resolved_category = (category or "misc").strip().lower()
         resolved_tags = [str(item).strip() for item in (tags or []) if str(item).strip()]
@@ -146,8 +188,8 @@ class SubscriptionsService:
         if resolved_priority < 0 or resolved_priority > 100:
             raise ValueError("priority must be in [0, 100]")
         return self.repo.upsert(
-            platform=platform,
-            source_type=source_type,
+            platform=normalized_platform,
+            source_type=normalized_source_type,
             source_value=source_value,
             adapter_type=resolved_adapter_type,
             source_url=resolved_source_url,

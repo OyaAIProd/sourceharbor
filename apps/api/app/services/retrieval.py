@@ -45,6 +45,7 @@ _KEYWORD_SOURCE_SCORE_BOOSTS = {
     "meta": 0.0,
     "transcript": 0.0,
 }
+_QUERY_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
 RetrievalMode = Literal["keyword", "semantic", "hybrid"]
 logger = logging.getLogger(__name__)
@@ -53,6 +54,383 @@ logger = logging.getLogger(__name__)
 class RetrievalService:
     def __init__(self, db: Session) -> None:
         self.db = db
+
+    def answer(
+        self,
+        *,
+        query: str,
+        watchlist_id: str | None = None,
+        story_id: str | None = None,
+        top_k: int,
+        filters: dict[str, Any] | None = None,
+        mode: RetrievalMode = "keyword",
+    ) -> dict[str, Any]:
+        normalized_query = query.strip()
+        normalized_filters = self._normalize_filters(filters)
+        normalized_mode = self._normalize_mode(mode)
+        briefing = (
+            self._load_watchlist_briefing(watchlist_id=watchlist_id)
+            if isinstance(watchlist_id, str) and watchlist_id.strip()
+            else None
+        )
+        selected_story, selection_basis = self._select_briefing_story(
+            briefing=briefing,
+            story_id=story_id,
+            query=normalized_query,
+        )
+
+        retrieval_filters = dict(normalized_filters)
+        primary_job_id = self._resolve_primary_job_id(briefing=briefing, story=selected_story)
+        if primary_job_id and "job_id" not in retrieval_filters:
+            retrieval_filters["job_id"] = primary_job_id
+
+        retrieval_payload = self.search(
+            query=normalized_query,
+            top_k=top_k,
+            filters=retrieval_filters,
+            mode=normalized_mode,
+        )
+        retrieval_items = list(retrieval_payload.get("items") or [])
+        changes = self._build_answer_changes(briefing=briefing, story=selected_story)
+        citations = self._build_answer_citations(
+            briefing=briefing,
+            story=selected_story,
+            retrieval_items=retrieval_items,
+            changes=changes,
+        )
+        fallback = self._build_answer_fallback(
+            watchlist_id=watchlist_id,
+            story_id=story_id,
+            briefing=briefing,
+            story=selected_story,
+            retrieval_items=retrieval_items,
+            citations=citations,
+        )
+
+        return {
+            "query": normalized_query,
+            "context": {
+                "watchlist_id": watchlist_id,
+                "watchlist_name": self._watchlist_name(briefing)
+                if isinstance(briefing, dict)
+                else None,
+                "story_id": story_id,
+                "selected_story_id": (
+                    str(selected_story.get("story_id") or "").strip() or None
+                    if selected_story
+                    else None
+                ),
+                "story_headline": str(selected_story.get("headline") or "").strip() or None
+                if selected_story
+                else None,
+                "topic_key": str(selected_story.get("topic_key") or "").strip() or None
+                if selected_story
+                else None,
+                "topic_label": str(selected_story.get("topic_label") or "").strip() or None
+                if selected_story
+                else None,
+                "selection_basis": selection_basis,
+                "mode": normalized_mode,
+                "filters": retrieval_filters,
+                "briefing_available": briefing is not None,
+            },
+            "selected_story": self._serialize_selected_story(story=selected_story),
+            "answer": self._build_answer_output(
+                query=normalized_query,
+                briefing=briefing,
+                story=selected_story,
+                retrieval_items=retrieval_items,
+                changes=changes,
+                fallback_status=str(fallback.get("status") or "limited"),
+            ),
+            "changes": changes,
+            "citations": citations,
+            "evidence": self._build_answer_evidence(
+                briefing=briefing,
+                story=selected_story,
+                retrieval_items=retrieval_items,
+                citation_count=len(citations),
+            ),
+            "fallback": fallback,
+        }
+
+    def answer_page(
+        self,
+        *,
+        query: str | None = None,
+        watchlist_id: str | None = None,
+        story_id: str | None = None,
+        topic_key: str | None = None,
+        top_k: int,
+        filters: dict[str, Any] | None = None,
+        mode: RetrievalMode = "keyword",
+    ) -> dict[str, Any]:
+        normalized_query = str(query or "").strip()
+        normalized_watchlist_id = str(watchlist_id or "").strip() or None
+        normalized_story_id = str(story_id or "").strip() or None
+        normalized_topic_key = str(topic_key or "").strip() or None
+        normalized_mode = self._normalize_mode(mode)
+        normalized_top_k = max(1, min(top_k, 20))
+        normalized_filters = self._normalize_filters(filters)
+
+        briefing = (
+            self._load_watchlist_briefing(watchlist_id=normalized_watchlist_id)
+            if normalized_watchlist_id
+            else None
+        )
+        selected_story, selection_basis = self._select_briefing_story(
+            briefing=briefing,
+            story_id=normalized_story_id,
+            query=normalized_query or normalized_topic_key or "",
+        )
+        answer_contract = (
+            self.answer(
+                query=normalized_query,
+                watchlist_id=normalized_watchlist_id,
+                story_id=normalized_story_id,
+                top_k=normalized_top_k,
+                filters=normalized_filters,
+                mode=normalized_mode,
+            )
+            if normalized_query and normalized_watchlist_id
+            else None
+        )
+        raw_retrieval = (
+            self.search(
+                query=normalized_query,
+                top_k=normalized_top_k,
+                filters=normalized_filters,
+                mode=normalized_mode,
+            )
+            if normalized_query and not normalized_watchlist_id
+            else None
+        )
+
+        story_focus = (
+            answer_contract.get("selected_story")
+            if isinstance(answer_contract, dict)
+            and isinstance(answer_contract.get("selected_story"), dict)
+            else self._serialize_selected_story(story=selected_story)
+        )
+        retrieval = (
+            {
+                "query": str(answer_contract.get("query") or normalized_query),
+                "top_k": normalized_top_k,
+                "filters": (
+                    answer_contract.get("context", {}).get("filters")
+                    if isinstance(answer_contract.get("context"), dict)
+                    else normalized_filters
+                ),
+                "items": (
+                    answer_contract.get("evidence", {}).get("retrieval_items") or []
+                    if isinstance(answer_contract.get("evidence"), dict)
+                    else []
+                ),
+            }
+            if isinstance(answer_contract, dict)
+            else raw_retrieval
+        )
+        retrieval_items = list(retrieval.get("items") or []) if isinstance(retrieval, dict) else []
+        fallback = (
+            answer_contract.get("fallback")
+            if isinstance(answer_contract, dict)
+            and isinstance(answer_contract.get("fallback"), dict)
+            else {}
+        )
+        fallback_status = str(fallback.get("status") or "").strip()
+        retrieval_hit_count = len(retrieval_items)
+        answer_state = (
+            "missing_context"
+            if not normalized_watchlist_id
+            else (
+                "briefing_unavailable"
+                if not isinstance(briefing, dict) or fallback_status == "briefing_unavailable"
+                else (
+                    "no_confident_answer"
+                    if normalized_query
+                    and (
+                        fallback_status in {"limited", "insufficient_evidence", "story_not_found"}
+                        or retrieval_hit_count == 0
+                    )
+                    else "briefing_grounded"
+                )
+            )
+        )
+
+        context = (
+            answer_contract.get("context")
+            if isinstance(answer_contract, dict)
+            and isinstance(answer_contract.get("context"), dict)
+            else {}
+        )
+        story_focus_dict = story_focus if isinstance(story_focus, dict) else {}
+        selected_story_dict = selected_story if isinstance(selected_story, dict) else {}
+        briefing_summary = (
+            briefing.get("summary")
+            if isinstance(briefing, dict) and isinstance(briefing.get("summary"), dict)
+            else {}
+        )
+
+        return {
+            "question": normalized_query,
+            "mode": normalized_mode,
+            "top_k": normalized_top_k,
+            "context": {
+                "watchlist_id": normalized_watchlist_id,
+                "watchlist_name": str(
+                    context.get("watchlist_name") or self._watchlist_name(briefing)
+                ).strip()
+                or None,
+                "story_id": str(
+                    story_focus_dict.get("story_id")
+                    or selected_story_dict.get("story_id")
+                    or normalized_story_id
+                    or ""
+                ).strip()
+                or None,
+                "selected_story_id": str(
+                    context.get("selected_story_id")
+                    or story_focus_dict.get("story_id")
+                    or selected_story_dict.get("story_id")
+                    or ""
+                ).strip()
+                or None,
+                "story_headline": str(
+                    context.get("story_headline")
+                    or story_focus_dict.get("headline")
+                    or selected_story_dict.get("headline")
+                    or ""
+                ).strip()
+                or None,
+                "topic_key": str(
+                    context.get("topic_key")
+                    or story_focus_dict.get("topic_key")
+                    or selected_story_dict.get("topic_key")
+                    or normalized_topic_key
+                    or ""
+                ).strip()
+                or None,
+                "topic_label": str(
+                    context.get("topic_label")
+                    or story_focus_dict.get("topic_label")
+                    or selected_story_dict.get("topic_label")
+                    or ""
+                ).strip()
+                or None,
+                "selection_basis": str(context.get("selection_basis") or selection_basis or "none"),
+                "mode": normalized_mode,
+                "filters": (
+                    context.get("filters")
+                    if isinstance(context.get("filters"), dict)
+                    else normalized_filters
+                ),
+                "briefing_available": isinstance(briefing, dict),
+            },
+            "answer_state": answer_state,
+            "answer_headline": (
+                str(
+                    answer_contract.get("answer", {}).get("direct_answer")
+                    if isinstance(answer_contract, dict)
+                    and isinstance(answer_contract.get("answer"), dict)
+                    and normalized_query
+                    else ""
+                ).strip()
+                or str(
+                    story_focus_dict.get("headline")
+                    or selected_story_dict.get("headline")
+                    or briefing_summary.get("primary_story_headline")
+                    or ""
+                ).strip()
+                or None
+            ),
+            "answer_summary": (
+                str(
+                    (
+                        answer_contract.get("answer", {}).get("summary")
+                        if isinstance(answer_contract, dict)
+                        and isinstance(answer_contract.get("answer"), dict)
+                        and normalized_query
+                        else briefing_summary.get("overview")
+                    )
+                    or ""
+                ).strip()
+                or None
+                if answer_state == "briefing_grounded"
+                else None
+            ),
+            "answer_reason": (
+                (
+                    str(
+                        (
+                            answer_contract.get("answer", {}).get("reason")
+                            if isinstance(answer_contract, dict)
+                            and isinstance(answer_contract.get("answer"), dict)
+                            and normalized_query
+                            else (
+                                (briefing_summary.get("signals") or [{}])[0].get("reason")
+                                if isinstance(briefing_summary.get("signals"), list)
+                                and briefing_summary.get("signals")
+                                and isinstance((briefing_summary.get("signals") or [{}])[0], dict)
+                                else None
+                            )
+                        )
+                        or (
+                            answer_contract.get("changes", {}).get("story_focus_summary")
+                            if isinstance(answer_contract, dict)
+                            and isinstance(answer_contract.get("changes"), dict)
+                            else None
+                        )
+                        or (
+                            answer_contract.get("fallback", {}).get("reason")
+                            if isinstance(answer_contract, dict)
+                            and isinstance(answer_contract.get("fallback"), dict)
+                            else None
+                        )
+                        or (
+                            briefing.get("differences", {}).get("compare", {}).get("diff_excerpt")
+                            if isinstance(briefing, dict)
+                            and isinstance(briefing.get("differences"), dict)
+                            and isinstance(briefing.get("differences", {}).get("compare"), dict)
+                            else None
+                        )
+                        or ""
+                    ).strip()
+                    or None
+                )
+                if answer_state == "briefing_grounded"
+                else str(fallback.get("reason") or "").strip() or None
+            ),
+            "answer_confidence": (
+                str(
+                    answer_contract.get("answer", {}).get("confidence")
+                    if isinstance(answer_contract, dict)
+                    and isinstance(answer_contract.get("answer"), dict)
+                    else ("grounded" if answer_state == "briefing_grounded" else "limited")
+                ).strip()
+                or "limited"
+            ),
+            "story_change_summary": (
+                str(
+                    answer_contract.get("changes", {}).get("story_focus_summary")
+                    if isinstance(answer_contract, dict)
+                    and isinstance(answer_contract.get("changes"), dict)
+                    else ""
+                ).strip()
+                or None
+            ),
+            "briefing": briefing,
+            "story_focus": story_focus,
+            "selected_story": selected_story,
+            "retrieval": retrieval,
+            "citations": (
+                list(answer_contract.get("citations") or [])
+                if isinstance(answer_contract, dict)
+                else []
+            ),
+            "fallback_reason": str(fallback.get("reason") or "").strip() or None,
+            "fallback_next_step": str(fallback.get("suggested_next_step") or "").strip() or None,
+            "fallback_actions": list(fallback.get("actions") or []),
+        }
 
     def search(
         self,
@@ -92,6 +470,618 @@ class RetrievalService:
             "filters": normalized_filters,
             "items": hits[:top_k],
         }
+
+    def _load_watchlist_briefing(self, *, watchlist_id: str | None) -> dict[str, Any] | None:
+        normalized_watchlist_id = str(watchlist_id or "").strip()
+        if not normalized_watchlist_id:
+            return None
+        from .watchlists import WatchlistsService
+
+        return WatchlistsService(self.db).get_watchlist_briefing(
+            watchlist_id=normalized_watchlist_id
+        )
+
+    def _select_briefing_story(
+        self,
+        *,
+        briefing: dict[str, Any] | None,
+        story_id: str | None,
+        query: str,
+    ) -> tuple[dict[str, Any] | None, str]:
+        if not isinstance(briefing, dict):
+            return None, "none"
+        evidence = briefing.get("evidence")
+        if not isinstance(evidence, dict):
+            return None, "none"
+        stories = evidence.get("stories")
+        if not isinstance(stories, list):
+            return None, "none"
+        normalized_story_id = str(story_id or "").strip()
+        if normalized_story_id:
+            for story in stories:
+                if not isinstance(story, dict):
+                    continue
+                if str(story.get("story_id") or "").strip() == normalized_story_id:
+                    return story, "requested_story_id"
+
+        scored: list[tuple[int, int, dict[str, Any]]] = []
+        for index, story in enumerate(stories):
+            if not isinstance(story, dict):
+                continue
+            score = self._score_story_match(story=story, query=query)
+            scored.append((score, -index, story))
+        if scored:
+            best_score, _, best_story = max(scored, key=lambda item: (item[0], item[1]))
+            if best_score > 0:
+                return best_story, "query_match"
+
+        suggested_story_id = str(evidence.get("suggested_story_id") or "").strip()
+        if suggested_story_id:
+            for story in stories:
+                if not isinstance(story, dict):
+                    continue
+                if str(story.get("story_id") or "").strip() == suggested_story_id:
+                    return story, "suggested_story_id"
+
+        for story in stories:
+            if isinstance(story, dict):
+                return story, "first_story"
+        return None, "none"
+
+    def _score_story_match(self, *, story: dict[str, Any], query: str) -> int:
+        tokens = self._query_tokens(query)
+        if not tokens:
+            return 0
+        cards = story.get("evidence_cards")
+        card_segments = []
+        if isinstance(cards, list):
+            for item in cards:
+                if not isinstance(item, dict):
+                    continue
+                for key in ("card_title", "card_body", "topic_key", "topic_label", "claim_kind"):
+                    value = item.get(key)
+                    if isinstance(value, str) and value.strip():
+                        card_segments.append(value.strip().lower())
+        haystack = "\n".join(
+            [
+                str(story.get("headline") or "").strip().lower(),
+                str(story.get("topic_key") or "").strip().lower(),
+                str(story.get("topic_label") or "").strip().lower(),
+                " ".join(str(item).strip().lower() for item in story.get("claim_kinds") or []),
+                *card_segments,
+            ]
+        )
+        return sum(1 for token in tokens if token in haystack)
+
+    def _resolve_primary_job_id(
+        self,
+        *,
+        briefing: dict[str, Any] | None,
+        story: dict[str, Any] | None,
+    ) -> str | None:
+        if isinstance(story, dict):
+            story_job_id = str(story.get("latest_run_job_id") or "").strip()
+            if story_job_id:
+                return story_job_id
+        if not isinstance(briefing, dict):
+            return None
+        differences = briefing.get("differences")
+        if isinstance(differences, dict):
+            latest_job_id = str(differences.get("latest_job_id") or "").strip()
+            if latest_job_id:
+                return latest_job_id
+        return None
+
+    def _build_answer_output(
+        self,
+        *,
+        query: str,
+        briefing: dict[str, Any] | None,
+        story: dict[str, Any] | None,
+        retrieval_items: list[dict[str, Any]],
+        changes: dict[str, Any],
+        fallback_status: str,
+    ) -> dict[str, Any]:
+        overview = self._briefing_overview(briefing)
+        watchlist_name = self._watchlist_name(briefing)
+        story_headline = str(story.get("headline") or "").strip() if isinstance(story, dict) else ""
+        strongest_hit = retrieval_items[0] if retrieval_items else None
+
+        if story_headline:
+            direct_answer = (
+                f'For "{query}", the current briefing most strongly points to "{story_headline}".'
+            )
+        elif strongest_hit is not None:
+            direct_answer = (
+                f'For "{query}", the strongest grounded match comes from '
+                f"{self._format_hit_source(strongest_hit)}."
+            )
+        elif isinstance(briefing, dict):
+            direct_answer = (
+                f"{watchlist_name} has a briefing context, but it does not yet surface a direct answer for "
+                f'"{query}".'
+            )
+        else:
+            direct_answer = (
+                f'There is not enough grounded briefing evidence to answer "{query}" yet.'
+            )
+
+        summary_parts: list[str] = []
+        if overview:
+            summary_parts.append(overview)
+        if strongest_hit is not None:
+            summary_parts.append(
+                f"The strongest query match is {self._format_hit_source(strongest_hit)}: "
+                f"{str(strongest_hit.get('snippet') or '').strip()}"
+            )
+        elif isinstance(story, dict):
+            evidence_cards = story.get("evidence_cards")
+            if isinstance(evidence_cards, list) and evidence_cards:
+                lead_card = evidence_cards[0] if isinstance(evidence_cards[0], dict) else {}
+                card_body = str(lead_card.get("card_body") or "").strip()
+                if card_body:
+                    summary_parts.append(f"Selected story evidence: {card_body}")
+        if not summary_parts:
+            summary_parts.append(direct_answer)
+
+        story_focus_summary = str(changes.get("story_focus_summary") or "").strip()
+        answer_reason: str | None = None
+        if story_focus_summary:
+            answer_reason = story_focus_summary
+        elif strongest_hit is not None:
+            answer_reason = (
+                f"The current answer is anchored by {self._format_hit_source(strongest_hit)} "
+                "as the strongest grounded match."
+            )
+        elif overview:
+            answer_reason = overview
+        elif isinstance(briefing, dict):
+            answer_reason = (
+                f"{watchlist_name} still provides a briefing context, but the current story layer "
+                "needs stronger supporting evidence."
+            )
+
+        confidence = "grounded" if fallback_status == "grounded" else "limited"
+        return {
+            "direct_answer": direct_answer,
+            "summary": " ".join(part for part in summary_parts if part).strip(),
+            "reason": answer_reason,
+            "confidence": confidence,
+        }
+
+    def _build_answer_changes(
+        self,
+        *,
+        briefing: dict[str, Any] | None,
+        story: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        differences = briefing.get("differences") if isinstance(briefing, dict) else None
+        if not isinstance(differences, dict):
+            return {
+                "summary": "No watchlist briefing changes are available for this answer.",
+                "story_focus_summary": self._build_story_focus_summary(
+                    story=story,
+                    new_story_keys=[],
+                    removed_story_keys=[],
+                    compare_excerpt=None,
+                ),
+                "latest_job_id": None,
+                "previous_job_id": None,
+                "added_topics": [],
+                "removed_topics": [],
+                "added_claim_kinds": [],
+                "removed_claim_kinds": [],
+                "new_story_keys": [],
+                "removed_story_keys": [],
+                "compare_excerpt": None,
+                "compare_route": None,
+                "has_previous": False,
+            }
+
+        compare = differences.get("compare")
+        compare_dict = compare if isinstance(compare, dict) else {}
+        added_topics = [
+            str(item).strip() for item in differences.get("added_topics") or [] if str(item).strip()
+        ]
+        removed_topics = [
+            str(item).strip()
+            for item in differences.get("removed_topics") or []
+            if str(item).strip()
+        ]
+        added_claim_kinds = [
+            str(item).strip()
+            for item in differences.get("added_claim_kinds") or []
+            if str(item).strip()
+        ]
+        removed_claim_kinds = [
+            str(item).strip()
+            for item in differences.get("removed_claim_kinds") or []
+            if str(item).strip()
+        ]
+        new_story_keys = [
+            str(item).strip()
+            for item in differences.get("new_story_keys") or []
+            if str(item).strip()
+        ]
+        removed_story_keys = [
+            str(item).strip()
+            for item in differences.get("removed_story_keys") or []
+            if str(item).strip()
+        ]
+
+        summary_parts: list[str] = []
+        if added_topics:
+            summary_parts.append(f"Added topics: {', '.join(added_topics)}.")
+        if removed_topics:
+            summary_parts.append(f"Removed topics: {', '.join(removed_topics)}.")
+        if added_claim_kinds:
+            summary_parts.append(f"Added claim kinds: {', '.join(added_claim_kinds)}.")
+        if removed_claim_kinds:
+            summary_parts.append(f"Removed claim kinds: {', '.join(removed_claim_kinds)}.")
+        if new_story_keys:
+            summary_parts.append(f"New story keys: {', '.join(new_story_keys)}.")
+        if removed_story_keys:
+            summary_parts.append(f"Removed story keys: {', '.join(removed_story_keys)}.")
+        compare_excerpt = str(compare_dict.get("diff_excerpt") or "").strip() or None
+        if compare_excerpt and not summary_parts:
+            summary_parts.append("The latest run includes a compare diff excerpt.")
+        if not summary_parts:
+            summary_parts.append(
+                "No major watchlist-to-watchlist changes were surfaced in the current briefing."
+            )
+
+        return {
+            "summary": " ".join(summary_parts).strip(),
+            "story_focus_summary": self._build_story_focus_summary(
+                story=story,
+                new_story_keys=new_story_keys,
+                removed_story_keys=removed_story_keys,
+                compare_excerpt=compare_excerpt,
+            ),
+            "latest_job_id": str(differences.get("latest_job_id") or "").strip() or None,
+            "previous_job_id": str(differences.get("previous_job_id") or "").strip() or None,
+            "added_topics": added_topics,
+            "removed_topics": removed_topics,
+            "added_claim_kinds": added_claim_kinds,
+            "removed_claim_kinds": removed_claim_kinds,
+            "new_story_keys": new_story_keys,
+            "removed_story_keys": removed_story_keys,
+            "compare_excerpt": compare_excerpt,
+            "compare_route": str(compare_dict.get("compare_route") or "").strip() or None,
+            "has_previous": bool(compare_dict.get("has_previous")),
+        }
+
+    def _build_answer_citations(
+        self,
+        *,
+        briefing: dict[str, Any] | None,
+        story: dict[str, Any] | None,
+        retrieval_items: list[dict[str, Any]],
+        changes: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        citations: list[dict[str, Any]] = []
+        if isinstance(story, dict):
+            routes = story.get("routes") if isinstance(story.get("routes"), dict) else {}
+            citations.append(
+                {
+                    "kind": "briefing_story",
+                    "label": str(story.get("headline") or "Selected briefing story").strip(),
+                    "snippet": self._story_support_snippet(story),
+                    "source_url": None,
+                    "job_id": str(story.get("latest_run_job_id") or "").strip() or None,
+                    "route": str(routes.get("briefing") or "").strip() or None,
+                    "route_label": "Open briefing story",
+                }
+            )
+            cards = story.get("evidence_cards")
+            if isinstance(cards, list):
+                for card in cards[:2]:
+                    if not isinstance(card, dict):
+                        continue
+                    citations.append(
+                        {
+                            "kind": "briefing_card",
+                            "label": str(
+                                card.get("card_title")
+                                or card.get("topic_label")
+                                or card.get("source_section")
+                                or "Briefing evidence card"
+                            ).strip(),
+                            "snippet": str(card.get("card_body") or "").strip(),
+                            "source_url": str(card.get("source_url") or "").strip() or None,
+                            "job_id": str(card.get("job_id") or "").strip() or None,
+                            "route": str(routes.get("job_knowledge_cards") or "").strip() or None,
+                            "route_label": "Open knowledge cards",
+                        }
+                    )
+        for hit in retrieval_items[:2]:
+            citations.append(
+                {
+                    "kind": "retrieval_hit",
+                    "label": self._format_hit_source(hit),
+                    "snippet": str(hit.get("snippet") or "").strip(),
+                    "source_url": str(hit.get("source_url") or "").strip() or None,
+                    "job_id": str(hit.get("job_id") or "").strip() or None,
+                    "route": self._job_route_for_hit(hit),
+                    "route_label": "Open job trace",
+                }
+            )
+        compare_excerpt = str(changes.get("compare_excerpt") or "").strip()
+        compare_route = str(changes.get("compare_route") or "").strip()
+        latest_job_id = str(changes.get("latest_job_id") or "").strip()
+        if compare_excerpt:
+            citations.append(
+                {
+                    "kind": "job_compare",
+                    "label": "Latest compare excerpt",
+                    "snippet": compare_excerpt,
+                    "source_url": None,
+                    "job_id": latest_job_id or None,
+                    "route": compare_route or None,
+                    "route_label": "Open compare",
+                }
+            )
+        deduped: list[dict[str, Any]] = []
+        seen: set[tuple[str, str, str]] = set()
+        for item in citations:
+            key = (
+                str(item.get("kind") or ""),
+                str(item.get("label") or ""),
+                str(item.get("snippet") or ""),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(item)
+        return deduped[:6]
+
+    def _build_answer_evidence(
+        self,
+        *,
+        briefing: dict[str, Any] | None,
+        story: dict[str, Any] | None,
+        retrieval_items: list[dict[str, Any]],
+        citation_count: int,
+    ) -> dict[str, Any]:
+        story_cards_payload: list[dict[str, Any]] = []
+        if isinstance(story, dict):
+            cards = story.get("evidence_cards")
+            if isinstance(cards, list):
+                for item in cards[:3]:
+                    if not isinstance(item, dict):
+                        continue
+                    story_cards_payload.append(
+                        {
+                            "card_id": str(item.get("card_id") or "").strip() or None,
+                            "job_id": str(item.get("job_id") or "").strip() or None,
+                            "platform": str(item.get("platform") or "").strip() or None,
+                            "source_url": str(item.get("source_url") or "").strip() or None,
+                            "title": str(item.get("card_title") or "").strip() or None,
+                            "body": str(item.get("card_body") or "").strip(),
+                            "source_section": str(item.get("source_section") or "").strip() or None,
+                        }
+                    )
+        return {
+            "briefing_overview": self._briefing_overview(briefing),
+            "selected_story_id": str(story.get("story_id") or "").strip() or None
+            if isinstance(story, dict)
+            else None,
+            "selected_story_headline": str(story.get("headline") or "").strip() or None
+            if isinstance(story, dict)
+            else None,
+            "latest_job_id": self._resolve_primary_job_id(briefing=briefing, story=story),
+            "citation_count": citation_count,
+            "retrieval_hit_count": len(retrieval_items),
+            "retrieval_items": retrieval_items[:3],
+            "story_cards": story_cards_payload,
+        }
+
+    def _build_answer_fallback(
+        self,
+        *,
+        watchlist_id: str | None,
+        story_id: str | None,
+        briefing: dict[str, Any] | None,
+        story: dict[str, Any] | None,
+        retrieval_items: list[dict[str, Any]],
+        citations: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        story_routes = (
+            story.get("routes")
+            if isinstance(story, dict) and isinstance(story.get("routes"), dict)
+            else {}
+        )
+        if (
+            isinstance(watchlist_id, str)
+            and watchlist_id.strip()
+            and not isinstance(briefing, dict)
+        ):
+            return {
+                "status": "briefing_unavailable",
+                "reason": "The requested watchlist does not have a briefing payload yet.",
+                "suggested_next_step": "Open the watchlist briefing first, then retry Ask against that watchlist.",
+                "actions": [
+                    {
+                        "kind": "open_briefing",
+                        "label": "Open watchlist briefing",
+                        "route": f"/briefings?watchlist_id={watchlist_id.strip()}",
+                    }
+                ],
+            }
+        if isinstance(story_id, str) and story_id.strip() and not isinstance(story, dict):
+            return {
+                "status": "story_not_found",
+                "reason": "The requested story_id was not found inside the current briefing context.",
+                "suggested_next_step": "Use the suggested story from the current briefing or pick a visible story id.",
+                "actions": [
+                    {
+                        "kind": "open_briefing",
+                        "label": "Open watchlist briefing",
+                        "route": f"/briefings?watchlist_id={watchlist_id.strip()}"
+                        if watchlist_id
+                        else None,
+                    }
+                ],
+            }
+        if citations:
+            return {
+                "status": "grounded",
+                "reason": None,
+                "suggested_next_step": None,
+                "actions": [],
+            }
+        if isinstance(briefing, dict):
+            if retrieval_items:
+                return {
+                    "status": "limited",
+                    "reason": "Retrieval found matches, but the current briefing did not supply stronger structured citations.",
+                    "suggested_next_step": "Inspect the cited jobs and knowledge cards before treating this as a strong answer.",
+                    "actions": [
+                        {
+                            "kind": "open_story",
+                            "label": "Open selected story",
+                            "route": str(story_routes.get("briefing") or "").strip() or None,
+                        },
+                        {
+                            "kind": "open_job",
+                            "label": "Open latest job trace",
+                            "route": self._job_route_for_hit(retrieval_items[0])
+                            if retrieval_items
+                            else None,
+                        },
+                    ],
+                }
+            return {
+                "status": "limited",
+                "reason": "The briefing exists, but it does not yet surface direct evidence for this question.",
+                "suggested_next_step": "Refine the question or open a story with stronger evidence cards.",
+                "actions": [
+                    {
+                        "kind": "open_story",
+                        "label": "Open selected story",
+                        "route": str(story_routes.get("briefing") or "").strip() or None,
+                    },
+                    {
+                        "kind": "open_search",
+                        "label": "Open raw search",
+                        "route": "/search",
+                    },
+                ],
+            }
+        return {
+            "status": "insufficient_evidence",
+            "reason": "No briefing context or grounded evidence was available for this question.",
+            "suggested_next_step": "Provide a watchlist-backed briefing context before asking for an answer.",
+            "actions": [
+                {
+                    "kind": "open_briefing",
+                    "label": "Open briefings",
+                    "route": "/briefings",
+                }
+            ],
+        }
+
+    def _serialize_selected_story(self, *, story: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not isinstance(story, dict):
+            return None
+        return {
+            "story_id": str(story.get("story_id") or "").strip(),
+            "story_key": str(story.get("story_key") or "").strip(),
+            "headline": str(story.get("headline") or "").strip(),
+            "topic_key": str(story.get("topic_key") or "").strip() or None,
+            "topic_label": str(story.get("topic_label") or "").strip() or None,
+            "source_count": int(story.get("source_count") or 0),
+            "run_count": int(story.get("run_count") or 0),
+            "matched_card_count": int(story.get("matched_card_count") or 0),
+            "platforms": list(story.get("platforms") or []),
+            "claim_kinds": list(story.get("claim_kinds") or []),
+            "source_urls": list(story.get("source_urls") or []),
+            "latest_run_job_id": str(story.get("latest_run_job_id") or "").strip() or None,
+            "routes": story.get("routes") if isinstance(story.get("routes"), dict) else {},
+        }
+
+    def _build_story_focus_summary(
+        self,
+        *,
+        story: dict[str, Any] | None,
+        new_story_keys: list[str],
+        removed_story_keys: list[str],
+        compare_excerpt: str | None,
+    ) -> str | None:
+        if not isinstance(story, dict):
+            return None
+        headline = str(story.get("headline") or "").strip() or "The selected story"
+        story_key = str(story.get("story_key") or "").strip()
+        source_count = int(story.get("source_count") or 0)
+        run_count = int(story.get("run_count") or 0)
+        matched_card_count = int(story.get("matched_card_count") or 0)
+        if story_key and story_key in new_story_keys:
+            return (
+                f'"{headline}" is newly surfaced in the latest briefing and is already backed by '
+                f"{source_count} source families."
+            )
+        if story_key and story_key in removed_story_keys:
+            return f'"{headline}" was removed from the latest story set, so treat this answer as stale context.'
+        if compare_excerpt:
+            return (
+                f'"{headline}" remains the selected story focus, and the latest compare still shows movement '
+                "around it."
+            )
+        if matched_card_count > 0:
+            return (
+                f'"{headline}" is the current story focus across {run_count} runs and '
+                f"{matched_card_count} matched evidence cards."
+            )
+        if source_count > 0:
+            return f'"{headline}" remains the strongest story focus across {source_count} source families.'
+        return f'"{headline}" is the current story focus for this answer.'
+
+    @staticmethod
+    def _watchlist_name(briefing: dict[str, Any] | None) -> str:
+        if not isinstance(briefing, dict):
+            return "This watchlist"
+        watchlist = briefing.get("watchlist")
+        if not isinstance(watchlist, dict):
+            return "This watchlist"
+        return str(watchlist.get("name") or "").strip() or "This watchlist"
+
+    @staticmethod
+    def _briefing_overview(briefing: dict[str, Any] | None) -> str | None:
+        if not isinstance(briefing, dict):
+            return None
+        summary = briefing.get("summary")
+        if not isinstance(summary, dict):
+            return None
+        overview = str(summary.get("overview") or "").strip()
+        return overview or None
+
+    @staticmethod
+    def _story_support_snippet(story: dict[str, Any]) -> str:
+        source_count = int(story.get("source_count") or 0)
+        run_count = int(story.get("run_count") or 0)
+        matched_card_count = int(story.get("matched_card_count") or 0)
+        return (
+            f"Supported across {source_count} source families, {run_count} runs, "
+            f"and {matched_card_count} matched cards."
+        )
+
+    @staticmethod
+    def _format_hit_source(hit: dict[str, Any]) -> str:
+        source = str(hit.get("source") or "").strip() or "retrieval"
+        platform = str(hit.get("platform") or "").strip() or "unknown platform"
+        title = str(hit.get("title") or "").strip() or "untitled source"
+        return f"{source} on {platform} ({title})"
+
+    @staticmethod
+    def _job_route_for_hit(hit: dict[str, Any]) -> str | None:
+        job_id = str(hit.get("job_id") or "").strip()
+        if not job_id:
+            return None
+        return f"/jobs?job_id={job_id}"
+
+    @staticmethod
+    def _query_tokens(query: str) -> set[str]:
+        return {token for token in _QUERY_TOKEN_PATTERN.findall(query.strip().lower()) if token}
 
     def _normalize_mode(self, mode: str) -> RetrievalMode:
         normalized = str(mode).strip().lower()

@@ -29,6 +29,8 @@ export type Subscription = {
 	source_type: SourceType;
 	source_value: string;
 	source_name: string;
+	support_tier?: "strong_supported" | "generic_supported";
+	content_profile?: ContentType;
 	adapter_type: SubscriptionAdapterType;
 	source_url: string | null;
 	rsshub_route: string;
@@ -56,6 +58,40 @@ export type SubscriptionUpsertRequest = {
 export type SubscriptionUpsertResponse = {
 	subscription: Subscription;
 	created: boolean;
+};
+
+export type SubscriptionTemplateSupportTier = {
+	id: "strong_supported" | "generic_supported";
+	label: string;
+	description: string;
+	content_profile: ContentType;
+	supports_video_pipeline: boolean;
+	verification_status: string;
+};
+
+export type SubscriptionTemplate = {
+	id: string;
+	label: string;
+	description: string;
+	support_tier: SubscriptionTemplateSupportTier["id"];
+	platform: Platform;
+	source_type: SourceType;
+	adapter_type: SubscriptionAdapterType;
+	content_profile: ContentType;
+	category?: SubscriptionCategory | string | null;
+	source_value_placeholder?: string | null;
+	source_url_placeholder?: string | null;
+	rsshub_route_hint?: string | null;
+	source_url_required: boolean;
+	supports_video_pipeline: boolean;
+	fill_now?: string | null;
+	proof_boundary?: string | null;
+	evidence_note?: string | null;
+};
+
+export type SubscriptionTemplateCatalogResponse = {
+	support_tiers: SubscriptionTemplateSupportTier[];
+	templates: SubscriptionTemplate[];
 };
 
 export type IngestPollRequest = {
@@ -473,6 +509,297 @@ export type WatchlistTrendResponse = {
 		matcher_value: string;
 	};
 	timeline: WatchlistTrendRun[];
+	merged_stories?: WatchlistMergedStory[];
+	source_coverage?: WatchlistTrendSourceCoverage[];
+};
+
+export type WatchlistMergedStory = {
+	id: string;
+	story_key: string;
+	headline: string;
+	topic_key: string | null;
+	topic_label: string | null;
+	latest_created_at: string;
+	matched_card_count: number;
+	platforms: string[];
+	claim_kinds: string[];
+	source_urls: string[];
+	run_ids: string[];
+	cards: WatchlistTrendCard[];
+};
+
+export type WatchlistTrendSourceCoverage = {
+	platform: string;
+	run_count: number;
+	card_count: number;
+	latest_created_at: string | null;
+};
+
+export type WatchlistBriefingSignal = {
+	story_key: string;
+	headline: string;
+	matched_card_count: number;
+	latest_run_job_id: string | null;
+	reason: string;
+};
+
+export type WatchlistBriefingSummary = {
+	overview: string;
+	source_count: number;
+	run_count: number;
+	story_count: number;
+	matched_cards: number;
+	primary_story_headline: string | null;
+	signals: WatchlistBriefingSignal[];
+};
+
+export type WatchlistBriefingCompare = {
+	job_id: string;
+	has_previous: boolean;
+	previous_job_id: string | null;
+	changed: boolean;
+	added_lines: number;
+	removed_lines: number;
+	diff_excerpt: string | null;
+	compare_route: string;
+};
+
+export type WatchlistBriefingDifferences = {
+	latest_job_id: string | null;
+	previous_job_id: string | null;
+	added_topics: string[];
+	removed_topics: string[];
+	added_claim_kinds: string[];
+	removed_claim_kinds: string[];
+	new_story_keys: string[];
+	removed_story_keys: string[];
+	compare: WatchlistBriefingCompare | null;
+};
+
+export type WatchlistBriefingRoutes = {
+	watchlist_trend: string;
+	briefing: string | null;
+	ask: string | null;
+	job_compare: string | null;
+	job_bundle: string | null;
+	job_knowledge_cards: string | null;
+};
+
+export type WatchlistBriefingStoryEvidence = {
+	story_id: string;
+	story_key: string;
+	headline: string;
+	topic_key: string | null;
+	topic_label: string | null;
+	source_count: number;
+	run_count: number;
+	matched_card_count: number;
+	platforms: string[];
+	claim_kinds: string[];
+	source_urls: string[];
+	latest_run_job_id: string | null;
+	evidence_cards: WatchlistTrendCard[];
+	routes: WatchlistBriefingRoutes;
+};
+
+export type WatchlistBriefingRunEvidence = {
+	job_id: string;
+	video_id: string;
+	platform: string;
+	title: string;
+	source_url: string | null;
+	created_at: string;
+	matched_card_count: number;
+	routes: WatchlistBriefingRoutes;
+};
+
+export type WatchlistBriefingEvidence = {
+	suggested_story_id: string | null;
+	stories: WatchlistBriefingStoryEvidence[];
+	featured_runs: WatchlistBriefingRunEvidence[];
+};
+
+export type WatchlistBriefing = {
+	watchlist: Watchlist;
+	summary: WatchlistBriefingSummary;
+	differences: WatchlistBriefingDifferences;
+	evidence: WatchlistBriefingEvidence;
+};
+
+export type AskAnswerConfidence = "grounded" | "limited";
+
+export type AskStorySelectionBasis =
+	| "requested_story_id"
+	| "query_match"
+	| "suggested_story_id"
+	| "first_story"
+	| "none";
+
+export type AskAnswerContractContext = {
+	watchlist_id: string | null;
+	watchlist_name: string | null;
+	story_id: string | null;
+	selected_story_id: string | null;
+	story_headline: string | null;
+	topic_key: string | null;
+	topic_label: string | null;
+	selection_basis: AskStorySelectionBasis;
+	mode: RetrievalSearchMode;
+	filters: Record<string, string>;
+	briefing_available: boolean;
+};
+
+export type AskAnswerContractAnswer = {
+	direct_answer: string;
+	summary: string;
+	reason: string | null;
+	confidence: AskAnswerConfidence;
+};
+
+export type AskAnswerContractChanges = {
+	summary: string;
+	story_focus_summary: string | null;
+	latest_job_id: string | null;
+	previous_job_id: string | null;
+	added_topics: string[];
+	removed_topics: string[];
+	added_claim_kinds: string[];
+	removed_claim_kinds: string[];
+	new_story_keys: string[];
+	removed_story_keys: string[];
+	compare_excerpt: string | null;
+	compare_route: string | null;
+	has_previous: boolean;
+};
+
+export type AskAnswerCitationKind =
+	| "briefing_story"
+	| "briefing_card"
+	| "retrieval_hit"
+	| "job_compare";
+
+export type AskAnswerContractCitation = {
+	kind: AskAnswerCitationKind;
+	label: string;
+	snippet: string;
+	source_url: string | null;
+	job_id: string | null;
+	route: string | null;
+	route_label: string | null;
+};
+
+export type AskAnswerSelectedStory = {
+	story_id: string;
+	story_key: string;
+	headline: string;
+	topic_key: string | null;
+	topic_label: string | null;
+	source_count: number;
+	run_count: number;
+	matched_card_count: number;
+	platforms: string[];
+	claim_kinds: string[];
+	source_urls: string[];
+	latest_run_job_id: string | null;
+	routes: WatchlistBriefingRoutes;
+};
+
+export type AskAnswerEvidenceCard = {
+	card_id: string | null;
+	job_id: string | null;
+	platform: string | null;
+	source_url: string | null;
+	title: string | null;
+	body: string;
+	source_section: string | null;
+};
+
+export type AskAnswerContractEvidence = {
+	briefing_overview: string | null;
+	selected_story_id: string | null;
+	selected_story_headline: string | null;
+	latest_job_id: string | null;
+	citation_count: number;
+	retrieval_hit_count: number;
+	retrieval_items: RetrievalHit[];
+	story_cards: AskAnswerEvidenceCard[];
+};
+
+export type AskAnswerFallbackStatus =
+	| "grounded"
+	| "limited"
+	| "briefing_unavailable"
+	| "story_not_found"
+	| "insufficient_evidence";
+
+export type AskAnswerContractFallback = {
+	status: AskAnswerFallbackStatus;
+	reason: string | null;
+	suggested_next_step: string | null;
+	actions: AskAnswerFallbackAction[];
+};
+
+export type AskAnswerFallbackAction = {
+	kind:
+		| "open_briefing"
+		| "open_story"
+		| "open_job"
+		| "open_knowledge"
+		| "open_search";
+	label: string;
+	route: string | null;
+};
+
+export type AskAnswerContractResponse = {
+	query: string;
+	context: AskAnswerContractContext;
+	selected_story: AskAnswerSelectedStory | null;
+	answer: AskAnswerContractAnswer;
+	changes: AskAnswerContractChanges;
+	citations: AskAnswerContractCitation[];
+	evidence: AskAnswerContractEvidence;
+	fallback: AskAnswerContractFallback;
+};
+
+export type AskAnswerState =
+	| "briefing_grounded"
+	| "missing_context"
+	| "briefing_unavailable"
+	| "no_confident_answer";
+
+export type AskContext = {
+	watchlist_id: string | null;
+	watchlist_name: string | null;
+	story_id: string | null;
+	selected_story_id: string | null;
+	story_headline: string | null;
+	topic_key: string | null;
+	topic_label: string | null;
+	selection_basis: AskStorySelectionBasis;
+	mode: RetrievalSearchMode;
+	filters: Record<string, string>;
+	briefing_available: boolean;
+};
+
+export type AskAnswerResponse = {
+	question: string;
+	mode: RetrievalSearchMode;
+	top_k: number;
+	context: AskContext;
+	answer_state: AskAnswerState;
+	answer_headline: string | null;
+	answer_summary: string | null;
+	answer_reason: string | null;
+	answer_confidence: AskAnswerConfidence;
+	story_change_summary: string | null;
+	briefing: WatchlistBriefing | null;
+	story_focus: AskAnswerSelectedStory | null;
+	selected_story: WatchlistBriefingStoryEvidence | null;
+	retrieval: RetrievalSearchResponse | null;
+	citations: AskAnswerContractCitation[];
+	fallback_reason: string | null;
+	fallback_next_step: string | null;
+	fallback_actions: AskAnswerFallbackAction[];
 };
 
 export type JobEvidenceBundle = {

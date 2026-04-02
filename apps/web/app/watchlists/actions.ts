@@ -63,6 +63,7 @@ export async function upsertWatchlistAction(formData: FormData) {
 
 		revalidatePath("/watchlists");
 		revalidatePath("/trends");
+		revalidatePath("/briefings");
 		redirect(
 			`/watchlists?watchlist_id=${encodeURIComponent(response.id)}&${toFlashQuery("success", "WATCHLIST_SAVED")}`,
 		);
@@ -88,6 +89,7 @@ export async function deleteWatchlistAction(formData: FormData) {
 		});
 		revalidatePath("/watchlists");
 		revalidatePath("/trends");
+		revalidatePath("/briefings");
 		redirect(statusUrl("success", "WATCHLIST_DELETED"));
 	} catch (error) {
 		if (isNextRedirectError(error)) {

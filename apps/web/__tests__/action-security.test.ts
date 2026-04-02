@@ -23,13 +23,15 @@ function buildEmptyCookieStore() {
 	};
 }
 
-function expectParseFailure<T>(
-	result: z.SafeParseReturnType<unknown, T>,
-): z.ZodError {
+function expectParseFailure<T>(result: {
+	success: boolean;
+	error?: z.ZodError;
+	data?: T;
+}): z.ZodError {
 	if (result.success) {
 		throw new Error("Expected parse failure");
 	}
-	return result.error;
+	return result.error ?? new z.ZodError([]);
 }
 
 describe("action security session token", () => {
@@ -102,6 +104,23 @@ describe("action security URL schema hardening", () => {
 				enabled: true,
 			}),
 		).toThrow();
+	});
+
+	it("accepts rss platform for generalized source intake", () => {
+		expect(() =>
+			schemas.subscriptionUpsert.parse({
+				platform: "rss",
+				source_type: "url",
+				source_value: "https://example.com/source",
+				adapter_type: "rss_generic",
+				source_url: "https://example.com/feed.xml",
+				rsshub_route: null,
+				category: "misc",
+				tags: [],
+				priority: 50,
+				enabled: true,
+			}),
+		).not.toThrow();
 	});
 });
 

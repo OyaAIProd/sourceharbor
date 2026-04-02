@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { metadata as askMetadata } from "@/app/ask/page";
+import { metadata as briefingsMetadata } from "@/app/briefings/page";
 import { metadata as feedMetadata } from "@/app/feed/page";
 import { metadata as jobsMetadata } from "@/app/jobs/page";
 import { metadata as mcpMetadata } from "@/app/mcp/page";
@@ -65,13 +66,13 @@ describe("route metadata", () => {
 		);
 
 		expect(askMetadata.title).toBe("Ask your sources");
-		expect(askMetadata.description).toMatch(/Wave 1 Ask MVP/i);
+		expect(askMetadata.description).toMatch(/briefing-backed Ask front door/i);
 		expect(toKeywordList(askMetadata.keywords)).toEqual(
 			expect.arrayContaining([
-				"Ask your sources",
-				"grounded Ask",
-				"citation-first Ask",
-				"MCP server",
+				"briefing-aware Ask",
+				"watchlist question front door",
+				"answer change evidence workflow",
+				"grounded answer workflow",
 			]),
 		);
 	});
@@ -145,6 +146,19 @@ describe("route metadata", () => {
 				"cross-run trend",
 				"topic diff",
 				"AI workflow trend",
+			]),
+		);
+
+		expect(briefingsMetadata.title).toBe("Briefings");
+		expect(briefingsMetadata.description).toMatch(
+			/Unified watchlist briefing/i,
+		);
+		expect(toKeywordList(briefingsMetadata.keywords)).toEqual(
+			expect.arrayContaining([
+				"watchlist briefing",
+				"unified information surface",
+				"cross-source briefing",
+				"evidence drill-down",
 			]),
 		);
 

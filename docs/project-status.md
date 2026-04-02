@@ -19,8 +19,9 @@ SourceHarbor is already a real, source-first product-shaped repository.
 It has:
 
 - local first-run and doctor flows
-- Search, Ask, MCP, and Ops front doors
-- watchlists, trends, bundles, and a sample playground
+- Search, story-aware briefing-backed Ask, MCP, and Ops front doors
+- strong-supported YouTube/Bilibili intake plus generalized RSSHub/RSS source intake templates
+- watchlists, merged stories, trends, briefings, bundles, and a sample playground
 - proof and runtime-truth surfaces that explain where confidence comes from
 
 What it does **not** have today:
@@ -29,6 +30,7 @@ What it does **not** have today:
 - autopilot product claims
 - live external notification proof without sender configuration
 - universal no-secret proof for Gemini-backed lanes
+- route-by-route verification across the full RSSHub universe
 
 ## Verified And Ready
 
@@ -36,8 +38,9 @@ These are the strongest current claims:
 
 - **First-run base path:** `./bin/bootstrap-full-stack`, `./bin/full-stack up`, `./bin/doctor`, and the runtime route snapshot under `.runtime-cache/run/full-stack/resolved.env`
 - **Local write-route contract:** direct write APIs can be exercised with the local dev token path instead of pretending auth is an unresolved product gap
-- **Front doors:** `/search`, `/ask`, `/mcp`, `/ops`
-- **Compounder layer:** `/watchlists`, `/trends`, `/playground`, and `GET /api/v1/jobs/{job_id}/bundle`
+- **Source intake contract:** strong-supported YouTube/Bilibili templates plus generalized RSSHub/RSS substrate without overclaiming full-universe proof, with the `/subscriptions` front door now consuming the same template catalog exposed through API and MCP
+- **Front doors:** `/search`, `/ask` (story-aware, briefing-backed answer/change/evidence flow with truthful raw-retrieval fallback, selected-story drill-down, and a server-owned Ask page payload that reduces front-end glue), `/briefings`, `/mcp`, `/ops`, `/subscriptions`
+- **Compounder layer:** `/watchlists`, `/trends` (merged stories + recent evidence), `/briefings` (summary -> differences -> evidence for one watchlist), `/playground`, and `GET /api/v1/jobs/{job_id}/bundle`
 - **Truth surfaces:** [proof.md](./proof.md), [runtime-truth.md](./runtime-truth.md), [start-here.md](./start-here.md), [testing.md](./testing.md)
 
 ## Implemented But Still Gated

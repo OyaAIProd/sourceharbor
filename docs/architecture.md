@@ -12,9 +12,11 @@ SourceHarbor is easiest to understand as a single knowledge pipeline with four o
 
 ## The Product Model
 
-Long-form sources come in.
+Long-form sources come in through two honest intake lanes:
 
-Artifacts, digests, and traceable jobs come out.
+- **strong-supported video intake:** YouTube channels and Bilibili creators
+- **generalized source intake:** RSSHub routes and generic RSS/Atom feeds
+Artifacts, digests, merged stories, and traceable jobs come out.
 
 Everything else in the repository exists to make that loop reliable, inspectable, and reusable.
 
@@ -25,12 +27,14 @@ Everything else in the repository exists to make that loop reliable, inspectable
 `apps/api` exposes HTTP endpoints for:
 
 - subscriptions
+- subscription template catalog shared by API, MCP, and the `/subscriptions` intake form
 - ingestion
 - videos and jobs
 - digest feed
 - artifacts
 - retrieval
 - notifications
+- watchlists, briefing, and merged-story trend views
 - operator-facing controls
 
 ### Worker
@@ -38,6 +42,7 @@ Everything else in the repository exists to make that loop reliable, inspectable
 `apps/worker` runs the asynchronous pipeline:
 
 - poll feeds
+- route entries into the video lane or article/text lane
 - queue and process jobs
 - write artifacts
 - send video digests
@@ -64,12 +69,12 @@ Everything else in the repository exists to make that loop reliable, inspectable
 - command overview
 - proof boundary
 - ops inbox / diagnostics
-- watchlists and trends
-- search and Ask front door
+- watchlists, merged stories, trends, and unified briefings
+- search plus story-aware, briefing-backed Ask front door that carries selected story context into answer, change, and evidence layers through a server-owned page payload instead of front-end stitching
 - digest reading flow
 - ingest run ledger
 - knowledge layer
-- subscription management
+- subscription management with strong-supported templates and generalized RSSHub/RSS intake, now driven by the shared subscription template catalog
 - job trace
 - notification settings
 - sample playground
@@ -97,6 +102,9 @@ See:
 
 - **Result-first operations:** a newcomer should be able to produce a real job before reading deep internals
 - **One truth, many surfaces:** API, MCP, and web all point at the same pipeline state
+- **Strong lanes plus general lanes:** YouTube/Bilibili stay richer than the generalized RSSHub/RSS substrate, and the contract should say so plainly
+- **Summary before diff before receipts:** unified briefings should lower operator cognitive load by leading with the current story, then the delta, then the drill-down evidence
+- **Server owns the answer page contract:** the Ask page should consume one formal page payload for story focus, answer, changes, evidence, and next steps instead of recomposing those layers in the browser
 - **Proof over promises:** jobs, artifacts, smoke scripts, and CI back up public claims
 - **Supervisor truth before long live smoke:** the repo-managed local path is `bootstrap -> up -> status -> doctor`; stricter provider-backed smoke is a separate lane, not the same claim
 - **Thin public docs, rich executable source:** docs should direct people; source should prove the details

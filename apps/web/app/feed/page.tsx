@@ -110,7 +110,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 	const sortOptions = SORT_KEYS.map((value) => ({
 		value,
 		label: copy.sortOptions[value],
-	})) as const;
+	}));
 	const sessionToken = getActionSessionTokenForForm();
 	const {
 		source,

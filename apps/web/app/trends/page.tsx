@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -10,6 +11,10 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
+import type {
+	WatchlistMergedStory,
+	WatchlistTrendResponse,
+} from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
@@ -30,6 +35,258 @@ type TrendsPageProps = {
 	searchParams?: SearchParamsInput;
 };
 
+type DerivedMergedStoryEvidence = {
+	jobId: string;
+	platform: string;
+	title: string;
+	sourceUrl: string | null;
+	createdAt: string;
+	excerpt: string | null;
+};
+
+type DerivedMergedStory = {
+	id: string;
+	label: string;
+	summary: string | null;
+	sourceCount: number;
+	runCount: number;
+	latestCreatedAt: string | null;
+	platforms: string[];
+	evidence: DerivedMergedStoryEvidence[];
+};
+
+type DerivedSourceCoverage = {
+	platform: string;
+	run_count: number;
+	card_count: number;
+	latest_created_at: string | null;
+};
+
+function platformLabel(platform: string): string {
+	if (platform === "youtube") {
+		return "YouTube";
+	}
+	if (platform === "bilibili") {
+		return "Bilibili";
+	}
+	if (platform === "rss") {
+		return "RSS";
+	}
+	return platform;
+}
+
+function humanizeClaimKind(value: string): string {
+	return value
+		.split(/[_-]/)
+		.filter((part) => part.length > 0)
+		.map((part) => part[0].toUpperCase() + part.slice(1))
+		.join(" ");
+}
+
+function deriveMergedStories(
+	trend: WatchlistTrendResponse,
+): DerivedMergedStory[] {
+	if (Array.isArray(trend.merged_stories) && trend.merged_stories.length > 0) {
+		return trend.merged_stories
+			.map((story: WatchlistMergedStory) => ({
+				id: story.id,
+				label: story.headline || story.topic_label || story.story_key,
+				summary: null,
+				sourceCount: story.source_urls.length,
+				runCount: story.run_ids.length,
+				latestCreatedAt: story.latest_created_at,
+				platforms: story.platforms,
+				evidence: story.cards.slice(0, 3).map((item) => ({
+					jobId: item.job_id,
+					platform: item.platform,
+					title:
+						item.video_title?.trim() ||
+						item.card_title?.trim() ||
+						`Job ${item.job_id}`,
+					sourceUrl: item.source_url,
+					createdAt: item.created_at,
+					excerpt: item.card_body,
+				})),
+			}))
+			.sort((left, right) => {
+				const timeDelta =
+					new Date(right.latestCreatedAt ?? 0).getTime() -
+					new Date(left.latestCreatedAt ?? 0).getTime();
+				if (timeDelta !== 0) {
+					return timeDelta;
+				}
+				if (right.sourceCount !== left.sourceCount) {
+					return right.sourceCount - left.sourceCount;
+				}
+				return right.runCount - left.runCount;
+			});
+	}
+
+	const groups = new Map<
+		string,
+		{
+			id: string;
+			label: string;
+			summary: string | null;
+			sourceKeys: Set<string>;
+			runIds: Set<string>;
+			platforms: Set<string>;
+			latestCreatedAt: string | null;
+			evidence: Map<string, DerivedMergedStoryEvidence>;
+		}
+	>();
+
+	for (const run of trend.timeline) {
+		const register = (
+			groupId: string,
+			label: string,
+			excerpt: string | null,
+		) => {
+			const sourceKey = `${run.platform}:${run.source_url ?? run.video_id ?? run.title}`;
+			const existing = groups.get(groupId) ?? {
+				id: groupId,
+				label,
+				summary: null,
+				sourceKeys: new Set<string>(),
+				runIds: new Set<string>(),
+				platforms: new Set<string>(),
+				latestCreatedAt: null as string | null,
+				evidence: new Map<string, DerivedMergedStoryEvidence>(),
+			};
+			existing.label = label;
+			existing.sourceKeys.add(sourceKey);
+			existing.runIds.add(run.job_id);
+			existing.platforms.add(run.platform);
+			if (
+				!existing.latestCreatedAt ||
+				new Date(run.created_at).getTime() >
+					new Date(existing.latestCreatedAt).getTime()
+			) {
+				existing.latestCreatedAt = run.created_at;
+			}
+			if (!existing.evidence.has(run.job_id)) {
+				existing.evidence.set(run.job_id, {
+					jobId: run.job_id,
+					platform: run.platform,
+					title: run.title,
+					sourceUrl: run.source_url,
+					createdAt: run.created_at,
+					excerpt,
+				});
+			}
+			groups.set(groupId, existing);
+		};
+
+		let matchedStructuredCard = false;
+		for (const card of run.cards) {
+			if (card.topic_key || card.topic_label) {
+				matchedStructuredCard = true;
+				const rawTopic = card.topic_key ?? card.topic_label ?? "topic";
+				const label = card.topic_label ?? card.topic_key ?? "Topic";
+				register(`topic:${rawTopic}`, label, card.card_body);
+			}
+			if (card.claim_kind) {
+				matchedStructuredCard = true;
+				register(
+					`claim:${card.claim_kind}`,
+					`${humanizeClaimKind(card.claim_kind)} claims`,
+					card.card_body,
+				);
+			}
+		}
+
+		if (!matchedStructuredCard) {
+			for (const topic of run.topics) {
+				register(`topic:${topic}`, topic, null);
+			}
+			for (const claimKind of run.claim_kinds) {
+				register(
+					`claim:${claimKind}`,
+					`${humanizeClaimKind(claimKind)} claims`,
+					null,
+				);
+			}
+		}
+	}
+
+	return [...groups.values()]
+		.map((group) => ({
+			id: group.id,
+			label: group.label,
+			summary: null,
+			sourceCount: group.sourceKeys.size,
+			runCount: group.runIds.size,
+			latestCreatedAt: group.latestCreatedAt,
+			platforms: [...group.platforms],
+			evidence: [...group.evidence.values()]
+				.sort(
+					(left, right) =>
+						new Date(right.createdAt).getTime() -
+						new Date(left.createdAt).getTime(),
+				)
+				.slice(0, 3),
+		}))
+		.sort((left, right) => {
+			if (right.sourceCount !== left.sourceCount) {
+				return right.sourceCount - left.sourceCount;
+			}
+			if (right.runCount !== left.runCount) {
+				return right.runCount - left.runCount;
+			}
+			return (
+				new Date(right.latestCreatedAt ?? 0).getTime() -
+				new Date(left.latestCreatedAt ?? 0).getTime()
+			);
+		});
+}
+
+function deriveSourceCoverage(
+	trend: WatchlistTrendResponse,
+): DerivedSourceCoverage[] {
+	const coverage = new Map<
+		string,
+		{
+			platform: string;
+			runIds: Set<string>;
+			cardCount: number;
+			latestCreatedAt: string | null;
+		}
+	>();
+
+	for (const run of trend.timeline) {
+		const existing = coverage.get(run.platform) ?? {
+			platform: run.platform,
+			runIds: new Set<string>(),
+			cardCount: 0,
+			latestCreatedAt: null as string | null,
+		};
+		existing.runIds.add(run.job_id);
+		existing.cardCount += run.matched_card_count;
+		if (
+			!existing.latestCreatedAt ||
+			new Date(run.created_at).getTime() >
+				new Date(existing.latestCreatedAt).getTime()
+		) {
+			existing.latestCreatedAt = run.created_at;
+		}
+		coverage.set(run.platform, existing);
+	}
+
+	return [...coverage.values()]
+		.map((item) => ({
+			platform: item.platform,
+			run_count: item.runIds.size,
+			card_count: item.cardCount,
+			latest_created_at: item.latestCreatedAt,
+		}))
+		.sort((left, right) => {
+			if (right.run_count !== left.run_count) {
+				return right.run_count - left.run_count;
+			}
+			return right.card_count - left.card_count;
+		});
+}
+
 export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 	const copy = getLocaleMessages().trendsPage;
 	const { watchlist_id: watchlistId } = await resolveSearchParams(
@@ -49,6 +306,8 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 				})
 				.catch(() => null)
 		: null;
+	const mergedStories = trend ? deriveMergedStories(trend) : [];
+	const sourceCoverage = trend ? deriveSourceCoverage(trend) : [];
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
@@ -88,79 +347,317 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 			</Card>
 
 			{selectedWatchlist && trend ? (
-				<Card className="folo-surface border-border/70">
-					<CardHeader>
-						<CardTitle>{selectedWatchlist.name}</CardTitle>
-						<CardDescription>
-							{copy.matcherLabel}: {trend.summary.matcher_type} ={" "}
-							<code>{trend.summary.matcher_value}</code> ·{" "}
-							{copy.recentRunsLabel}: {trend.summary.recent_runs} ·{" "}
-							{copy.matchedCardsLabel}: {trend.summary.matched_cards}
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						{trend.timeline.map((run) => (
-							<div
-								key={run.job_id}
-								className="rounded-lg border border-border/60 bg-muted/20 p-4"
-							>
-								<div className="flex flex-wrap items-center justify-between gap-3">
-									<div className="space-y-1">
-										<p className="font-medium">{run.title}</p>
-										<p className="text-sm text-muted-foreground">
-											{run.platform} · {formatDateTime(run.created_at)} ·{" "}
-											{copy.matchedCardsLabel}: {run.matched_card_count}
+				<>
+					<section className="grid gap-4 xl:grid-cols-[0.95fr_1.35fr]">
+						<Card className="folo-surface border-border/70">
+							<CardHeader>
+								<CardTitle>{selectedWatchlist.name}</CardTitle>
+								<CardDescription>
+									{copy.matcherLabel}: {trend.summary.matcher_type} ={" "}
+									<code>{trend.summary.matcher_value}</code>
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3 xl:grid-cols-1">
+								<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+									<p className="font-medium text-foreground">
+										{copy.recentRunsLabel}
+									</p>
+									<p className="mt-1 text-2xl font-semibold text-foreground">
+										{trend.summary.recent_runs}
+									</p>
+								</div>
+								<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+									<p className="font-medium text-foreground">
+										{copy.matchedCardsLabel}
+									</p>
+									<p className="mt-1 text-2xl font-semibold text-foreground">
+										{trend.summary.matched_cards}
+									</p>
+								</div>
+								<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+									<p className="font-medium text-foreground">
+										{copy.sourceCountLabel}
+									</p>
+									<p className="mt-1 text-2xl font-semibold text-foreground">
+										{sourceCoverage.length}
+									</p>
+								</div>
+								<div className="flex flex-wrap gap-3 xl:pt-2">
+									<Button asChild variant="outline" size="sm">
+										<Link
+											href={`/briefings?watchlist_id=${encodeURIComponent(selectedWatchlist.id)}`}
+										>
+											{copy.openBriefingButton}
+										</Link>
+									</Button>
+									<Button asChild variant="outline" size="sm">
+										<Link
+											href={`/watchlists?watchlist_id=${encodeURIComponent(selectedWatchlist.id)}`}
+										>
+											{copy.editWatchlistButton}
+										</Link>
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+
+						<Card className="folo-surface border-border/70">
+							<CardHeader>
+								<CardTitle>{copy.sourceCoverageTitle}</CardTitle>
+								<CardDescription>
+									{copy.sourceCoverageDescription}
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="grid gap-3 md:grid-cols-2">
+								{sourceCoverage.map((item) => (
+									<div
+										key={item.platform}
+										className="rounded-lg border border-border/60 bg-muted/20 p-4"
+									>
+										<div className="flex items-center justify-between gap-3">
+											<p className="font-medium">
+												{platformLabel(item.platform)}
+											</p>
+											<Badge variant="outline">
+												{item.run_count} {copy.sourceCoverageRunsLabel}
+											</Badge>
+										</div>
+										<p className="mt-3 text-sm text-muted-foreground">
+											{copy.sourceCoverageCardsLabel}: {item.card_count}
+										</p>
+										{item.latest_created_at ? (
+											<p className="mt-1 text-sm text-muted-foreground">
+												{copy.latestSeenLabel}:{" "}
+												{formatDateTime(item.latest_created_at)}
+											</p>
+										) : null}
+									</div>
+								))}
+							</CardContent>
+						</Card>
+					</section>
+
+					<Card className="folo-surface border-border/70">
+						<CardHeader>
+							<CardTitle>{copy.mergedStoriesTitle}</CardTitle>
+							<CardDescription>{copy.mergedStoriesDescription}</CardDescription>
+						</CardHeader>
+						<CardContent>
+							{mergedStories.length === 0 ? (
+								<p className="text-sm text-muted-foreground">
+									{copy.mergedStoriesEmpty}
+								</p>
+							) : (
+								<div className="grid gap-4 lg:grid-cols-2">
+									{mergedStories.map((story) => (
+										<article
+											key={story.id}
+											className="rounded-xl border border-border/60 bg-muted/20 p-4"
+										>
+											<div className="flex flex-wrap items-start justify-between gap-3">
+												<div className="space-y-2">
+													<h2 className="text-lg font-semibold">
+														{story.label}
+													</h2>
+													<div className="flex flex-wrap gap-2">
+														{story.platforms.map((platform) => (
+															<Badge key={platform} variant="outline">
+																{platformLabel(platform)}
+															</Badge>
+														))}
+													</div>
+												</div>
+												<Badge variant="outline">
+													{story.sourceCount} {copy.sourceCountLabel}
+												</Badge>
+											</div>
+											<div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+												<p>
+													<span className="font-medium text-foreground">
+														{copy.sourceCountLabel}:
+													</span>{" "}
+													{story.sourceCount}
+												</p>
+												<p>
+													<span className="font-medium text-foreground">
+														{copy.runCountLabel}:
+													</span>{" "}
+													{story.runCount}
+												</p>
+												<p>
+													<span className="font-medium text-foreground">
+														{copy.latestSeenLabel}:
+													</span>{" "}
+													{story.latestCreatedAt
+														? formatDateTime(story.latestCreatedAt)
+														: copy.noneValue}
+												</p>
+											</div>
+											{story.summary ? (
+												<p className="mt-4 text-sm text-muted-foreground">
+													{story.summary}
+												</p>
+											) : null}
+											<div className="mt-4 space-y-3">
+												{story.evidence.map((item) => (
+													<div
+														key={item.jobId}
+														className="rounded-lg border border-border/50 bg-background/70 p-3"
+													>
+														<div className="flex flex-wrap items-center justify-between gap-3">
+															<div className="space-y-1">
+																<p className="font-medium">{item.title}</p>
+																<p className="text-sm text-muted-foreground">
+																	{platformLabel(item.platform)} ·{" "}
+																	{formatDateTime(item.createdAt)}
+																</p>
+															</div>
+															<div className="flex flex-wrap gap-3">
+																<Button
+																	asChild
+																	variant="link"
+																	size="sm"
+																	className="h-auto px-0"
+																>
+																	<Link
+																		href={`/jobs?job_id=${encodeURIComponent(item.jobId)}`}
+																	>
+																		{copy.openJobButton}
+																	</Link>
+																</Button>
+																<Button
+																	asChild
+																	variant="link"
+																	size="sm"
+																	className="h-auto px-0"
+																>
+																	<Link
+																		href={`/knowledge?job_id=${encodeURIComponent(item.jobId)}`}
+																	>
+																		{copy.openKnowledgeButton}
+																	</Link>
+																</Button>
+																{item.sourceUrl ? (
+																	<Button
+																		asChild
+																		variant="link"
+																		size="sm"
+																		className="h-auto px-0"
+																	>
+																		<Link
+																			href={item.sourceUrl}
+																			target="_blank"
+																			rel="noreferrer"
+																		>
+																			{copy.openSourceButton}
+																		</Link>
+																	</Button>
+																) : null}
+															</div>
+														</div>
+														{item.excerpt ? (
+															<p className="mt-3 text-sm text-muted-foreground">
+																{item.excerpt}
+															</p>
+														) : null}
+													</div>
+												))}
+											</div>
+										</article>
+									))}
+								</div>
+							)}
+						</CardContent>
+					</Card>
+
+					<Card className="folo-surface border-border/70">
+						<CardHeader>
+							<CardTitle>{copy.recentEvidenceTitle}</CardTitle>
+							<CardDescription>
+								{copy.recentEvidenceDescription}
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							{trend.timeline.map((run) => (
+								<div
+									key={run.job_id}
+									className="rounded-lg border border-border/60 bg-muted/20 p-4"
+								>
+									<div className="flex flex-wrap items-center justify-between gap-3">
+										<div className="space-y-1">
+											<p className="font-medium">{run.title}</p>
+											<p className="text-sm text-muted-foreground">
+												{platformLabel(run.platform)} ·{" "}
+												{formatDateTime(run.created_at)} ·{" "}
+												{copy.matchedCardsLabel}: {run.matched_card_count}
+											</p>
+										</div>
+										<div className="flex flex-wrap gap-3">
+											<Button
+												asChild
+												variant="link"
+												size="sm"
+												className="h-auto px-0"
+											>
+												<Link
+													href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}
+												>
+													{copy.openJobButton}
+												</Link>
+											</Button>
+											<Button
+												asChild
+												variant="link"
+												size="sm"
+												className="h-auto px-0"
+											>
+												<Link
+													href={`/knowledge?job_id=${encodeURIComponent(run.job_id)}`}
+												>
+													{copy.openKnowledgeButton}
+												</Link>
+											</Button>
+											{run.source_url ? (
+												<Button
+													asChild
+													variant="link"
+													size="sm"
+													className="h-auto px-0"
+												>
+													<Link
+														href={run.source_url}
+														target="_blank"
+														rel="noreferrer"
+													>
+														{copy.openSourceButton}
+													</Link>
+												</Button>
+											) : null}
+										</div>
+									</div>
+									<div className="mt-3 grid gap-2 text-sm text-muted-foreground lg:grid-cols-2">
+										<p>
+											{copy.addedTopicsPrefix}:{" "}
+											{run.added_topics.join(", ") || copy.noneValue}
+										</p>
+										<p>
+											{copy.removedTopicsPrefix}:{" "}
+											{run.removed_topics.join(", ") || copy.noneValue}
+										</p>
+										<p>
+											{copy.addedClaimKindsPrefix}:{" "}
+											{run.added_claim_kinds.join(", ") || copy.noneValue}
+										</p>
+										<p>
+											{copy.removedClaimKindsPrefix}:{" "}
+											{run.removed_claim_kinds.join(", ") || copy.noneValue}
 										</p>
 									</div>
-									<div className="flex flex-wrap gap-3">
-										<Button
-											asChild
-											variant="link"
-											size="sm"
-											className="h-auto px-0"
-										>
-											<Link
-												href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}
-											>
-												{copy.openJobButton}
-											</Link>
-										</Button>
-										<Button
-											asChild
-											variant="link"
-											size="sm"
-											className="h-auto px-0"
-										>
-											<Link
-												href={`/knowledge?job_id=${encodeURIComponent(run.job_id)}`}
-											>
-												{copy.openKnowledgeButton}
-											</Link>
-										</Button>
-									</div>
 								</div>
-								<div className="mt-3 grid gap-2 text-sm text-muted-foreground lg:grid-cols-2">
-									<p>
-										{copy.addedTopicsPrefix}:{" "}
-										{run.added_topics.join(", ") || copy.noneValue}
-									</p>
-									<p>
-										{copy.removedTopicsPrefix}:{" "}
-										{run.removed_topics.join(", ") || copy.noneValue}
-									</p>
-									<p>
-										{copy.addedClaimKindsPrefix}:{" "}
-										{run.added_claim_kinds.join(", ") || copy.noneValue}
-									</p>
-									<p>
-										{copy.removedClaimKindsPrefix}:{" "}
-										{run.removed_claim_kinds.join(", ") || copy.noneValue}
-									</p>
-								</div>
-							</div>
-						))}
-					</CardContent>
-				</Card>
+							))}
+						</CardContent>
+					</Card>
+				</>
 			) : null}
 		</div>
 	);

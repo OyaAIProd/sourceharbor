@@ -206,8 +206,8 @@ export const schemas = {
 		force: z.boolean().default(false),
 	}),
 	subscriptionUpsert: z.object({
-		platform: z.enum(["youtube", "bilibili"]),
-		source_type: z.enum(["url", "youtube_channel_id", "bilibili_uid"]),
+		platform: z.string().trim().min(1).max(MAX_TEXT_LENGTH),
+		source_type: z.string().trim().min(1).max(MAX_TEXT_LENGTH),
 		source_value: z.string().trim().min(1).max(MAX_TEXT_LENGTH),
 		adapter_type: z.enum(["rsshub_route", "rss_generic"]),
 		source_url: httpUrlSchema.nullable(),

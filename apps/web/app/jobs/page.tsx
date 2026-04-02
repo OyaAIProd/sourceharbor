@@ -24,6 +24,7 @@ import {
 import { buildProductMetadata } from "@/lib/seo";
 
 const jobsCopy = getLocaleMessages().jobsPage;
+const briefingsCopy = getLocaleMessages().briefingsPage;
 
 export const metadata: Metadata = buildProductMetadata({
 	title: jobsCopy.metadataTitle,
@@ -238,6 +239,16 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 									<a href={`/api/v1/jobs/${encodeURIComponent(job.id)}/bundle`}>
 										{copy.downloadEvidenceBundle}
 									</a>
+								</Button>
+								<Button
+									asChild
+									variant="link"
+									size="sm"
+									className="h-auto px-0"
+								>
+									<Link href="/briefings">
+										{briefingsCopy.openBriefingButton}
+									</Link>
 								</Button>
 								<p className="text-sm text-muted-foreground">
 									{copy.evidenceBundleNote}

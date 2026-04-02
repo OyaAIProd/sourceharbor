@@ -135,6 +135,74 @@ describe("apiClient core behavior", () => {
 		expect(headers).toMatchObject({ "content-type": "application/json" });
 	});
 
+	it("loads Ask from the server-owned page payload route", async () => {
+		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					question: "retry policy",
+					mode: "keyword",
+					top_k: 6,
+					context: {
+						watchlist_id: "wl-1",
+						watchlist_name: "Retry policy",
+						story_id: "story-1",
+						selected_story_id: "story-1",
+						story_headline: "Retry Policy",
+						topic_key: "retry-policy",
+						topic_label: "Retry policy",
+						selection_basis: "requested_story_id",
+						mode: "keyword",
+						filters: {},
+						briefing_available: true,
+					},
+					answer_state: "briefing_grounded",
+					answer_headline: "Retry Policy",
+					answer_summary:
+						"Retry policy currently converges across recent sources.",
+					answer_reason: "The newest runs keep repeating the retry baseline.",
+					answer_confidence: "grounded",
+					story_change_summary:
+						"Retry policy keeps tightening into the default path.",
+					briefing: null,
+					story_focus: null,
+					selected_story: null,
+					retrieval: null,
+					citations: [],
+					fallback_reason: null,
+					fallback_next_step: null,
+					fallback_actions: [],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.getAskAnswer({
+			question: "retry policy",
+			watchlist_id: "wl-1",
+			story_id: "story-1",
+			topic_key: "retry-policy",
+			top_k: 6,
+			mode: "keyword",
+		});
+
+		expect(payload.context.selected_story_id).toBe("story-1");
+		const [url, options] = fetchSpy.mock.calls[0] ?? [];
+		expect(String(url)).toContain("/api/v1/retrieval/answer/page");
+		expect(options).toMatchObject({
+			method: "POST",
+			cache: "no-store",
+			body: JSON.stringify({
+				query: "retry policy",
+				watchlist_id: "wl-1",
+				story_id: "story-1",
+				topic_key: "retry-policy",
+				top_k: 6,
+				mode: "keyword",
+				filters: {},
+			}),
+		});
+	});
+
 	it("loads one ingest run by id", async () => {
 		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
 			new Response(

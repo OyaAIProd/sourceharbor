@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import BriefingsPage from "@/app/briefings/page";
 import PlaygroundPage from "@/app/playground/page";
 import TrendsPage from "@/app/trends/page";
 import {
@@ -11,6 +12,7 @@ import {
 import WatchlistsPage from "@/app/watchlists/page";
 
 const mockListWatchlists = vi.fn();
+const mockGetWatchlistBriefing = vi.fn();
 const mockGetWatchlistTrend = vi.fn();
 const mockGetOpsInbox = vi.fn();
 
@@ -32,6 +34,8 @@ vi.mock("next/link", () => ({
 vi.mock("@/lib/api/client", () => ({
 	apiClient: {
 		listWatchlists: (...args: unknown[]) => mockListWatchlists(...args),
+		getWatchlistBriefing: (...args: unknown[]) =>
+			mockGetWatchlistBriefing(...args),
 		getWatchlistTrend: (...args: unknown[]) => mockGetWatchlistTrend(...args),
 		getOpsInbox: (...args: unknown[]) => mockGetOpsInbox(...args),
 	},
@@ -86,7 +90,157 @@ describe("compounder pages", () => {
 					added_claim_kinds: ["recommendation"],
 					removed_claim_kinds: [],
 				},
+				{
+					job_id: "job-2",
+					video_id: "video-2",
+					platform: "bilibili",
+					title: "Bili Update",
+					source_url: "https://bilibili.com/video/xyz",
+					created_at: "2026-03-31T11:00:00Z",
+					matched_card_count: 1,
+					cards: [],
+					topics: ["retry-policy"],
+					claim_kinds: ["recommendation"],
+					added_topics: [],
+					removed_topics: [],
+					added_claim_kinds: [],
+					removed_claim_kinds: [],
+				},
+				{
+					job_id: "job-3",
+					video_id: "video-3",
+					platform: "rss",
+					title: "RSS Digest",
+					source_url: "https://example.com/feed.xml",
+					created_at: "2026-03-31T12:00:00Z",
+					matched_card_count: 1,
+					cards: [],
+					topics: ["retry-policy"],
+					claim_kinds: [],
+					added_topics: [],
+					removed_topics: [],
+					added_claim_kinds: [],
+					removed_claim_kinds: [],
+				},
 			],
+		});
+		mockGetWatchlistBriefing.mockResolvedValue({
+			watchlist: {
+				id: "wl-1",
+				name: "Retry policy",
+				matcher_type: "topic_key",
+				matcher_value: "retry-policy",
+				delivery_channel: "dashboard",
+				enabled: true,
+				created_at: "2026-03-31T10:00:00Z",
+				updated_at: "2026-03-31T10:00:00Z",
+			},
+			summary: {
+				overview:
+					"Retry policy keeps surfacing across YouTube, Bilibili, and RSS sources.",
+				source_count: 3,
+				run_count: 4,
+				matched_cards: 6,
+				story_count: 2,
+				primary_story_headline:
+					"Retries moved from recommendation to default posture",
+				signals: [
+					{
+						story_key: "topic:retry-policy",
+						headline: "Retry policy is becoming a stable default",
+						matched_card_count: 6,
+						latest_run_job_id: "job-3",
+						reason:
+							"Recent runs now describe retry handling as the baseline safe path.",
+					},
+				],
+			},
+			differences: {
+				latest_job_id: "job-3",
+				previous_job_id: "job-2",
+				added_topics: ["retry-policy"],
+				removed_topics: [],
+				added_claim_kinds: ["recommendation"],
+				removed_claim_kinds: [],
+				new_story_keys: ["topic:retry-policy"],
+				removed_story_keys: [],
+				compare: {
+					job_id: "job-3",
+					has_previous: true,
+					previous_job_id: "job-2",
+					changed: true,
+					added_lines: 12,
+					removed_lines: 4,
+					diff_excerpt:
+						"Retry guidance moved from optional to default posture.",
+					compare_route: "/jobs?job_id=job-3",
+				},
+			},
+			evidence: {
+				suggested_story_id: "story-1",
+				stories: [
+					{
+						story_id: "story-1",
+						story_key: "topic:retry-policy",
+						headline: "Retries moved from recommendation to default posture",
+						topic_key: "retry-policy",
+						topic_label: "Retry policy",
+						source_count: 3,
+						run_count: 4,
+						matched_card_count: 6,
+						platforms: ["youtube", "rss"],
+						claim_kinds: ["recommendation"],
+						source_urls: ["https://example.com"],
+						latest_run_job_id: "job-1",
+						evidence_cards: [
+							{
+								card_id: "card-1",
+								job_id: "job-1",
+								video_id: "video-1",
+								platform: "youtube",
+								video_title: "AI Weekly",
+								source_url: "https://example.com",
+								created_at: "2026-03-31T10:00:00Z",
+								card_type: "claim",
+								card_title: "Retry policy became explicit",
+								card_body:
+									"The workflow now treats retries as first-line safety.",
+								source_section: "Digest",
+								topic_key: "retry-policy",
+								topic_label: "Retry policy",
+								claim_kind: "recommendation",
+							},
+						],
+						routes: {
+							watchlist_trend: "/trends?watchlist_id=wl-1",
+							briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
+							ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+							job_compare: "/jobs?job_id=job-1",
+							job_bundle: "/api/v1/jobs/job-1/bundle",
+							job_knowledge_cards: "/knowledge?job_id=job-1",
+						},
+					},
+				],
+				featured_runs: [
+					{
+						job_id: "job-3",
+						video_id: "video-3",
+						platform: "rss",
+						title: "RSS Digest",
+						source_url: "https://example.com/feed.xml",
+						created_at: "2026-03-31T12:00:00Z",
+						matched_card_count: 1,
+						routes: {
+							watchlist_trend: "/trends?watchlist_id=wl-1",
+							briefing: "/briefings?watchlist_id=wl-1",
+							ask: "/ask?watchlist_id=wl-1",
+							job_compare: "/jobs?job_id=job-3",
+							job_bundle: "/api/v1/jobs/job-3/bundle",
+							job_knowledge_cards: "/knowledge?job_id=job-3",
+						},
+					},
+				],
+			},
 		});
 		mockGetOpsInbox.mockResolvedValue({
 			gates: {
@@ -113,13 +267,23 @@ describe("compounder pages", () => {
 		).toBeInTheDocument();
 		expect(screen.getByText("Retry policy")).toBeInTheDocument();
 		expect(
+			screen
+				.getAllByRole("link", { name: "Open briefing" })
+				.map((element) => element.getAttribute("href")),
+		).toEqual(
+			expect.arrayContaining([
+				"/briefings?watchlist_id=wl-1",
+				"/briefings?watchlist_id=wl-1",
+			]),
+		);
+		expect(
 			screen.getByText(
 				/Notification send paths exist, but live delivery is blocked/i,
 			),
 		).toBeInTheDocument();
 	});
 
-	it("renders trend page from real watchlist trend payload", async () => {
+	it("renders trend page as merged story plus source coverage", async () => {
 		render(
 			await TrendsPage({
 				searchParams: { watchlist_id: "wl-1" },
@@ -127,10 +291,67 @@ describe("compounder pages", () => {
 		);
 
 		expect(
-			screen.getByRole("heading", { name: "Cross-run trend" }),
+			screen.getByRole("heading", { name: "Merged source stories" }),
 		).toBeInTheDocument();
-		expect(screen.getByText("AI Weekly")).toBeInTheDocument();
+		expect(screen.getByText("Source coverage")).toBeInTheDocument();
+		expect(screen.getByText("Merged stories")).toBeInTheDocument();
+		expect(screen.getAllByText("AI Weekly").length).toBeGreaterThan(0);
+		expect(screen.getAllByText("Bili Update").length).toBeGreaterThan(0);
+		expect(screen.getAllByText("RSS Digest").length).toBeGreaterThan(0);
+		expect(screen.getByRole("link", { name: "Open briefing" })).toHaveAttribute(
+			"href",
+			"/briefings?watchlist_id=wl-1",
+		);
+		expect(screen.getAllByText("retry-policy").length).toBeGreaterThan(0);
 		expect(screen.getByText(/Added topics: retry-policy/i)).toBeInTheDocument();
+	});
+
+	it("renders briefing page as summary first, then differences, then evidence", async () => {
+		render(
+			await BriefingsPage({
+				searchParams: { watchlist_id: "wl-1" },
+			}),
+		);
+
+		expect(
+			screen.getByRole("heading", { name: "Unified briefings" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("What the story is saying now"),
+		).toBeInTheDocument();
+		expect(screen.getByText("What changed recently")).toBeInTheDocument();
+		expect(screen.getByText("Evidence drill-down")).toBeInTheDocument();
+		expect(
+			screen.getByText(/Retry policy keeps surfacing across YouTube/i),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/Retry guidance moved from optional/i),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Retry policy is becoming a stable default"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "Ask this briefing" }),
+		).toHaveAttribute(
+			"href",
+			"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy",
+		);
+		expect(
+			screen.getByRole("link", { name: "Ask about this story" }),
+		).toHaveAttribute(
+			"href",
+			"/ask?watchlist_id=wl-1&question=Retry+policy&story_id=story-1&topic_key=retry-policy",
+		);
+		expect(
+			screen
+				.getAllByRole("link", { name: "Open knowledge" })
+				.map((element) => element.getAttribute("href")),
+		).toEqual(
+			expect.arrayContaining([
+				"/knowledge?job_id=job-1",
+				"/knowledge?job_id=job-3",
+			]),
+		);
 	});
 
 	it("renders read-only playground as sample-labeled surface", async () => {

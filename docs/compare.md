@@ -26,8 +26,10 @@ SourceHarbor continues:
 2. **Run** a job-backed pipeline
 3. **Write** artifacts you can inspect later
 4. **Search** those artifacts
-5. **Deliver** them through notifications
-6. **Reuse** the same system through MCP
+5. **Merge** repeated themes into watchlists and merged stories
+6. **Brief** one watchlist as a summary-first story with deltas and evidence drill-down
+7. **Deliver** them through notifications
+8. **Reuse** the same system through MCP
 
 ## Trade-Offs
 

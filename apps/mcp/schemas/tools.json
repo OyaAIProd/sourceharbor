@@ -1,6 +1,6 @@
 {
   "version": "phase4",
-  "description": "MCP tool manifest for video ingestion phase 4.",
+  "description": "MCP tool manifest for source-first intake, retrieval, and operator control surfaces.",
   "apiBaseEnv": "SOURCE_HARBOR_API_BASE_URL",
   "$defs": {
     "errorPayload": {
@@ -52,10 +52,7 @@
     },
     "platform": {
       "type": "string",
-      "enum": [
-        "bilibili",
-        "youtube"
-      ]
+      "description": "Source platform or source family key. YouTube and Bilibili remain strong-supported, but generic RSSHub/RSS lanes may use other string values."
     },
     "jobStatus": {
       "type": "string",
@@ -85,11 +82,7 @@
     },
     "sourceType": {
       "type": "string",
-      "enum": [
-        "bilibili_uid",
-        "youtube_channel_id",
-        "url"
-      ]
+      "description": "Source identifier type. Known strong-supported values include youtube_channel_id and bilibili_uid, while generic lanes may use values such as url or rsshub_route."
     },
     "subscription": {
       "type": "object",
@@ -2529,6 +2522,7 @@
             "type": "string",
             "enum": [
               "list",
+              "list_templates",
               "upsert",
               "remove",
               "batch_update_category"

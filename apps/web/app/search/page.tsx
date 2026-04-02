@@ -11,6 +11,7 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
+import type { RetrievalSearchMode } from "@/lib/api/types";
 import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
@@ -19,6 +20,7 @@ import {
 import { buildProductMetadata } from "@/lib/seo";
 
 const searchCopy = getLocaleMessages().searchPage;
+const briefingsCopy = getLocaleMessages().briefingsPage;
 
 export const metadata: Metadata = buildProductMetadata({
 	title: searchCopy.metadataTitle,
@@ -45,19 +47,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 		{ value: "semantic", label: copy.modeOptions.semantic },
 		{ value: "hybrid", label: copy.modeOptions.hybrid },
 	];
-	const platformOptions = [
-		{ value: "", label: copy.platformOptions.all },
-		{ value: "youtube", label: copy.platformOptions.youtube },
-		{ value: "bilibili", label: copy.platformOptions.bilibili },
-	];
 	const { q, query, mode, top_k, intent, platform } = await resolveSearchParams(
 		searchParams,
 		["q", "query", "mode", "top_k", "intent", "platform"] as const,
 	);
 	const queryValue = query.trim() || q.trim();
-	const normalizedMode =
-		mode.trim() === "semantic" || mode.trim() === "hybrid"
-			? mode.trim()
+	const trimmedMode = mode.trim();
+	const normalizedMode: RetrievalSearchMode =
+		trimmedMode === "semantic" || trimmedMode === "hybrid"
+			? trimmedMode
 			: "keyword";
 	const parsedTopK = Number.parseInt(top_k, 10);
 	const safeTopK =
@@ -66,6 +64,20 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 			: 8;
 	const askIntent = intent.trim() === "ask";
 	const safePlatform = platform.trim().toLowerCase();
+	const basePlatformOptions = [
+		{ value: "", label: copy.platformOptions.all },
+		{ value: "youtube", label: copy.platformOptions.youtube },
+		{ value: "bilibili", label: copy.platformOptions.bilibili },
+		{ value: "rss", label: copy.platformOptions.rss },
+	];
+	const platformOptions = safePlatform
+		? basePlatformOptions.some((option) => option.value === safePlatform)
+			? basePlatformOptions
+			: [
+					...basePlatformOptions,
+					{ value: safePlatform, label: humanizeSource(safePlatform) },
+				]
+		: basePlatformOptions;
 
 	let payload: Awaited<ReturnType<typeof apiClient.searchRetrieval>> | null =
 		null;
@@ -174,6 +186,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 							<Link href={askIntent ? "/ask" : "/ask"}>
 								{askIntent ? copy.askTruthCta : copy.searchTruthCta}
 							</Link>
+						</Button>
+						<Button asChild variant="outline" size="sm">
+							<Link href="/briefings">{briefingsCopy.openBriefingButton}</Link>
 						</Button>
 					</CardContent>
 				</Card>

@@ -3,6 +3,7 @@
 import {
 	Activity,
 	BookmarkPlus,
+	FileText,
 	Home,
 	Inbox,
 	Layers3,
@@ -217,6 +218,19 @@ function SidebarNavContent({
 				>
 					<LineChart className="size-4 shrink-0 opacity-80" aria-hidden />
 					<span className={collapsed ? "sr-only" : undefined}>Trends</span>
+				</Link>
+				<Link
+					href="/briefings"
+					className={cn(
+						"flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 motion-reduce:transition-none",
+						pathname.startsWith("/briefings")
+							? "bg-sidebar-accent text-sidebar-accent-foreground"
+							: "text-sidebar-foreground/90 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+					)}
+					aria-current={pathname.startsWith("/briefings") ? "page" : undefined}
+				>
+					<FileText className="size-4 shrink-0 opacity-80" aria-hidden />
+					<span className={collapsed ? "sr-only" : undefined}>Briefings</span>
 				</Link>
 				<Link
 					href="/knowledge"

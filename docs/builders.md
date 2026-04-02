@@ -14,6 +14,7 @@ Think of the product like one control tower with multiple doors:
 - integrations use the HTTP API
 - assistants use MCP
 - future SDKs should stay thin wrappers over those same contracts
+- the same contracts now distinguish **strong-supported video intake** from **generalized RSSHub/RSS intake**
 
 ## Best-Fit Clients Today
 
@@ -39,6 +40,7 @@ Representative routes:
 - `POST /api/v1/videos/process`
 - `GET /api/v1/jobs/{job_id}`
 - `POST /api/v1/retrieval/search`
+- `POST /api/v1/retrieval/answer/page`
 - `GET /api/v1/ops/inbox`
 - `GET /api/v1/watchlists`
 

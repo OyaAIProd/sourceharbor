@@ -125,6 +125,19 @@ describe("RouteTransition", () => {
 		expect(screen.getByRole("status")).toHaveTextContent("Switched to: Trends");
 	});
 
+	it("maps briefings route to the dedicated label", () => {
+		usePathnameMock.mockReturnValue("/briefings");
+		render(
+			<RouteTransition>
+				<h1 data-route-heading>统一简报</h1>
+			</RouteTransition>,
+		);
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Switched to: Briefings",
+		);
+	});
+
 	it("maps proof route to the dedicated label", () => {
 		usePathnameMock.mockReturnValue("/proof");
 		render(

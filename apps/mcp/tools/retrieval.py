@@ -17,7 +17,7 @@ from apps.mcp.tools._common import (
 )
 
 _ALLOWED_RETRIEVAL_MODES = {"keyword", "semantic", "hybrid"}
-_ALLOWED_RETRIEVAL_PLATFORMS = {"bilibili", "youtube"}
+_ALLOWED_RETRIEVAL_PLATFORMS = {"youtube", "bilibili", "rss"}
 _ALLOWED_RETRIEVAL_SOURCES = {
     "digest",
     "transcript",

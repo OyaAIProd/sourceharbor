@@ -13,7 +13,7 @@ ApiCall = Callable[..., dict[str, Any]]
 def register_subscription_tools(mcp: FastMCP, api_call: ApiCall) -> None:
     @mcp.tool(
         name="sourceharbor.subscriptions.manage",
-        description="Manage subscriptions. action=list|upsert|remove|batch_update_category.",
+        description="Manage subscriptions. action=list|list_templates|upsert|remove|batch_update_category.",
     )
     def manage_subscriptions(
         action: str,
@@ -42,6 +42,8 @@ def register_subscription_tools(mcp: FastMCP, api_call: ApiCall) -> None:
                     "enabled_only": enabled_only,
                 },
             )
+        if normalized_action == "list_templates":
+            return api_call("GET", "/api/v1/subscriptions/templates")
         if normalized_action == "upsert":
             return api_call(
                 "POST",
@@ -99,7 +101,7 @@ def register_subscription_tools(mcp: FastMCP, api_call: ApiCall) -> None:
                 )
             return api_call("DELETE", f"/api/v1/subscriptions/{url_path_segment(normalized_id)}")
         return invalid_argument(
-            "action must be one of: list, upsert, remove, batch_update_category",
+            "action must be one of: list, list_templates, upsert, remove, batch_update_category",
             method="POST",
             path="sourceharbor.subscriptions.manage",
             field="action",

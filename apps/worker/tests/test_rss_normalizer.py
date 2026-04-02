@@ -5,6 +5,7 @@ from datetime import datetime
 
 from worker.rss.normalizer import (
     extract_video_identity,
+    make_article_idempotency_key,
     make_job_idempotency_key,
     normalize_entry,
 )
@@ -78,3 +79,12 @@ def test_make_job_idempotency_key_is_deterministic() -> None:
     assert key_1 != key_3
     assert key_1 == new_formula
     assert key_1 != old_formula
+
+
+def test_make_article_idempotency_key_is_deterministic() -> None:
+    key_1 = make_article_idempotency_key("entry-hash-1")
+    key_2 = make_article_idempotency_key("entry-hash-1")
+    key_3 = make_article_idempotency_key("entry-hash-2")
+
+    assert key_1 == key_2
+    assert key_1 != key_3

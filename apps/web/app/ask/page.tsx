@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { FormInputField, FormSelectField } from "@/components/form-field";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -10,7 +11,12 @@ import {
 	CardHeader,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api/client";
-import type { RetrievalHit, RetrievalSearchMode } from "@/lib/api/types";
+import type {
+	AskStorySelectionBasis,
+	RetrievalHit,
+	RetrievalSearchMode,
+} from "@/lib/api/types";
+import { formatDateTime } from "@/lib/format";
 import { getLocaleMessages } from "@/lib/i18n/messages";
 import {
 	resolveSearchParams,
@@ -19,12 +25,17 @@ import {
 import { buildProductMetadata } from "@/lib/seo";
 
 const askCopy = getLocaleMessages().searchPage;
+const briefingsCopy = getLocaleMessages().briefingsPage;
 
 export const metadata: Metadata = buildProductMetadata({
 	title: askCopy.askTitle,
 	description: askCopy.askSubtitle,
-	route: "search",
-	keywords: ["Ask your sources", "grounded Ask", "citation-first Ask"],
+	route: "ask",
+	keywords: [
+		"briefing-aware Ask",
+		"watchlist question front door",
+		"answer change evidence workflow",
+	],
 });
 
 type AskPageProps = {
@@ -52,6 +63,94 @@ function formatSourceLabel(source: string): string {
 		.join(" ");
 }
 
+function platformLabel(platform: string, fallback: string): string {
+	const normalized = platform.trim().toLowerCase();
+	if (normalized === "youtube") {
+		return "YouTube";
+	}
+	if (normalized === "bilibili") {
+		return "Bilibili";
+	}
+	if (normalized === "rss") {
+		return "RSS";
+	}
+	return platform.trim() || fallback;
+}
+
+function renderTokenList(items: string[], fallback: string): string {
+	return items.length > 0 ? items.join(", ") : fallback;
+}
+
+function buildAskHref(params: {
+	question?: string;
+	mode?: string;
+	top_k?: string;
+	watchlist_id?: string;
+	story_id?: string;
+	topic_key?: string;
+}): string {
+	const nextParams = new URLSearchParams();
+	for (const [key, value] of Object.entries(params)) {
+		const safeValue = value?.trim();
+		if (safeValue) {
+			nextParams.set(key, safeValue);
+		}
+	}
+	const serialized = nextParams.toString();
+	return serialized ? `/ask?${serialized}` : "/ask";
+}
+
+function buildContextSeed({
+	question,
+	fallback,
+}: {
+	question: string;
+	fallback: string;
+}): string {
+	return question.trim() || fallback.trim();
+}
+
+function stateBadgeLabel(
+	state: Awaited<ReturnType<typeof apiClient.getAskAnswer>>["answer_state"],
+): string {
+	switch (state) {
+		case "briefing_grounded":
+			return askCopy.askAnswerGroundedState;
+		case "briefing_unavailable":
+			return askCopy.askAnswerUnavailableState;
+		case "no_confident_answer":
+			return askCopy.askAnswerNoConfidentState;
+		default:
+			return askCopy.askAnswerNeedsContextState;
+	}
+}
+
+function stateDescription({
+	state,
+	hasQuestion,
+}: {
+	state: Awaited<ReturnType<typeof apiClient.getAskAnswer>>["answer_state"];
+	hasQuestion: boolean;
+}): string {
+	if (state === "briefing_grounded" && hasQuestion) {
+		return askCopy.askAnswerGroundedDescription;
+	}
+	if (state === "briefing_grounded") {
+		return askCopy.askAnswerContextOnlyDescription;
+	}
+	if (state === "briefing_unavailable") {
+		return askCopy.askAnswerUnavailableDescription;
+	}
+	if (state === "no_confident_answer") {
+		return askCopy.askAnswerNoConfidentDescription;
+	}
+	return askCopy.askContextMissingDescription;
+}
+
+function selectionBasisLabel(selectionBasis: AskStorySelectionBasis): string {
+	return askCopy.askSelectionBasis[selectionBasis];
+}
+
 function EvidenceCard({ hit }: { hit: RetrievalHit }) {
 	return (
 		<Card className="folo-surface border-border/70">
@@ -64,9 +163,9 @@ function EvidenceCard({ hit }: { hit: RetrievalHit }) {
 					<span>Job {compactId(hit.job_id)}</span>
 				</div>
 				<div className="space-y-2">
-					<h2 className="text-xl font-semibold">
+					<h3 className="text-xl font-semibold">
 						{hit.title?.trim() || askCopy.groundedEvidenceTitle}
-					</h2>
+					</h3>
 					<CardDescription>{hit.snippet}</CardDescription>
 				</div>
 			</CardHeader>
@@ -79,6 +178,11 @@ function EvidenceCard({ hit }: { hit: RetrievalHit }) {
 				<Button asChild variant="outline" size="sm">
 					<Link href={`/knowledge?job_id=${encodeURIComponent(hit.job_id)}`}>
 						{askCopy.openKnowledgeCardsButton}
+					</Link>
+				</Button>
+				<Button asChild variant="outline" size="sm">
+					<Link href={`/feed?item=${encodeURIComponent(hit.job_id)}`}>
+						{askCopy.openFeedEntryButton}
 					</Link>
 				</Button>
 				{hit.source_url ? (
@@ -98,10 +202,16 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 		question,
 		mode,
 		top_k: topK,
+		watchlist_id: watchlistId,
+		story_id: storyId,
+		topic_key: topicKey,
 	} = await resolveSearchParams(searchParams, [
 		"question",
 		"mode",
 		"top_k",
+		"watchlist_id",
+		"story_id",
+		"topic_key",
 	] as const);
 	const safeQuestion = question.trim();
 	const modeCandidate = mode.trim().toLowerCase();
@@ -114,22 +224,53 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 		Number.isFinite(parsedTopK) && parsedTopK > 0
 			? Math.min(parsedTopK, 12)
 			: 6;
+	const safeWatchlistId = watchlistId.trim();
+	const safeStoryId = storyId.trim();
+	const safeTopicKey = topicKey.trim();
 
-	let results: Awaited<ReturnType<typeof apiClient.searchRetrieval>> | null =
-		null;
-	let error = false;
+	const [watchlists, askPayload] = await Promise.all([
+		apiClient.listWatchlists().catch(() => []),
+		apiClient.getAskAnswer({
+			question: safeQuestion,
+			mode: safeMode,
+			top_k: safeTopK,
+			watchlist_id: safeWatchlistId,
+			story_id: safeStoryId,
+			topic_key: safeTopicKey,
+		}),
+	]);
 
-	if (safeQuestion) {
-		try {
-			results = await apiClient.searchRetrieval({
-				query: safeQuestion,
-				top_k: safeTopK,
-				mode: safeMode,
-			});
-		} catch {
-			error = true;
-		}
-	}
+	const briefingHref = askPayload.context.watchlist_id
+		? `/briefings?watchlist_id=${encodeURIComponent(askPayload.context.watchlist_id)}`
+		: "/briefings";
+	const trendHref = askPayload.context.watchlist_id
+		? `/trends?watchlist_id=${encodeURIComponent(askPayload.context.watchlist_id)}`
+		: "/trends";
+	const clearContextHref = buildAskHref({
+		question: safeQuestion,
+		mode: safeMode,
+		top_k: String(safeTopK),
+	});
+	const clearStoryHref = buildAskHref({
+		question: safeQuestion,
+		mode: safeMode,
+		top_k: String(safeTopK),
+		watchlist_id: askPayload.context.watchlist_id ?? undefined,
+	});
+	const contextOptions = [
+		{ value: "", label: askCopy.askContextEmptyOption },
+		...watchlists.map((item) => ({
+			value: item.id,
+			label: item.name,
+		})),
+	];
+	const retrievalHits = askPayload.retrieval?.items ?? [];
+	const storyFocus = askPayload.story_focus;
+	const selectedStory = askPayload.selected_story;
+	const storyChoices = askPayload.briefing?.evidence.stories ?? [];
+	const featuredRuns = askPayload.briefing?.evidence.featured_runs ?? [];
+	const citations = askPayload.citations ?? [];
+	const fallbackActions = askPayload.fallback_actions ?? [];
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
@@ -146,8 +287,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 					<h2 className="text-xl font-semibold">{askCopy.askTruthTitle}</h2>
 					<CardDescription>
 						{askCopy.askTruthContractLead} {askCopy.askTruthPrimary}{" "}
-						{askCopy.askTruthSecondary} {askCopy.askTruthNote}{" "}
-						{askCopy.askContractPrimary}
+						{askCopy.askTruthSecondary} {askCopy.askTruthNote}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
@@ -157,6 +297,9 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 							docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md
 						</code>
 					</div>
+					<Button asChild variant="outline" size="sm">
+						<Link href={briefingHref}>{askCopy.askOpenBriefingButton}</Link>
+					</Button>
 					<Button asChild variant="ghost" size="sm">
 						<Link href="/search">{askCopy.openRawSearchButton} →</Link>
 					</Button>
@@ -166,9 +309,10 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
 					<h2 className="text-xl font-semibold">{askCopy.askFormTitle}</h2>
+					<CardDescription>{askCopy.askFormDescription}</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form method="GET" className="grid gap-4 lg:grid-cols-2">
+					<form method="GET" className="grid gap-4 xl:grid-cols-2">
 						<FormInputField
 							id="ask-question"
 							name="question"
@@ -176,6 +320,14 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 							type="search"
 							placeholder={askCopy.questionPlaceholder}
 							defaultValue={safeQuestion}
+							hint={askCopy.askHint}
+						/>
+						<FormSelectField
+							name="watchlist_id"
+							label={askCopy.askContextLabel}
+							defaultValue={askPayload.context.watchlist_id ?? ""}
+							options={contextOptions}
+							hint={askCopy.askContextDescription}
 						/>
 						<FormSelectField
 							name="mode"
@@ -200,6 +352,20 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 							max={12}
 							defaultValue={String(safeTopK)}
 						/>
+						{askPayload.context.story_id ? (
+							<input
+								type="hidden"
+								name="story_id"
+								value={askPayload.context.story_id}
+							/>
+						) : null}
+						{askPayload.context.topic_key ? (
+							<input
+								type="hidden"
+								name="topic_key"
+								value={askPayload.context.topic_key}
+							/>
+						) : null}
 						<div className="flex items-end gap-3">
 							<Button type="submit" variant="hero" size="sm">
 								{askCopy.askButton}
@@ -212,64 +378,703 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 				</CardContent>
 			</Card>
 
-			{error ? (
-				<Card className="folo-surface border-destructive/40 bg-destructive/5">
-					<CardHeader>
-						<h2 className="text-xl font-semibold">{askCopy.askErrorTitle}</h2>
-						<CardDescription>{askCopy.askErrorDescription}</CardDescription>
-					</CardHeader>
-				</Card>
-			) : null}
+			<Card className="folo-surface border-border/70">
+				<CardHeader>
+					<h2 className="text-xl font-semibold">{askCopy.askContextTitle}</h2>
+					<CardDescription>{askCopy.askContextDescription}</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					{askPayload.context.watchlist_id && askPayload.briefing ? (
+						<>
+							<div className="flex flex-wrap items-center gap-2">
+								<Badge variant="outline">
+									{stateBadgeLabel(askPayload.answer_state)}
+								</Badge>
+								{selectedStory?.topic_label ? (
+									<Badge variant="outline">{selectedStory.topic_label}</Badge>
+								) : null}
+							</div>
+							<dl className="grid gap-3 md:grid-cols-2">
+								<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+										{briefingsCopy.currentWatchlistLabel}
+									</dt>
+									<dd className="mt-1 text-sm font-medium text-foreground">
+										{askPayload.context.watchlist_name}
+									</dd>
+								</div>
+								<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+										{askCopy.askContextTopicLabel}
+									</dt>
+									<dd className="mt-1 text-sm font-medium text-foreground">
+										{askPayload.context.topic_label ||
+											askPayload.context.topic_key ||
+											briefingsCopy.noneValue}
+									</dd>
+								</div>
+								<div className="rounded-lg border border-border/60 bg-muted/20 p-3 md:col-span-2">
+									<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+										{briefingsCopy.primaryStoryLabel}
+									</dt>
+									<dd className="mt-1 text-sm font-medium text-foreground">
+										{askPayload.context.story_headline ||
+											askPayload.answer_headline ||
+											briefingsCopy.noneValue}
+									</dd>
+								</div>
+							</dl>
+							<div className="flex flex-wrap gap-3">
+								<Button asChild variant="outline" size="sm">
+									<Link href={briefingHref}>
+										{askCopy.askOpenBriefingButton}
+									</Link>
+								</Button>
+								<Button asChild variant="outline" size="sm">
+									<Link href={trendHref}>{briefingsCopy.openTrendButton}</Link>
+								</Button>
+								{askPayload.context.story_id || askPayload.context.topic_key ? (
+									<Button asChild variant="ghost" size="sm">
+										<Link href={clearStoryHref}>
+											{askCopy.askClearStoryContextButton}
+										</Link>
+									</Button>
+								) : null}
+								<Button asChild variant="ghost" size="sm">
+									<Link href={clearContextHref}>
+										{askCopy.askClearContextButton}
+									</Link>
+								</Button>
+							</div>
+							{storyChoices.length > 1 ? (
+								<div className="rounded-lg border border-border/60 bg-background/70 p-4">
+									<div className="space-y-1">
+										<h3 className="text-lg font-semibold">
+											{askCopy.askStorySwitcherTitle}
+										</h3>
+										<p className="text-sm text-muted-foreground">
+											{askCopy.askStorySwitcherDescription}
+										</p>
+									</div>
+									<div className="mt-3 flex flex-wrap gap-2">
+										{storyChoices.map((story) => (
+											<Button
+												key={story.story_id}
+												asChild
+												size="sm"
+												variant={
+													story.story_id ===
+													(storyFocus?.story_id ??
+														askPayload.context.story_id ??
+														"")
+														? "hero"
+														: "outline"
+												}
+											>
+												<Link
+													href={buildAskHref({
+														question: safeQuestion || undefined,
+														mode: safeMode,
+														top_k: String(safeTopK),
+														watchlist_id:
+															askPayload.context.watchlist_id ?? undefined,
+														story_id: story.story_id,
+														topic_key: story.topic_key ?? undefined,
+													})}
+												>
+													{story.headline}
+												</Link>
+											</Button>
+										))}
+									</div>
+								</div>
+							) : null}
+						</>
+					) : (
+						<>
+							<div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+								<p className="font-medium text-foreground">
+									{askCopy.askContextMissingTitle}
+								</p>
+								<p className="mt-2">{askCopy.askContextMissingDescription}</p>
+							</div>
+							{watchlists.length > 0 ? (
+								<div className="flex flex-wrap gap-3">
+									{watchlists.map((item) => (
+										<Button key={item.id} asChild variant="outline" size="sm">
+											<Link
+												href={buildAskHref({
+													question: buildContextSeed({
+														question: safeQuestion,
+														fallback: item.matcher_value || item.name,
+													}),
+													mode: safeMode,
+													top_k: String(safeTopK),
+													watchlist_id: item.id,
+												})}
+											>
+												{item.name}
+											</Link>
+										</Button>
+									))}
+								</div>
+							) : (
+								<p className="text-sm text-muted-foreground">
+									{briefingsCopy.empty}
+								</p>
+							)}
+						</>
+					)}
+				</CardContent>
+			</Card>
 
-			{!safeQuestion ? (
+			<section className="space-y-4" aria-label={askCopy.askResultsAriaLabel}>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<div className="flex flex-wrap items-center gap-3">
+							<h2 className="text-xl font-semibold">
+								{askCopy.askAnswerTitle}
+							</h2>
+							<Badge variant="outline">
+								{stateBadgeLabel(askPayload.answer_state)}
+							</Badge>
+						</div>
+						<CardDescription>
+							{stateDescription({
+								state: askPayload.answer_state,
+								hasQuestion: Boolean(safeQuestion),
+							})}
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						{safeQuestion ? (
+							<p className="text-sm text-muted-foreground">
+								{askCopy.askSummaryQuestionPrefix}:{" "}
+								<strong>{safeQuestion}</strong> · {askCopy.askSummaryHitsPrefix}
+								: <strong>{retrievalHits.length}</strong>
+							</p>
+						) : null}
+
+						{storyFocus ? (
+							<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+								<div className="flex flex-wrap items-center gap-2">
+									<h3 className="text-lg font-semibold">
+										{askCopy.askStoryFocusTitle}
+									</h3>
+									<Badge variant="outline">
+										{askCopy.askSelectionBasisLabel}:{" "}
+										{selectionBasisLabel(askPayload.context.selection_basis)}
+									</Badge>
+									{storyFocus.topic_label ? (
+										<Badge variant="outline">{storyFocus.topic_label}</Badge>
+									) : null}
+								</div>
+								<p className="mt-2 text-sm text-muted-foreground">
+									{askCopy.askStoryFocusDescription}
+								</p>
+								<div className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
+									<Badge variant="outline">
+										{briefingsCopy.sourcesLabel}: {storyFocus.source_count}
+									</Badge>
+									<Badge variant="outline">
+										{briefingsCopy.runsLabel}: {storyFocus.run_count}
+									</Badge>
+									<Badge variant="outline">
+										{briefingsCopy.matchedCardsLabel}:{" "}
+										{storyFocus.matched_card_count}
+									</Badge>
+								</div>
+								<div className="mt-3 flex flex-wrap gap-3">
+									{storyFocus.routes.briefing ? (
+										<Button asChild variant="outline" size="sm">
+											<Link href={storyFocus.routes.briefing}>
+												{askCopy.askOpenBriefingButton}
+											</Link>
+										</Button>
+									) : null}
+									{storyFocus.routes.watchlist_trend ? (
+										<Button asChild variant="outline" size="sm">
+											<Link href={storyFocus.routes.watchlist_trend}>
+												{briefingsCopy.openTrendButton}
+											</Link>
+										</Button>
+									) : null}
+									{storyFocus.routes.job_compare ? (
+										<Button asChild variant="outline" size="sm">
+											<Link href={storyFocus.routes.job_compare}>
+												{briefingsCopy.openCompareButton}
+											</Link>
+										</Button>
+									) : null}
+									{storyFocus.routes.job_knowledge_cards ? (
+										<Button asChild variant="outline" size="sm">
+											<Link href={storyFocus.routes.job_knowledge_cards}>
+												{briefingsCopy.openKnowledgeButton}
+											</Link>
+										</Button>
+									) : null}
+									{storyFocus.source_urls[0] ? (
+										<Button asChild variant="ghost" size="sm">
+											<a
+												href={storyFocus.source_urls[0]}
+												target="_blank"
+												rel="noreferrer"
+											>
+												{briefingsCopy.openSourceButton}
+											</a>
+										</Button>
+									) : null}
+								</div>
+							</div>
+						) : null}
+
+						{askPayload.answer_state === "briefing_grounded" ? (
+							<div className="space-y-3">
+								<h3 className="text-2xl font-semibold">
+									{askPayload.answer_headline || askCopy.askAnswerFallbackTitle}
+								</h3>
+								{askPayload.answer_summary ? (
+									<p className="text-sm text-muted-foreground">
+										{askPayload.answer_summary}
+									</p>
+								) : null}
+								{askPayload.answer_reason ? (
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{askCopy.askAnswerWhyLabel}
+										</p>
+										<p className="mt-2">{askPayload.answer_reason}</p>
+									</div>
+								) : null}
+								<p className="text-sm text-muted-foreground">
+									{safeQuestion
+										? askCopy.askAnswerGroundedNote
+										: askCopy.askAnswerContextOnlyNote}
+								</p>
+							</div>
+						) : (
+							<div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+								<p className="font-medium text-foreground">
+									{askPayload.answer_state === "no_confident_answer"
+										? askCopy.askNoEvidenceTitle
+										: askPayload.answer_state === "briefing_unavailable"
+											? briefingsCopy.unavailableTitle
+											: askCopy.askContextMissingTitle}
+								</p>
+								<p>
+									{askPayload.answer_state === "no_confident_answer"
+										? askCopy.askNoEvidenceDescription
+										: askPayload.answer_state === "briefing_unavailable"
+											? briefingsCopy.unavailableDescription
+											: askCopy.askContextMissingDescription}
+								</p>
+								{askPayload.fallback_reason ? (
+									<p>{askPayload.fallback_reason}</p>
+								) : null}
+								{askPayload.fallback_next_step ? (
+									<p>{askPayload.fallback_next_step}</p>
+								) : null}
+								{fallbackActions.length > 0 ? (
+									<div className="space-y-2">
+										<p className="font-medium text-foreground">
+											{askCopy.askFallbackActionsTitle}
+										</p>
+										<div className="flex flex-wrap gap-3">
+											{fallbackActions.map((action) =>
+												action.route ? (
+													<Button
+														key={`${action.kind}-${action.route}`}
+														asChild
+														variant="outline"
+														size="sm"
+													>
+														<Link href={action.route}>{action.label}</Link>
+													</Button>
+												) : null,
+											)}
+										</div>
+									</div>
+								) : null}
+							</div>
+						)}
+					</CardContent>
+				</Card>
+
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<h2 className="text-xl font-semibold">
-							{askCopy.askExpectationTitle}
+							{briefingsCopy.differencesTitle}
 						</h2>
 						<CardDescription>
-							{askCopy.askExpectationDescription}
+							{briefingsCopy.differencesDescription}
 						</CardDescription>
 					</CardHeader>
+					<CardContent className="space-y-4">
+						{askPayload.briefing ? (
+							<>
+								{askPayload.story_change_summary ? (
+									<div className="rounded-lg border border-border/60 bg-background/70 p-4 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{askCopy.askAnswerWhyLabel}
+										</p>
+										<p className="mt-2">{askPayload.story_change_summary}</p>
+									</div>
+								) : null}
+								<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{briefingsCopy.addedTopicsLabel}
+										</p>
+										<p className="mt-2">
+											{renderTokenList(
+												askPayload.briefing.differences.added_topics,
+												briefingsCopy.noneValue,
+											)}
+										</p>
+									</div>
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{briefingsCopy.removedTopicsLabel}
+										</p>
+										<p className="mt-2">
+											{renderTokenList(
+												askPayload.briefing.differences.removed_topics,
+												briefingsCopy.noneValue,
+											)}
+										</p>
+									</div>
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{briefingsCopy.addedClaimKindsLabel}
+										</p>
+										<p className="mt-2">
+											{renderTokenList(
+												askPayload.briefing.differences.added_claim_kinds,
+												briefingsCopy.noneValue,
+											)}
+										</p>
+									</div>
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{briefingsCopy.removedClaimKindsLabel}
+										</p>
+										<p className="mt-2">
+											{renderTokenList(
+												askPayload.briefing.differences.removed_claim_kinds,
+												briefingsCopy.noneValue,
+											)}
+										</p>
+									</div>
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{briefingsCopy.newStoryKeysLabel}
+										</p>
+										<p className="mt-2">
+											{renderTokenList(
+												askPayload.briefing.differences.new_story_keys,
+												briefingsCopy.noneValue,
+											)}
+										</p>
+									</div>
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm text-muted-foreground">
+										<p className="font-medium text-foreground">
+											{briefingsCopy.removedStoryKeysLabel}
+										</p>
+										<p className="mt-2">
+											{renderTokenList(
+												askPayload.briefing.differences.removed_story_keys,
+												briefingsCopy.noneValue,
+											)}
+										</p>
+									</div>
+								</div>
+								<div className="rounded-lg border border-border/60 bg-background/70 p-4 text-sm text-muted-foreground">
+									<p className="font-medium text-foreground">
+										{briefingsCopy.compareTitle}
+									</p>
+									<p className="mt-2">
+										{askPayload.briefing.differences.compare?.diff_excerpt ||
+											briefingsCopy.noCompareExcerpt}
+									</p>
+									{askPayload.briefing.differences.compare ? (
+										<p className="mt-2">
+											+{askPayload.briefing.differences.compare.added_lines} / -
+											{askPayload.briefing.differences.compare.removed_lines}
+										</p>
+									) : null}
+								</div>
+								<div className="flex flex-wrap gap-3">
+									<Button asChild variant="outline" size="sm">
+										<Link href={briefingHref}>
+											{askCopy.askOpenBriefingButton}
+										</Link>
+									</Button>
+									{askPayload.briefing.differences.compare?.job_id ? (
+										<Button asChild variant="outline" size="sm">
+											<Link
+												href={`/jobs?job_id=${encodeURIComponent(askPayload.briefing.differences.compare.job_id)}`}
+											>
+												{briefingsCopy.openCompareButton}
+											</Link>
+										</Button>
+									) : null}
+								</div>
+							</>
+						) : (
+							<p className="text-sm text-muted-foreground">
+								{askCopy.askChangesFallbackDescription}
+							</p>
+						)}
+					</CardContent>
 				</Card>
-			) : null}
 
-			{safeQuestion && results ? (
-				<section className="space-y-4" aria-label={askCopy.askResultsAriaLabel}>
-					<Card className="folo-surface border-border/70">
-						<CardHeader>
-							<h2 className="text-xl font-semibold">
-								{askCopy.askSummaryTitle}
-							</h2>
-							<CardDescription>
-								{askCopy.askSummaryQuestionPrefix}:{" "}
-								<strong>{results.query}</strong> ·{" "}
-								{askCopy.askSummaryHitsPrefix}:{" "}
-								<strong>{results.items.length}</strong>
-							</CardDescription>
-						</CardHeader>
-					</Card>
-					{results.items.length === 0 ? (
-						<Card className="folo-surface border-border/70">
-							<CardHeader>
-								<h2 className="text-xl font-semibold">
-									{askCopy.askNoEvidenceTitle}
-								</h2>
-								<CardDescription>
-									{askCopy.askNoEvidenceDescription}
-								</CardDescription>
-							</CardHeader>
-						</Card>
-					) : (
-						results.items.map((hit) => (
-							<EvidenceCard
-								key={`${hit.job_id}-${hit.source}-${hit.snippet}`}
-								hit={hit}
-							/>
-						))
-					)}
-				</section>
-			) : null}
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<h2 className="text-xl font-semibold">
+							{briefingsCopy.evidenceTitle}
+						</h2>
+						<CardDescription>
+							{briefingsCopy.evidenceDescription}
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-6">
+						{citations.length > 0 ? (
+							<section className="space-y-4">
+								<div className="space-y-1">
+									<h3 className="text-lg font-semibold">
+										{askCopy.askCitationsTitle}
+									</h3>
+									<p className="text-sm text-muted-foreground">
+										{askCopy.askCitationsDescription}
+									</p>
+								</div>
+								<div className="grid gap-4 xl:grid-cols-2">
+									{citations.map((citation, index) => (
+										<article
+											key={`${citation.kind}-${citation.label}-${index}`}
+											className="rounded-xl border border-border/60 bg-muted/20 p-4"
+										>
+											<div className="space-y-3">
+												<div className="flex flex-wrap gap-2">
+													{citation.job_id ? (
+														<Badge variant="outline">
+															Job {compactId(citation.job_id)}
+														</Badge>
+													) : null}
+													<Badge variant="outline">
+														{formatSourceLabel(citation.kind)}
+													</Badge>
+												</div>
+												<div className="space-y-1">
+													<h4 className="text-lg font-semibold">
+														{citation.label}
+													</h4>
+													<p className="text-sm text-muted-foreground">
+														{citation.snippet}
+													</p>
+												</div>
+												<div className="flex flex-wrap gap-3">
+													{citation.route ? (
+														<Button asChild variant="outline" size="sm">
+															<Link href={citation.route}>
+																{citation.route_label ??
+																	askCopy.askOpenCitationRouteButton}
+															</Link>
+														</Button>
+													) : null}
+													{citation.source_url ? (
+														<Button asChild variant="ghost" size="sm">
+															<a
+																href={citation.source_url}
+																target="_blank"
+																rel="noreferrer"
+															>
+																{askCopy.openSourceButton}
+															</a>
+														</Button>
+													) : null}
+												</div>
+											</div>
+										</article>
+									))}
+								</div>
+							</section>
+						) : null}
+
+						{safeQuestion ? (
+							<section className="space-y-4">
+								<div className="space-y-1">
+									<h3 className="text-lg font-semibold">
+										{askCopy.askQuestionEvidenceTitle}
+									</h3>
+									<p className="text-sm text-muted-foreground">
+										{askCopy.askQuestionEvidenceDescription}
+									</p>
+								</div>
+								{retrievalHits.length > 0 ? (
+									retrievalHits.map((hit) => (
+										<EvidenceCard
+											key={`${hit.job_id}-${hit.source}-${hit.snippet}`}
+											hit={hit}
+										/>
+									))
+								) : (
+									<p className="text-sm text-muted-foreground">
+										{askCopy.askNoEvidenceDescription}
+									</p>
+								)}
+							</section>
+						) : null}
+
+						{selectedStory ? (
+							<section className="space-y-4">
+								<div className="space-y-1">
+									<h3 className="text-lg font-semibold">
+										{briefingsCopy.storyEvidenceTitle}
+									</h3>
+									<p className="text-sm text-muted-foreground">
+										{selectedStory.headline}
+									</p>
+								</div>
+								<div className="grid gap-4 xl:grid-cols-2">
+									{selectedStory.evidence_cards.map((card) => (
+										<article
+											key={card.card_id}
+											className="rounded-xl border border-border/60 bg-muted/20 p-4"
+										>
+											<div className="space-y-3">
+												<div className="flex flex-wrap gap-2">
+													<Badge variant="outline">
+														{platformLabel(
+															card.platform,
+															briefingsCopy.platformUnknown,
+														)}
+													</Badge>
+													{card.topic_label ? (
+														<Badge variant="outline">{card.topic_label}</Badge>
+													) : null}
+												</div>
+												<div className="space-y-1">
+													<h4 className="text-lg font-semibold">
+														{card.card_title ||
+															card.video_title ||
+															briefingsCopy.untitledEvidenceLabel}
+													</h4>
+													<p className="text-sm text-muted-foreground">
+														{card.card_body.trim() || briefingsCopy.noExcerpt}
+													</p>
+												</div>
+												<div className="flex flex-wrap gap-3">
+													<Button asChild variant="outline" size="sm">
+														<Link
+															href={`/jobs?job_id=${encodeURIComponent(card.job_id)}`}
+														>
+															{briefingsCopy.openJobButton}
+														</Link>
+													</Button>
+													<Button asChild variant="outline" size="sm">
+														<Link
+															href={`/knowledge?job_id=${encodeURIComponent(card.job_id)}`}
+														>
+															{briefingsCopy.openKnowledgeButton}
+														</Link>
+													</Button>
+													{card.source_url ? (
+														<Button asChild variant="ghost" size="sm">
+															<a
+																href={card.source_url}
+																target="_blank"
+																rel="noreferrer"
+															>
+																{briefingsCopy.openSourceButton}
+															</a>
+														</Button>
+													) : null}
+												</div>
+											</div>
+										</article>
+									))}
+								</div>
+							</section>
+						) : null}
+
+						{featuredRuns.length > 0 ? (
+							<section className="space-y-4">
+								<div className="space-y-1">
+									<h3 className="text-lg font-semibold">
+										{briefingsCopy.featuredRunsTitle}
+									</h3>
+									<p className="text-sm text-muted-foreground">
+										{askCopy.askFeaturedRunsDescription}
+									</p>
+								</div>
+								<div className="grid gap-4 xl:grid-cols-2">
+									{featuredRuns.map((run) => (
+										<article
+											key={run.job_id}
+											className="rounded-xl border border-border/60 bg-muted/20 p-4"
+										>
+											<div className="space-y-3">
+												<div className="flex flex-wrap gap-2">
+													<Badge variant="outline">
+														{platformLabel(
+															run.platform,
+															briefingsCopy.platformUnknown,
+														)}
+													</Badge>
+													<Badge variant="outline">
+														{run.matched_card_count}{" "}
+														{briefingsCopy.matchedCardsLabel}
+													</Badge>
+												</div>
+												<div className="space-y-1">
+													<h4 className="text-lg font-semibold">{run.title}</h4>
+													<p className="text-sm text-muted-foreground">
+														{formatDateTime(run.created_at)}
+													</p>
+												</div>
+												<div className="flex flex-wrap gap-3">
+													<Button asChild variant="outline" size="sm">
+														<Link
+															href={`/jobs?job_id=${encodeURIComponent(run.job_id)}`}
+														>
+															{briefingsCopy.openJobButton}
+														</Link>
+													</Button>
+													<Button asChild variant="outline" size="sm">
+														<Link
+															href={`/knowledge?job_id=${encodeURIComponent(run.job_id)}`}
+														>
+															{briefingsCopy.openKnowledgeButton}
+														</Link>
+													</Button>
+													{run.source_url ? (
+														<Button asChild variant="ghost" size="sm">
+															<a
+																href={run.source_url}
+																target="_blank"
+																rel="noreferrer"
+															>
+																{briefingsCopy.openSourceButton}
+															</a>
+														</Button>
+													) : null}
+												</div>
+											</div>
+										</article>
+									))}
+								</div>
+							</section>
+						) : null}
+
+						{!safeQuestion && !selectedStory && featuredRuns.length === 0 ? (
+							<p className="text-sm text-muted-foreground">
+								{askCopy.askExpectationDescription}
+							</p>
+						) : null}
+					</CardContent>
+				</Card>
+			</section>
 		</div>
 	);
 }

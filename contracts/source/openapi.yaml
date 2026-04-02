@@ -54,6 +54,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/SubscriptionUpsertResponse'
 
+  /api/v1/subscriptions/templates:
+    get:
+      operationId: listSubscriptionTemplates
+      responses:
+        '200':
+          description: Supported subscription templates and support tiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionTemplateCatalogResponse'
+
   /api/v1/subscriptions/{id}:
     delete:
       operationId: removeSubscription
@@ -86,6 +97,143 @@ paths:
             application/json:
               schema:
                 type: object
+
+  /api/v1/watchlists:
+    get:
+      operationId: listWatchlists
+      responses:
+        '200':
+          description: Watchlist list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Watchlist'
+    post:
+      operationId: upsertWatchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatchlistUpsertRequest'
+      responses:
+        '200':
+          description: Watchlist upsert result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Watchlist'
+
+  /api/v1/watchlists/{watchlist_id}:
+    delete:
+      operationId: deleteWatchlist
+      parameters:
+        - in: path
+          name: watchlist_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+
+  /api/v1/watchlists/{watchlist_id}/trend:
+    get:
+      operationId: getWatchlistTrend
+      parameters:
+        - in: path
+          name: watchlist_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit_runs
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 3
+        - in: query
+          name: limit_cards
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 60
+            default: 18
+        - in: query
+          name: limit_stories
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 4
+        - in: query
+          name: limit_evidence_per_story
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 8
+            default: 3
+      responses:
+        '200':
+          description: Watchlist trend with timeline and merged story groups
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistTrendResponse'
+        '404':
+          description: Not found
+
+  /api/v1/watchlists/{watchlist_id}/briefing:
+    get:
+      operationId: getWatchlistBriefing
+      parameters:
+        - in: path
+          name: watchlist_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit_runs
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 4
+        - in: query
+          name: limit_cards
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 60
+            default: 18
+        - in: query
+          name: limit_stories
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 4
+        - in: query
+          name: limit_evidence_per_story
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 8
+            default: 3
+      responses:
+        '200':
+          description: Unified watchlist briefing with summary, differences, and evidence drill-down
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistBriefingResponse'
+        '404':
+          description: Not found
 
   /api/v1/ingest/poll:
     post:
@@ -193,6 +341,26 @@ paths:
         '404':
           description: Not found
 
+  /api/v1/jobs/{job_id}/bundle:
+    get:
+      operationId: getJobEvidenceBundle
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job evidence bundle for drill-down and async reuse
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobEvidenceBundleResponse'
+        '404':
+          description: Not found
+
   /api/v1/knowledge/cards:
     get:
       operationId: listKnowledgeCards
@@ -274,6 +442,70 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RetrievalSearchResponse'
+
+  /api/v1/retrieval/answer:
+    post:
+      operationId: retrievalAnswer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskAnswerRequest'
+      responses:
+        '200':
+          description: Briefing-aware answer contract
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskAnswerResponse'
+
+  /api/v1/retrieval/answer/page:
+    post:
+      operationId: retrievalAnswerPage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskPageRequest'
+      responses:
+        '200':
+          description: Server-owned Ask page payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskPageResponse'
+
+  /api/v1/ops/inbox:
+    get:
+      operationId: getOpsInbox
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+        - in: query
+          name: window_hours
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 168
+            default: 24
+      responses:
+        '200':
+          description: Operator inbox rollup for failures, gates, and next actions
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid ops inbox request
+        '503':
+          description: Ops inbox unavailable
 
   /api/v1/computer-use/run:
     post:
@@ -707,11 +939,21 @@ components:
 
     Platform:
       type: string
-      enum: [bilibili, youtube]
+      description: Source platform key. `youtube` and `bilibili` are strong-supported video lanes; other string values are allowed for generic RSSHub/RSS substrate usage.
+      examples: [youtube, bilibili, rsshub, generic]
 
     SourceType:
       type: string
-      enum: [bilibili_uid, youtube_channel_id, url]
+      description: Source identifier type. Known strong-supported values include `youtube_channel_id` and `bilibili_uid`; generic strings such as `rsshub_route` remain allowed without claiming per-route verification.
+      examples: [youtube_channel_id, bilibili_uid, url, rsshub_route]
+
+    SubscriptionSupportTier:
+      type: string
+      enum: [strong_supported, generic_supported]
+
+    SubscriptionContentProfile:
+      type: string
+      enum: [video, article]
 
     JobStatus:
       type: string
@@ -719,7 +961,8 @@ components:
 
     Subscription:
       type: object
-      required: [id, platform, source_type, source_value, rsshub_route, enabled, created_at, updated_at]
+      required:
+        [id, platform, source_type, source_value, support_tier, content_profile, rsshub_route, enabled, created_at, updated_at]
       properties:
         id:
           type: string
@@ -730,8 +973,30 @@ components:
           $ref: '#/components/schemas/SourceType'
         source_value:
           type: string
+        source_name:
+          type: string
+        support_tier:
+          $ref: '#/components/schemas/SubscriptionSupportTier'
+        content_profile:
+          $ref: '#/components/schemas/SubscriptionContentProfile'
+        adapter_type:
+          type: string
+          enum: [rsshub_route, rss_generic]
+        source_url:
+          type: string
+          nullable: true
         rsshub_route:
           type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
         enabled:
           type: boolean
         created_at:
@@ -756,6 +1021,84 @@ components:
         enabled:
           type: boolean
 
+    SubscriptionTemplateSupportTier:
+      type: object
+      required: [id, label, description, content_profile, supports_video_pipeline, verification_status]
+      properties:
+        id:
+          $ref: '#/components/schemas/SubscriptionSupportTier'
+        label:
+          type: string
+        description:
+          type: string
+        content_profile:
+          $ref: '#/components/schemas/SubscriptionContentProfile'
+        supports_video_pipeline:
+          type: boolean
+        verification_status:
+          type: string
+
+    SubscriptionTemplate:
+      type: object
+      required:
+        [id, label, description, support_tier, platform, source_type, adapter_type, content_profile, source_url_required, supports_video_pipeline]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        support_tier:
+          $ref: '#/components/schemas/SubscriptionSupportTier'
+        platform:
+          $ref: '#/components/schemas/Platform'
+        source_type:
+          $ref: '#/components/schemas/SourceType'
+        adapter_type:
+          type: string
+          enum: [rsshub_route, rss_generic]
+        content_profile:
+          $ref: '#/components/schemas/SubscriptionContentProfile'
+        category:
+          type: string
+          nullable: true
+        source_value_placeholder:
+          type: string
+          nullable: true
+        source_url_placeholder:
+          type: string
+          nullable: true
+        rsshub_route_hint:
+          type: string
+          nullable: true
+        source_url_required:
+          type: boolean
+        supports_video_pipeline:
+          type: boolean
+        fill_now:
+          type: string
+          nullable: true
+        proof_boundary:
+          type: string
+          nullable: true
+        evidence_note:
+          type: string
+          nullable: true
+
+    SubscriptionTemplateCatalogResponse:
+      type: object
+      required: [support_tiers, templates]
+      properties:
+        support_tiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionTemplateSupportTier'
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionTemplate'
+
     SubscriptionUpsertResponse:
       type: object
       required: [subscription, created]
@@ -764,6 +1107,432 @@ components:
           $ref: '#/components/schemas/Subscription'
         created:
           type: boolean
+
+    Watchlist:
+      type: object
+      required:
+        [id, name, matcher_type, matcher_value, delivery_channel, enabled, created_at, updated_at]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        matcher_type:
+          type: string
+          enum: [topic_key, claim_kind, platform, source_match]
+        matcher_value:
+          type: string
+        delivery_channel:
+          type: string
+          enum: [dashboard, email]
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    WatchlistUpsertRequest:
+      type: object
+      required: [name, matcher_type, matcher_value]
+      properties:
+        id:
+          type: string
+          nullable: true
+        name:
+          type: string
+        matcher_type:
+          type: string
+          enum: [topic_key, claim_kind, platform, source_match]
+        matcher_value:
+          type: string
+        delivery_channel:
+          type: string
+          enum: [dashboard, email]
+          default: dashboard
+        enabled:
+          type: boolean
+
+    WatchlistTrendCard:
+      type: object
+      required:
+        [card_id, job_id, video_id, platform, created_at, card_type, card_body, source_section]
+      properties:
+        card_id:
+          type: string
+        job_id:
+          type: string
+        video_id:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
+        video_title:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        card_type:
+          type: string
+        card_title:
+          type: string
+          nullable: true
+        card_body:
+          type: string
+        source_section:
+          type: string
+        topic_key:
+          type: string
+          nullable: true
+        topic_label:
+          type: string
+          nullable: true
+        claim_kind:
+          type: string
+          nullable: true
+
+    WatchlistTrendRun:
+      type: object
+      required:
+        [job_id, video_id, platform, title, created_at, matched_card_count, cards, topics, claim_kinds, added_topics, removed_topics, added_claim_kinds, removed_claim_kinds]
+      properties:
+        job_id:
+          type: string
+        video_id:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
+        title:
+          type: string
+        source_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        matched_card_count:
+          type: integer
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistTrendCard'
+        topics:
+          type: array
+          items:
+            type: string
+        claim_kinds:
+          type: array
+          items:
+            type: string
+        added_topics:
+          type: array
+          items:
+            type: string
+        removed_topics:
+          type: array
+          items:
+            type: string
+        added_claim_kinds:
+          type: array
+          items:
+            type: string
+        removed_claim_kinds:
+          type: array
+          items:
+            type: string
+
+    WatchlistMergedStory:
+      type: object
+      required:
+        [id, story_key, headline, latest_created_at, matched_card_count, platforms, claim_kinds, source_urls, run_ids, cards]
+      properties:
+        id:
+          type: string
+        story_key:
+          type: string
+        headline:
+          type: string
+        topic_key:
+          type: string
+          nullable: true
+        topic_label:
+          type: string
+          nullable: true
+        latest_created_at:
+          type: string
+        matched_card_count:
+          type: integer
+        platforms:
+          type: array
+          items:
+            type: string
+        claim_kinds:
+          type: array
+          items:
+            type: string
+        source_urls:
+          type: array
+          items:
+            type: string
+        run_ids:
+          type: array
+          items:
+            type: string
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistTrendCard'
+
+    WatchlistTrendSummary:
+      type: object
+      required: [recent_runs, matched_cards, matcher_type, matcher_value]
+      properties:
+        recent_runs:
+          type: integer
+        matched_cards:
+          type: integer
+        matcher_type:
+          type: string
+        matcher_value:
+          type: string
+
+    WatchlistTrendResponse:
+      type: object
+      required: [watchlist, summary, timeline, merged_stories]
+      properties:
+        watchlist:
+          $ref: '#/components/schemas/Watchlist'
+        summary:
+          $ref: '#/components/schemas/WatchlistTrendSummary'
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistTrendRun'
+        merged_stories:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistMergedStory'
+
+    WatchlistBriefingSignal:
+      type: object
+      required: [story_key, headline, matched_card_count, reason]
+      properties:
+        story_key:
+          type: string
+        headline:
+          type: string
+        matched_card_count:
+          type: integer
+        latest_run_job_id:
+          type: string
+          nullable: true
+        reason:
+          type: string
+
+    WatchlistBriefingSummary:
+      type: object
+      required: [overview, source_count, run_count, story_count, matched_cards, signals]
+      properties:
+        overview:
+          type: string
+        source_count:
+          type: integer
+        run_count:
+          type: integer
+        story_count:
+          type: integer
+        matched_cards:
+          type: integer
+        primary_story_headline:
+          type: string
+          nullable: true
+        signals:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistBriefingSignal'
+
+    WatchlistBriefingCompare:
+      type: object
+      required:
+        [job_id, has_previous, changed, added_lines, removed_lines, compare_route]
+      properties:
+        job_id:
+          type: string
+        has_previous:
+          type: boolean
+        previous_job_id:
+          type: string
+          nullable: true
+        changed:
+          type: boolean
+        added_lines:
+          type: integer
+        removed_lines:
+          type: integer
+        diff_excerpt:
+          type: string
+          nullable: true
+        compare_route:
+          type: string
+
+    WatchlistBriefingDifferences:
+      type: object
+      required:
+        [added_topics, removed_topics, added_claim_kinds, removed_claim_kinds, new_story_keys, removed_story_keys]
+      properties:
+        latest_job_id:
+          type: string
+          nullable: true
+        previous_job_id:
+          type: string
+          nullable: true
+        added_topics:
+          type: array
+          items:
+            type: string
+        removed_topics:
+          type: array
+          items:
+            type: string
+        added_claim_kinds:
+          type: array
+          items:
+            type: string
+        removed_claim_kinds:
+          type: array
+          items:
+            type: string
+        new_story_keys:
+          type: array
+          items:
+            type: string
+        removed_story_keys:
+          type: array
+          items:
+            type: string
+        compare:
+          allOf:
+            - $ref: '#/components/schemas/WatchlistBriefingCompare'
+          nullable: true
+
+    WatchlistBriefingRoutes:
+      type: object
+      required: [watchlist_trend]
+      properties:
+        watchlist_trend:
+          type: string
+        briefing:
+          type: string
+          nullable: true
+        ask:
+          type: string
+          nullable: true
+        job_compare:
+          type: string
+          nullable: true
+        job_bundle:
+          type: string
+          nullable: true
+        job_knowledge_cards:
+          type: string
+          nullable: true
+
+    WatchlistBriefingStoryEvidence:
+      type: object
+      required:
+        [story_id, story_key, headline, source_count, run_count, matched_card_count, platforms, claim_kinds, source_urls, evidence_cards, routes]
+      properties:
+        story_id:
+          type: string
+        story_key:
+          type: string
+        headline:
+          type: string
+        topic_key:
+          type: string
+          nullable: true
+        topic_label:
+          type: string
+          nullable: true
+        source_count:
+          type: integer
+        run_count:
+          type: integer
+        matched_card_count:
+          type: integer
+        platforms:
+          type: array
+          items:
+            type: string
+        claim_kinds:
+          type: array
+          items:
+            type: string
+        source_urls:
+          type: array
+          items:
+            type: string
+        latest_run_job_id:
+          type: string
+          nullable: true
+        evidence_cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistTrendCard'
+        routes:
+          $ref: '#/components/schemas/WatchlistBriefingRoutes'
+
+    WatchlistBriefingRunEvidence:
+      type: object
+      required: [job_id, video_id, platform, title, created_at, matched_card_count, routes]
+      properties:
+        job_id:
+          type: string
+        video_id:
+          type: string
+        platform:
+          $ref: '#/components/schemas/Platform'
+        title:
+          type: string
+        source_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        matched_card_count:
+          type: integer
+        routes:
+          $ref: '#/components/schemas/WatchlistBriefingRoutes'
+
+    WatchlistBriefingEvidence:
+      type: object
+      required: [stories, featured_runs]
+      properties:
+        suggested_story_id:
+          type: string
+          nullable: true
+        stories:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'
+        featured_runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistBriefingRunEvidence'
+
+    WatchlistBriefingResponse:
+      type: object
+      required: [watchlist, summary, differences, evidence]
+      properties:
+        watchlist:
+          $ref: '#/components/schemas/Watchlist'
+        summary:
+          $ref: '#/components/schemas/WatchlistBriefingSummary'
+        differences:
+          $ref: '#/components/schemas/WatchlistBriefingDifferences'
+        evidence:
+          $ref: '#/components/schemas/WatchlistBriefingEvidence'
 
     IngestPollRequest:
       type: object
@@ -1155,6 +1924,10 @@ components:
           minimum: 1
           maximum: 50
           default: 10
+        mode:
+          type: string
+          enum: [keyword, semantic, hybrid]
+          default: keyword
         filters:
           type: object
           default: {}
@@ -1186,7 +1959,7 @@ components:
           nullable: true
         source:
           type: string
-          enum: [digest, transcript, outline, comments, meta]
+          enum: [digest, transcript, outline, knowledge_cards, comments, meta]
         snippet:
           type: string
         score:
@@ -1208,6 +1981,409 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RetrievalHit'
+
+    AskAnswerRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+        watchlist_id:
+          type: string
+          nullable: true
+        story_id:
+          type: string
+          nullable: true
+        top_k:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+        mode:
+          type: string
+          enum: [keyword, semantic, hybrid]
+          default: keyword
+        filters:
+          type: object
+          default: {}
+          additionalProperties: true
+
+    AskAnswerContext:
+      type: object
+      required: [selection_basis, mode, filters, briefing_available]
+      properties:
+        watchlist_id:
+          type: string
+          nullable: true
+        watchlist_name:
+          type: string
+          nullable: true
+        story_id:
+          type: string
+          nullable: true
+        selected_story_id:
+          type: string
+          nullable: true
+        story_headline:
+          type: string
+          nullable: true
+        topic_key:
+          type: string
+          nullable: true
+        topic_label:
+          type: string
+          nullable: true
+        selection_basis:
+          type: string
+          enum: [requested_story_id, query_match, suggested_story_id, first_story, none]
+        mode:
+          type: string
+          enum: [keyword, semantic, hybrid]
+        filters:
+          type: object
+          additionalProperties: true
+        briefing_available:
+          type: boolean
+
+    AskAnswerBody:
+      type: object
+      required: [direct_answer, summary, confidence]
+      properties:
+        direct_answer:
+          type: string
+        summary:
+          type: string
+        reason:
+          type: string
+          nullable: true
+        confidence:
+          type: string
+          enum: [grounded, limited]
+
+    AskAnswerChanges:
+      type: object
+      required:
+        [summary, added_topics, removed_topics, added_claim_kinds, removed_claim_kinds, new_story_keys, removed_story_keys, has_previous]
+      properties:
+        summary:
+          type: string
+        story_focus_summary:
+          type: string
+          nullable: true
+        latest_job_id:
+          type: string
+          nullable: true
+        previous_job_id:
+          type: string
+          nullable: true
+        added_topics:
+          type: array
+          items:
+            type: string
+        removed_topics:
+          type: array
+          items:
+            type: string
+        added_claim_kinds:
+          type: array
+          items:
+            type: string
+        removed_claim_kinds:
+          type: array
+          items:
+            type: string
+        new_story_keys:
+          type: array
+          items:
+            type: string
+        removed_story_keys:
+          type: array
+          items:
+            type: string
+        compare_excerpt:
+          type: string
+          nullable: true
+        compare_route:
+          type: string
+          nullable: true
+        has_previous:
+          type: boolean
+
+    AskAnswerCitation:
+      type: object
+      required: [kind, label, snippet]
+      properties:
+        kind:
+          type: string
+          enum: [briefing_story, briefing_card, retrieval_hit, job_compare]
+        label:
+          type: string
+        snippet:
+          type: string
+        source_url:
+          type: string
+          nullable: true
+        job_id:
+          type: string
+          nullable: true
+        route:
+          type: string
+          nullable: true
+        route_label:
+          type: string
+          nullable: true
+
+    AskAnswerSelectedStory:
+      type: object
+      required:
+        [story_id, story_key, headline, source_count, run_count, matched_card_count, platforms, claim_kinds, source_urls, routes]
+      properties:
+        story_id:
+          type: string
+        story_key:
+          type: string
+        headline:
+          type: string
+        topic_key:
+          type: string
+          nullable: true
+        topic_label:
+          type: string
+          nullable: true
+        source_count:
+          type: integer
+        run_count:
+          type: integer
+        matched_card_count:
+          type: integer
+        platforms:
+          type: array
+          items:
+            type: string
+        claim_kinds:
+          type: array
+          items:
+            type: string
+        source_urls:
+          type: array
+          items:
+            type: string
+        latest_run_job_id:
+          type: string
+          nullable: true
+        routes:
+          $ref: '#/components/schemas/WatchlistBriefingRoutes'
+
+    AskAnswerEvidenceCard:
+      type: object
+      required: [body]
+      properties:
+        card_id:
+          type: string
+          nullable: true
+        job_id:
+          type: string
+          nullable: true
+        platform:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        body:
+          type: string
+        source_section:
+          type: string
+          nullable: true
+
+    AskAnswerEvidence:
+      type: object
+      required: [citation_count, retrieval_hit_count, retrieval_items, story_cards]
+      properties:
+        briefing_overview:
+          type: string
+          nullable: true
+        selected_story_id:
+          type: string
+          nullable: true
+        selected_story_headline:
+          type: string
+          nullable: true
+        latest_job_id:
+          type: string
+          nullable: true
+        citation_count:
+          type: integer
+        retrieval_hit_count:
+          type: integer
+        retrieval_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrievalHit'
+        story_cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AskAnswerEvidenceCard'
+
+    AskAnswerFallback:
+      type: object
+      required: [status, actions]
+      properties:
+        status:
+          type: string
+          enum:
+            [grounded, limited, briefing_unavailable, story_not_found, insufficient_evidence]
+        reason:
+          type: string
+          nullable: true
+        suggested_next_step:
+          type: string
+          nullable: true
+        actions:
+          type: array
+          items:
+            type: object
+            required: [kind, label]
+            properties:
+              kind:
+                type: string
+                enum: [open_briefing, open_story, open_job, open_knowledge, open_search]
+              label:
+                type: string
+              route:
+                type: string
+                nullable: true
+
+    AskAnswerResponse:
+      type: object
+      required: [query, context, answer, changes, citations, evidence, fallback]
+      properties:
+        query:
+          type: string
+        context:
+          $ref: '#/components/schemas/AskAnswerContext'
+        selected_story:
+          allOf:
+            - $ref: '#/components/schemas/AskAnswerSelectedStory'
+          nullable: true
+        answer:
+          $ref: '#/components/schemas/AskAnswerBody'
+        changes:
+          $ref: '#/components/schemas/AskAnswerChanges'
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AskAnswerCitation'
+        evidence:
+          $ref: '#/components/schemas/AskAnswerEvidence'
+        fallback:
+          $ref: '#/components/schemas/AskAnswerFallback'
+
+    AskPageRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          default: ''
+        watchlist_id:
+          type: string
+          nullable: true
+        story_id:
+          type: string
+          nullable: true
+        topic_key:
+          type: string
+          nullable: true
+        top_k:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 6
+        mode:
+          type: string
+          enum: [keyword, semantic, hybrid]
+          default: keyword
+        filters:
+          type: object
+          additionalProperties: true
+          default: {}
+
+    AskPageResponse:
+      type: object
+      required:
+        [question, mode, top_k, context, answer_state, answer_confidence, citations, fallback_actions]
+      properties:
+        question:
+          type: string
+        mode:
+          type: string
+          enum: [keyword, semantic, hybrid]
+        top_k:
+          type: integer
+        context:
+          $ref: '#/components/schemas/AskAnswerContext'
+        answer_state:
+          type: string
+          enum: [briefing_grounded, missing_context, briefing_unavailable, no_confident_answer]
+        answer_headline:
+          type: string
+          nullable: true
+        answer_summary:
+          type: string
+          nullable: true
+        answer_reason:
+          type: string
+          nullable: true
+        answer_confidence:
+          type: string
+          enum: [grounded, limited]
+        story_change_summary:
+          type: string
+          nullable: true
+        briefing:
+          allOf:
+            - $ref: '#/components/schemas/WatchlistBriefingResponse'
+          nullable: true
+        story_focus:
+          allOf:
+            - $ref: '#/components/schemas/AskAnswerSelectedStory'
+          nullable: true
+        selected_story:
+          allOf:
+            - $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'
+          nullable: true
+        retrieval:
+          allOf:
+            - $ref: '#/components/schemas/RetrievalSearchResponse'
+          nullable: true
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AskAnswerCitation'
+        fallback_reason:
+          type: string
+          nullable: true
+        fallback_next_step:
+          type: string
+          nullable: true
+        fallback_actions:
+          type: array
+          items:
+            type: object
+            required: [kind, label]
+            properties:
+              kind:
+                type: string
+                enum: [open_briefing, open_story, open_job, open_knowledge, open_search]
+              label:
+                type: string
+              route:
+                type: string
+                nullable: true
 
     ComputerUseSafety:
       type: object

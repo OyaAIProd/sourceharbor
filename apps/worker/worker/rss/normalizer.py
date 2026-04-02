@@ -101,6 +101,10 @@ def make_job_idempotency_key(platform: str, video_uid: str) -> str:
     return _sha256(f"{platform}:{video_uid}:video_digest_v1")
 
 
+def make_article_idempotency_key(entry_hash: str) -> str:
+    return _sha256(f"article:{_normalize_hash_part(entry_hash)}:rss_entry_v1")
+
+
 def normalize_entry(raw_entry: Mapping[str, Any], feed_url: str) -> dict[str, Any]:
     title = _clean_text(raw_entry.get("title"))
     link = _clean_text(raw_entry.get("link"))

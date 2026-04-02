@@ -21,6 +21,9 @@ MOCK_JOB_ID = "00000000-0000-4000-8000-000000000001"
 MOCK_VIDEO_ID = "00000000-0000-4000-8000-000000000002"
 MOCK_VIDEO_DB_ID = "00000000-0000-4000-8000-000000000003"
 MOCK_DELIVERY_ID = "00000000-0000-4000-8000-000000000004"
+MOCK_WATCHLIST_ID = "wl-1"
+MOCK_PREVIOUS_JOB_ID = "00000000-0000-4000-8000-000000000005"
+MOCK_RSS_JOB_ID = "00000000-0000-4000-8000-000000000006"
 SUBSCRIPTION_NAMESPACE = uuid.UUID("00000000-0000-4000-8000-0000000000aa")
 
 
@@ -289,6 +292,258 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
             path = parsed.path
             query = parse_qs(parsed.query)
 
+            if path == "/api/v1/watchlists":
+                payload = [
+                    {
+                        "id": MOCK_WATCHLIST_ID,
+                        "name": "Retry policy",
+                        "matcher_type": "topic_key",
+                        "matcher_value": "retry-policy",
+                        "delivery_channel": "dashboard",
+                        "enabled": True,
+                        "created_at": "2026-03-31T10:00:00Z",
+                        "updated_at": "2026-04-01T10:00:00Z",
+                    }
+                ]
+                self._record_http(
+                    method="GET",
+                    path=path,
+                    query=parsed.query,
+                    status=int(HTTPStatus.OK),
+                )
+                self._send_json(HTTPStatus.OK, payload)
+                return
+
+            if path == f"/api/v1/watchlists/{MOCK_WATCHLIST_ID}/briefing":
+                payload = {
+                    "watchlist": {
+                        "id": MOCK_WATCHLIST_ID,
+                        "name": "Retry policy",
+                        "matcher_type": "topic_key",
+                        "matcher_value": "retry-policy",
+                        "delivery_channel": "dashboard",
+                        "enabled": True,
+                        "created_at": "2026-03-31T10:00:00Z",
+                        "updated_at": "2026-04-01T10:00:00Z",
+                    },
+                    "summary": {
+                        "overview": (
+                            "Retry policy now reads like one shared story across YouTube, "
+                            "Bilibili, and RSS sources."
+                        ),
+                        "source_count": 3,
+                        "run_count": 3,
+                        "story_count": 1,
+                        "matched_cards": 5,
+                        "primary_story_headline": "Retries moved from optional advice to default posture",
+                        "signals": [
+                            {
+                                "story_key": "topic:retry-policy",
+                                "headline": "Retry policy is stabilizing into the baseline path",
+                                "matched_card_count": 5,
+                                "latest_run_job_id": MOCK_RSS_JOB_ID,
+                                "reason": "The newest runs repeat the same retry baseline across source types.",
+                            }
+                        ],
+                    },
+                    "differences": {
+                        "latest_job_id": MOCK_RSS_JOB_ID,
+                        "previous_job_id": MOCK_PREVIOUS_JOB_ID,
+                        "added_topics": ["retry-policy"],
+                        "removed_topics": [],
+                        "added_claim_kinds": ["recommendation"],
+                        "removed_claim_kinds": [],
+                        "new_story_keys": ["topic:retry-policy"],
+                        "removed_story_keys": [],
+                        "compare": {
+                            "job_id": MOCK_RSS_JOB_ID,
+                            "has_previous": True,
+                            "previous_job_id": MOCK_PREVIOUS_JOB_ID,
+                            "changed": True,
+                            "added_lines": 7,
+                            "removed_lines": 2,
+                            "diff_excerpt": "Retry handling moved into the default guidance instead of a footnote.",
+                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                        },
+                    },
+                    "evidence": {
+                        "suggested_story_id": "story-1",
+                        "stories": [
+                            {
+                                "story_id": "story-1",
+                                "story_key": "topic:retry-policy",
+                                "headline": "Retries moved from optional advice to default posture",
+                                "topic_key": "retry-policy",
+                                "topic_label": "Retry policy",
+                                "source_count": 3,
+                                "run_count": 3,
+                                "matched_card_count": 5,
+                                "platforms": ["youtube", "bilibili", "rss"],
+                                "claim_kinds": ["recommendation"],
+                                "source_urls": ["https://example.com/retry-policy"],
+                                "latest_run_job_id": MOCK_RSS_JOB_ID,
+                                "evidence_cards": [
+                                    {
+                                        "card_id": "card-briefing-1",
+                                        "job_id": MOCK_JOB_ID,
+                                        "video_id": MOCK_VIDEO_ID,
+                                        "platform": "youtube",
+                                        "video_title": "AI Weekly",
+                                        "source_url": "https://example.com/retry-policy",
+                                        "created_at": "2026-04-01T10:00:00Z",
+                                        "card_type": "claim",
+                                        "card_title": "Retry baseline became explicit",
+                                        "card_body": "Operators should treat retries as the default safe path.",
+                                        "source_section": "digest",
+                                        "topic_key": "retry-policy",
+                                        "topic_label": "Retry policy",
+                                        "claim_kind": "recommendation",
+                                    }
+                                ],
+                                "routes": {
+                                    "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                                    "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                                },
+                            }
+                        ],
+                        "featured_runs": [
+                            {
+                                "job_id": MOCK_RSS_JOB_ID,
+                                "video_id": MOCK_VIDEO_ID,
+                                "platform": "rss",
+                                "title": "RSS Digest",
+                                "source_url": "https://example.com/retry-policy",
+                                "created_at": "2026-04-01T11:00:00Z",
+                                "matched_card_count": 2,
+                                "routes": {
+                                    "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                                    "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                                },
+                            }
+                        ],
+                    },
+                }
+                self._record_http(
+                    method="GET",
+                    path=path,
+                    query=parsed.query,
+                    status=int(HTTPStatus.OK),
+                )
+                self._send_json(HTTPStatus.OK, payload)
+                return
+
+            if path == "/api/v1/subscriptions/templates":
+                payload = {
+                    "support_tiers": [
+                        {
+                            "id": "strong_supported",
+                            "label": "Strong support",
+                            "description": "Purpose-built video subscriptions.",
+                            "content_profile": "video",
+                            "supports_video_pipeline": True,
+                            "verification_status": "verified_for_youtube_bilibili_only",
+                        },
+                        {
+                            "id": "generic_supported",
+                            "label": "Generic support",
+                            "description": "Generic RSSHub/RSS substrate without route-by-route verification.",
+                            "content_profile": "article",
+                            "supports_video_pipeline": False,
+                            "verification_status": "substrate_ready_not_route_by_route_verified",
+                        },
+                    ],
+                    "templates": [
+                        {
+                            "id": "youtube_channel",
+                            "label": "YouTube channel",
+                            "description": "Strong preset for recurring YouTube intake when you already know the channel ID, handle, or landing URL.",
+                            "support_tier": "strong_supported",
+                            "platform": "youtube",
+                            "source_type": "youtube_channel_id",
+                            "adapter_type": "rsshub_route",
+                            "content_profile": "video",
+                            "category": "creator",
+                            "source_value_placeholder": "UCxxxxxxxxxxxxxxxxxxxxxx",
+                            "source_url_placeholder": "https://www.youtube.com/@channel",
+                            "rsshub_route_hint": "/youtube/channel/{channel_id}",
+                            "source_url_required": False,
+                            "supports_video_pipeline": True,
+                            "fill_now": "Start with the channel ID or a stable channel URL, then keep the RSSHub route aligned.",
+                            "proof_boundary": "YouTube is a strong path today, but route health still matters if you depend on RSSHub for intake.",
+                            "evidence_note": "Strongly supported video lane.",
+                        },
+                        {
+                            "id": "bilibili_user_video",
+                            "label": "Bilibili uploader",
+                            "description": "Strong preset for Bilibili creators when the UID is known and you want a repeatable creator feed.",
+                            "support_tier": "strong_supported",
+                            "platform": "bilibili",
+                            "source_type": "bilibili_uid",
+                            "adapter_type": "rsshub_route",
+                            "content_profile": "video",
+                            "category": "creator",
+                            "source_value_placeholder": "12345678",
+                            "source_url_placeholder": "https://space.bilibili.com/12345678",
+                            "rsshub_route_hint": "/bilibili/user/video/{uid}",
+                            "source_url_required": False,
+                            "supports_video_pipeline": True,
+                            "fill_now": "Use the creator UID as the primary identifier and keep the companion RSSHub route ready.",
+                            "proof_boundary": "Bilibili creator intake is productized, but route breakage or source-side changes still need monitoring.",
+                            "evidence_note": "Strongly supported video lane.",
+                        },
+                        {
+                            "id": "generic_rsshub_route",
+                            "label": "Generic RSSHub route",
+                            "description": "General preset for wider source coverage when RSSHub can normalize a route into a usable feed.",
+                            "support_tier": "generic_supported",
+                            "platform": "rsshub",
+                            "source_type": "rsshub_route",
+                            "adapter_type": "rsshub_route",
+                            "content_profile": "article",
+                            "category": "misc",
+                            "source_value_placeholder": "/namespace/path",
+                            "source_url_placeholder": "https://example.com/source",
+                            "rsshub_route_hint": "/namespace/path",
+                            "source_url_required": False,
+                            "supports_video_pipeline": False,
+                            "fill_now": "Bring the exact RSSHub route you want SourceHarbor to poll, then add a canonical source URL only if it helps operators recognize the feed.",
+                            "proof_boundary": "Do not assume every RSSHub route is equally solid. Treat each route as proven only after it survives real runs.",
+                            "evidence_note": "Substrate-ready route lane.",
+                        },
+                        {
+                            "id": "generic_rss_feed",
+                            "label": "Generic RSS or Atom feed",
+                            "description": "General preset for any source that already exposes a clean RSS or Atom feed without a platform-specific shortcut.",
+                            "support_tier": "generic_supported",
+                            "platform": "generic",
+                            "source_type": "url",
+                            "adapter_type": "rss_generic",
+                            "content_profile": "article",
+                            "category": "misc",
+                            "source_value_placeholder": "https://example.com/feed.xml",
+                            "source_url_placeholder": "https://example.com/feed.xml",
+                            "rsshub_route_hint": "https://example.com/feed.xml",
+                            "source_url_required": False,
+                            "supports_video_pipeline": False,
+                            "fill_now": "Paste the exact RSS or Atom feed URL into Source value. Leave Source URL empty unless you want to store the same feed URL explicitly.",
+                            "proof_boundary": "Feed quality varies a lot. If the feed is noisy or incomplete, the intake surface should stay honest about that.",
+                            "evidence_note": "Use Source value for the exact feed URL; Source URL stays optional unless you want to store the same feed URL explicitly.",
+                        },
+                    ],
+                }
+                self._record_http(
+                    method="GET",
+                    path=path,
+                    query=parsed.query,
+                    status=int(HTTPStatus.OK),
+                )
+                self._send_json(HTTPStatus.OK, payload)
+                return
+
             if path == "/api/v1/subscriptions":
                 with state.lock:
                     subscriptions = list(state.subscriptions)
@@ -533,6 +788,453 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
             path = parsed.path
             payload = self._read_json()
 
+            if path == "/api/v1/retrieval/answer/page":
+                query_text = str(payload.get("query", "")).strip()
+                retrieval_items = (
+                    [
+                        {
+                            "job_id": MOCK_RSS_JOB_ID,
+                            "video_id": MOCK_VIDEO_ID,
+                            "platform": "rss",
+                            "video_uid": "rss-e2e-001",
+                            "source_url": "https://example.com/retry-policy",
+                            "title": "Retry policy roundup",
+                            "kind": "video_digest_v1",
+                            "mode": "full",
+                            "source": "knowledge_cards",
+                            "snippet": "Recent runs now describe retry handling as the default safe path.",
+                            "score": 3.2,
+                        },
+                        {
+                            "job_id": MOCK_JOB_ID,
+                            "video_id": MOCK_VIDEO_ID,
+                            "platform": "youtube",
+                            "video_uid": "yt-e2e-001",
+                            "source_url": "https://example.com/retry-policy",
+                            "title": "AI Weekly",
+                            "kind": "video_digest_v1",
+                            "mode": "full",
+                            "source": "digest",
+                            "snippet": "Operators should treat retries as the baseline posture.",
+                            "score": 2.7,
+                        },
+                    ]
+                    if "retry" in query_text.lower()
+                    else []
+                )
+                briefing_payload = {
+                    "watchlist": {
+                        "id": MOCK_WATCHLIST_ID,
+                        "name": "Retry policy",
+                        "matcher_type": "topic_key",
+                        "matcher_value": "retry-policy",
+                        "delivery_channel": "dashboard",
+                        "enabled": True,
+                        "created_at": "2026-03-31T10:00:00Z",
+                        "updated_at": "2026-04-01T10:00:00Z",
+                    },
+                    "summary": {
+                        "overview": (
+                            "Retry policy now reads like one shared story across YouTube, "
+                            "Bilibili, and RSS sources."
+                        ),
+                        "source_count": 3,
+                        "run_count": 3,
+                        "story_count": 1,
+                        "matched_cards": 5,
+                        "primary_story_headline": "Retries moved from optional advice to default posture",
+                        "signals": [
+                            {
+                                "story_key": "topic:retry-policy",
+                                "headline": "Retry policy is stabilizing into the baseline path",
+                                "matched_card_count": 5,
+                                "latest_run_job_id": MOCK_RSS_JOB_ID,
+                                "reason": "The newest runs repeat the same retry baseline across source types.",
+                            }
+                        ],
+                    },
+                    "differences": {
+                        "latest_job_id": MOCK_RSS_JOB_ID,
+                        "previous_job_id": MOCK_PREVIOUS_JOB_ID,
+                        "added_topics": ["retry-policy"],
+                        "removed_topics": [],
+                        "added_claim_kinds": ["recommendation"],
+                        "removed_claim_kinds": [],
+                        "new_story_keys": ["topic:retry-policy"],
+                        "removed_story_keys": [],
+                        "compare": {
+                            "job_id": MOCK_RSS_JOB_ID,
+                            "has_previous": True,
+                            "previous_job_id": MOCK_PREVIOUS_JOB_ID,
+                            "changed": True,
+                            "added_lines": 7,
+                            "removed_lines": 2,
+                            "diff_excerpt": "Retry handling moved into the default guidance instead of a footnote.",
+                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                        },
+                    },
+                    "evidence": {
+                        "suggested_story_id": "story-1",
+                        "stories": [
+                            {
+                                "story_id": "story-1",
+                                "story_key": "topic:retry-policy",
+                                "headline": "Retries moved from optional advice to default posture",
+                                "topic_key": "retry-policy",
+                                "topic_label": "Retry policy",
+                                "source_count": 3,
+                                "run_count": 3,
+                                "matched_card_count": 5,
+                                "platforms": ["youtube", "bilibili", "rss"],
+                                "claim_kinds": ["recommendation"],
+                                "source_urls": ["https://example.com/retry-policy"],
+                                "latest_run_job_id": MOCK_RSS_JOB_ID,
+                                "evidence_cards": [
+                                    {
+                                        "card_id": "card-briefing-1",
+                                        "job_id": MOCK_JOB_ID,
+                                        "video_id": MOCK_VIDEO_ID,
+                                        "platform": "youtube",
+                                        "video_title": "AI Weekly",
+                                        "source_url": "https://example.com/retry-policy",
+                                        "created_at": "2026-04-01T10:00:00Z",
+                                        "card_type": "claim",
+                                        "card_title": "Retry baseline became explicit",
+                                        "card_body": "Operators should treat retries as the default safe path.",
+                                        "source_section": "digest",
+                                        "topic_key": "retry-policy",
+                                        "topic_label": "Retry policy",
+                                        "claim_kind": "recommendation",
+                                    }
+                                ],
+                                "routes": {
+                                    "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&topic_key=retry-policy",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                                    "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                                },
+                            }
+                        ],
+                        "featured_runs": [
+                            {
+                                "job_id": MOCK_RSS_JOB_ID,
+                                "video_id": MOCK_VIDEO_ID,
+                                "platform": "rss",
+                                "title": "RSS Digest",
+                                "source_url": "https://example.com/retry-policy",
+                                "created_at": "2026-04-01T11:00:00Z",
+                                "matched_card_count": 2,
+                                "routes": {
+                                    "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                                    "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                                },
+                            }
+                        ],
+                    },
+                }
+                self._record_http(
+                    method="POST",
+                    path=path,
+                    query=parsed.query,
+                    status=int(HTTPStatus.OK),
+                    payload=payload,
+                )
+                self._send_json(
+                    HTTPStatus.OK,
+                    {
+                        "question": query_text,
+                        "mode": payload.get("mode", "keyword"),
+                        "top_k": payload.get("top_k", 6),
+                        "context": {
+                            "watchlist_id": payload.get("watchlist_id"),
+                            "watchlist_name": "Retry policy",
+                            "story_id": payload.get("story_id") or "story-1",
+                            "selected_story_id": "story-1",
+                            "story_headline": "Retries moved from optional advice to default posture",
+                            "topic_key": "retry-policy",
+                            "topic_label": "Retry policy",
+                            "selection_basis": "requested_story_id"
+                            if payload.get("story_id")
+                            else "suggested_story_id",
+                            "mode": payload.get("mode", "keyword"),
+                            "filters": payload.get("filters", {}),
+                            "briefing_available": True,
+                        },
+                        "answer_state": "briefing_grounded",
+                        "answer_headline": "Retries moved from optional advice to default posture",
+                        "answer_summary": (
+                            "Retry policy now reads like one shared story across YouTube, "
+                            "Bilibili, and RSS sources."
+                        ),
+                        "answer_reason": (
+                            '"Retries moved from optional advice to default posture" remains the selected '
+                            "story focus, and the latest compare still shows movement around it."
+                        ),
+                        "answer_confidence": "grounded",
+                        "story_change_summary": (
+                            '"Retries moved from optional advice to default posture" remains the selected '
+                            "story focus, and the latest compare still shows movement around it."
+                        ),
+                        "briefing": briefing_payload,
+                        "story_focus": briefing_payload["evidence"]["stories"][0],
+                        "selected_story": briefing_payload["evidence"]["stories"][0],
+                        "retrieval": {
+                            "query": query_text,
+                            "top_k": payload.get("top_k", 6),
+                            "filters": payload.get("filters", {}),
+                            "items": retrieval_items,
+                        },
+                        "citations": [
+                            {
+                                "kind": "briefing_story",
+                                "label": "Retry policy is stabilizing into the baseline path",
+                                "snippet": "Supported across 3 source families, 3 runs, and 5 matched cards.",
+                                "source_url": None,
+                                "job_id": MOCK_RSS_JOB_ID,
+                                "route": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
+                                "route_label": "Open briefing story",
+                            },
+                            {
+                                "kind": "retrieval_hit",
+                                "label": "knowledge_cards on rss (Retry policy roundup)",
+                                "snippet": "Recent runs now describe retry handling as the default safe path.",
+                                "source_url": "https://example.com/retry-policy",
+                                "job_id": MOCK_RSS_JOB_ID,
+                                "route": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                "route_label": "Open job trace",
+                            },
+                        ],
+                        "fallback_reason": None,
+                        "fallback_next_step": None,
+                        "fallback_actions": [],
+                    },
+                )
+                return
+
+            if path == "/api/v1/retrieval/answer":
+                query_text = str(payload.get("query", "")).strip()
+                retrieval_items = (
+                    [
+                        {
+                            "job_id": MOCK_RSS_JOB_ID,
+                            "video_id": MOCK_VIDEO_ID,
+                            "platform": "rss",
+                            "video_uid": "rss-e2e-001",
+                            "source_url": "https://example.com/retry-policy",
+                            "title": "Retry policy roundup",
+                            "kind": "video_digest_v1",
+                            "mode": "full",
+                            "source": "knowledge_cards",
+                            "snippet": "Recent runs now describe retry handling as the default safe path.",
+                            "score": 3.2,
+                        },
+                        {
+                            "job_id": MOCK_JOB_ID,
+                            "video_id": MOCK_VIDEO_ID,
+                            "platform": "youtube",
+                            "video_uid": "yt-e2e-001",
+                            "source_url": "https://example.com/retry-policy",
+                            "title": "AI Weekly",
+                            "kind": "video_digest_v1",
+                            "mode": "full",
+                            "source": "digest",
+                            "snippet": "Operators should treat retries as the baseline posture.",
+                            "score": 2.7,
+                        },
+                    ]
+                    if "retry" in query_text.lower()
+                    else []
+                )
+                self._record_http(
+                    method="POST",
+                    path=path,
+                    query=parsed.query,
+                    status=int(HTTPStatus.OK),
+                    payload=payload,
+                )
+                self._send_json(
+                    HTTPStatus.OK,
+                    {
+                        "query": query_text,
+                        "context": {
+                            "watchlist_id": payload.get("watchlist_id"),
+                            "watchlist_name": "Retry policy",
+                            "story_id": payload.get("story_id"),
+                            "selected_story_id": "story-1",
+                            "story_headline": "Retries moved from optional advice to default posture",
+                            "topic_key": "retry-policy",
+                            "topic_label": "Retry policy",
+                            "selection_basis": "query_match",
+                            "mode": payload.get("mode", "keyword"),
+                            "filters": payload.get("filters", {}),
+                            "briefing_available": True,
+                        },
+                        "selected_story": {
+                            "story_id": "story-1",
+                            "story_key": "topic:retry-policy",
+                            "headline": "Retries moved from optional advice to default posture",
+                            "topic_key": "retry-policy",
+                            "topic_label": "Retry policy",
+                            "source_count": 3,
+                            "run_count": 3,
+                            "matched_card_count": 5,
+                            "platforms": ["youtube", "bilibili", "rss"],
+                            "claim_kinds": ["recommendation"],
+                            "source_urls": ["https://example.com/retry-policy"],
+                            "latest_run_job_id": MOCK_RSS_JOB_ID,
+                            "routes": {
+                                "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                                "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
+                                "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&topic_key=retry-policy",
+                                "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                                "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                            },
+                        },
+                        "answer": {
+                            "direct_answer": (
+                                f'For "{query_text}", the current briefing most strongly points to '
+                                '"Retries moved from optional advice to default posture".'
+                            ),
+                            "summary": (
+                                "Retry policy now reads like one shared story across YouTube, "
+                                "Bilibili, and RSS sources. Added topics: retry-policy."
+                            ),
+                            "reason": (
+                                '"Retries moved from optional advice to default posture" remains the selected '
+                                "story focus, and the latest compare still shows movement around it."
+                            ),
+                            "confidence": "grounded",
+                        },
+                        "changes": {
+                            "summary": "Added topics: retry-policy. New story keys: topic:retry-policy.",
+                            "story_focus_summary": (
+                                '"Retries moved from optional advice to default posture" remains the selected '
+                                "story focus, and the latest compare still shows movement around it."
+                            ),
+                            "latest_job_id": MOCK_RSS_JOB_ID,
+                            "previous_job_id": MOCK_PREVIOUS_JOB_ID,
+                            "added_topics": ["retry-policy"],
+                            "removed_topics": [],
+                            "added_claim_kinds": ["recommendation"],
+                            "removed_claim_kinds": [],
+                            "new_story_keys": ["topic:retry-policy"],
+                            "removed_story_keys": [],
+                            "compare_excerpt": "Retry guidance moved from optional to default posture.",
+                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                            "has_previous": True,
+                        },
+                        "citations": [
+                            {
+                                "kind": "briefing_story",
+                                "label": "Retry policy is stabilizing into the baseline path",
+                                "snippet": "Supported across 3 source families, 3 runs, and 5 matched cards.",
+                                "source_url": None,
+                                "job_id": MOCK_RSS_JOB_ID,
+                                "route": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
+                                "route_label": "Open briefing story",
+                            },
+                            {
+                                "kind": "retrieval_hit",
+                                "label": "knowledge_cards on rss (Retry policy roundup)",
+                                "snippet": "Recent runs now describe retry handling as the default safe path.",
+                                "source_url": "https://example.com/retry-policy",
+                                "job_id": MOCK_RSS_JOB_ID,
+                                "route": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                "route_label": "Open job trace",
+                            },
+                        ],
+                        "evidence": {
+                            "briefing_overview": (
+                                "Retry policy now reads like one shared story across YouTube, "
+                                "Bilibili, and RSS sources."
+                            ),
+                            "selected_story_id": "story-1",
+                            "selected_story_headline": "Retries moved from optional advice to default posture",
+                            "latest_job_id": MOCK_RSS_JOB_ID,
+                            "citation_count": 2,
+                            "retrieval_hit_count": len(retrieval_items),
+                            "retrieval_items": retrieval_items,
+                            "story_cards": [
+                                {
+                                    "card_id": "card-1",
+                                    "job_id": MOCK_JOB_ID,
+                                    "platform": "youtube",
+                                    "source_url": "https://example.com/retry-policy",
+                                    "title": "Retry policy became explicit",
+                                    "body": "The workflow now treats retries as first-line safety.",
+                                    "source_section": "Digest",
+                                }
+                            ],
+                        },
+                        "fallback": {
+                            "status": "grounded",
+                            "reason": None,
+                            "suggested_next_step": None,
+                            "actions": [],
+                        },
+                    },
+                )
+                return
+
+            if path == "/api/v1/retrieval/search":
+                query_text = str(payload.get("query", "")).strip().lower()
+                items = (
+                    [
+                        {
+                            "job_id": MOCK_RSS_JOB_ID,
+                            "video_id": MOCK_VIDEO_ID,
+                            "platform": "rss",
+                            "video_uid": "rss-e2e-001",
+                            "source_url": "https://example.com/retry-policy",
+                            "title": "Retry policy roundup",
+                            "kind": "video_digest_v1",
+                            "mode": "full",
+                            "source": "knowledge_cards",
+                            "snippet": "Recent runs now describe retry handling as the default safe path.",
+                            "score": 3.2,
+                        },
+                        {
+                            "job_id": MOCK_JOB_ID,
+                            "video_id": MOCK_VIDEO_ID,
+                            "platform": "youtube",
+                            "video_uid": "yt-e2e-001",
+                            "source_url": "https://example.com/retry-policy",
+                            "title": "AI Weekly",
+                            "kind": "video_digest_v1",
+                            "mode": "full",
+                            "source": "digest",
+                            "snippet": "Operators should treat retries as the baseline posture.",
+                            "score": 2.7,
+                        },
+                    ]
+                    if "retry" in query_text
+                    else []
+                )
+                self._record_http(
+                    method="POST",
+                    path=path,
+                    query=parsed.query,
+                    status=int(HTTPStatus.OK),
+                    payload=payload,
+                )
+                self._send_json(
+                    HTTPStatus.OK,
+                    {
+                        "query": payload.get("query", ""),
+                        "top_k": payload.get("top_k", 6),
+                        "filters": payload.get("filters", {}),
+                        "items": items,
+                    },
+                )
+                return
+
             if path == "/api/v1/ingest/poll":
                 state.record("poll_ingest", payload)
                 self._record_http(
@@ -581,16 +1283,36 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
             if path == "/api/v1/subscriptions":
                 state.record("upsert_subscription", payload)
                 now = utc_now()
+                platform = str(payload.get("platform", "youtube"))
+                adapter_type = payload.get("adapter_type") or "rsshub_route"
+                support_tier = (
+                    "strong_supported"
+                    if (
+                        (
+                            platform == "youtube"
+                            and payload.get("source_type") == "youtube_channel_id"
+                        )
+                        or (platform == "bilibili" and payload.get("source_type") == "bilibili_uid")
+                    )
+                    else "generic_supported"
+                )
+                content_profile = (
+                    "article"
+                    if adapter_type == "rss_generic" or platform in {"rss", "rsshub", "generic"}
+                    else "video"
+                )
                 with state.lock:
                     new_id = _subscription_uuid(len(state.subscriptions) + 1)
                     subscription = {
                         "id": new_id,
-                        "platform": payload.get("platform", "youtube"),
+                        "platform": platform,
                         "source_type": payload.get("source_type", "url"),
                         "source_value": payload.get("source_value", ""),
                         "source_name": payload.get("source_name")
                         or payload.get("source_value", ""),
-                        "adapter_type": payload.get("adapter_type") or "rsshub_route",
+                        "support_tier": support_tier,
+                        "content_profile": content_profile,
+                        "adapter_type": adapter_type,
                         "source_url": payload.get("source_url"),
                         "rsshub_route": payload.get("rsshub_route") or "",
                         "category": payload.get("category") or "misc",
@@ -623,7 +1345,9 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                         status=int(HTTPStatus.BAD_REQUEST),
                         payload=payload,
                     )
-                    self._send_json(HTTPStatus.BAD_REQUEST, {"detail": "invalid batch update payload"})
+                    self._send_json(
+                        HTTPStatus.BAD_REQUEST, {"detail": "invalid batch update payload"}
+                    )
                     return
                 with state.lock:
                     id_set = {str(item) for item in ids}
@@ -801,6 +1525,8 @@ def seed_subscription(state: MockApiState, subscription_id: str, source_value: s
                 "source_type": "url",
                 "source_value": source_value,
                 "source_name": source_value,
+                "support_tier": "strong_supported",
+                "content_profile": "video",
                 "adapter_type": "rsshub_route",
                 "source_url": None,
                 "rsshub_route": "/youtube/channel/seeded",

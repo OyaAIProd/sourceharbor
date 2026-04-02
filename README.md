@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <strong>AI knowledge control tower and MCP server for YouTube, Bilibili, and RSS.</strong>
+  <strong>AI knowledge control tower and MCP server with strong YouTube/Bilibili support plus a generalized RSSHub and RSS intake substrate.</strong>
 </p>
 
 <p align="center">
@@ -56,6 +56,16 @@ knowledge cards, traceable job runs, and MCP-ready operations. It stays
 source-first and proof-first: you can inspect it, run it locally, and verify
 each surface instead of trusting product copy on vibes alone.
 
+The honest intake boundary today is:
+
+- **strong support:** YouTube channels and Bilibili creators
+- **general support:** RSSHub routes and generic RSS/Atom feeds
+- **not yet claimable:** route-by-route verification for the full RSSHub universe
+
+That intake split now lives behind one shared template catalog instead of
+separate Web-only presets: the `/subscriptions` front door, HTTP API, and MCP
+surface all point at the same strong-supported vs generalized intake contract.
+
 It is strongest when you read it as a control tower for source intake:
 
 - operators use the Web command center
@@ -84,7 +94,7 @@ This is the part that makes SourceHarbor more than a pretty README:
 The hook is simple:
 
 - **Search** gives the evidence surface.
-- **Ask** gives the truthful question-shaped front door.
+- **Ask** gives the story-aware, briefing-backed answer/change/evidence front door, now pushed toward a server-owned page payload instead of a front-end stitched view model.
 - **MCP** gives Codex / Claude Code / builder reuse.
 - **Ops + compounders** make the system worth coming back to instead of treating it like a one-shot summarizer.
 
@@ -95,7 +105,8 @@ The fastest way to understand the product is to open the highest-value rooms fir
 | Front door | What it means | Current truth |
 | --- | --- | --- |
 | **Search** | Operator-facing evidence search over digests, knowledge cards, transcripts, and related artifacts | Real Web route after local boot: `/search` |
-| **Ask your sources** | Truthful MVP: grounded search with citation jumps, not a hidden answer generator | Real Web route after local boot: `/ask` + [grounded contract](./docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md) |
+| **Ask your sources** | Story-aware, briefing-backed Ask front door: with watchlist and story context it returns the current answer, recent changes, and citation drill-down through a server-owned page payload; without context it falls back to grounded retrieval | Real Web route after local boot: `/ask` + [grounded contract](./docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md) |
+| **Briefings** | Lowest-cognitive-load unified story view for one watchlist: summary first, then differences, then evidence drill-down, with direct handoff into story-aware Ask | Real Web route after local boot: `/briefings`; grounded in watchlists, merged stories, jobs, and knowledge |
 | **MCP** | Agent-facing surface on top of the same API and pipeline state | [docs/mcp-quickstart.md](./docs/mcp-quickstart.md) + `./bin/dev-mcp` |
 | **Ops / doctor** | First-run diagnosis, operator triage, and next-step guidance for runtime truth, failed jobs, ingest issues, and live-hardening gates | `./bin/doctor` + `/ops` after local boot + [docs/runtime-truth.md](./docs/runtime-truth.md) |
 | **Compounders** | Watchlists, trends, evidence bundles, and read-only sample playgrounds that make SourceHarbor worth coming back to | `/watchlists`, `/trends`, `/playground`, and `/use-cases/*` |
@@ -119,6 +130,7 @@ Think of this as the label on the box, not fine print:
 - SourceHarbor is **not** presented as a hosted SaaS or online signup product.
 - Agent Autopilot is **not** a shipped capability; it remains a bounded spike direction.
 - Hosted Team Workspace is **not** a current promise; it remains a deferred bet.
+- SourceHarbor does **not** claim that every RSSHub route has already been individually validated.
 
 If you need the explicit bet boundaries, read:
 
@@ -133,6 +145,7 @@ These are the surfaces that make SourceHarbor reusable instead of one-and-done:
 | --- | --- | --- |
 | **Watchlists** | Save a topic, claim kind, or source matcher as a durable tracking object | Real route: `/watchlists` |
 | **Trends** | Compare recent matched runs for a watchlist and show what was added or removed | Real route: `/trends` |
+| **Briefings** | Collapse one watchlist into a unified story surface that starts with the current summary, highlights recent deltas, and keeps evidence one click away | Real route: `/briefings`; truthful MVP rather than a fully automatic fusion engine |
 | **Evidence bundle** | Export one job as a reusable internal bundle with digest, trace summary, knowledge cards, and artifact manifest | Real route on demand: `/api/v1/jobs/<job-id>/bundle` |
 | **Playground** | Explore clearly labeled sample corpus and demo outputs without pretending they are live operator state | Real route: `/playground` + [docs/samples/README.md](./docs/samples/README.md) |
 | **Use-case pages** | Route newcomer traffic into truthful capability stories for YouTube, Bilibili, RSS, MCP, and research workflows | Real routes: `/use-cases/youtube`, `/use-cases/bilibili`, `/use-cases/rss`, `/use-cases/mcp-use-cases`, `/use-cases/research-pipeline` |
@@ -211,13 +224,13 @@ For the lightweight evaluation path, go to [docs/see-it-fast.md](./docs/see-it-f
 
 | Surface | What you can do | Why it matters |
 | :-- | :-- | :-- |
-| **Subscriptions** | Track YouTube, Bilibili, and RSS sources | Build a durable intake layer instead of pasting one-off URLs |
+| **Subscriptions** | Start from strong YouTube/Bilibili templates or widen into RSSHub and generic RSS intake through the shared backend template catalog | Build a durable intake layer without pretending every source family is equally proven |
 | **Digest feed** | Read generated summaries in a single operator flow | Turn long-form content into an actionable daily reading stream |
-| **Search & Ask** | Search evidence and ask grounded questions across the same knowledge surface | Make the knowledge layer visible instead of keeping retrieval buried in API/MCP |
+| **Search & Ask** | Search raw evidence and turn a watchlist or selected story briefing into an answer + change + citation flow on one page, with less front-end glue and a more server-owned Ask payload | Make the knowledge layer visible without pretending every question already has a global answer engine |
 | **Job trace** | Inspect pipeline status, retries, degradations, and artifacts | Debug with evidence instead of guessing what happened |
 | **Notifications** | Configure and send digests outward when the notification lane is enabled | Push results outward instead of trapping them in a database |
 | **Retrieval** | Search over generated artifacts | Reuse digests as a searchable knowledge layer |
-| **MCP tools** | Expose ingestion, jobs, artifacts, search, and notifications to agents | Let assistants act on the same system without custom glue code |
+| **MCP tools** | Expose subscriptions, ingestion, jobs, artifacts, search, and notifications to agents | Let assistants act on the same system without custom glue code |
 
 ## Evaluate Fast: No-Boot Tour
 
@@ -320,7 +333,7 @@ curl -sS "${SOURCE_HARBOR_API_BASE_URL}/api/v1/jobs/<job-id>" | jq
 Open these front-door routes after the stack is up:
 
 - `/search` for grounded search
-- `/ask` for the truthful Ask MVP
+- `/ask` for the story-aware, briefing-backed Ask front door, now leaning on a server-owned page payload
 - `/mcp` for the in-product MCP front door
 - `/ops` for operator diagnostics and hardening gates
 

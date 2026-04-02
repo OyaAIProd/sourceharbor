@@ -20,6 +20,7 @@ const MESSAGES = {
 				ops: "Ops inbox",
 				watchlists: "Watchlists",
 				trends: "Trends",
+				briefings: "Briefings",
 				playground: "Playground",
 				proof: "Proof",
 				knowledge: "Knowledge",
@@ -514,22 +515,97 @@ const MESSAGES = {
 		subscriptionsPage: {
 			metadataTitle: "Subscriptions",
 			metadataDescription:
-				"SourceHarbor source subscription control surface for YouTube, Bilibili, RSSHub, and RSS feeds, with priority, category, and bulk update workflow.",
+				"SourceHarbor source intake front door for strong YouTube and Bilibili presets, general RSSHub routes, and generic RSS feeds, with guided template setup and bulk subscription management.",
 			kicker: "SourceHarbor Sources",
 			heroTitle: "Subscriptions",
 			heroSubtitle:
-				"Manage source settings, categories, and priority so ingestion and digest pipelines always start from stable inputs.",
+				"Start with strong YouTube and Bilibili presets, branch into RSSHub routes or generic feeds when the source universe widens, and keep the intake contract honest from the first click.",
+			supportMatrixTitle: "Support levels at a glance",
+			supportMatrixDescription:
+				"Think of this like an intake menu. Some source shapes are already plated and tested, some are broadly useful, and some still need route-level proof before you trust them every day.",
+			supportLevels: {
+				strong: {
+					title: "Strong support",
+					description:
+						"YouTube channels and Bilibili creators are the clearest, most guided subscription paths right now.",
+				},
+				general: {
+					title: "General support",
+					description:
+						"RSSHub routes and generic RSS feeds widen the universe, but the quality still depends on the route or feed you bring in.",
+				},
+				proving: {
+					title: "Needs proof",
+					description:
+						"Route-specific or unusual source patterns should be treated as real experiments until the feed stays stable in live runs.",
+				},
+			},
+			templateSectionTitle: "Choose a source template",
+			templateSectionDescription:
+				"Templates pre-wire platform, source type, and adapter defaults so the form feels like guided intake instead of a raw internal editor.",
+			templateButton: "Use template",
+			templateSelectedButton: "Current template",
+			openMergedStoriesButton: "Open merged stories",
+			intakeGuideTitle: "Selected intake contract",
+			intakeGuideDescription:
+				"This panel spells out what the current template is optimized for, which field matters first, and where the proof boundary still lives.",
+			guideLabels: {
+				supportLevel: "Support level",
+				platform: "Platform",
+				sourceType: "Source type",
+				adapterType: "Adapter",
+				fillNow: "Fill now",
+				proofBoundary: "Proof boundary",
+			},
+			templates: {
+				youtubeChannel: {
+					title: "YouTube channel",
+					description:
+						"Strong preset for recurring YouTube intake when you already know the channel ID, handle, or landing URL.",
+					fillNow:
+						"Start with the channel ID or a stable channel URL, then keep the RSSHub route aligned.",
+					proofBoundary:
+						"YouTube is a strong path today, but route health still matters if you depend on RSSHub for intake.",
+				},
+				bilibiliCreator: {
+					title: "Bilibili creator",
+					description:
+						"Strong preset for Bilibili creators when the UID is known and you want a repeatable creator feed.",
+					fillNow:
+						"Use the creator UID as the primary identifier and keep the companion RSSHub route ready.",
+					proofBoundary:
+						"Bilibili creator intake is productized, but route breakage or source-side changes still need monitoring.",
+				},
+				rsshubRoute: {
+					title: "RSSHub route",
+					description:
+						"General preset for wider source coverage when RSSHub can normalize a route into a usable feed.",
+					fillNow:
+						"Bring a source URL or handle plus the exact RSSHub route you want SourceHarbor to poll.",
+					proofBoundary:
+						"Do not assume every RSSHub route is equally solid. Treat each route as proven only after it survives real runs.",
+				},
+				genericRss: {
+					title: "Generic RSS feed",
+					description:
+						"General preset for any source that already exposes a clean RSS or Atom feed without a platform-specific shortcut.",
+					fillNow:
+						"Paste the exact RSS or Atom feed URL into Source value. Leave Source URL empty unless you want to store the same feed URL explicitly.",
+					proofBoundary:
+						"Feed quality varies a lot. If the feed is noisy or incomplete, the intake surface should stay honest about that.",
+				},
+			},
 			loadErrorTitle: "Unable to load subscriptions",
 			retryCurrentPageButton: "Retry this page",
-			editorTitle: "Create or update a subscription",
+			editorTitle: "Guided universe editor",
 			editorDescription:
-				"Choose a source type first, then enter the matching source value. Only fill in Source URL when using Generic RSS.",
+				"The selected template pre-fills the intake shape so you can focus on the real source details instead of reconstructing the contract from scratch.",
 			formLabels: {
 				platform: "Platform",
 				sourceType: "Source type",
 				sourceValue: "Source value",
 				adapterType: "Adapter type",
-				sourceUrl: "Source URL (for rss_generic)",
+				sourceUrl: "Source URL (optional)",
 				rsshubRoute: "RSSHub route (optional)",
 				category: "Category",
 				tags: "Tags (comma-separated, optional)",
@@ -553,11 +629,13 @@ const MESSAGES = {
 			platformOptions: {
 				youtube: "YouTube",
 				bilibili: "Bilibili",
+				rss: "RSS / web source",
 			},
 			sourceTypeOptions: {
 				url: "Source URL",
 				youtubeChannelId: "YouTube channel ID",
 				bilibiliUid: "Bilibili user UID",
+				rsshubRoute: "RSSHub route",
 			},
 			adapterTypeOptions: {
 				rsshubRoute: "RSSHub route",
@@ -582,13 +660,13 @@ const MESSAGES = {
 			searchSubtitle:
 				"This is the real operator-facing retrieval surface. It turns digests, transcripts, outlines, and knowledge cards into auditable jumps.",
 			askSubtitle:
-				"This is an honest Wave 1 Ask MVP. The current repo truth supports grounded, search-first retrieval, not a fully generated answer layer.",
+				"This is a briefing-backed Ask front door. With watchlist context, it can answer with the current story, recent changes, and citations. Without context, it falls back to raw grounded retrieval.",
 			searchFormTitle: "Search your sources",
 			askFormTitle: "Ask in grounded mode",
 			searchFormDescription:
-				"`keyword` is the steadiest mode right now. `semantic` and `hybrid` are wired, but still presented as experimental.",
+				"`keyword` is the steadiest mode right now. Search already spans strong video sources plus RSS-backed source families, while `semantic` and `hybrid` stay clearly marked as experimental.",
 			askFormDescription:
-				"Narrow the question into cited retrieval first, then jump into job trace, knowledge cards, and the original source.",
+				"Bring a watchlist or briefing context, narrow the question into cited retrieval, then keep the answer, recent changes, and receipts on one page.",
 			queryLabel: "Query",
 			questionLabel: "Question",
 			queryPlaceholder: "agent workflow, retry policy, knowledge cards...",
@@ -596,18 +674,42 @@ const MESSAGES = {
 				"What did recent runs say about retry policy, agent workflow, or knowledge cards?",
 			searchHint:
 				"Every result should jump back into job trace, knowledge, or the source URL.",
-			askHint: "This MVP returns grounded evidence candidates first.",
+			askHint:
+				"Attach a watchlist briefing when you want answer + changes + citations. Without context, Ask stays in raw grounded retrieval mode.",
+			askContextLabel: "Briefing context",
+			askContextTitle: "Context that Ask can stand on",
+			askContextDescription:
+				"Pick a watchlist or open Ask from Briefings so this page can reuse a real briefing before it looks for question-level evidence.",
+			askContextEmptyOption: "No briefing context yet",
+			askContextMissingTitle: "Add briefing context first",
+			askContextMissingDescription:
+				"Ask can still search raw evidence, but it cannot honestly frame an answer-and-change view until you anchor it to a watchlist briefing.",
+			askContextTopicLabel: "Story or topic focus",
+			askSelectionBasisLabel: "Selected by",
+			askSelectionBasis: {
+				requested_story_id: "Requested story",
+				query_match: "Question match",
+				suggested_story_id: "Suggested story",
+				first_story: "First visible story",
+				none: "No story focus",
+			},
+			askOpenBriefingButton: "Open selected briefing",
+			askClearContextButton: "Clear briefing context",
+			askClearStoryContextButton: "Clear story focus",
 			modeLabel: "Mode",
 			groundingModeLabel: "Grounding mode",
 			platformLabel: "Platform",
+			platformPlaceholder:
+				"youtube, bilibili, rss, rsshub, github, newsletter ...",
 			topKLabel: "Top K",
 			searchButton: "Search",
 			askButton: "Ask",
 			clearButton: "Clear",
 			platformOptions: {
-				all: "All platforms",
+				all: "All source families",
 				youtube: "YouTube",
 				bilibili: "Bilibili",
+				rss: "RSS / web source",
 			},
 			modeOptions: {
 				keyword: "Keyword",
@@ -617,16 +719,17 @@ const MESSAGES = {
 			searchTruthTitle: "Current truth",
 			askTruthTitle: "Grounded Ask mode",
 			searchTruthPrimary:
-				"Search is a production-facing front door over a real retrieval backend.",
+				"Search is a production-facing front door over a real retrieval backend, and the retrieval substrate already reaches beyond two video platforms.",
 			searchTruthSecondary:
-				"Wave 1 keeps the boundary honest: cited retrieval first, stronger answer synthesis later.",
+				"The default picker stays intentionally curated while broader source families continue through the same backend contracts and query surface.",
 			askTruthPrimary:
-				"What exists today: cited retrieval, job trace, knowledge cards, and original source links.",
+				"What exists today: a briefing-backed answer contract for watchlist-scoped Ask, plus raw retrieval, job trace, knowledge cards, and original source links.",
 			askTruthSecondary:
-				"What does not exist yet: a verified answer payload with stable citation spans and answer-level hallucination guards.",
-			askTruthNote: "It does not synthesize a free-form answer layer yet.",
+				"What does not exist yet: a global free-form answer engine that works without briefing context or real citations.",
+			askTruthNote:
+				"Without watchlist context, Ask still stays honest by falling back to grounded retrieval instead of pretending the answer model is universal.",
 			askTruthContractLead:
-				"Current contract: retrieval-first, citation-first, and operator auditable.",
+				"Current contract: answer first, recent changes second, cited drill-down third, and operator auditable throughout.",
 			searchTruthCta: "Open Ask mode",
 			askTruthCta: "Open Ask details",
 			openRawSearchButton: "Open raw search",
@@ -638,9 +741,9 @@ const MESSAGES = {
 			searchContractSecondary:
 				"If the corpus is empty, Search should show an honest empty state instead of inventing an answer.",
 			askContractPrimary:
-				"Use Ask to narrow a question into evidence-backed result candidates, then follow the citations into job trace, knowledge, or original source pages.",
+				"Use Ask with a watchlist-backed briefing when you want the current answer, the newest change summary, and the evidence trail in one place.",
 			askContractSecondary:
-				"This is truthful by design: no hidden answer layer, no unverifiable synthesis.",
+				"If you do not attach a watchlist briefing, Ask should stay truthful by dropping back to raw grounded retrieval instead of inventing an answer layer.",
 			searchResultsTitle: "Results",
 			askResultsTitle: "Grounded result set",
 			askErrorTitle: "Ask failed",
@@ -652,9 +755,46 @@ const MESSAGES = {
 			askSummaryTitle: "Best evidence for your question",
 			askSummaryQuestionPrefix: "Question",
 			askSummaryHitsPrefix: "Evidence hits",
+			askAnswerTitle: "Best current answer",
+			askAnswerGroundedState: "Briefing-grounded",
+			askAnswerNeedsContextState: "Needs context",
+			askAnswerUnavailableState: "Briefing unavailable",
+			askAnswerNoConfidentState: "No confident answer yet",
+			askAnswerGroundedDescription:
+				"SourceHarbor can now answer this as a briefing-aware front door: current answer first, recent change next, receipts underneath.",
+			askAnswerContextOnlyDescription:
+				"No question is loaded yet, so Ask is showing the current briefing answer before it narrows further.",
+			askAnswerUnavailableDescription:
+				"The watchlist exists, but the briefing object is unavailable right now, so Ask cannot frame an honest answer layer yet.",
+			askAnswerNoConfidentDescription:
+				"The selected briefing gives context, but this question did not return enough grounded evidence to claim a confident answer.",
+			askAnswerGroundedNote:
+				"This answer is grounded in the current watchlist briefing and kept honest by the cited evidence below.",
+			askAnswerContextOnlyNote:
+				"This is the current briefing answer. Add or refine a question to narrow it into question-level evidence.",
+			askAnswerFallbackTitle: "Current briefing answer",
+			askAnswerWhyLabel: "Why this is the current answer",
+			askStoryFocusTitle: "Story focus driving this answer",
+			askStoryFocusDescription:
+				"This is the story Ask is currently standing on before it fans out into change tracking and evidence drill-down.",
+			askStorySwitcherTitle: "Switch story focus",
+			askStorySwitcherDescription:
+				"Keep the same question, but pivot the answer layer onto another story from this briefing when you need to compare narratives.",
 			askNoEvidenceTitle: "No cited evidence yet",
 			askNoEvidenceDescription:
 				"Try a narrower question, switch to keyword mode, or process more sources before treating this as a missing capability.",
+			askQuestionEvidenceTitle: "Evidence for this question",
+			askQuestionEvidenceDescription:
+				"These hits come from the current retrieval layer. Use them to verify or challenge the answer above.",
+			askCitationsTitle: "Citations behind this answer",
+			askCitationsDescription:
+				"These are the shortest route back to the exact story, card, compare view, or source that supports the answer above.",
+			askOpenCitationRouteButton: "Open cited route",
+			askFeaturedRunsDescription:
+				"These runs are still the fastest way to inspect the newest receipts behind the current answer.",
+			askChangesFallbackDescription:
+				"Recent changes only become honest on Ask after a watchlist briefing is attached.",
+			askFallbackActionsTitle: "Helpful next steps",
 			searchResultsPrefix: "Showing cited retrieval results",
 			askResultsPrefix: "Evidence candidates",
 			searchRunPrompt: "Run a query to inspect grounded retrieval results.",
@@ -696,7 +836,8 @@ const MESSAGES = {
 			saveButton: "Save watchlist",
 			updateButton: "Update watchlist",
 			createNewButton: "Create new",
-			openTrendViewButton: "Open trend view",
+			openTrendViewButton: "Open merged story view",
+			openBriefingButton: "Open briefing",
 			alertTitle: "Alert readiness",
 			alertDescription:
 				"SourceHarbor can already persist watchlists and reuse them inside the dashboard. Whether external alerts are ready depends on the notification gate, not on whether the form submission succeeds.",
@@ -738,26 +879,120 @@ const MESSAGES = {
 		trendsPage: {
 			metadataTitle: "Trends",
 			metadataDescription:
-				"Cross-run trend and diff view for SourceHarbor watchlists, showing recent topic and claim changes across jobs and knowledge cards.",
+				"Cross-run trend and merged story view for SourceHarbor watchlists, showing how repeated themes are converging across multiple sources and recent evidence runs.",
 			kicker: "SourceHarbor Trends",
-			heroTitle: "Cross-run trend",
+			heroTitle: "Merged source stories",
 			heroSubtitle:
-				"This is not fake analytics. It only shows the real topic and claim changes that the current watchlist matched across recent runs.",
+				"This is where repeated watchlist hits start looking like a product surface instead of scattered diffs. The merged story stays visible, and the raw run receipts remain right below it.",
 			chooseTitle: "Choose a watchlist",
 			chooseDescription:
-				"Wave 1 keeps the MVP tightly focused: pick one watchlist and inspect what changed across the latest runs.",
+				"Pick one watchlist to inspect source coverage, merged stories, and the latest evidence runs without pretending the system already has a magical global narrative layer.",
 			empty:
-				"Save at least one watchlist first so this page can show a real cross-run view instead of an empty selector.",
+				"Save at least one watchlist first so this page can show real merged stories instead of an empty selector.",
 			matcherLabel: "Matcher",
 			recentRunsLabel: "Recent runs",
 			matchedCardsLabel: "Matched cards",
+			sourceCoverageTitle: "Source coverage",
+			sourceCoverageDescription:
+				"These are the source families currently feeding this watchlist, based on real matched runs and cards.",
+			sourceCoverageRunsLabel: "Runs",
+			sourceCoverageCardsLabel: "Matched cards",
+			mergedStoriesTitle: "Merged stories",
+			mergedStoriesDescription:
+				"Each card below groups the same topic or claim across multiple runs so the repeated story becomes visible without hiding the underlying receipts.",
+			mergedStoriesEmpty:
+				"No repeated topic or claim group is visible yet. As more runs land, this page will start surfacing the repeated story here.",
+			sourceCountLabel: "Sources",
+			runCountLabel: "Runs",
+			latestSeenLabel: "Latest seen",
+			recentEvidenceTitle: "Recent evidence runs",
+			recentEvidenceDescription:
+				"Keep the raw run-by-run movement in view so every merged story stays auditable.",
+			openBriefingButton: "Open briefing",
+			editWatchlistButton: "Edit watchlist",
 			openJobButton: "Open job",
 			openKnowledgeButton: "Open knowledge",
+			openSourceButton: "Open source",
 			addedTopicsPrefix: "Added topics",
 			removedTopicsPrefix: "Removed topics",
 			addedClaimKindsPrefix: "Added claim kinds",
 			removedClaimKindsPrefix: "Removed claim kinds",
 			noneValue: "none",
+		},
+		briefingsPage: {
+			metadataTitle: "Briefings",
+			metadataDescription:
+				"Unified watchlist briefing surface for SourceHarbor, showing what the current story is, what changed, and which evidence to inspect next.",
+			kicker: "SourceHarbor Briefings",
+			heroTitle: "Unified briefings",
+			heroSubtitle:
+				"Start with the current story, then inspect what changed, then drill into the receipts. This is the smallest truthful unified story line built on watchlists, merged stories, jobs, and knowledge.",
+			truthTitle: "Truthful product line",
+			truthDescription:
+				"This page reuses real watchlists, merged stories, and evidence links. It is not claiming a fully automatic cross-source fusion engine yet.",
+			truthPrimary:
+				"Think of it like a daily briefing board: first the lead paragraph, then the deltas, then the documents underneath.",
+			truthSecondary:
+				"It stays grounded in watchlists, jobs, knowledge cards, and original sources so you can keep checking the receipts.",
+			openWatchlistsButton: "Open watchlists",
+			openTrendsButton: "Open trends",
+			chooseTitle: "Choose a briefing",
+			chooseDescription:
+				"Pick a watchlist to load the corresponding briefing object. The front door is unified, but the underlying tracking object is still explicit.",
+			empty:
+				"Save at least one watchlist first so this page can load a real briefing instead of an empty shell.",
+			unavailableTitle: "Briefing unavailable",
+			unavailableDescription:
+				"The selected watchlist exists, but its briefing object is unavailable right now. Retry after the API route is ready or the backend response recovers.",
+			overviewTitle: "What the story is saying now",
+			overviewDescription:
+				"Read this first. It is the operator summary for what multiple sources are currently repeating about the same thing.",
+			sourcesLabel: "Sources",
+			runsLabel: "Runs",
+			storiesLabel: "Story groups",
+			matchedCardsLabel: "Matched cards",
+			latestSeenLabel: "Latest seen",
+			generatedLabel: "Generated",
+			currentWatchlistLabel: "Current watchlist",
+			matcherLabel: "Matcher",
+			primaryStoryLabel: "Lead story",
+			signalsTitle: "Current signals",
+			noSignals: "No highlighted signals yet.",
+			openTrendButton: "Open trend view",
+			editWatchlistButton: "Edit watchlist",
+			askBriefingButton: "Ask this briefing",
+			differencesTitle: "What changed recently",
+			differencesDescription:
+				"Use this like the delta section of a briefing memo. Each row points at a change worth checking instead of forcing you to diff every run by hand.",
+			differencesEmpty:
+				"No highlighted differences yet. As the briefing route matures, this section will surface the newest meaningful changes here.",
+			addedTopicsLabel: "Added topics",
+			removedTopicsLabel: "Removed topics",
+			addedClaimKindsLabel: "Added claim kinds",
+			removedClaimKindsLabel: "Removed claim kinds",
+			newStoryKeysLabel: "New story keys",
+			removedStoryKeysLabel: "Removed story keys",
+			compareTitle: "Compare excerpt",
+			noCompareExcerpt: "No compare excerpt is available yet.",
+			openCompareButton: "Open compare",
+			changeJobsLabel: "Jobs behind this change",
+			openJobButton: "Open job",
+			noneValue: "none",
+			evidenceTitle: "Evidence drill-down",
+			evidenceDescription:
+				"Every evidence card keeps the receipt trail open so you can jump back to job trace, knowledge cards, or the original source without leaving the briefing.",
+			evidenceEmpty:
+				"No evidence cards are attached yet. The summary can exist before the drill-down is populated.",
+			storyEvidenceTitle: "Story evidence",
+			featuredRunsTitle: "Featured runs",
+			askStoryButton: "Ask about this story",
+			openKnowledgeButton: "Open knowledge",
+			openSourceButton: "Open source",
+			openBriefingButton: "Open briefing",
+			unknownStoryLabel: "Unlabeled story",
+			untitledEvidenceLabel: "Untitled evidence",
+			noExcerpt: "No excerpt available yet.",
+			platformUnknown: "Unknown platform",
 		},
 		proofPage: {
 			metadataTitle: "Proof",
@@ -948,6 +1183,7 @@ const MESSAGES = {
 				ops: "Ops inbox",
 				watchlists: "Watchlists",
 				trends: "Trends",
+				briefings: "Briefings",
 				playground: "Playground",
 				proof: "Proof",
 				knowledge: "Knowledge",
@@ -1432,22 +1668,96 @@ const MESSAGES = {
 		subscriptionsPage: {
 			metadataTitle: "Subscriptions",
 			metadataDescription:
-				"SourceHarbor 的 source subscription 控制面，管理 YouTube、Bilibili、RSSHub 与 RSS feed 的 priority、category 与 bulk update workflow。",
+				"SourceHarbor 的 source intake 前门，突出 YouTube / Bilibili 强支持，同时接住 RSSHub 路由和通用 RSS feed，并用模板化引导来管理订阅。",
 			kicker: "SourceHarbor Sources",
 			heroTitle: "Subscriptions",
 			heroSubtitle:
-				"管理 source 设置、分类和优先级，让 ingestion 与 digest pipeline 总是从稳定输入开始。",
+				"先从 YouTube 和 Bilibili 的强支持模板起步，再把宇宙扩到 RSSHub 路由和通用 feed，让 intake 从第一步就像产品前门，而不是内部字段编辑器。",
+			supportMatrixTitle: "支持层级一眼看懂",
+			supportMatrixDescription:
+				"你可以把这里理解成 intake 菜单。某些来源已经是主打套餐，某些是通用入口，还有一些需要先经过路线级验证，不能一上来就吹成稳定能力。",
+			supportLevels: {
+				strong: {
+					title: "强支持",
+					description:
+						"YouTube 频道和 Bilibili 创作者是当前最成形、最有引导感的订阅路径。",
+				},
+				general: {
+					title: "通用支持",
+					description:
+						"RSSHub 路由和通用 RSS feed 可以扩展 source universe，但质量仍取决于具体 route 或 feed 本身。",
+				},
+				proving: {
+					title: "待证明",
+					description:
+						"越偏门、越依赖 route 细节的来源形态，就越应该先当成真实实验，而不是默认稳定能力。",
+				},
+			},
+			templateSectionTitle: "先选 source template",
+			templateSectionDescription:
+				"模板会先帮你锁定平台、source type 和 adapter 默认值，让这页更像引导式 intake，而不是生硬的内部编辑表单。",
+			templateButton: "使用模板",
+			templateSelectedButton: "当前模板",
+			openMergedStoriesButton: "打开 merged stories",
+			intakeGuideTitle: "当前 intake 契约",
+			intakeGuideDescription:
+				"这块会直白告诉你：当前模板最适合什么、应该先填哪一项，以及证明边界还在哪里。",
+			guideLabels: {
+				supportLevel: "支持层级",
+				platform: "平台",
+				sourceType: "来源类型",
+				adapterType: "适配器",
+				fillNow: "现在先填",
+				proofBoundary: "证明边界",
+			},
+			templates: {
+				youtubeChannel: {
+					title: "YouTube 频道",
+					description:
+						"适合稳定的 YouTube intake。已知频道 ID、handle 或 landing URL 时，这条路最顺。",
+					fillNow:
+						"优先填频道 ID 或稳定频道 URL，再让 RSSHub route 跟它保持一致。",
+					proofBoundary:
+						"YouTube 本身是强支持，但如果你依赖 RSSHub intake，仍要看 route 是否长期稳定。",
+				},
+				bilibiliCreator: {
+					title: "Bilibili 创作者",
+					description:
+						"适合已知 UID 的 Bilibili 创作者，目标是把 creator feed 做成可重复 intake。",
+					fillNow: "先填创作者 UID 作为主标识，再补配套 RSSHub route。",
+					proofBoundary:
+						"Bilibili 创作者 intake 已经比较成形，但 route 断裂或上游变化仍需要盯住。",
+				},
+				rsshubRoute: {
+					title: "RSSHub 路由",
+					description:
+						"适合更广的 source universe，只要 RSSHub 能把某条 route 规范成可用 feed，就能接进来。",
+					fillNow:
+						"先给一个可读的 source URL 或 handle，再把准确的 RSSHub route 填进去。",
+					proofBoundary:
+						"不能把“有 RSSHub”说成“所有 route 都稳”。每条 route 都应该用真实 runs 证明。",
+				},
+				genericRss: {
+					title: "通用 RSS feed",
+					description:
+						"适合已经暴露干净 RSS 或 Atom feed 的来源，不需要平台专用捷径也能接入。",
+					fillNow:
+						"把精确 RSS 或 Atom feed URL 直接填进 Source value。除非你还想显式记录同一个 feed URL，否则可以把 Source URL 留空。",
+					proofBoundary:
+						"不同 feed 的质量差异很大。如果 feed 本身缺字段或很嘈杂，页面也应该保持诚实。",
+				},
+			},
 			loadErrorTitle: "Unable to load subscriptions",
 			retryCurrentPageButton: "Retry this page",
-			editorTitle: "Create or update a subscription",
+			editorTitle: "引导式 source editor",
 			editorDescription:
-				"先选 source type，再填写对应 source value。只有在使用 Generic RSS 时才填写 Source URL。",
+				"当前模板会先把 intake 形状预填好，你只需要补充真正的 source 细节，而不是自己从零猜契约。",
 			formLabels: {
 				platform: "Platform",
 				sourceType: "Source type",
 				sourceValue: "Source value",
 				adapterType: "Adapter type",
-				sourceUrl: "Source URL (for rss_generic)",
+				sourceUrl: "Source URL (optional)",
 				rsshubRoute: "RSSHub route (optional)",
 				category: "Category",
 				tags: "Tags (comma-separated, optional)",
@@ -1470,11 +1780,13 @@ const MESSAGES = {
 			platformOptions: {
 				youtube: "YouTube",
 				bilibili: "Bilibili",
+				rss: "RSS / web source",
 			},
 			sourceTypeOptions: {
 				url: "Source URL",
 				youtubeChannelId: "YouTube channel ID",
 				bilibiliUid: "Bilibili user UID",
+				rsshubRoute: "RSSHub route",
 			},
 			adapterTypeOptions: {
 				rsshubRoute: "RSSHub route",
@@ -1499,31 +1811,55 @@ const MESSAGES = {
 			searchSubtitle:
 				"这是面向运营者的真实检索前台。它把 digest、transcript、outline 和 knowledge cards 变成可回跳、可审计的结果。",
 			askSubtitle:
-				"这是一个诚实的 Wave 1 Ask MVP。当前 repo truth 支撑的是 grounded、search-first retrieval，而不是 fully generated answer layer。",
+				"这是一个建立在 briefing 上下文之上的 Ask 前门。带上 watchlist 时，它可以先给当前答案、再给最近变化、最后给 citations；不带上下文时，就退回 raw grounded retrieval。",
 			searchFormTitle: "Search your sources",
 			askFormTitle: "Ask in grounded mode",
 			searchFormDescription:
-				"`keyword` 目前最稳。`semantic` 和 `hybrid` 已接线，但仍按 experimental 呈现。",
+				"`keyword` 目前最稳。Search 已经覆盖视频强支持来源与 RSS 驱动的 source family，`semantic` 和 `hybrid` 仍保持 experimental 呈现。",
 			askFormDescription:
-				"先把问题收敛成 cited retrieval，再跳回 job trace、knowledge cards 和原始来源。",
+				"先带上 watchlist 或 briefing 上下文，再把问题收敛成 cited retrieval，这样答案、变化和证据就能留在同一页。",
 			queryLabel: "Query",
 			questionLabel: "Question",
 			queryPlaceholder: "agent workflow、retry policy、knowledge cards...",
 			questionPlaceholder:
 				"最近几轮到底怎么提 retry policy、agent workflow 或 knowledge cards？",
 			searchHint: "每条结果都应该能回跳到 job trace、knowledge 或 source URL。",
-			askHint: "这个 MVP 先返回 grounded evidence candidates。",
+			askHint:
+				"如果你想拿到“答案 + 变化 + citations”，先挂上 watchlist briefing；不带上下文时，Ask 会诚实地退回 raw grounded retrieval。",
+			askContextLabel: "Briefing 上下文",
+			askContextTitle: "Ask 现在能站住脚的上下文",
+			askContextDescription:
+				"先选一个 watchlist，或者从 Briefings 打开 Ask，这页才能先复用真实 briefing，再去看问题级证据。",
+			askContextEmptyOption: "还没有 briefing 上下文",
+			askContextMissingTitle: "先补 briefing 上下文",
+			askContextMissingDescription:
+				"Ask 仍然可以搜原始证据，但如果没有 watchlist briefing，它就不能诚实地把页面组织成“答案 + 变化”视图。",
+			askContextTopicLabel: "聚焦的 story / topic",
+			askSelectionBasisLabel: "选择依据",
+			askSelectionBasis: {
+				requested_story_id: "指定 story",
+				query_match: "问题匹配",
+				suggested_story_id: "推荐 story",
+				first_story: "首个可见 story",
+				none: "尚未选定 story",
+			},
+			askOpenBriefingButton: "打开当前 briefing",
+			askClearContextButton: "清除 briefing 上下文",
+			askClearStoryContextButton: "清除 story 聚焦",
 			modeLabel: "Mode",
 			groundingModeLabel: "Grounding mode",
 			platformLabel: "Platform",
+			platformPlaceholder:
+				"youtube、bilibili、rss、rsshub、github、newsletter ...",
 			topKLabel: "Top K",
 			searchButton: "Search",
 			askButton: "Ask",
 			clearButton: "Clear",
 			platformOptions: {
-				all: "All platforms",
+				all: "All source families",
 				youtube: "YouTube",
 				bilibili: "Bilibili",
+				rss: "RSS / web source",
 			},
 			modeOptions: {
 				keyword: "Keyword",
@@ -1533,16 +1869,17 @@ const MESSAGES = {
 			searchTruthTitle: "Current truth",
 			askTruthTitle: "Grounded Ask mode",
 			searchTruthPrimary:
-				"Search 是一个建立在真实 retrieval backend 之上的 production-facing front door。",
+				"Search 是一个建立在真实 retrieval backend 之上的 production-facing front door，而它背后的 retrieval substrate 已经不止两家视频网站。",
 			searchTruthSecondary:
-				"Wave 1 先把边界讲诚实：cited retrieval 在前，更强的 answer synthesis 在后。",
+				"默认 picker 仍然是刻意收窄的，但更宽的 source family 已经通过同一套后端 contract 和 query surface 往外延伸。",
 			askTruthPrimary:
-				"今天已经存在的是：cited retrieval、job trace、knowledge cards 和原始来源链接。",
+				"今天已经存在的是：基于 watchlist briefing 的答案 contract，以及 cited retrieval、job trace、knowledge cards 和原始来源链接。",
 			askTruthSecondary:
-				"还没有的是：带稳定 citation spans 和 answer-level hallucination guards 的 answer payload。",
-			askTruthNote: "当前不会合成一个 free-form answer layer。",
+				"还没有的是：一个脱离 briefing 上下文、也能到处成立的全局 free-form answer engine。",
+			askTruthNote:
+				"如果没有 watchlist 上下文，Ask 仍然会诚实地退回 grounded retrieval，而不是假装答案层已经无处不在。",
 			askTruthContractLead:
-				"Current contract: retrieval-first, citation-first, and operator auditable.",
+				"Current contract: 先给答案，再给最近变化，最后给 citations，而且整条链都可回查。",
 			searchTruthCta: "打开 Ask mode",
 			askTruthCta: "打开 Ask details",
 			openRawSearchButton: "Open raw search",
@@ -1554,9 +1891,9 @@ const MESSAGES = {
 			searchContractSecondary:
 				"如果语料为空，Search 应该给出诚实的 empty state，而不是编一个答案。",
 			askContractPrimary:
-				"把 Ask 用成 evidence-backed result candidates 的收敛器，然后顺着 citations 回到 job trace、knowledge 或原始来源页面。",
+				"当你带着 watchlist briefing 来 Ask 时，这一页会把当前答案、最新变化和证据回跳放在同一页上。",
 			askContractSecondary:
-				"它之所以诚实，是因为没有隐藏的 answer layer，也没有 unverifiable synthesis。",
+				"如果你没有挂 briefing，上面这套 answer view 就不会硬装存在，而会退回 raw grounded retrieval。",
 			searchResultsTitle: "Results",
 			askResultsTitle: "Grounded result set",
 			askErrorTitle: "Ask failed",
@@ -1568,9 +1905,46 @@ const MESSAGES = {
 			askSummaryTitle: "Best evidence for your question",
 			askSummaryQuestionPrefix: "Question",
 			askSummaryHitsPrefix: "Evidence hits",
+			askAnswerTitle: "当前最可信的答案",
+			askAnswerGroundedState: "基于 briefing",
+			askAnswerNeedsContextState: "需要上下文",
+			askAnswerUnavailableState: "briefing 不可用",
+			askAnswerNoConfidentState: "还不能自信回答",
+			askAnswerGroundedDescription:
+				"现在的 Ask 可以作为 briefing-aware 前门来回答：先给当前答案，再给最近变化，最后把证据摊开。",
+			askAnswerContextOnlyDescription:
+				"当前还没有具体问题，所以 Ask 先展示 briefing 里的当前答案，再等你继续缩小范围。",
+			askAnswerUnavailableDescription:
+				"watchlist 还在，但 briefing object 当前不可用，所以 Ask 还不能诚实地组出 answer layer。",
+			askAnswerNoConfidentDescription:
+				"当前 briefing 给了上下文，但这个问题还没有返回足够扎实的 grounded evidence，所以不能硬说答案已经成立。",
+			askAnswerGroundedNote:
+				"这个答案基于当前 watchlist briefing，并由下面的引用证据托底。",
+			askAnswerContextOnlyNote:
+				"这是当前 briefing 的答案。继续补问题或缩小问题，才能把它压到 question-level evidence。",
+			askAnswerFallbackTitle: "当前 briefing 答案",
+			askAnswerWhyLabel: "为什么这是当前答案",
+			askStoryFocusTitle: "当前答案依赖的 story focus",
+			askStoryFocusDescription:
+				"你可以把它理解成 Ask 当前踩着哪条 story 在回答，然后再往 changes 和 evidence 往下钻。",
+			askStorySwitcherTitle: "切换 story focus",
+			askStorySwitcherDescription:
+				"保留同一个问题，但把 answer layer 切到 briefing 里的另一条 story 上，方便比较不同 narrative。",
 			askNoEvidenceTitle: "No cited evidence yet",
 			askNoEvidenceDescription:
 				"试着把问题收窄、切回 keyword mode，或者先处理更多 sources，再判断这是不是能力缺口。",
+			askQuestionEvidenceTitle: "这个问题对应的证据",
+			askQuestionEvidenceDescription:
+				"这些命中来自当前 retrieval layer。你可以用它们验证上面的答案，或者推翻上面的答案。",
+			askCitationsTitle: "支撑当前答案的 citations",
+			askCitationsDescription:
+				"这些入口会把你直接带回真正支撑答案的 story、card、compare 视图或原始来源。",
+			askOpenCitationRouteButton: "打开 cited route",
+			askFeaturedRunsDescription:
+				"这些 runs 仍然是回看“当前答案背后最新收据”的最快入口。",
+			askChangesFallbackDescription:
+				"只有挂上 watchlist briefing，Ask 才能诚实地讲“最近变了什么”。",
+			askFallbackActionsTitle: "下一步建议",
 			searchResultsPrefix: "Showing cited retrieval results",
 			askResultsPrefix: "Evidence candidates",
 			searchRunPrompt: "先跑一个 query，再检查 grounded retrieval results。",
@@ -1611,7 +1985,8 @@ const MESSAGES = {
 			saveButton: "保存 watchlist",
 			updateButton: "更新 watchlist",
 			createNewButton: "新建一个",
-			openTrendViewButton: "打开趋势视图",
+			openTrendViewButton: "打开 merged story 视图",
+			openBriefingButton: "打开 briefing",
 			alertTitle: "提醒 readiness",
 			alertDescription:
 				"SourceHarbor 现在已经能保存 watchlist 并在 dashboard 内复用。外发提醒是否 ready，要看 notification gate，而不是看表单有没有提交成功。",
@@ -1652,25 +2027,119 @@ const MESSAGES = {
 		trendsPage: {
 			metadataTitle: "Trends",
 			metadataDescription:
-				"查看 SourceHarbor watchlists 的跨运行趋势与 diff，追踪最近 jobs / knowledge cards 里的 topic 与 claim 变化。",
+				"查看 SourceHarbor watchlists 的跨运行趋势与 merged story，把多个来源里反复出现的主题收拢成可见产品面，同时保留最近证据运行。",
 			kicker: "SourceHarbor Trends",
-			heroTitle: "Cross-run trend",
+			heroTitle: "Merged source stories",
 			heroSubtitle:
-				"这不是 fake analytics。它只展示当前 watchlist 在最近几次 run 里真实匹配到的 topics 和 claims 变化。",
+				"这里开始把重复出现的 watchlist 命中收拢成可见 story，而不是只剩散装 diff。上面的 merged story 负责给你主线，下面的原始 runs 负责给你收据。",
 			chooseTitle: "选择 watchlist",
 			chooseDescription:
-				"Wave 1 先做一个非常 focused 的 MVP：围绕一个 watchlist，看最近几次 run 发生了什么变化。",
+				"先选一个 watchlist，再看 source coverage、merged stories 和最近 evidence runs。页面会保持诚实，不假装已经有全自动大叙事层。",
 			empty: "先保存至少一个 watchlist，这里才会出现真正可比的连续变化视图。",
 			matcherLabel: "匹配器",
 			recentRunsLabel: "最近运行数",
 			matchedCardsLabel: "匹配卡片数",
+			sourceCoverageTitle: "Source coverage",
+			sourceCoverageDescription:
+				"这里展示的是当前 watchlist 真正吃到的 source family，依据是实际匹配到的 runs 和 cards。",
+			sourceCoverageRunsLabel: "运行数",
+			sourceCoverageCardsLabel: "匹配卡片",
+			mergedStoriesTitle: "Merged stories",
+			mergedStoriesDescription:
+				"下面每张卡会把同一个 topic 或 claim 在多次运行里的重复出现收拢起来，让“同一件事被多个来源反复提到”开始变成可见产品面。",
+			mergedStoriesEmpty:
+				"当前还没有足够重复的 topic 或 claim 形成 merged story。随着更多 runs 进入，这里会先长出来。",
+			sourceCountLabel: "来源数",
+			runCountLabel: "运行数",
+			latestSeenLabel: "最近出现",
+			recentEvidenceTitle: "最近 evidence runs",
+			recentEvidenceDescription:
+				"原始 run-by-run 变化仍然保留在下面，这样每个 merged story 都还能回到真实收据。",
+			openBriefingButton: "打开 briefing",
+			editWatchlistButton: "编辑 watchlist",
 			openJobButton: "打开 Job",
 			openKnowledgeButton: "打开 Knowledge",
+			openSourceButton: "打开来源",
 			addedTopicsPrefix: "新增主题",
 			removedTopicsPrefix: "移除主题",
 			addedClaimKindsPrefix: "新增 claim kinds",
 			removedClaimKindsPrefix: "移除 claim kinds",
 			noneValue: "无",
+		},
+		briefingsPage: {
+			metadataTitle: "Briefings",
+			metadataDescription:
+				"SourceHarbor 的统一 watchlist briefing 入口，先讲当前主线，再讲最近变化，最后回到具体证据。",
+			kicker: "SourceHarbor Briefings",
+			heroTitle: "Unified briefings",
+			heroSubtitle:
+				"先看这件事现在在说什么，再看哪里变了，最后点进收据。它是建立在 watchlists、merged stories、jobs 和 knowledge 之上的最小真实 unified story 产品线。",
+			truthTitle: "Truthful product line",
+			truthDescription:
+				"这页复用了真实 watchlists、merged stories 与 evidence links。它不是在宣称自己已经是全自动跨源融合引擎。",
+			truthPrimary:
+				"你可以把它理解成 briefing board：先看导语，再看变化，再看底下的原始材料。",
+			truthSecondary:
+				"它始终绑着 watchlists、jobs、knowledge cards 和原始来源，所以你可以随时回查收据。",
+			openWatchlistsButton: "打开 watchlists",
+			openTrendsButton: "打开 trends",
+			chooseTitle: "选择 briefing",
+			chooseDescription:
+				"先选一个 watchlist，再加载对应的 briefing object。入口统一了，但底层 tracking object 仍然是明确可见的。",
+			empty:
+				"先保存至少一个 watchlist，这页才能加载真实 briefing，而不是空壳。",
+			unavailableTitle: "Briefing 暂不可用",
+			unavailableDescription:
+				"选中的 watchlist 还在，但 briefing object 当前不可用。等 API route ready 或后端响应恢复后再重试。",
+			overviewTitle: "这件事现在在说什么",
+			overviewDescription:
+				"先读这里。它是把多个来源当前反复在讲的同一件事收成一段 operator summary。",
+			sourcesLabel: "来源数",
+			runsLabel: "运行数",
+			storiesLabel: "故事组",
+			matchedCardsLabel: "匹配卡片",
+			latestSeenLabel: "最近出现",
+			generatedLabel: "生成时间",
+			currentWatchlistLabel: "当前 watchlist",
+			matcherLabel: "匹配器",
+			primaryStoryLabel: "主线 story",
+			signalsTitle: "当前信号",
+			noSignals: "当前还没有被提炼出的重点信号。",
+			openTrendButton: "打开 trend 视图",
+			editWatchlistButton: "编辑 watchlist",
+			askBriefingButton: "围绕这个 briefing 提问",
+			differencesTitle: "最近有哪些变化",
+			differencesDescription:
+				"把它理解成 briefing memo 里的“增量更新”区。每一条都指向值得继续查的变化，而不是逼你自己手工 diff 每次 run。",
+			differencesEmpty:
+				"当前还没有被提炼出的重点变化。随着 briefing route 变完整，这里会先长出来。",
+			addedTopicsLabel: "新增主题",
+			removedTopicsLabel: "移除主题",
+			addedClaimKindsLabel: "新增 claim kinds",
+			removedClaimKindsLabel: "移除 claim kinds",
+			newStoryKeysLabel: "新增 story keys",
+			removedStoryKeysLabel: "移除 story keys",
+			compareTitle: "Compare 摘要",
+			noCompareExcerpt: "当前还没有 compare excerpt。",
+			openCompareButton: "打开 compare",
+			changeJobsLabel: "支撑这次变化的 Jobs",
+			openJobButton: "打开 Job",
+			noneValue: "无",
+			evidenceTitle: "证据下钻",
+			evidenceDescription:
+				"每张 evidence card 都保留回到 Job Trace、Knowledge cards 和原始来源的路径，不会把 briefing 做成无法追溯的黑盒。",
+			evidenceEmpty:
+				"当前还没有挂上 evidence cards。summary 可能先存在，drill-down 后补齐。",
+			storyEvidenceTitle: "Story 证据",
+			featuredRunsTitle: "Featured runs",
+			askStoryButton: "围绕这个 story 提问",
+			openKnowledgeButton: "打开 Knowledge",
+			openSourceButton: "打开来源",
+			openBriefingButton: "打开 briefing",
+			unknownStoryLabel: "未命名 story",
+			untitledEvidenceLabel: "未命名证据",
+			noExcerpt: "暂时没有可展示的摘录。",
+			platformUnknown: "未知平台",
 		},
 		proofPage: {
 			metadataTitle: "Proof",

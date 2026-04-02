@@ -868,6 +868,8 @@ def test_job_get_preserves_explicit_llm_required_false(api_client: TestClient, m
 
 
 def test_retrieval_search_returns_items(api_client: TestClient, monkeypatch) -> None:
+    from apps.api.app.routers import retrieval as retrieval_router
+
     def fake_search(self, *, query, top_k, mode, filters):
         assert query == "timeout"
         assert top_k == 2
@@ -894,7 +896,7 @@ def test_retrieval_search_returns_items(api_client: TestClient, monkeypatch) -> 
             ],
         }
 
-    monkeypatch.setattr("apps.api.app.services.retrieval.RetrievalService.search", fake_search)
+    monkeypatch.setattr(retrieval_router.RetrievalService, "search", fake_search)
 
     response = api_client.post(
         "/api/v1/retrieval/search",
@@ -911,6 +913,8 @@ def test_retrieval_search_returns_items(api_client: TestClient, monkeypatch) -> 
 
 
 def test_retrieval_search_passes_semantic_mode(api_client: TestClient, monkeypatch) -> None:
+    from apps.api.app.routers import retrieval as retrieval_router
+
     def fake_search(self, *, query, top_k, mode, filters):
         assert query == "retry policy"
         assert top_k == 3
@@ -918,7 +922,7 @@ def test_retrieval_search_passes_semantic_mode(api_client: TestClient, monkeypat
         assert filters == {"platform": "youtube"}
         return {"query": query, "top_k": top_k, "filters": filters, "items": []}
 
-    monkeypatch.setattr("apps.api.app.services.retrieval.RetrievalService.search", fake_search)
+    monkeypatch.setattr(retrieval_router.RetrievalService, "search", fake_search)
 
     response = api_client.post(
         "/api/v1/retrieval/search",
@@ -941,6 +945,8 @@ def test_retrieval_search_passes_semantic_mode(api_client: TestClient, monkeypat
 def test_retrieval_search_accepts_knowledge_cards_source(
     api_client: TestClient, monkeypatch
 ) -> None:
+    from apps.api.app.routers import retrieval as retrieval_router
+
     def fake_search(self, *, query, top_k, mode, filters):
         del self
         assert query == "takeaway"
@@ -968,7 +974,7 @@ def test_retrieval_search_accepts_knowledge_cards_source(
             ],
         }
 
-    monkeypatch.setattr("apps.api.app.services.retrieval.RetrievalService.search", fake_search)
+    monkeypatch.setattr(retrieval_router.RetrievalService, "search", fake_search)
 
     response = api_client.post(
         "/api/v1/retrieval/search",
@@ -993,7 +999,7 @@ def test_retrieval_search_semantic_failure_is_observable(
             error_kind="upstream_error",
         )
 
-    monkeypatch.setattr("apps.api.app.services.retrieval.RetrievalService.search", fake_search)
+    monkeypatch.setattr(retrieval_router.RetrievalService, "search", fake_search)
 
     response = api_client.post(
         "/api/v1/retrieval/search",
@@ -1010,6 +1016,415 @@ def test_retrieval_search_semantic_failure_is_observable(
         "detail": "retrieval embedding request failed",
         "error_code": "RETRIEVAL_EMBEDDING_REQUEST_FAILED",
         "error_kind": "upstream_error",
+    }
+
+
+def test_retrieval_answer_returns_structured_contract(api_client: TestClient, monkeypatch) -> None:
+    from apps.api.app.routers import retrieval as retrieval_router
+
+    def fake_answer(self, *, query, watchlist_id, story_id, top_k, mode, filters):
+        del self
+        assert query == "retry policy"
+        assert watchlist_id == "wl-1"
+        assert story_id is None
+        assert top_k == 4
+        assert mode == "keyword"
+        assert filters == {"platform": "youtube"}
+        return {
+            "query": query,
+            "context": {
+                "watchlist_id": watchlist_id,
+                "watchlist_name": "Retry policy",
+                "story_id": story_id,
+                "selected_story_id": "story-1",
+                "story_headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "selection_basis": "query_match",
+                "mode": mode,
+                "filters": filters,
+                "briefing_available": True,
+            },
+            "selected_story": {
+                "story_id": "story-1",
+                "story_key": "topic:retry-policy",
+                "headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "source_count": 2,
+                "run_count": 2,
+                "matched_card_count": 1,
+                "platforms": ["youtube"],
+                "claim_kinds": ["recommendation"],
+                "source_urls": ["https://example.com/retry"],
+                "latest_run_job_id": "job-2",
+                "routes": {
+                    "watchlist_trend": "/trends?watchlist_id=wl-1",
+                    "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+                    "job_compare": "/jobs?job_id=job-2",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+            },
+            "answer": {
+                "direct_answer": 'For "retry policy", the current briefing most strongly points to "Retry Policy".',
+                "summary": "Retry policy currently converges across recent sources.",
+                "reason": '"Retry Policy" is newly surfaced in the latest briefing and is already backed by 2 source families.',
+                "confidence": "grounded",
+            },
+            "changes": {
+                "summary": "Added topics: retry-policy.",
+                "story_focus_summary": '"Retry Policy" is newly surfaced in the latest briefing and is already backed by 2 source families.',
+                "latest_job_id": "job-2",
+                "previous_job_id": "job-1",
+                "added_topics": ["retry-policy"],
+                "removed_topics": [],
+                "added_claim_kinds": ["recommendation"],
+                "removed_claim_kinds": [],
+                "new_story_keys": ["topic:retry-policy"],
+                "removed_story_keys": [],
+                "compare_excerpt": "@@ latest diff @@",
+                "compare_route": "/jobs?job_id=job-2",
+                "has_previous": True,
+            },
+            "citations": [
+                {
+                    "kind": "briefing_story",
+                    "label": "Retry Policy",
+                    "snippet": "Supported across 2 source families.",
+                    "source_url": None,
+                    "job_id": "job-2",
+                    "route": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "route_label": "Open briefing story",
+                }
+            ],
+            "evidence": {
+                "briefing_overview": "Retry policy currently converges across recent sources.",
+                "selected_story_id": "story-1",
+                "selected_story_headline": "Retry Policy",
+                "latest_job_id": "job-2",
+                "citation_count": 1,
+                "retrieval_hit_count": 1,
+                "retrieval_items": [
+                    {
+                        "job_id": "job-2",
+                        "video_id": "video-2",
+                        "platform": "youtube",
+                        "video_uid": "abc123",
+                        "source_url": "https://www.youtube.com/watch?v=abc123",
+                        "title": "Demo",
+                        "kind": "video_digest_v1",
+                        "mode": "full",
+                        "source": "knowledge_cards",
+                        "snippet": "Retry policy evidence",
+                        "score": 2.2,
+                    }
+                ],
+                "story_cards": [
+                    {
+                        "card_id": "card-1",
+                        "job_id": "job-2",
+                        "platform": "youtube",
+                        "source_url": "https://example.com/retry",
+                        "title": "Retry policy card",
+                        "body": "Retry policy is now explicit.",
+                        "source_section": "summary",
+                    }
+                ],
+            },
+            "fallback": {
+                "status": "grounded",
+                "reason": None,
+                "suggested_next_step": None,
+                "actions": [],
+            },
+        }
+
+    monkeypatch.setattr(retrieval_router.RetrievalService, "answer", fake_answer)
+
+    response = api_client.post(
+        "/api/v1/retrieval/answer",
+        json={
+            "query": "retry policy",
+            "watchlist_id": "wl-1",
+            "top_k": 4,
+            "filters": {"platform": "youtube"},
+        },
+    )
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["context"]["selected_story_id"] == "story-1"
+    assert payload["context"]["watchlist_name"] == "Retry policy"
+    assert payload["context"]["story_headline"] == "Retry Policy"
+    assert payload["context"]["selection_basis"] == "query_match"
+    assert (
+        payload["selected_story"]["routes"]["briefing"]
+        == "/briefings?watchlist_id=wl-1&story_id=story-1"
+    )
+    assert payload["answer"]["confidence"] == "grounded"
+    assert payload["answer"]["reason"].startswith('"Retry Policy" is newly surfaced')
+    assert payload["changes"]["story_focus_summary"].startswith('"Retry Policy" is newly surfaced')
+    assert payload["changes"]["compare_route"] == "/jobs?job_id=job-2"
+    assert payload["citations"][0]["kind"] == "briefing_story"
+    assert payload["citations"][0]["route_label"] == "Open briefing story"
+    assert payload["fallback"]["status"] == "grounded"
+
+
+def test_retrieval_answer_page_returns_server_owned_payload(
+    api_client: TestClient, monkeypatch
+) -> None:
+    from apps.api.app.routers import retrieval as retrieval_router
+
+    def fake_answer_page(self, *, query, watchlist_id, story_id, topic_key, top_k, mode, filters):
+        del self
+        assert query == "retry policy"
+        assert watchlist_id == "wl-1"
+        assert story_id == "story-1"
+        assert topic_key == "retry-policy"
+        assert top_k == 4
+        assert mode == "keyword"
+        assert filters == {"platform": "youtube"}
+        return {
+            "question": query,
+            "mode": mode,
+            "top_k": top_k,
+            "context": {
+                "watchlist_id": watchlist_id,
+                "watchlist_name": "Retry policy",
+                "story_id": "story-1",
+                "selected_story_id": "story-1",
+                "story_headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "selection_basis": "requested_story_id",
+                "mode": mode,
+                "filters": filters,
+                "briefing_available": True,
+            },
+            "answer_state": "briefing_grounded",
+            "answer_headline": 'For "retry policy", the current briefing most strongly points to "Retry Policy".',
+            "answer_summary": "Retry policy currently converges across recent sources.",
+            "answer_reason": '"Retry Policy" is newly surfaced in the latest briefing and is already backed by 2 source families.',
+            "answer_confidence": "grounded",
+            "story_change_summary": '"Retry Policy" is newly surfaced in the latest briefing and is already backed by 2 source families.',
+            "briefing": {
+                "watchlist": {
+                    "id": "wl-1",
+                    "name": "Retry policy",
+                    "matcher_type": "topic_key",
+                    "matcher_value": "retry-policy",
+                    "delivery_channel": "dashboard",
+                    "enabled": True,
+                    "created_at": "2026-03-31T10:00:00Z",
+                    "updated_at": "2026-03-31T10:00:00Z",
+                },
+                "summary": {
+                    "overview": "Retry policy currently converges across recent sources.",
+                    "source_count": 2,
+                    "run_count": 2,
+                    "story_count": 1,
+                    "matched_cards": 2,
+                    "primary_story_headline": "Retry Policy",
+                    "signals": [],
+                },
+                "differences": {
+                    "latest_job_id": "job-2",
+                    "previous_job_id": "job-1",
+                    "added_topics": ["retry-policy"],
+                    "removed_topics": [],
+                    "added_claim_kinds": ["recommendation"],
+                    "removed_claim_kinds": [],
+                    "new_story_keys": ["topic:retry-policy"],
+                    "removed_story_keys": [],
+                    "compare": {
+                        "job_id": "job-2",
+                        "has_previous": True,
+                        "previous_job_id": "job-1",
+                        "changed": True,
+                        "added_lines": 2,
+                        "removed_lines": 1,
+                        "diff_excerpt": "@@ latest diff @@",
+                        "compare_route": "/jobs?job_id=job-2",
+                    },
+                },
+                "evidence": {
+                    "suggested_story_id": "story-1",
+                    "stories": [
+                        {
+                            "story_id": "story-1",
+                            "story_key": "topic:retry-policy",
+                            "headline": "Retry Policy",
+                            "topic_key": "retry-policy",
+                            "topic_label": "Retry Policy",
+                            "source_count": 2,
+                            "run_count": 2,
+                            "matched_card_count": 1,
+                            "platforms": ["youtube"],
+                            "claim_kinds": ["recommendation"],
+                            "source_urls": ["https://example.com/retry"],
+                            "latest_run_job_id": "job-2",
+                            "evidence_cards": [],
+                            "routes": {
+                                "watchlist_trend": "/trends?watchlist_id=wl-1",
+                                "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                                "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+                                "job_compare": "/jobs?job_id=job-2",
+                                "job_bundle": "/api/v1/jobs/job-2/bundle",
+                                "job_knowledge_cards": "/knowledge?job_id=job-2",
+                            },
+                        }
+                    ],
+                    "featured_runs": [],
+                },
+            },
+            "story_focus": {
+                "story_id": "story-1",
+                "story_key": "topic:retry-policy",
+                "headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "source_count": 2,
+                "run_count": 2,
+                "matched_card_count": 1,
+                "platforms": ["youtube"],
+                "claim_kinds": ["recommendation"],
+                "source_urls": ["https://example.com/retry"],
+                "latest_run_job_id": "job-2",
+                "routes": {
+                    "watchlist_trend": "/trends?watchlist_id=wl-1",
+                    "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+                    "job_compare": "/jobs?job_id=job-2",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+            },
+            "selected_story": {
+                "story_id": "story-1",
+                "story_key": "topic:retry-policy",
+                "headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "source_count": 2,
+                "run_count": 2,
+                "matched_card_count": 1,
+                "platforms": ["youtube"],
+                "claim_kinds": ["recommendation"],
+                "source_urls": ["https://example.com/retry"],
+                "latest_run_job_id": "job-2",
+                "evidence_cards": [],
+                "routes": {
+                    "watchlist_trend": "/trends?watchlist_id=wl-1",
+                    "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+                    "job_compare": "/jobs?job_id=job-2",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+            },
+            "retrieval": {
+                "query": query,
+                "top_k": top_k,
+                "filters": filters,
+                "items": [],
+            },
+            "citations": [
+                {
+                    "kind": "briefing_story",
+                    "label": "Retry Policy",
+                    "snippet": "Supported across 2 source families.",
+                    "source_url": None,
+                    "job_id": "job-2",
+                    "route": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "route_label": "Open briefing story",
+                }
+            ],
+            "fallback_reason": None,
+            "fallback_next_step": None,
+            "fallback_actions": [],
+        }
+
+    monkeypatch.setattr(retrieval_router.RetrievalService, "answer_page", fake_answer_page)
+
+    response = api_client.post(
+        "/api/v1/retrieval/answer/page",
+        json={
+            "query": "retry policy",
+            "watchlist_id": "wl-1",
+            "story_id": "story-1",
+            "topic_key": "retry-policy",
+            "top_k": 4,
+            "filters": {"platform": "youtube"},
+        },
+    )
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload["context"]["selection_basis"] == "requested_story_id"
+    assert (
+        payload["story_focus"]["routes"]["briefing"]
+        == "/briefings?watchlist_id=wl-1&story_id=story-1"
+    )
+    assert payload["answer_state"] == "briefing_grounded"
+    assert payload["citations"][0]["route_label"] == "Open briefing story"
+    assert payload["fallback_actions"] == []
+
+
+def test_retrieval_answer_page_service_error_is_observable(
+    api_client: TestClient, monkeypatch
+) -> None:
+    from apps.api.app.routers import retrieval as retrieval_router
+
+    def fake_answer_page(self, *, query, watchlist_id, story_id, topic_key, top_k, mode, filters):
+        del self, query, watchlist_id, story_id, topic_key, top_k, mode, filters
+        raise retrieval_router.ApiServiceError(
+            detail="ask page unavailable",
+            error_code="ASK_PAGE_UNAVAILABLE",
+            status_code=503,
+            error_kind="dependency_error",
+        )
+
+    monkeypatch.setattr(retrieval_router.RetrievalService, "answer_page", fake_answer_page)
+
+    response = api_client.post(
+        "/api/v1/retrieval/answer/page",
+        json={"query": "retry policy", "watchlist_id": "wl-1"},
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "ask page unavailable",
+        "error_code": "ASK_PAGE_UNAVAILABLE",
+        "error_kind": "dependency_error",
+    }
+
+
+def test_retrieval_answer_service_error_is_observable(api_client: TestClient, monkeypatch) -> None:
+    from apps.api.app.routers import retrieval as retrieval_router
+
+    def fake_answer(self, *, query, watchlist_id, story_id, top_k, mode, filters):
+        del self, query, watchlist_id, story_id, top_k, mode, filters
+        raise retrieval_router.ApiServiceError(
+            detail="briefing unavailable",
+            error_code="ASK_BRIEFING_UNAVAILABLE",
+            status_code=503,
+            error_kind="dependency_error",
+        )
+
+    monkeypatch.setattr(retrieval_router.RetrievalService, "answer", fake_answer)
+
+    response = api_client.post(
+        "/api/v1/retrieval/answer",
+        json={"query": "retry policy", "watchlist_id": "wl-1"},
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "briefing unavailable",
+        "error_code": "ASK_BRIEFING_UNAVAILABLE",
+        "error_kind": "dependency_error",
     }
 
 

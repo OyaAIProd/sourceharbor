@@ -1,5 +1,6 @@
 import type {
 	ArtifactMarkdownWithMeta,
+	AskAnswerResponse,
 	DigestFeedResponse,
 	FeedFeedback,
 	FeedFeedbackUpdateRequest,
@@ -21,12 +22,14 @@ import type {
 	RetrievalSearchMode,
 	RetrievalSearchResponse,
 	Subscription,
+	SubscriptionTemplateCatalogResponse,
 	SubscriptionUpsertRequest,
 	SubscriptionUpsertResponse,
 	Video,
 	VideoProcessRequest,
 	VideoProcessResponse,
 	Watchlist,
+	WatchlistBriefing,
 	WatchlistTrendResponse,
 	WatchlistUpsertRequest,
 } from "@/lib/api/types";
@@ -315,6 +318,18 @@ function normalizeRetrievalSearchResponse(
 	};
 }
 
+function normalizeRetrievalMode(
+	value: RetrievalSearchMode | string | undefined,
+): RetrievalSearchMode {
+	return value === "semantic" || value === "hybrid" ? value : "keyword";
+}
+
+function normalizeTopK(value: number | undefined, fallback: number): number {
+	return Number.isFinite(value) && typeof value === "number" && value > 0
+		? Math.min(value, 20)
+		: fallback;
+}
+
 function assertSafeExternalUrl(raw: string): string {
 	const normalized = sanitizeExternalUrl(raw);
 	if (!normalized) {
@@ -514,6 +529,12 @@ export const apiClient = {
 		return requestJson<Subscription[]>("/api/v1/subscriptions", {}, params);
 	},
 
+	listSubscriptionTemplates() {
+		return requestJson<SubscriptionTemplateCatalogResponse>(
+			"/api/v1/subscriptions/templates",
+		);
+	},
+
 	upsertSubscription(
 		payload: SubscriptionUpsertRequest,
 		options?: { writeAccessToken?: string | null },
@@ -668,6 +689,34 @@ export const apiClient = {
 		);
 	},
 
+	async getAskAnswer(payload: {
+		question?: string;
+		watchlist_id?: string;
+		story_id?: string;
+		topic_key?: string;
+		top_k?: number;
+		mode?: RetrievalSearchMode;
+	}) {
+		const safeQuestion = payload.question?.trim() ?? "";
+		const safeWatchlistId = payload.watchlist_id?.trim() ?? "";
+		const safeStoryId = payload.story_id?.trim() ?? "";
+		const safeTopicKey = payload.topic_key?.trim() ?? "";
+		const safeMode = normalizeRetrievalMode(payload.mode);
+		const safeTopK = normalizeTopK(payload.top_k, 6);
+		return requestJson<AskAnswerResponse>("/api/v1/retrieval/answer/page", {
+			method: "POST",
+			body: {
+				query: safeQuestion,
+				watchlist_id: safeWatchlistId || undefined,
+				story_id: safeStoryId || undefined,
+				topic_key: safeTopicKey || undefined,
+				top_k: safeTopK,
+				mode: safeMode,
+				filters: {},
+			},
+		});
+	},
+
 	getArtifactMarkdown,
 
 	getNotificationConfig() {
@@ -711,6 +760,23 @@ export const apiClient = {
 		const safeId = encodeURIComponent(assertSafeIdentifier(watchlistId));
 		return requestJson<WatchlistTrendResponse>(
 			`/api/v1/watchlists/${safeId}/trend`,
+			{},
+			params,
+		);
+	},
+
+	getWatchlistBriefing(
+		watchlistId: string,
+		params?: {
+			limit_runs?: number;
+			limit_cards?: number;
+			limit_stories?: number;
+			limit_evidence_per_story?: number;
+		},
+	) {
+		const safeId = encodeURIComponent(assertSafeIdentifier(watchlistId));
+		return requestJson<WatchlistBriefing>(
+			`/api/v1/watchlists/${safeId}/briefing`,
 			{},
 			params,
 		);

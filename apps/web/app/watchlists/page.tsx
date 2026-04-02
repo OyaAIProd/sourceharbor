@@ -191,7 +191,26 @@ export default async function WatchlistsPage({
 									</Button>
 								) : null}
 								<Button asChild variant="outline" size="sm">
-									<Link href="/trends">{copy.openTrendViewButton}</Link>
+									<Link
+										href={
+											editingWatchlist
+												? `/trends?watchlist_id=${encodeURIComponent(editingWatchlist.id)}`
+												: "/trends"
+										}
+									>
+										{copy.openTrendViewButton}
+									</Link>
+								</Button>
+								<Button asChild variant="outline" size="sm">
+									<Link
+										href={
+											editingWatchlist
+												? `/briefings?watchlist_id=${encodeURIComponent(editingWatchlist.id)}`
+												: "/briefings"
+										}
+									>
+										{copy.openBriefingButton}
+									</Link>
 								</Button>
 							</div>
 						</form>
@@ -266,6 +285,13 @@ export default async function WatchlistsPage({
 													href={`/trends?watchlist_id=${encodeURIComponent(item.id)}`}
 												>
 													{copy.viewTrendButton}
+												</Link>
+											</Button>
+											<Button asChild variant="outline" size="sm">
+												<Link
+													href={`/briefings?watchlist_id=${encodeURIComponent(item.id)}`}
+												>
+													{copy.openBriefingButton}
 												</Link>
 											</Button>
 											<form action={deleteWatchlistAction}>

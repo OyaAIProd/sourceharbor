@@ -21,6 +21,7 @@ const ROUTE_NAME_MAP: Array<{
 	{ href: "/ops", label: routeTransitionCopy.labels.ops },
 	{ href: "/watchlists", label: routeTransitionCopy.labels.watchlists },
 	{ href: "/trends", label: routeTransitionCopy.labels.trends },
+	{ href: "/briefings", label: routeTransitionCopy.labels.briefings },
 	{ href: "/playground", label: routeTransitionCopy.labels.playground },
 	{ href: "/proof", label: routeTransitionCopy.labels.proof },
 	{ href: "/knowledge", label: routeTransitionCopy.labels.knowledge },

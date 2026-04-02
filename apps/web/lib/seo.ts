@@ -10,8 +10,10 @@ type SeoRoute =
 	| "feed"
 	| "subscriptions"
 	| "search"
+	| "ask"
 	| "watchlists"
 	| "trends"
+	| "briefings"
 	| "proof"
 	| "playground"
 	| "jobs"
@@ -82,6 +84,12 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"citation-first AI",
 		"AI search for source artifacts",
 	],
+	ask: [
+		"briefing-aware Ask",
+		"watchlist question front door",
+		"answer change evidence",
+		"grounded answer workflow",
+	],
 	watchlists: [
 		"AI trend watchlist",
 		"Codex updates tracking",
@@ -93,6 +101,12 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 		"topic diff",
 		"claim change tracking",
 		"AI workflow trend",
+	],
+	briefings: [
+		"watchlist briefing",
+		"unified information surface",
+		"cross-source briefing",
+		"evidence drill-down",
 	],
 	proof: [
 		"proof boundary",

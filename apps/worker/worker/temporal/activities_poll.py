@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from worker.config import Settings
 from worker.rss.adapters import poll_subscription_entries, resolve_feed_url
+from worker.rss.normalizer import make_article_idempotency_key
 from worker.state.mirrored_sqlite_store import MirroredSQLiteStateStore
 from worker.state.postgres_store import PostgresBusinessStore
 from worker.temporal.activities_timing import _utc_now_iso
@@ -29,6 +30,10 @@ except ModuleNotFoundError:  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 SQLiteStateStore = MirroredSQLiteStateStore
+_STRONG_VIDEO_SOURCES = {
+    ("youtube", "youtube_channel_id"),
+    ("bilibili", "bilibili_uid"),
+}
 
 
 def _build_runtime_sqlite_store(settings: Settings) -> Any:
@@ -304,10 +309,23 @@ async def run_poll_feeds_once(
                 entries_normalized += 1
 
                 platform = _resolve_platform(normalized=normalized, subscription=subscription)
-                video_uid = _resolve_video_uid(normalized=normalized)
-                content_type = str(normalized.get("content_type") or "video").strip().lower()
-                if content_type not in ("video", "article"):
-                    content_type = "video"
+                content_type = _resolve_content_type(
+                    normalized=normalized,
+                    subscription=subscription,
+                )
+                force_entry_hash_uid = (
+                    content_type == "article"
+                    and not _is_strong_video_subscription(subscription=subscription)
+                )
+                video_uid = _resolve_video_uid(
+                    normalized=normalized,
+                    force_entry_hash=force_entry_hash_uid,
+                )
+                job_idempotency_key = _resolve_job_idempotency_key(
+                    normalized=normalized,
+                    content_type=content_type,
+                    force_article_key=force_entry_hash_uid,
+                )
 
                 video = pg_store.upsert_video(
                     platform=platform,
@@ -330,15 +348,12 @@ async def run_poll_feeds_once(
                 else:
                     ingest_event_duplicates += 1
 
-                existing_job = pg_store.find_active_job(
-                    idempotency_key=normalized["idempotency_key"]
-                )
+                existing_job = pg_store.find_active_job(idempotency_key=job_idempotency_key)
                 if existing_job is not None:
                     job_duplicates += 1
                     continue
 
-                adapter_type = str(subscription.get("adapter_type") or "rsshub_route")
-                pipeline_mode: str | None = "text_only" if adapter_type == "rss_generic" else None
+                pipeline_mode: str | None = "text_only" if content_type == "article" else None
 
                 job_overrides: dict[str, Any] | None = None
                 if content_type == "article":
@@ -350,7 +365,7 @@ async def run_poll_feeds_once(
 
                 job, created = pg_store.create_queued_job(
                     video_id=video["id"],
-                    idempotency_key=normalized["idempotency_key"],
+                    idempotency_key=job_idempotency_key,
                     mode=pipeline_mode,
                     overrides_json=job_overrides,
                 )
@@ -464,13 +479,55 @@ def _resolve_platform(*, normalized: dict[str, Any], subscription: dict[str, Any
     return fallback_platform or "generic"
 
 
-def _resolve_video_uid(*, normalized: dict[str, Any]) -> str:
+def _is_strong_video_subscription(*, subscription: dict[str, Any]) -> bool:
+    platform = str(subscription.get("platform") or "").strip().lower()
+    source_type = str(subscription.get("source_type") or "").strip().lower()
+    if not source_type and platform in {"youtube", "bilibili"}:
+        return True
+    return (platform, source_type) in _STRONG_VIDEO_SOURCES
+
+
+def _resolve_content_type(*, normalized: dict[str, Any], subscription: dict[str, Any]) -> str:
+    content_type = str(normalized.get("content_type") or "video").strip().lower()
+    if content_type not in ("video", "article"):
+        content_type = "video"
+    if content_type == "article":
+        return "article"
+    if _is_strong_video_subscription(subscription=subscription):
+        return "video"
+    return "article"
+
+
+def _resolve_video_uid(*, normalized: dict[str, Any], force_entry_hash: bool = False) -> str:
+    if force_entry_hash:
+        entry_hash = str(normalized.get("entry_hash") or "").strip()
+        if entry_hash:
+            return entry_hash
     candidate = str(normalized.get("video_uid") or "").strip()
     if candidate:
         return candidate
     entry_hash = str(normalized.get("entry_hash") or "").strip()
     if entry_hash:
         return entry_hash
+    return "unknown"
+
+
+def _resolve_job_idempotency_key(
+    *,
+    normalized: dict[str, Any],
+    content_type: str,
+    force_article_key: bool = False,
+) -> str:
+    if content_type == "article" and force_article_key:
+        entry_hash = str(normalized.get("entry_hash") or "").strip()
+        if entry_hash:
+            return make_article_idempotency_key(entry_hash)
+    candidate = str(normalized.get("idempotency_key") or "").strip()
+    if candidate:
+        return candidate
+    entry_hash = str(normalized.get("entry_hash") or "").strip()
+    if entry_hash:
+        return make_article_idempotency_key(entry_hash)
     return "unknown"
 
 

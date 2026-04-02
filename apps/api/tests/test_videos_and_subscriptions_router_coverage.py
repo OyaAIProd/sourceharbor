@@ -284,6 +284,8 @@ def test_to_subscription_response_applies_defaults_for_missing_optional_fields()
     assert payload.source_type == "youtube_channel_id"
     assert payload.source_value == source_value
     assert payload.source_name == source_value
+    assert payload.support_tier == "strong_supported"
+    assert payload.content_profile == "video"
     assert payload.adapter_type == "rsshub_route"
     assert payload.source_url is None
     assert payload.category == "misc"
@@ -309,6 +311,8 @@ def test_to_subscription_response_handles_missing_or_none_source_fields_and_keep
     assert missing_payload.source_type == ""
     assert missing_payload.source_value == ""
     assert missing_payload.source_name == "Unknown"
+    assert missing_payload.support_tier == "generic_supported"
+    assert missing_payload.content_profile == "article"
 
     none_row = types.SimpleNamespace(
         id=uuid.uuid4(),
@@ -326,6 +330,8 @@ def test_to_subscription_response_handles_missing_or_none_source_fields_and_keep
     assert none_payload.source_type == ""
     assert none_payload.source_value == ""
     assert none_payload.source_name == "Unknown"
+    assert none_payload.support_tier == "generic_supported"
+    assert none_payload.content_profile == "article"
     assert none_payload.tags == ["tag-a", "tag-b"]
     assert none_payload.priority == 0
 
@@ -387,6 +393,7 @@ def test_subscriptions_router_list_and_upsert_success_paths(
     assert captured_list_kwargs == {"platform": "youtube", "category": "news", "enabled_only": True}
     assert list_response.json()[0]["source_type"] == "youtube_channel_id"
     assert list_response.json()[0]["adapter_type"] == "rsshub_route"
+    assert list_response.json()[0]["support_tier"] == "strong_supported"
     assert list_response.json()[0]["priority"] == 50
 
     upsert_response = api_client.post(
@@ -407,8 +414,25 @@ def test_subscriptions_router_list_and_upsert_success_paths(
     assert upsert_response.status_code == 200
     assert upsert_response.json()["created"] is False
     assert upsert_response.json()["subscription"]["adapter_type"] == "rss_generic"
+    assert upsert_response.json()["subscription"]["content_profile"] == "article"
     assert upsert_response.json()["subscription"]["priority"] == 100
     assert upsert_response.json()["subscription"]["enabled"] is False
+
+    templates_response = api_client.get("/api/v1/subscriptions/templates")
+    assert templates_response.status_code == 200
+    payload = templates_response.json()
+    assert {item["id"] for item in payload["support_tiers"]} == {
+        "strong_supported",
+        "generic_supported",
+    }
+    assert any(item["id"] == "generic_rsshub_route" for item in payload["templates"])
+    assert any(
+        item["id"] == "generic_rss_feed"
+        and item["source_value_placeholder"] == "https://example.com/feed.xml"
+        and item["source_url_placeholder"] == "https://example.com/feed.xml"
+        and item["source_url_required"] is False
+        for item in payload["templates"]
+    )
 
     batch_response = api_client.post(
         "/api/v1/subscriptions/batch-update-category",

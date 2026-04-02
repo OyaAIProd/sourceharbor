@@ -8,6 +8,8 @@ from typing import Any
 from worker.temporal import activities_poll
 from worker.temporal.activities_poll import (
     _build_rss_transcript,
+    _resolve_content_type,
+    _resolve_job_idempotency_key,
     _resolve_platform,
     _resolve_video_uid,
 )
@@ -45,6 +47,39 @@ def test_resolve_video_uid_falls_back_to_entry_hash() -> None:
 def test_resolve_video_uid_returns_unknown_without_hash() -> None:
     uid = _resolve_video_uid(normalized={"video_uid": "", "entry_hash": ""})
     assert uid == "unknown"
+
+
+def test_resolve_content_type_keeps_video_for_strong_video_subscription() -> None:
+    content_type = _resolve_content_type(
+        normalized={"content_type": "video"},
+        subscription={"platform": "youtube", "source_type": "youtube_channel_id"},
+    )
+    assert content_type == "video"
+
+
+def test_resolve_content_type_forces_article_for_generic_rsshub_route() -> None:
+    content_type = _resolve_content_type(
+        normalized={"content_type": "video"},
+        subscription={"platform": "rsshub", "source_type": "rsshub_route"},
+    )
+    assert content_type == "article"
+
+
+def test_resolve_video_uid_can_force_entry_hash_for_article_lane() -> None:
+    uid = _resolve_video_uid(
+        normalized={"video_uid": "yt-1", "entry_hash": "hash-article"},
+        force_entry_hash=True,
+    )
+    assert uid == "hash-article"
+
+
+def test_resolve_job_idempotency_key_uses_article_formula_when_forced() -> None:
+    key = _resolve_job_idempotency_key(
+        normalized={"idempotency_key": "video-idem", "entry_hash": "hash-article"},
+        content_type="article",
+        force_article_key=True,
+    )
+    assert key != "video-idem"
 
 
 def test_build_rss_transcript_uses_summary_when_content_missing() -> None:
@@ -309,6 +344,102 @@ def test_run_poll_feeds_once_collects_article_candidates_and_overrides(monkeypat
     assert result["entries_normalized"] == 1
     assert result["candidates"][0]["pipeline_mode"] == "text_only"
     assert "Full RSS body" in result["candidates"][0]["rss_transcript"]
+
+
+def test_run_poll_feeds_once_forces_generic_rsshub_route_into_article_lane(monkeypatch) -> None:
+    class _FakeSQLiteStore:
+        def __init__(self, _path: str) -> None:
+            pass
+
+        def acquire_lock(self, _lock_key: str, _owner: str, _ttl: int) -> bool:
+            return True
+
+        def release_lock(self, _lock_key: str, _owner: str) -> None:
+            return None
+
+    class _FakePostgresStore:
+        def __init__(self, _database_url: str) -> None:
+            self.created_jobs: list[dict[str, object]] = []
+
+        def try_acquire_advisory_lock(self, *, lock_key: str):
+            assert lock_key == "phase2.poll_feeds"
+            return True, object(), None
+
+        def list_subscriptions(self, *, subscription_id=None, platform=None):
+            return [
+                {
+                    "id": "sub-2",
+                    "platform": "rsshub",
+                    "source_type": "rsshub_route",
+                    "adapter_type": "rsshub_route",
+                    "rsshub_route": "/36kr/newsflashes",
+                }
+            ]
+
+        def upsert_video(self, **kwargs):
+            self.upsert_kwargs = kwargs
+            return {
+                "id": "video-2",
+                "platform": kwargs["platform"],
+                "video_uid": kwargs["video_uid"],
+                "source_url": kwargs["source_url"],
+                "title": kwargs["title"],
+                "published_at": kwargs["published_at"],
+            }
+
+        def create_ingest_event(self, **kwargs):
+            return ({"id": "ingest-2"}, True)
+
+        def find_active_job(self, *, idempotency_key):
+            self.idempotency_key = idempotency_key
+            return
+
+        def create_queued_job(self, **kwargs):
+            self.created_jobs.append(kwargs)
+            return ({"id": "job-2"}, True)
+
+        def release_advisory_lock(self, _lease) -> None:
+            return None
+
+    async def _fake_poll_subscription_entries(**_kwargs):
+        return (
+            1,
+            [
+                {
+                    "video_platform": "youtube",
+                    "video_uid": "yt-article-1",
+                    "entry_hash": "entry-hash-2",
+                    "idempotency_key": "video-idem-2",
+                    "guid": "guid-2",
+                    "link": "https://www.youtube.com/watch?v=yt-article-1",
+                    "title": "Cross-posted article",
+                    "published_at": "2026-03-08T00:00:00Z",
+                    "content_type": "video",
+                    "content": "Article body wins over embedded video links.",
+                    "summary": "Summary text",
+                }
+            ],
+        )
+
+    monkeypatch.setattr(activities_poll, "SQLiteStateStore", _FakeSQLiteStore)
+    monkeypatch.setattr(activities_poll, "PostgresBusinessStore", _FakePostgresStore)
+    monkeypatch.setattr(
+        activities_poll,
+        "resolve_feed_url",
+        lambda _settings, _item: "https://rsshub.app/36kr/newsflashes",
+    )
+    monkeypatch.setattr(
+        activities_poll, "poll_subscription_entries", _fake_poll_subscription_entries
+    )
+
+    result = asyncio.run(
+        activities_poll.run_poll_feeds_once(_poll_settings(), filters={"max_new_videos": 1})
+    )
+
+    assert result["jobs_created"] == 1
+    assert result["candidates"][0]["content_type"] == "article"
+    assert result["candidates"][0]["pipeline_mode"] == "text_only"
+    assert result["candidates"][0]["video_uid"] == "entry-hash-2"
 
 
 def test_run_poll_feeds_once_skips_duplicate_jobs(monkeypatch) -> None:
