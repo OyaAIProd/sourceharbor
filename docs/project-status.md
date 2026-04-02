@@ -90,7 +90,6 @@ current maintainer re-audit:
 - `RESEND_FROM_EMAIL`
 - a verified Resend sender/domain and a real destination mailbox
 - a YouTube key/project state that no longer returns `quota_or_permission` / `403` during the strict live-smoke probe
-- landing the current local closure work on remote `main` before treating the newer front-door surfaces as remote-current truth
 - a new tagged release if you need release-aligned remote distribution proof for the current `main`
 
 Raw non-empty values for `YOUTUBE_API_KEY`, `RESEND_API_KEY`, and
@@ -101,10 +100,11 @@ machine. The remaining blockers are more specific than \"secret missing\".
 
 Fresh GitHub-side verification now shows:
 
-- current `main` (`4a59b462c6d624985b5ca5ae58c527ba95a1f0f3`) has successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs
+- current `main` (`d0b80973d06338242341e2d18b7f822627d9c6d3`) now includes the server-owned Ask page payload refresh and the story-aware `/briefings -> /ask` front-door path from PR `#32`
+- current `main` has fresh successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs on the landed branch lineage
 - latest release tag `v0.1.1` is still older than current `main`, so release proof and current-branch proof remain different layers
-- the current local Prompt 6/7 front doors are still dirty local worktree state rather than remote `main`
-- live repo description, homepage, and topics were re-checked and then kept on a safer remote-main wording instead of advertising those newer local-only surfaces
+- the story-aware `/ask`, `/briefings`, and server-owned Ask payload story are no longer local-only; they are now part of remote `main`
+- live repo description, homepage, and topics should be judged against the landed `main` wording rather than the earlier conservative pre-landing wording
 
 ## Read Next
 

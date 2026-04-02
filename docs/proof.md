@@ -97,8 +97,9 @@ What this layer answers:
 
 Fresh Dawn Closure note:
 
-- current `main` has fresh successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs
-- live GitHub description, homepage, and topics were re-checked, but they were kept on a more conservative remote-main-safe wording because the newer local front doors are not landed on remote `main`
+- current `main` now includes the landed server-owned Ask page payload and the story-aware `/briefings -> /ask` front-door path from PR `#32`
+- current `main` has fresh successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs on the landed branch lineage
+- live GitHub description, homepage, and topics should now be evaluated against that landed `main`, not against the earlier conservative pre-landing wording
 - latest tagged release `v0.1.1` still lags current `main`, so release-side proof is not the same thing as current-branch proof
 
 ## Future-direction Truth
