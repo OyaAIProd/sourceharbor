@@ -138,5 +138,6 @@ If you are evaluating whether this repo is worth starring, forking, or maintaini
 The honest lure is not "AI magic." It is that SourceHarbor already gives builders:
 
 - a **Codex / Claude Code-friendly** MCP and HTTP API surface
+- a **repo-local CLI substrate** through `./bin/sourceharbor help` when they want one discoverable command surface
 - a **proof-first** story that names external gates instead of hiding them
 - a **compounder layer** worth revisiting when you care about watchlists, trends, and evidence bundles

@@ -15,6 +15,7 @@ These prove that the public narrative maps to visible product surfaces:
 - [docs/runtime-truth.md](./runtime-truth.md)
 - [docs/architecture.md](./architecture.md)
 - [docs/mcp-quickstart.md](./mcp-quickstart.md)
+- `./bin/sourceharbor help`
 - the web command center routes
 - the API route map
 - the MCP tool map
@@ -97,10 +98,11 @@ What this layer answers:
 
 Fresh Dawn Closure note:
 
-- current `main` now includes the landed server-owned Ask page payload and the story-aware `/briefings -> /ask` front-door path from PR `#32`
-- current `main` has fresh successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs on the landed branch lineage
-- live GitHub description, homepage, and topics should now be evaluated against that landed `main`, not against the earlier conservative pre-landing wording
-- latest tagged release `v0.1.1` still lags current `main`, so release-side proof is not the same thing as current-branch proof
+- current `main` now includes the landed shared-story and JK front-door consolidation
+- current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
+- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs still point at an older `main` head, so they remain external-proof gaps rather than current-head proof for the current branch tip
+- live GitHub description, homepage, and topics should now be evaluated against `config/public/github-profile.json` for the landed `main`, not against the earlier conservative wording
+- release-side proof is still a separate ledger from current-branch proof; check the latest live tag and current-head external lanes together before claiming release alignment
 
 ## Future-direction Truth
 

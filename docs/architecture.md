@@ -85,6 +85,7 @@ Everything else in the repository exists to make that loop reliable, inspectable
 - `contracts`: shared schemas and contract artifacts
 - `infra`: compose, migrations, runtime infrastructure, and deployment assets
 - `scripts` and `bin`: reproducible operator and CI entrypoints, including the runtime route snapshot under `.runtime-cache/run/full-stack/resolved.env`
+- `./bin/sourceharbor`: thin repo-local CLI/help facade over those existing `bin/*` entrypoints
 
 ## Under Evaluation, Not Runtime Surfaces
 

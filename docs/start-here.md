@@ -11,6 +11,16 @@ Think of it like a guided first local run:
 - then inspect the feed and the job trace
 - then run the smoke path that backs up the public story
 
+If you want one discoverable repo-local command surface before you memorize
+individual entrypoints, start here:
+
+```bash
+./bin/sourceharbor help
+```
+
+That helper stays intentionally thin. The direct `bin/*` commands below remain
+the underlying truth.
+
 ## What You Should See By The End
 
 - the web command center at the route recorded in `.runtime-cache/run/full-stack/resolved.env`
@@ -24,6 +34,7 @@ Think of it like a guided first local run:
 ### 1. Install dependencies
 
 ```bash
+./bin/sourceharbor help
 cp .env.example .env
 UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/project-venv}" \
   uv sync --frozen --extra dev --extra e2e
@@ -46,6 +57,13 @@ on `127.0.0.1:5432`.
 source .runtime-cache/run/full-stack/resolved.env
 ```
 
+Equivalent thin-facade path:
+
+```bash
+./bin/sourceharbor bootstrap
+./bin/sourceharbor full-stack up
+```
+
 Open:
 
 - web command center: `http://127.0.0.1:${WEB_PORT}`
@@ -56,6 +74,12 @@ If anything feels off before you continue, run:
 
 ```bash
 ./bin/doctor
+```
+
+Or through the thin facade:
+
+```bash
+./bin/sourceharbor doctor
 ```
 
 Why source the runtime snapshot:

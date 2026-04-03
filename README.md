@@ -130,10 +130,15 @@ The builder-facing mental map should follow the same product line:
 | Entry point | Who it is for | Current truth |
 | --- | --- | --- |
 | **Codex / Claude Code workflows** | local operators who want an AI coding or operations agent to query and drive the same system truth | honest fit today through MCP + HTTP API, documented in [docs/builders.md](./docs/builders.md) |
+| **Repo-local CLI substrate** | newcomers who want one discoverable command surface before they memorize `bin/*` | real today via `./bin/sourceharbor help`, which routes to the existing repo entrypoints without pretending to be a packaged public CLI |
 | **Read-only MCP** | agent workflows and assistant clients that need governed access to jobs, artifacts, retrieval, ingest, reports, and notifications | real surface today via [`./bin/dev-mcp`](./docs/mcp-quickstart.md) |
 | **HTTP API contract** | product builders, automation, and future SDK consumers | real contract today via [`contracts/source/openapi.yaml`](./contracts/source/openapi.yaml) |
 | **Shared Web client/types** | the current TypeScript consumer layer inside the repo | real layer today in `apps/web/lib/api/client.ts` and `apps/web/lib/api/types.ts` |
 | **Future SDK path** | external packages that should stay thin and truthful | documented as a next step in [docs/builders.md](./docs/builders.md), not marketed as already shipped |
+
+The CLI story is intentionally thin: the existing `bin/*` commands remain the
+truthful repo-local substrate, `./bin/sourceharbor` is the discoverable façade,
+and a separately packaged public CLI or SDK still stays later.
 
 ## What It Does Not Claim Today
 
@@ -142,6 +147,7 @@ Think of this as the label on the box, not fine print:
 - SourceHarbor is **not** presented as a hosted SaaS or online signup product.
 - Agent Autopilot is **not** a shipped capability; it remains a bounded spike direction.
 - Hosted Team Workspace is **not** a current promise; it remains a deferred bet.
+- SourceHarbor is **not** yet shipped as a separately packaged public CLI or SDK.
 - SourceHarbor does **not** claim that every RSSHub route has already been individually validated.
 
 If you need the explicit bet boundaries, read:
@@ -175,6 +181,7 @@ Choose the shortest honest path for the result you want first:
 
 | I want to... | Do this first | What I get |
 | --- | --- | --- |
+| discover the repo-local command surface first | `./bin/sourceharbor help` | a thin menu over the existing `bin/*` entrypoints without inventing a second CLI stack |
 | evaluate without booting anything | [docs/see-it-fast.md](./docs/see-it-fast.md) | the fastest public tour of the command center, digest feed, and job trace |
 | run a real local flow | [docs/start-here.md](./docs/start-here.md) | the shortest repo-documented path to a local stack and a queued or completed job |
 | inspect the trust boundary first | [docs/proof.md](./docs/proof.md) | the current proof map, including what is locally provable and where the public boundary stops |
@@ -268,6 +275,7 @@ By the end of this path, you should have:
 ### 1. Boot the stack
 
 ```bash
+./bin/sourceharbor help
 cp .env.example .env
 UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/project-venv}" \
   uv sync --frozen --extra dev --extra e2e
@@ -349,6 +357,12 @@ Open these front-door routes after the stack is up:
 - `/mcp` for the in-product MCP front door
 - `/ops` for operator diagnostics and hardening gates
 
+The truthful CLI story today is intentionally thin:
+
+- `./bin/sourceharbor help` is the discoverable repo-local menu
+- `./bin/sourceharbor mcp` and `./bin/sourceharbor doctor` route to the same underlying entrypoints
+- packaged public CLI and public SDK surfaces are still later, not already shipped
+
 ### 5. Run the repo smoke path
 
 ```bash
@@ -389,10 +403,12 @@ This repository does not ask you to trust product copy on its own.
 - **Proof of verification:** [docs/testing.md](./docs/testing.md)
 - **Proof of current public claims:** [docs/proof.md](./docs/proof.md)
 
-GitHub profile intent is tracked in `config/public/github-profile.json`. The
-description, homepage, and topics were re-checked live, but they are
-intentionally still kept on a more conservative remote-main-safe wording until
-the newer local front doors are actually landed on remote `main`.
+GitHub profile intent is tracked in `config/public/github-profile.json`. Use
+`python3 scripts/github/apply_public_profile.py --verify` to compare the live
+description, homepage, and topics against the current tracked intent, and use
+`python3 scripts/github/apply_public_profile.py` when you intentionally want to
+sync those settings after current `main` truth is ready. Social preview upload
+still requires a manual GitHub Settings check.
 
 Generated docs under `docs/generated/` can point you toward runtime-owned evidence, but they are not the current verdict themselves. Historical plans under `.agents/Plans/` explain past execution context only and should not be read as the current public truth route.
 

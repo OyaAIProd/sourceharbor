@@ -45,13 +45,17 @@ export default function McpPage() {
 						<h2 className="text-xl font-semibold">{copy.startTitle}</h2>
 						<CardDescription>{copy.startDescription}</CardDescription>
 					</CardHeader>
-					<CardContent className="space-y-4">
-						<pre className="overflow-x-auto rounded-lg border border-border/70 bg-muted/40 p-4 text-sm">
-							<code>./bin/dev-mcp</code>
-						</pre>
-						<p className="text-sm text-muted-foreground">{copy.startNote}</p>
-					</CardContent>
-				</Card>
+				<CardContent className="space-y-4">
+					<pre className="overflow-x-auto rounded-lg border border-border/70 bg-muted/40 p-4 text-sm">
+						<code>{`./bin/sourceharbor help
+./bin/sourceharbor mcp
+
+# direct entrypoint still works
+./bin/dev-mcp`}</code>
+					</pre>
+					<p className="text-sm text-muted-foreground">{copy.startNote}</p>
+				</CardContent>
+			</Card>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
 						<h2 className="text-xl font-semibold">{copy.toolsTitle}</h2>

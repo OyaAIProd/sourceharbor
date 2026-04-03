@@ -7,6 +7,8 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-04-03
+
 ### Added
 
 - first-run doctor and operator diagnostics surfaces for local runtime truth
@@ -14,6 +16,7 @@ and this project follows semantic-ish release communication even when the reposi
 - job evidence bundle export for internal reuse and async collaboration
 - read-only sample corpus and playground surfaces
 - truthful use-case landing pages for YouTube, Bilibili, RSS, MCP, and research pipeline discovery
+- a thin `./bin/sourceharbor` facade that exposes the existing repo-owned `bin/*` entrypoints as one discoverable local CLI/help surface
 
 ### Changed
 
@@ -21,6 +24,8 @@ and this project follows semantic-ish release communication even when the reposi
 - hosted GHCR publish lanes now prefer the repository-scoped `GITHUB_TOKEN` path for login and SBOM registry auth in current workspace fixes
 - release evidence readiness now fail-closes on rollback gate drift, invalid rollback drill evidence, and failing required prechecks instead of checking file presence alone
 - rollback guidance now documents the destructive `content_type` down migration path as schema-restoring rather than lossless
+- builder docs now separate the truthful repo-local CLI substrate from the future packaged CLI / SDK path
+- README, start-here, and MCP quickstart now expose the repo-local command surface without overclaiming a packaged public CLI
 
 ## [0.1.1] - 2026-03-26
 
