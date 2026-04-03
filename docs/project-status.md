@@ -12,9 +12,10 @@ Use it like a status board, not like a sales page.
 If you need the exhaustive ledger instead of the short board, read
 [2026-03-31-program-closeout-matrix.md](./blueprints/2026-03-31-program-closeout-matrix.md).
 
-The current published baseline is `v0.1.2`: the latest release, the current
-remote `main`, and the latest successful protected external-lane runs all point
-at the same release-aligned snapshot.
+Release-current truth is a separate ledger from current remote `main`.
+Always verify the latest live tag together with the current remote head before
+repeating any “release-aligned” claim, because docs/governance closeout commits
+can move `main` forward again after a release is cut.
 
 ## Current Program State
 
@@ -135,9 +136,9 @@ Fresh GitHub-side verification now shows:
 
 - current `main` now includes the landed shared-story and JK front-door consolidation
 - current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
-- the latest published release is `v0.1.2`, and that release points at the current remote `main`
-- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with that same current `main` instead of an older head
-- release-current truth is aligned for `v0.1.2`, but live provider proof still stays a separate ledger from GitHub/release proof
+- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with the current remote `main` instead of an older head
+- latest-release truth must still be checked live against the current remote `main`, because post-release docs/governance closeouts can move `main` ahead again before the next tag is cut
+- live provider proof still stays a separate ledger from GitHub/release proof
 - the story-aware `/ask`, `/briefings`, `/subscriptions`, `/watchlists`, and `/trends` front-door line is now part of remote `main`
 - live repo description, homepage, topics, and discussions now match `config/public/github-profile.json` for the current remote `main`
 

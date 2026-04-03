@@ -100,10 +100,10 @@ Fresh Dawn Closure note:
 
 - current `main` now includes the landed shared-story and JK front-door consolidation
 - current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
-- the latest published release is `v0.1.2`, and that release points at the current remote `main`
-- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with that same current `main` instead of an older head
+- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with the current remote `main` instead of an older head
 - live GitHub description, homepage, topics, and discussions now match `config/public/github-profile.json` for the current remote `main`
-- release-side proof is currently aligned for `v0.1.2`, but provider-backed live proof still stays separate from GitHub/release truth
+- release-side proof must still be checked against the latest live tag, because current `main` can move ahead again after docs/governance closeout merges
+- provider-backed live proof still stays separate from GitHub/release truth
 
 ## Future-direction Truth
 
