@@ -12,8 +12,10 @@ import {
 import WatchlistsPage from "@/app/watchlists/page";
 
 const mockListWatchlists = vi.fn();
+const mockGetWatchlistBriefing = vi.fn();
 const mockGetWatchlistBriefingPage = vi.fn();
 const mockGetWatchlistTrend = vi.fn();
+const mockGetJobEvidenceBundle = vi.fn();
 const mockGetOpsInbox = vi.fn();
 
 vi.mock("next/link", () => ({
@@ -34,9 +36,13 @@ vi.mock("next/link", () => ({
 vi.mock("@/lib/api/client", () => ({
 	apiClient: {
 		listWatchlists: (...args: unknown[]) => mockListWatchlists(...args),
+		getWatchlistBriefing: (...args: unknown[]) =>
+			mockGetWatchlistBriefing(...args),
 		getWatchlistBriefingPage: (...args: unknown[]) =>
 			mockGetWatchlistBriefingPage(...args),
 		getWatchlistTrend: (...args: unknown[]) => mockGetWatchlistTrend(...args),
+		getJobEvidenceBundle: (...args: unknown[]) =>
+			mockGetJobEvidenceBundle(...args),
 		getOpsInbox: (...args: unknown[]) => mockGetOpsInbox(...args),
 	},
 }));
@@ -73,6 +79,26 @@ describe("compounder pages", () => {
 				matcher_type: "topic_key",
 				matcher_value: "retry-policy",
 			},
+			source_coverage: [
+				{
+					platform: "youtube",
+					run_count: 1,
+					card_count: 2,
+					latest_created_at: "2026-03-31T10:00:00Z",
+				},
+				{
+					platform: "bilibili",
+					run_count: 1,
+					card_count: 1,
+					latest_created_at: "2026-03-31T11:00:00Z",
+				},
+				{
+					platform: "rss",
+					run_count: 1,
+					card_count: 1,
+					latest_created_at: "2026-03-31T12:00:00Z",
+				},
+			],
 			timeline: [
 				{
 					job_id: "job-1",
@@ -289,6 +315,7 @@ describe("compounder pages", () => {
 				},
 			},
 		};
+		mockGetWatchlistBriefing.mockResolvedValue(briefing);
 		mockGetWatchlistBriefingPage.mockResolvedValue({
 			context: {
 				watchlist_id: "wl-1",
@@ -306,6 +333,22 @@ describe("compounder pages", () => {
 			ask_route:
 				"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 			compare_route: "/jobs?job_id=job-3&via=briefing-compare",
+		});
+		mockGetJobEvidenceBundle.mockResolvedValue({
+			bundle_kind: "sourceharbor_job_evidence_bundle_v1",
+			sharing_scope: "internal",
+			sample: false,
+			generated_at: "2026-03-31T12:00:00Z",
+			proof_boundary:
+				"Internal evidence bundle only. Do not treat this as hosted proof.",
+			job: { id: "job-1" },
+			trace_summary: { step_count: 4 },
+			digest: "# Digest",
+			digest_meta: null,
+			comparison: null,
+			knowledge_cards: [{ id: "card-1" }],
+			artifact_manifest: {},
+			step_summary: [],
 		});
 		mockGetOpsInbox.mockResolvedValue({
 			gates: {
@@ -346,6 +389,21 @@ describe("compounder pages", () => {
 				/Notification send paths exist, but live delivery is blocked/i,
 			),
 		).toBeInTheDocument();
+		expect(
+			screen.getAllByRole("heading", { name: "Continue this watchlist" })
+				.length,
+		).toBeGreaterThan(0);
+		expect(
+			screen
+				.getAllByRole("link", { name: "Open compounder front door" })
+				.map((element) => element.getAttribute("href")),
+		).toContain("/trends?watchlist_id=wl-1");
+		expect(
+			screen.getByRole("link", { name: "Ask about this story" }),
+		).toHaveAttribute(
+			"href",
+			"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+		);
 	});
 
 	it("renders trend page as merged story plus source coverage", async () => {
@@ -358,8 +416,17 @@ describe("compounder pages", () => {
 		expect(
 			screen.getByRole("heading", { name: "Merged source stories" }),
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Compounder front door" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("Source coverage")).toBeInTheDocument();
 		expect(screen.getByText("Merged stories")).toBeInTheDocument();
+		expect(screen.getByText("Latest lead-story bundle")).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/Internal evidence bundle only\. Do not treat this as hosted proof/i,
+			),
+		).toBeInTheDocument();
 		expect(screen.getAllByText("AI Weekly").length).toBeGreaterThan(0);
 		expect(screen.getAllByText("Bili Update").length).toBeGreaterThan(0);
 		expect(screen.getAllByText("RSS Digest").length).toBeGreaterThan(0);
@@ -369,6 +436,9 @@ describe("compounder pages", () => {
 		);
 		expect(screen.getAllByText("retry-policy").length).toBeGreaterThan(0);
 		expect(screen.getByText(/Added topics: retry-policy/i)).toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "Open evidence bundle" }),
+		).toHaveAttribute("href", "/api/v1/jobs/job-1/bundle");
 	});
 
 	it("renders briefing page as summary first, then differences, then evidence", async () => {
@@ -434,6 +504,7 @@ describe("compounder pages", () => {
 			screen.getByRole("heading", { name: "Read-only sample playground" }),
 		).toBeInTheDocument();
 		expect(screen.getByText(/Sample boundary/i)).toBeInTheDocument();
+		expect(screen.getByText(/Sharing scope:/i)).toBeInTheDocument();
 	});
 
 	it("renders truthful use-case page", async () => {
@@ -446,7 +517,10 @@ describe("compounder pages", () => {
 		expect(
 			screen.getByRole("heading", { name: "YouTube to AI digest" }),
 		).toBeInTheDocument();
-		expect(screen.getByText(/discoverability surfaces/i)).toBeInTheDocument();
+		expect(
+			screen.getByText(/evidence bundle keep the output reviewable/i),
+		).toBeInTheDocument();
+		expect(screen.getByText("Current action path")).toBeInTheDocument();
 	});
 
 	it("supports promised params for use-case runtime and metadata generation", async () => {

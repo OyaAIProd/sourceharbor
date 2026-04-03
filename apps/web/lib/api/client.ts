@@ -526,7 +526,11 @@ function getArtifactMarkdown(params: {
 }
 
 export const apiClient = {
-	listSubscriptions(params?: { platform?: Platform; enabled_only?: boolean }) {
+	listSubscriptions(params?: {
+		platform?: Platform;
+		category?: SubscriptionCategory;
+		enabled_only?: boolean;
+	}) {
 		return requestJson<Subscription[]>("/api/v1/subscriptions", {}, params);
 	},
 

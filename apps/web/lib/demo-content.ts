@@ -8,7 +8,8 @@ export const USE_CASE_PAGES = {
 			"Job trace and evidence bundle keep the output reviewable instead of turning it into black-box AI copy.",
 		],
 		links: [
-			{ href: "/search", label: "Open Search" },
+			{ href: "/trends", label: "Open compounder front door" },
+			{ href: "/watchlists", label: "Open Watchlists" },
 			{ href: "/playground", label: "Open sample playground" },
 			{
 				href: "https://github.com/xiaojiou176-open/sourceharbor/blob/main/docs/start-here.md",
@@ -25,6 +26,7 @@ export const USE_CASE_PAGES = {
 			"Knowledge cards and trends help you come back to the same source family over time.",
 		],
 		links: [
+			{ href: "/trends", label: "Open compounder front door" },
 			{ href: "/knowledge", label: "Open Knowledge" },
 			{ href: "/watchlists", label: "Open Watchlists" },
 			{ href: "/playground", label: "Open sample playground" },
@@ -40,6 +42,7 @@ export const USE_CASE_PAGES = {
 		],
 		links: [
 			{ href: "/feed", label: "Open Feed" },
+			{ href: "/watchlists", label: "Open Watchlists" },
 			{ href: "/trends", label: "Open Trends" },
 			{ href: "/ops", label: "Open Ops inbox" },
 		],
@@ -53,6 +56,7 @@ export const USE_CASE_PAGES = {
 			"Use cases are strongest when grounded in real jobs, retrieval, and evidence bundles.",
 		],
 		links: [
+			{ href: "/trends", label: "Open compounder front door" },
 			{ href: "/mcp", label: "Open MCP quickstart" },
 			{ href: "/search", label: "Open Search" },
 			{ href: "/playground", label: "Open sample playground" },
@@ -68,6 +72,7 @@ export const USE_CASE_PAGES = {
 		],
 		links: [
 			{ href: "/mcp", label: "Open MCP quickstart" },
+			{ href: "/trends", label: "Open compounder front door" },
 			{ href: "/ops", label: "Open Ops inbox" },
 			{ href: "/search", label: "Open Search" },
 		],
@@ -82,6 +87,7 @@ export const USE_CASE_PAGES = {
 		],
 		links: [
 			{ href: "/mcp", label: "Open MCP quickstart" },
+			{ href: "/trends", label: "Open compounder front door" },
 			{
 				href: "/use-cases/research-pipeline",
 				label: "Open research pipeline use case",
@@ -98,8 +104,8 @@ export const USE_CASE_PAGES = {
 			"This page is a truthful map of the current compounder layer, not a hosted product promise.",
 		],
 		links: [
+			{ href: "/trends", label: "Open compounder front door" },
 			{ href: "/watchlists", label: "Open Watchlists" },
-			{ href: "/trends", label: "Open Trends" },
 			{ href: "/playground", label: "Open sample playground" },
 		],
 	},

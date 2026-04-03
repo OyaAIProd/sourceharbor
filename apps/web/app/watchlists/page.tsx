@@ -97,7 +97,19 @@ export default async function WatchlistsPage({
 				.then((payload) => ({ payload, error: false }))
 				.catch(() => ({ payload: null, error: true }))
 		: { payload: null, error: false };
+	const briefingPageResult = trendWatchlist
+		? await apiClient
+				.getWatchlistBriefingPage(trendWatchlist.id)
+				.then((payload) => ({ payload, error: false }))
+				.catch(() => ({ payload: null, error: true }))
+		: { payload: null, error: false };
 	const notificationGate = opsResult.payload?.gates.notifications ?? null;
+	const selectedStory = briefingPageResult.payload?.selected_story ?? null;
+	const selectedStoryRoutes =
+		selectedStory?.routes ?? briefingPageResult.payload?.routes;
+	const compounderFrontDoorHref = trendWatchlist
+		? `/trends?watchlist_id=${encodeURIComponent(trendWatchlist.id)}`
+		: "/trends";
 
 	const alert =
 		status && code ? (
@@ -239,6 +251,81 @@ export default async function WatchlistsPage({
 					</CardContent>
 				</Card>
 			</section>
+
+			{trendWatchlist && briefingPageResult.payload ? (
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>Continue this watchlist</CardTitle>
+						<CardDescription>
+							Watchlists are the saved tracking objects. The unified compounder
+							front door lives in Trends, where this watchlist turns into one
+							current story, one recent-delta lane, and one internal evidence
+							bundle path.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+							<p className="font-medium text-foreground">
+								{selectedStory?.headline ?? trendWatchlist.name}
+							</p>
+							<p className="mt-2 text-sm text-muted-foreground">
+								{briefingPageResult.payload.briefing.summary.overview}
+							</p>
+							{briefingPageResult.payload.story_change_summary ? (
+								<p className="mt-3 text-sm text-muted-foreground">
+									{briefingPageResult.payload.story_change_summary}
+								</p>
+							) : null}
+						</div>
+
+						<div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+							<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+								<p className="font-medium text-foreground">Source families</p>
+								<p className="mt-1">
+									{briefingPageResult.payload.briefing.summary.source_count}
+								</p>
+							</div>
+							<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+								<p className="font-medium text-foreground">Recent runs</p>
+								<p className="mt-1">
+									{briefingPageResult.payload.briefing.summary.run_count}
+								</p>
+							</div>
+							<div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+								<p className="font-medium text-foreground">Matched cards</p>
+								<p className="mt-1">
+									{briefingPageResult.payload.briefing.summary.matched_cards}
+								</p>
+							</div>
+						</div>
+
+						<div className="flex flex-wrap gap-3">
+							<Button asChild variant="hero" size="sm">
+								<Link href={compounderFrontDoorHref}>
+									Open compounder front door
+								</Link>
+							</Button>
+							{selectedStoryRoutes?.briefing ? (
+								<Button asChild variant="outline" size="sm">
+									<Link href={selectedStoryRoutes.briefing}>
+										Open briefing story
+									</Link>
+								</Button>
+							) : null}
+							{briefingPageResult.payload.ask_route ? (
+								<Button asChild variant="outline" size="sm">
+									<Link href={briefingPageResult.payload.ask_route}>
+										Ask about this story
+									</Link>
+								</Button>
+							) : null}
+							<Button asChild variant="outline" size="sm">
+								<Link href="/playground">Review sample-proof boundary</Link>
+							</Button>
+						</div>
+					</CardContent>
+				</Card>
+			) : null}
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>

@@ -92,11 +92,13 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 	],
 	watchlists: [
 		"AI trend watchlist",
+		"tracking object",
 		"Codex updates tracking",
 		"Claude Code tracking",
 		"compounder workflow",
 	],
 	trends: [
+		"compounder front door",
 		"cross-run trend",
 		"topic diff",
 		"claim change tracking",
@@ -104,6 +106,7 @@ const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 	],
 	briefings: [
 		"watchlist briefing",
+		"shared story surface",
 		"unified information surface",
 		"cross-source briefing",
 		"evidence drill-down",

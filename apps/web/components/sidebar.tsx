@@ -357,7 +357,7 @@ function SidebarNavContent({
 					>
 						<Plus className="size-4 shrink-0 opacity-80" aria-hidden />
 						<span className={collapsed ? "sr-only" : undefined}>
-							+ Add subscription
+							Subscriptions
 						</span>
 					</Link>
 					<Link

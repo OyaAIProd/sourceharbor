@@ -16,6 +16,17 @@ Think of the product like one control tower with multiple doors:
 - future SDKs should stay thin wrappers over those same contracts
 - the same contracts now distinguish **strong-supported video intake** from **generalized RSSHub/RSS intake**
 
+The easiest way to keep the builder story honest is to map it to the same front
+doors operators already see:
+
+| Product door | Builder meaning | Current truth |
+| --- | --- | --- |
+| **`/subscriptions`** | intake contract over one shared template catalog | Web, API, and MCP now all point at the same strong-supported vs generalized intake split |
+| **`/watchlists`** | durable tracking-object substrate | builders can treat watchlists as saved operator intent, not a temporary browser filter |
+| **`/trends`** | compounder front door | repeated runs become merged stories and evidence surfaces instead of one-off search sessions |
+| **`/briefings` + `/ask`** | story-aware answer/change/evidence lane | the same server-owned story payload now carries selected-story context into Ask |
+| **`/mcp`** | agent-facing reuse doorway | assistants reuse the same jobs, retrieval, artifacts, and operator truth instead of a second business-logic stack |
+
 ## Best-Fit Clients Today
 
 | Surface | Best fit today | Why |
@@ -37,6 +48,7 @@ Think of the product like one control tower with multiple doors:
 
 Representative routes:
 
+- `GET /api/v1/subscriptions/templates`
 - `POST /api/v1/videos/process`
 - `GET /api/v1/jobs/{job_id}`
 - `POST /api/v1/retrieval/search`

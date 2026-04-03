@@ -13,7 +13,11 @@ ApiCall = Callable[..., dict[str, Any]]
 def register_subscription_tools(mcp: FastMCP, api_call: ApiCall) -> None:
     @mcp.tool(
         name="sourceharbor.subscriptions.manage",
-        description="Manage subscriptions. action=list|list_templates|upsert|remove|batch_update_category.",
+        description=(
+            "Manage subscriptions and inspect the shared template catalog for "
+            "strong-supported YouTube/Bilibili lanes plus generalized RSSHub and RSS intake. "
+            "action=list|list_templates|upsert|remove|batch_update_category."
+        ),
     )
     def manage_subscriptions(
         action: str,

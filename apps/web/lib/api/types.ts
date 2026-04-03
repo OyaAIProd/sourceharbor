@@ -1,9 +1,15 @@
 type ExtensibleString = string & {};
-export type Platform = "youtube" | "bilibili" | ExtensibleString;
+export type Platform =
+	| "youtube"
+	| "bilibili"
+	| "rsshub"
+	| "generic"
+	| ExtensibleString;
 export type SourceType =
 	| "url"
 	| "youtube_channel_id"
 	| "bilibili_uid"
+	| "rsshub_route"
 	| ExtensibleString;
 export type SubscriptionCategory =
 	| "tech"
@@ -29,8 +35,8 @@ export type Subscription = {
 	source_type: SourceType;
 	source_value: string;
 	source_name: string;
-	support_tier?: "strong_supported" | "generic_supported";
-	content_profile?: ContentType;
+	support_tier: "strong_supported" | "generic_supported";
+	content_profile: ContentType;
 	adapter_type: SubscriptionAdapterType;
 	source_url: string | null;
 	rsshub_route: string;

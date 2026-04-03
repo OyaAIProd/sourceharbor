@@ -94,9 +94,10 @@ This is the part that makes SourceHarbor more than a pretty README:
 The hook is simple:
 
 - **Search** gives the evidence surface.
+- **Subscriptions** gives the source-universe intake front door.
 - **Ask** gives the story-aware, briefing-backed answer/change/evidence front door, now pushed toward a server-owned page payload instead of a front-end stitched view model.
 - **MCP** gives Codex / Claude Code / builder reuse.
-- **Ops + compounders** make the system worth coming back to instead of treating it like a one-shot summarizer.
+- **Watchlists + Trends + Playground** make the system worth coming back to instead of treating it like a one-shot summarizer.
 
 ## Front Doors
 
@@ -104,16 +105,27 @@ The fastest way to understand the product is to open the highest-value rooms fir
 
 | Front door | What it means | Current truth |
 | --- | --- | --- |
+| **Subscriptions** | Source-universe intake front door with one shared template catalog for strong-supported YouTube/Bilibili lanes plus generalized RSSHub/RSS intake | Real Web route after local boot: `/subscriptions` + shared catalog through API and MCP |
 | **Search** | Operator-facing evidence search over digests, knowledge cards, transcripts, and related artifacts | Real Web route after local boot: `/search` |
 | **Ask your sources** | Story-aware, briefing-backed Ask front door: with watchlist and story context it returns the current answer, recent changes, and citation drill-down through a server-owned page payload; without context it falls back to grounded retrieval | Real Web route after local boot: `/ask` + [grounded contract](./docs/blueprints/2026-03-31-ask-your-sources-grounded-answer-contract.md) |
 | **Briefings** | Lowest-cognitive-load unified story view for one watchlist: summary first, then differences, then evidence drill-down, with one canonical selected-story page payload that Ask reuses instead of parallel browser-side aliases | Real Web route after local boot: `/briefings`; grounded in watchlists, merged stories, jobs, and knowledge |
+| **Watchlists** | Durable tracking object surface for saved topics, claim kinds, platform slices, and source matchers | Real Web route after local boot: `/watchlists` |
+| **Trends** | Compounder front door that turns repeated watchlist hits into merged stories plus recent evidence runs | Real Web route after local boot: `/trends` |
 | **MCP** | Agent-facing surface on top of the same API and pipeline state | [docs/mcp-quickstart.md](./docs/mcp-quickstart.md) + `./bin/dev-mcp` |
 | **Ops / doctor** | First-run diagnosis, operator triage, and next-step guidance for runtime truth, failed jobs, ingest issues, and live-hardening gates | `./bin/doctor` + `/ops` after local boot + [docs/runtime-truth.md](./docs/runtime-truth.md) |
-| **Compounders** | Watchlists, trends, evidence bundles, and read-only sample playgrounds that make SourceHarbor worth coming back to | `/watchlists`, `/trends`, `/playground`, and `/use-cases/*` |
+| **Playground** | Clearly labeled sample-proof lane for demo corpus, example jobs, retrieval results, and use-case navigation without pretending to be live operator truth | Real Web route after local boot: `/playground` + [docs/samples/README.md](./docs/samples/README.md) |
 
 ## Builder Entry Points
 
 SourceHarbor is not just a Web app. It already has multiple access layers for builders and agent workflows:
+
+The builder-facing mental map should follow the same product line:
+
+- `/subscriptions` establishes the intake contract
+- `/watchlists` stores the tracking object
+- `/trends` turns repeated runs into the compounder front door
+- `/briefings` and `/ask` share the story-aware page payload
+- `/mcp` reuses that same system truth for agents
 
 | Entry point | Who it is for | Current truth |
 | --- | --- | --- |
