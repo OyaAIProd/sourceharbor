@@ -235,6 +235,61 @@ paths:
         '404':
           description: Not found
 
+  /api/v1/watchlists/{watchlist_id}/briefing/page:
+    get:
+      operationId: getWatchlistBriefingPage
+      parameters:
+        - in: path
+          name: watchlist_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: story_id
+          schema:
+            type: string
+        - in: query
+          name: query
+          schema:
+            type: string
+        - in: query
+          name: limit_runs
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 4
+        - in: query
+          name: limit_cards
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 60
+            default: 18
+        - in: query
+          name: limit_stories
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 4
+        - in: query
+          name: limit_evidence_per_story
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 8
+            default: 3
+      responses:
+        '200':
+          description: Server-owned watchlist briefing page payload with selected story context and Ask handoff
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistBriefingPageResponse'
+        '404':
+          description: Not found
+
   /api/v1/ingest/poll:
     post:
       operationId: pollIngest
@@ -1521,6 +1576,21 @@ components:
           items:
             $ref: '#/components/schemas/WatchlistBriefingRunEvidence'
 
+    WatchlistBriefingSelection:
+      type: object
+      required: [selection_basis]
+      properties:
+        selected_story_id:
+          type: string
+          nullable: true
+        selection_basis:
+          type: string
+          enum: [requested_story_id, query_match, suggested_story_id, first_story, none]
+        story:
+          allOf:
+            - $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'
+          nullable: true
+
     WatchlistBriefingResponse:
       type: object
       required: [watchlist, summary, differences, evidence]
@@ -1533,6 +1603,116 @@ components:
           $ref: '#/components/schemas/WatchlistBriefingDifferences'
         evidence:
           $ref: '#/components/schemas/WatchlistBriefingEvidence'
+        selection:
+          allOf:
+            - $ref: '#/components/schemas/WatchlistBriefingSelection'
+          nullable: true
+
+    WatchlistBriefingPageContext:
+      type: object
+      required: [watchlist_id, selection_basis]
+      properties:
+        watchlist_id:
+          type: string
+        watchlist_name:
+          type: string
+          nullable: true
+        story_id:
+          type: string
+          nullable: true
+        selected_story_id:
+          type: string
+          nullable: true
+        story_headline:
+          type: string
+          nullable: true
+        topic_key:
+          type: string
+          nullable: true
+        topic_label:
+          type: string
+          nullable: true
+        selection_basis:
+          type: string
+          enum: [requested_story_id, query_match, suggested_story_id, first_story, none]
+        question_seed:
+          type: string
+          nullable: true
+
+    WatchlistBriefingPageCitation:
+      type: object
+      required: [kind, label, snippet]
+      properties:
+        kind:
+          type: string
+          enum: [briefing_story, briefing_card, job_compare]
+        label:
+          type: string
+        snippet:
+          type: string
+        source_url:
+          type: string
+          nullable: true
+        job_id:
+          type: string
+          nullable: true
+        route:
+          type: string
+          nullable: true
+        route_label:
+          type: string
+          nullable: true
+
+    WatchlistBriefingPageFallbackAction:
+      type: object
+      required: [kind, label]
+      properties:
+        kind:
+          type: string
+          enum: [open_briefing, open_story, open_job, open_knowledge, open_trend]
+        label:
+          type: string
+        route:
+          type: string
+          nullable: true
+
+    WatchlistBriefingPageResponse:
+      type: object
+      required: [context, briefing, citations, routes, fallback_actions]
+      properties:
+        context:
+          $ref: '#/components/schemas/WatchlistBriefingPageContext'
+        briefing:
+          $ref: '#/components/schemas/WatchlistBriefingResponse'
+        selected_story:
+          allOf:
+            - $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'
+          nullable: true
+        story_change_summary:
+          type: string
+          nullable: true
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistBriefingPageCitation'
+        routes:
+          $ref: '#/components/schemas/WatchlistBriefingRoutes'
+        ask_route:
+          type: string
+          nullable: true
+        compare_route:
+          type: string
+          nullable: true
+        fallback_reason:
+          type: string
+          nullable: true
+        fallback_next_step:
+          type: string
+          nullable: true
+        fallback_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistBriefingPageFallbackAction'
 
     IngestPollRequest:
       type: object
@@ -2344,17 +2524,9 @@ components:
         story_change_summary:
           type: string
           nullable: true
-        briefing:
+        story_page:
           allOf:
-            - $ref: '#/components/schemas/WatchlistBriefingResponse'
-          nullable: true
-        story_focus:
-          allOf:
-            - $ref: '#/components/schemas/AskAnswerSelectedStory'
-          nullable: true
-        selected_story:
-          allOf:
-            - $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'
+            - $ref: '#/components/schemas/WatchlistBriefingPageResponse'
           nullable: true
         retrieval:
           allOf:

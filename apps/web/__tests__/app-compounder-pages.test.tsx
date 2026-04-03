@@ -12,7 +12,7 @@ import {
 import WatchlistsPage from "@/app/watchlists/page";
 
 const mockListWatchlists = vi.fn();
-const mockGetWatchlistBriefing = vi.fn();
+const mockGetWatchlistBriefingPage = vi.fn();
 const mockGetWatchlistTrend = vi.fn();
 const mockGetOpsInbox = vi.fn();
 
@@ -34,8 +34,8 @@ vi.mock("next/link", () => ({
 vi.mock("@/lib/api/client", () => ({
 	apiClient: {
 		listWatchlists: (...args: unknown[]) => mockListWatchlists(...args),
-		getWatchlistBriefing: (...args: unknown[]) =>
-			mockGetWatchlistBriefing(...args),
+		getWatchlistBriefingPage: (...args: unknown[]) =>
+			mockGetWatchlistBriefingPage(...args),
 		getWatchlistTrend: (...args: unknown[]) => mockGetWatchlistTrend(...args),
 		getOpsInbox: (...args: unknown[]) => mockGetOpsInbox(...args),
 	},
@@ -124,7 +124,7 @@ describe("compounder pages", () => {
 				},
 			],
 		});
-		mockGetWatchlistBriefing.mockResolvedValue({
+		const briefing = {
 			watchlist: {
 				id: "wl-1",
 				name: "Retry policy",
@@ -173,7 +173,7 @@ describe("compounder pages", () => {
 					removed_lines: 4,
 					diff_excerpt:
 						"Retry guidance moved from optional to default posture.",
-					compare_route: "/jobs?job_id=job-3",
+					compare_route: "/jobs?job_id=job-3&via=briefing-compare",
 				},
 			},
 			evidence: {
@@ -213,9 +213,10 @@ describe("compounder pages", () => {
 						],
 						routes: {
 							watchlist_trend: "/trends?watchlist_id=wl-1",
-							briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
-							ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
-							job_compare: "/jobs?job_id=job-1",
+							briefing:
+								"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+							ask: "/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+							job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 							job_bundle: "/api/v1/jobs/job-1/bundle",
 							job_knowledge_cards: "/knowledge?job_id=job-1",
 						},
@@ -232,15 +233,79 @@ describe("compounder pages", () => {
 						matched_card_count: 1,
 						routes: {
 							watchlist_trend: "/trends?watchlist_id=wl-1",
-							briefing: "/briefings?watchlist_id=wl-1",
-							ask: "/ask?watchlist_id=wl-1",
-							job_compare: "/jobs?job_id=job-3",
+							briefing: "/briefings?watchlist_id=wl-1&via=briefing-run",
+							ask: "/ask?watchlist_id=wl-1&via=briefing-run",
+							job_compare: "/jobs?job_id=job-3&via=briefing-run",
 							job_bundle: "/api/v1/jobs/job-3/bundle",
 							job_knowledge_cards: "/knowledge?job_id=job-3",
 						},
 					},
 				],
 			},
+			selection: {
+				selected_story_id: "story-1",
+				selection_basis: "suggested_story_id",
+				story: {
+					story_id: "story-1",
+					story_key: "topic:retry-policy",
+					headline: "Retries moved from recommendation to default posture",
+					topic_key: "retry-policy",
+					topic_label: "Retry policy",
+					source_count: 3,
+					run_count: 4,
+					matched_card_count: 6,
+					platforms: ["youtube", "rss"],
+					claim_kinds: ["recommendation"],
+					source_urls: ["https://example.com"],
+					latest_run_job_id: "job-1",
+					evidence_cards: [
+						{
+							card_id: "card-1",
+							job_id: "job-1",
+							video_id: "video-1",
+							platform: "youtube",
+							video_title: "AI Weekly",
+							source_url: "https://example.com",
+							created_at: "2026-03-31T10:00:00Z",
+							card_type: "claim",
+							card_title: "Retry policy became explicit",
+							card_body:
+								"The workflow now treats retries as first-line safety.",
+							source_section: "Digest",
+							topic_key: "retry-policy",
+							topic_label: "Retry policy",
+							claim_kind: "recommendation",
+						},
+					],
+					routes: {
+						watchlist_trend: "/trends?watchlist_id=wl-1",
+						briefing:
+							"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+						ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+						job_compare: "/jobs?job_id=job-1&via=briefing-compare",
+						job_bundle: "/api/v1/jobs/job-1/bundle",
+						job_knowledge_cards: "/knowledge?job_id=job-1",
+					},
+				},
+			},
+		};
+		mockGetWatchlistBriefingPage.mockResolvedValue({
+			context: {
+				watchlist_id: "wl-1",
+				watchlist_name: "Retry policy",
+				story_id: null,
+				selected_story_id: "story-1",
+				story_headline: "Retries moved from recommendation to default posture",
+				topic_key: "retry-policy",
+				topic_label: "Retry policy",
+				selection_basis: "suggested_story_id",
+				question_seed: "Retry policy",
+			},
+			briefing,
+			selected_story: briefing.selection.story,
+			ask_route:
+				"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+			compare_route: "/jobs?job_id=job-3&via=briefing-compare",
 		});
 		mockGetOpsInbox.mockResolvedValue({
 			gates: {
@@ -334,13 +399,21 @@ describe("compounder pages", () => {
 			screen.getByRole("link", { name: "Ask this briefing" }),
 		).toHaveAttribute(
 			"href",
-			"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy",
+			"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 		);
 		expect(
 			screen.getByRole("link", { name: "Ask about this story" }),
 		).toHaveAttribute(
 			"href",
-			"/ask?watchlist_id=wl-1&question=Retry+policy&story_id=story-1&topic_key=retry-policy",
+			"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+		);
+		expect(screen.getByRole("link", { name: "Open briefing" })).toHaveAttribute(
+			"href",
+			"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+		);
+		expect(screen.getByRole("link", { name: "Open compare" })).toHaveAttribute(
+			"href",
+			"/jobs?job_id=job-3&via=briefing-compare",
 		);
 		expect(
 			screen

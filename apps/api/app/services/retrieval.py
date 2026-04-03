@@ -16,6 +16,7 @@ from integrations.providers.gemini import build_gemini_client, load_gemini_sdk
 
 from ..config import Settings
 from ..errors import ApiServiceError, ApiTimeoutError
+from .story_read_model import build_briefing_page_payload, select_story_from_briefing
 
 _ALLOWED_FILTERS = {
     "platform",
@@ -46,7 +47,6 @@ _KEYWORD_SOURCE_SCORE_BOOSTS = {
     "transcript": 0.0,
 }
 _QUERY_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
-
 RetrievalMode = Literal["keyword", "semantic", "hybrid"]
 logger = logging.getLogger(__name__)
 
@@ -66,21 +66,50 @@ class RetrievalService:
         mode: RetrievalMode = "keyword",
     ) -> dict[str, Any]:
         normalized_query = query.strip()
+        normalized_watchlist_id = str(watchlist_id or "").strip() or None
+        normalized_story_id = str(story_id or "").strip() or None
         normalized_filters = self._normalize_filters(filters)
         normalized_mode = self._normalize_mode(mode)
         briefing = (
-            self._load_watchlist_briefing(watchlist_id=watchlist_id)
-            if isinstance(watchlist_id, str) and watchlist_id.strip()
+            self._ensure_story_page_payload(
+                self._load_watchlist_briefing_page(
+                    watchlist_id=normalized_watchlist_id,
+                    story_id=normalized_story_id,
+                    query=normalized_query,
+                ),
+                watchlist_id=normalized_watchlist_id,
+                story_id=normalized_story_id,
+                query=normalized_query,
+            )
+            if normalized_watchlist_id
             else None
         )
-        selected_story, selection_basis = self._select_briefing_story(
-            briefing=briefing,
-            story_id=story_id,
+        briefing_context = self._extract_briefing_context(briefing)
+        briefing_payload = self._extract_briefing_payload(briefing)
+        selected_story = self._extract_selected_story(
+            briefing,
+            briefing_payload=briefing_payload,
+            story_id=normalized_story_id,
             query=normalized_query,
         )
+        _, derived_selection_basis = self._select_briefing_story(
+            briefing=briefing_payload,
+            story_id=normalized_story_id,
+            query=normalized_query,
+        )
+        selection_basis = (
+            str(
+                briefing_context.get("selection_basis") or derived_selection_basis or "none"
+            ).strip()
+            or "none"
+        )
+        selected_story_dict = selected_story if isinstance(selected_story, dict) else {}
 
         retrieval_filters = dict(normalized_filters)
-        primary_job_id = self._resolve_primary_job_id(briefing=briefing, story=selected_story)
+        primary_job_id = self._resolve_primary_job_id(
+            briefing=briefing_payload,
+            story=selected_story,
+        )
         if primary_job_id and "job_id" not in retrieval_filters:
             retrieval_filters["job_id"] = primary_job_id
 
@@ -91,9 +120,9 @@ class RetrievalService:
             mode=normalized_mode,
         )
         retrieval_items = list(retrieval_payload.get("items") or [])
-        changes = self._build_answer_changes(briefing=briefing, story=selected_story)
+        changes = self._build_answer_changes(briefing=briefing_payload, story=selected_story)
         citations = self._build_answer_citations(
-            briefing=briefing,
+            briefing=briefing_payload,
             story=selected_story,
             retrieval_items=retrieval_items,
             changes=changes,
@@ -101,7 +130,7 @@ class RetrievalService:
         fallback = self._build_answer_fallback(
             watchlist_id=watchlist_id,
             story_id=story_id,
-            briefing=briefing,
+            briefing=briefing_payload,
             story=selected_story,
             retrieval_items=retrieval_items,
             citations=citations,
@@ -110,24 +139,44 @@ class RetrievalService:
         return {
             "query": normalized_query,
             "context": {
-                "watchlist_id": watchlist_id,
-                "watchlist_name": self._watchlist_name(briefing)
-                if isinstance(briefing, dict)
+                "watchlist_id": normalized_watchlist_id,
+                "watchlist_name": str(
+                    briefing_context.get("watchlist_name")
+                    or self._watchlist_name(briefing_payload)
+                    or ""
+                ).strip()
+                or None,
+                "story_id": str(
+                    briefing_context.get("selected_story_id") or normalized_story_id or ""
+                ).strip()
+                or None,
+                "selected_story_id": str(
+                    briefing_context.get("selected_story_id")
+                    or selected_story_dict.get("story_id")
+                    or ""
+                ).strip()
+                or None,
+                "story_headline": str(
+                    briefing_context.get("story_headline")
+                    or selected_story_dict.get("headline")
+                    or ""
+                ).strip()
+                or None
+                if selected_story_dict or briefing_context
                 else None,
-                "story_id": story_id,
-                "selected_story_id": (
-                    str(selected_story.get("story_id") or "").strip() or None
-                    if selected_story
-                    else None
-                ),
-                "story_headline": str(selected_story.get("headline") or "").strip() or None
-                if selected_story
+                "topic_key": str(
+                    briefing_context.get("topic_key") or selected_story_dict.get("topic_key") or ""
+                ).strip()
+                or None
+                if selected_story_dict or briefing_context
                 else None,
-                "topic_key": str(selected_story.get("topic_key") or "").strip() or None
-                if selected_story
-                else None,
-                "topic_label": str(selected_story.get("topic_label") or "").strip() or None
-                if selected_story
+                "topic_label": str(
+                    briefing_context.get("topic_label")
+                    or selected_story_dict.get("topic_label")
+                    or ""
+                ).strip()
+                or None
+                if selected_story_dict or briefing_context
                 else None,
                 "selection_basis": selection_basis,
                 "mode": normalized_mode,
@@ -137,7 +186,7 @@ class RetrievalService:
             "selected_story": self._serialize_selected_story(story=selected_story),
             "answer": self._build_answer_output(
                 query=normalized_query,
-                briefing=briefing,
+                briefing=briefing_payload,
                 story=selected_story,
                 retrieval_items=retrieval_items,
                 changes=changes,
@@ -146,7 +195,7 @@ class RetrievalService:
             "changes": changes,
             "citations": citations,
             "evidence": self._build_answer_evidence(
-                briefing=briefing,
+                briefing=briefing_payload,
                 story=selected_story,
                 retrieval_items=retrieval_items,
                 citation_count=len(citations),
@@ -173,15 +222,39 @@ class RetrievalService:
         normalized_top_k = max(1, min(top_k, 20))
         normalized_filters = self._normalize_filters(filters)
 
-        briefing = (
-            self._load_watchlist_briefing(watchlist_id=normalized_watchlist_id)
+        briefing_page = (
+            self._ensure_story_page_payload(
+                self._load_watchlist_briefing_page(
+                    watchlist_id=normalized_watchlist_id,
+                    story_id=normalized_story_id,
+                    query=normalized_query or normalized_topic_key or "",
+                ),
+                watchlist_id=normalized_watchlist_id,
+                story_id=normalized_story_id,
+                query=normalized_query or normalized_topic_key or "",
+            )
             if normalized_watchlist_id
             else None
         )
-        selected_story, selection_basis = self._select_briefing_story(
+        story_page = briefing_page if isinstance(briefing_page, dict) else None
+        briefing = self._extract_briefing_payload(story_page)
+        selected_story = self._extract_selected_story(
+            story_page,
+            briefing_payload=briefing,
+            story_id=normalized_story_id,
+            query=normalized_query or normalized_topic_key or "",
+        )
+        briefing_page_context = self._extract_briefing_context(story_page)
+        _, derived_selection_basis = self._select_briefing_story(
             briefing=briefing,
             story_id=normalized_story_id,
             query=normalized_query or normalized_topic_key or "",
+        )
+        selection_basis = (
+            str(
+                briefing_page_context.get("selection_basis") or derived_selection_basis or "none"
+            ).strip()
+            or "none"
         )
         answer_contract = (
             self.answer(
@@ -206,7 +279,7 @@ class RetrievalService:
             else None
         )
 
-        story_focus = (
+        selected_story_payload = (
             answer_contract.get("selected_story")
             if isinstance(answer_contract, dict)
             and isinstance(answer_contract.get("selected_story"), dict)
@@ -263,7 +336,9 @@ class RetrievalService:
             and isinstance(answer_contract.get("context"), dict)
             else {}
         )
-        story_focus_dict = story_focus if isinstance(story_focus, dict) else {}
+        selected_story_page_dict = (
+            selected_story_payload if isinstance(selected_story_payload, dict) else {}
+        )
         selected_story_dict = selected_story if isinstance(selected_story, dict) else {}
         briefing_summary = (
             briefing.get("summary")
@@ -278,46 +353,58 @@ class RetrievalService:
             "context": {
                 "watchlist_id": normalized_watchlist_id,
                 "watchlist_name": str(
-                    context.get("watchlist_name") or self._watchlist_name(briefing)
+                    context.get("watchlist_name")
+                    or briefing_page_context.get("watchlist_name")
+                    or self._watchlist_name(briefing)
                 ).strip()
                 or None,
                 "story_id": str(
-                    story_focus_dict.get("story_id")
+                    selected_story_page_dict.get("story_id")
                     or selected_story_dict.get("story_id")
+                    or briefing_page_context.get("selected_story_id")
                     or normalized_story_id
                     or ""
                 ).strip()
                 or None,
                 "selected_story_id": str(
                     context.get("selected_story_id")
-                    or story_focus_dict.get("story_id")
+                    or selected_story_page_dict.get("story_id")
                     or selected_story_dict.get("story_id")
+                    or briefing_page_context.get("selected_story_id")
                     or ""
                 ).strip()
                 or None,
                 "story_headline": str(
                     context.get("story_headline")
-                    or story_focus_dict.get("headline")
+                    or selected_story_page_dict.get("headline")
                     or selected_story_dict.get("headline")
+                    or briefing_page_context.get("story_headline")
                     or ""
                 ).strip()
                 or None,
                 "topic_key": str(
                     context.get("topic_key")
-                    or story_focus_dict.get("topic_key")
+                    or selected_story_page_dict.get("topic_key")
                     or selected_story_dict.get("topic_key")
+                    or briefing_page_context.get("topic_key")
                     or normalized_topic_key
                     or ""
                 ).strip()
                 or None,
                 "topic_label": str(
                     context.get("topic_label")
-                    or story_focus_dict.get("topic_label")
+                    or selected_story_page_dict.get("topic_label")
                     or selected_story_dict.get("topic_label")
+                    or briefing_page_context.get("topic_label")
                     or ""
                 ).strip()
                 or None,
-                "selection_basis": str(context.get("selection_basis") or selection_basis or "none"),
+                "selection_basis": str(
+                    context.get("selection_basis")
+                    or briefing_page_context.get("selection_basis")
+                    or selection_basis
+                    or "none"
+                ),
                 "mode": normalized_mode,
                 "filters": (
                     context.get("filters")
@@ -336,7 +423,7 @@ class RetrievalService:
                     else ""
                 ).strip()
                 or str(
-                    story_focus_dict.get("headline")
+                    selected_story_page_dict.get("headline")
                     or selected_story_dict.get("headline")
                     or briefing_summary.get("primary_story_headline")
                     or ""
@@ -414,22 +501,45 @@ class RetrievalService:
                     answer_contract.get("changes", {}).get("story_focus_summary")
                     if isinstance(answer_contract, dict)
                     and isinstance(answer_contract.get("changes"), dict)
-                    else ""
+                    else (
+                        story_page.get("story_change_summary")
+                        if isinstance(story_page, dict)
+                        else ""
+                    )
                 ).strip()
                 or None
             ),
-            "briefing": briefing,
-            "story_focus": story_focus,
-            "selected_story": selected_story,
+            "story_page": story_page,
             "retrieval": retrieval,
             "citations": (
                 list(answer_contract.get("citations") or [])
                 if isinstance(answer_contract, dict)
+                else (
+                    list(story_page.get("citations") or []) if isinstance(story_page, dict) else []
+                )
+            ),
+            "fallback_reason": (
+                str(fallback.get("reason") or "").strip()
+                or (
+                    str(story_page.get("fallback_reason") or "").strip()
+                    if isinstance(story_page, dict)
+                    else None
+                )
+            ),
+            "fallback_next_step": (
+                str(fallback.get("suggested_next_step") or "").strip()
+                or (
+                    str(story_page.get("fallback_next_step") or "").strip()
+                    if isinstance(story_page, dict)
+                    else None
+                )
+            ),
+            "fallback_actions": list(fallback.get("actions") or [])
+            or (
+                list(story_page.get("fallback_actions") or [])
+                if isinstance(story_page, dict)
                 else []
             ),
-            "fallback_reason": str(fallback.get("reason") or "").strip() or None,
-            "fallback_next_step": str(fallback.get("suggested_next_step") or "").strip() or None,
-            "fallback_actions": list(fallback.get("actions") or []),
         }
 
     def search(
@@ -481,6 +591,155 @@ class RetrievalService:
             watchlist_id=normalized_watchlist_id
         )
 
+    def _load_watchlist_briefing_page(
+        self,
+        *,
+        watchlist_id: str | None,
+        story_id: str | None,
+        query: str,
+    ) -> dict[str, Any] | None:
+        normalized_watchlist_id = str(watchlist_id or "").strip()
+        if not normalized_watchlist_id:
+            return None
+        from .watchlists import WatchlistsService
+
+        return WatchlistsService(self.db).get_watchlist_briefing_page(
+            watchlist_id=normalized_watchlist_id,
+            story_id=story_id,
+            query=query,
+        )
+
+    @staticmethod
+    def _extract_briefing_context(payload: dict[str, Any] | None) -> dict[str, Any]:
+        if isinstance(payload, dict) and isinstance(payload.get("context"), dict):
+            return payload.get("context") or {}
+        return {}
+
+    @staticmethod
+    def _extract_briefing_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if isinstance(payload, dict) and isinstance(payload.get("briefing"), dict):
+            return payload.get("briefing")
+        if (
+            isinstance(payload, dict)
+            and isinstance(payload.get("summary"), dict)
+            and isinstance(payload.get("evidence"), dict)
+        ):
+            return payload
+        return None
+
+    def _extract_selected_story(
+        self,
+        payload: dict[str, Any] | None,
+        *,
+        briefing_payload: dict[str, Any] | None,
+        story_id: str | None,
+        query: str,
+    ) -> dict[str, Any] | None:
+        candidate_story_id = None
+        if isinstance(payload, dict):
+            selected_story = payload.get("selected_story")
+            if isinstance(selected_story, dict):
+                candidate_story_id = str(selected_story.get("story_id") or "").strip() or None
+                if isinstance(selected_story.get("evidence_cards"), list):
+                    return selected_story
+            selection = payload.get("selection")
+            if isinstance(selection, dict) and isinstance(selection.get("story"), dict):
+                selected_story = selection.get("story")
+                candidate_story_id = str(selected_story.get("story_id") or "").strip() or None
+                if isinstance(selected_story.get("evidence_cards"), list):
+                    return selected_story
+        if isinstance(briefing_payload, dict) and candidate_story_id:
+            evidence = briefing_payload.get("evidence")
+            stories = evidence.get("stories") if isinstance(evidence, dict) else None
+            if isinstance(stories, list):
+                for story in stories:
+                    if not isinstance(story, dict):
+                        continue
+                    if str(story.get("story_id") or "").strip() == candidate_story_id:
+                        return story
+        selected_story, _ = self._select_briefing_story(
+            briefing=briefing_payload,
+            story_id=story_id,
+            query=query,
+        )
+        return selected_story
+
+    def _ensure_story_page_payload(
+        self,
+        payload: dict[str, Any] | None,
+        *,
+        watchlist_id: str | None,
+        story_id: str | None,
+        query: str,
+    ) -> dict[str, Any] | None:
+        if not isinstance(payload, dict):
+            return None
+        if isinstance(payload.get("briefing"), dict) and isinstance(payload.get("context"), dict):
+            normalized = dict(payload)
+            briefing = self._extract_briefing_payload(normalized)
+            selected_story = self._extract_selected_story(
+                normalized,
+                briefing_payload=briefing,
+                story_id=story_id,
+                query=query,
+            )
+            if isinstance(briefing, dict):
+                normalized_briefing = dict(briefing)
+                selection = normalized_briefing.get("selection")
+                if isinstance(selection, dict):
+                    normalized_selection = dict(selection)
+                    normalized_selection["story"] = None
+                    normalized_briefing["selection"] = normalized_selection
+                normalized["briefing"] = normalized_briefing
+            normalized["selected_story"] = selected_story
+            normalized.pop("story_focus", None)
+            return normalized
+
+        briefing = self._extract_briefing_payload(payload)
+        if not isinstance(briefing, dict):
+            return None
+
+        page = build_briefing_page_payload(
+            briefing=briefing,
+            story_id=story_id,
+            selection_query=query,
+        )
+        selection = page["selection"]
+        selected_story = page["selected_story"]
+        routes = page["routes"]
+        watchlist = briefing.get("watchlist") if isinstance(briefing.get("watchlist"), dict) else {}
+
+        return {
+            "context": {
+                "watchlist_id": str(watchlist_id or "").strip() or None,
+                "watchlist_name": str(watchlist.get("name") or "").strip() or None,
+                "story_id": selection["requested_story_id"],
+                "selected_story_id": selection["selected_story_id"],
+                "story_headline": selection["story_headline"],
+                "topic_key": selection["topic_key"],
+                "topic_label": selection["topic_label"],
+                "selection_basis": selection["selection_basis"],
+                "question_seed": selection["question_seed"],
+            },
+            "briefing": {
+                **briefing,
+                "selection": {
+                    "selected_story_id": selection["selected_story_id"],
+                    "selection_basis": selection["selection_basis"],
+                    "story": None,
+                },
+            },
+            "selected_story": selected_story,
+            "story_change_summary": None,
+            "citations": [],
+            "routes": routes,
+            "ask_route": str(routes.get("ask") or "").strip() or None,
+            "compare_route": str(routes.get("job_compare") or "").strip() or None,
+            "fallback_reason": None,
+            "fallback_next_step": None,
+            "fallback_actions": [],
+        }
+
     def _select_briefing_story(
         self,
         *,
@@ -488,70 +747,7 @@ class RetrievalService:
         story_id: str | None,
         query: str,
     ) -> tuple[dict[str, Any] | None, str]:
-        if not isinstance(briefing, dict):
-            return None, "none"
-        evidence = briefing.get("evidence")
-        if not isinstance(evidence, dict):
-            return None, "none"
-        stories = evidence.get("stories")
-        if not isinstance(stories, list):
-            return None, "none"
-        normalized_story_id = str(story_id or "").strip()
-        if normalized_story_id:
-            for story in stories:
-                if not isinstance(story, dict):
-                    continue
-                if str(story.get("story_id") or "").strip() == normalized_story_id:
-                    return story, "requested_story_id"
-
-        scored: list[tuple[int, int, dict[str, Any]]] = []
-        for index, story in enumerate(stories):
-            if not isinstance(story, dict):
-                continue
-            score = self._score_story_match(story=story, query=query)
-            scored.append((score, -index, story))
-        if scored:
-            best_score, _, best_story = max(scored, key=lambda item: (item[0], item[1]))
-            if best_score > 0:
-                return best_story, "query_match"
-
-        suggested_story_id = str(evidence.get("suggested_story_id") or "").strip()
-        if suggested_story_id:
-            for story in stories:
-                if not isinstance(story, dict):
-                    continue
-                if str(story.get("story_id") or "").strip() == suggested_story_id:
-                    return story, "suggested_story_id"
-
-        for story in stories:
-            if isinstance(story, dict):
-                return story, "first_story"
-        return None, "none"
-
-    def _score_story_match(self, *, story: dict[str, Any], query: str) -> int:
-        tokens = self._query_tokens(query)
-        if not tokens:
-            return 0
-        cards = story.get("evidence_cards")
-        card_segments = []
-        if isinstance(cards, list):
-            for item in cards:
-                if not isinstance(item, dict):
-                    continue
-                for key in ("card_title", "card_body", "topic_key", "topic_label", "claim_kind"):
-                    value = item.get(key)
-                    if isinstance(value, str) and value.strip():
-                        card_segments.append(value.strip().lower())
-        haystack = "\n".join(
-            [
-                str(story.get("headline") or "").strip().lower(),
-                str(story.get("topic_key") or "").strip().lower(),
-                str(story.get("topic_label") or "").strip().lower(),
-                " ".join(str(item).strip().lower() for item in story.get("claim_kinds") or []),
-                *card_segments,
-            ]
-        )
-        return sum(1 for token in tokens if token in haystack)
+        return select_story_from_briefing(briefing, story_id=story_id, query=query)
 
     def _resolve_primary_job_id(
         self,

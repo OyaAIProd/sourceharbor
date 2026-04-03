@@ -19,6 +19,7 @@ import {
 import { buildProductMetadata } from "@/lib/seo";
 
 const briefingsCopy = getLocaleMessages().briefingsPage;
+const askCopy = getLocaleMessages().searchPage;
 
 export const metadata: Metadata = buildProductMetadata({
 	title: briefingsCopy.metadataTitle,
@@ -70,25 +71,6 @@ function knowledgeRoute(jobId: string | null | undefined): string | null {
 	return `/knowledge?job_id=${encodeURIComponent(jobId)}`;
 }
 
-function buildAskHref(params: {
-	watchlistId: string;
-	question: string;
-	storyId?: string | null;
-	topicKey?: string | null;
-}): string {
-	const search = new URLSearchParams({
-		watchlist_id: params.watchlistId,
-		question: params.question,
-	});
-	if (params.storyId?.trim()) {
-		search.set("story_id", params.storyId);
-	}
-	if (params.topicKey?.trim()) {
-		search.set("topic_key", params.topicKey);
-	}
-	return `/ask?${search.toString()}`;
-}
-
 export default async function BriefingsPage({
 	searchParams,
 }: BriefingsPageProps) {
@@ -103,9 +85,10 @@ export default async function BriefingsPage({
 		watchlists.find((item) => item.id === watchlistId.trim()) ??
 		watchlists[0] ??
 		null;
-	const briefing = selectedWatchlist
+	const briefingPage = selectedWatchlist
 		? await apiClient
-				.getWatchlistBriefing(selectedWatchlist.id, {
+				.getWatchlistBriefingPage(selectedWatchlist.id, {
+					story_id: storyId.trim() || undefined,
 					limit_runs: 4,
 					limit_cards: 12,
 					limit_stories: 4,
@@ -113,30 +96,13 @@ export default async function BriefingsPage({
 				})
 				.catch(() => null)
 		: null;
-	const compareDrilldownHref = briefing?.differences.compare?.job_id
-		? jobRoute(briefing.differences.compare.job_id)
-		: (briefing?.differences.compare?.compare_route ?? null);
-	const selectedStory =
-		briefing?.evidence.stories.find(
-			(story) => story.story_id === storyId.trim(),
-		) ??
-		briefing?.evidence.stories.find(
-			(story) => story.story_id === briefing.evidence.suggested_story_id,
-		) ??
-		briefing?.evidence.stories[0] ??
-		null;
-	const briefingAskHref = selectedWatchlist
-		? buildAskHref({
-				watchlistId: selectedWatchlist.id,
-				question:
-					selectedStory?.headline.trim() ||
-					briefing?.summary.primary_story_headline?.trim() ||
-					selectedWatchlist.matcher_value ||
-					selectedWatchlist.name,
-				storyId: selectedStory?.story_id,
-				topicKey: selectedStory?.topic_key,
-			})
-		: "/ask";
+	const briefing = briefingPage?.briefing ?? null;
+	const selectedStory = briefingPage?.selected_story ?? null;
+	const compareDrilldownHref = briefingPage?.compare_route ?? null;
+	const briefingAskHref = briefingPage?.ask_route ?? "/ask";
+	const selectionLabel = briefingPage
+		? askCopy.askSelectionBasis[briefingPage.context.selection_basis]
+		: null;
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
@@ -265,6 +231,13 @@ export default async function BriefingsPage({
 												{selectedStory?.headline ||
 													briefing.summary.primary_story_headline}
 											</p>
+										) : null}
+										{selectionLabel ? (
+											<div className="mt-3">
+												<Badge variant="outline">
+													{askCopy.askSelectionBasisLabel}: {selectionLabel}
+												</Badge>
+											</div>
 										) : null}
 									</div>
 									<div className="rounded-lg border border-border/60 bg-background/70 p-3 text-sm text-muted-foreground">
@@ -496,19 +469,17 @@ export default async function BriefingsPage({
 																</ul>
 																<div className="flex flex-wrap gap-3">
 																	<Button asChild size="sm">
-																		<Link
-																			href={buildAskHref({
-																				watchlistId: selectedWatchlist.id,
-																				question:
-																					story.topic_label?.trim() ||
-																					story.headline.trim(),
-																				storyId: story.story_id,
-																				topicKey: story.topic_key,
-																			})}
-																		>
+																		<Link href={story.routes.ask ?? "/ask"}>
 																			{copy.askStoryButton}
 																		</Link>
 																	</Button>
+																	{story.routes.briefing ? (
+																		<Button asChild variant="outline" size="sm">
+																			<Link href={story.routes.briefing}>
+																				{copy.openBriefingButton}
+																			</Link>
+																		</Button>
+																	) : null}
 																	{storyJobHref ? (
 																		<Button asChild variant="outline" size="sm">
 																			<Link href={storyJobHref}>

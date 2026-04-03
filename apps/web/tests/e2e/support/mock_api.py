@@ -248,6 +248,184 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
             self.send_header("Content-Length", "0")
             self.end_headers()
 
+        def _briefing_page_payload(self) -> dict[str, Any]:
+            return {
+                "context": {
+                    "watchlist_id": MOCK_WATCHLIST_ID,
+                    "watchlist_name": "Retry policy",
+                    "story_id": None,
+                    "selected_story_id": "story-1",
+                    "story_headline": "Retries moved from optional advice to default posture",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry policy",
+                    "selection_basis": "suggested_story_id",
+                    "question_seed": "Retries moved from optional advice to default posture",
+                },
+                "briefing": {
+                    "watchlist": {
+                        "id": MOCK_WATCHLIST_ID,
+                        "name": "Retry policy",
+                        "matcher_type": "topic_key",
+                        "matcher_value": "retry-policy",
+                        "delivery_channel": "dashboard",
+                        "enabled": True,
+                        "created_at": "2026-03-31T10:00:00Z",
+                        "updated_at": "2026-04-01T10:00:00Z",
+                    },
+                    "summary": {
+                        "overview": (
+                            "Retry policy now reads like one shared story across YouTube, "
+                            "Bilibili, and RSS sources."
+                        ),
+                        "source_count": 3,
+                        "run_count": 3,
+                        "story_count": 1,
+                        "matched_cards": 5,
+                        "primary_story_headline": "Retries moved from optional advice to default posture",
+                        "signals": [
+                            {
+                                "story_key": "topic:retry-policy",
+                                "headline": "Retry policy is stabilizing into the baseline path",
+                                "matched_card_count": 5,
+                                "latest_run_job_id": MOCK_RSS_JOB_ID,
+                                "reason": "The newest runs repeat the same retry baseline across source types.",
+                            }
+                        ],
+                    },
+                    "differences": {
+                        "latest_job_id": MOCK_RSS_JOB_ID,
+                        "previous_job_id": MOCK_PREVIOUS_JOB_ID,
+                        "added_topics": ["retry-policy"],
+                        "removed_topics": [],
+                        "added_claim_kinds": ["recommendation"],
+                        "removed_claim_kinds": [],
+                        "new_story_keys": ["topic:retry-policy"],
+                        "removed_story_keys": [],
+                        "compare": {
+                            "job_id": MOCK_RSS_JOB_ID,
+                            "has_previous": True,
+                            "previous_job_id": MOCK_PREVIOUS_JOB_ID,
+                            "changed": True,
+                            "added_lines": 7,
+                            "removed_lines": 2,
+                            "diff_excerpt": "Retry handling moved into the default guidance instead of a footnote.",
+                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
+                        },
+                    },
+                    "evidence": {
+                        "suggested_story_id": "story-1",
+                        "stories": [
+                            {
+                                "story_id": "story-1",
+                                "story_key": "topic:retry-policy",
+                                "headline": "Retries moved from optional advice to default posture",
+                                "topic_key": "retry-policy",
+                                "topic_label": "Retry policy",
+                                "source_count": 3,
+                                "run_count": 3,
+                                "matched_card_count": 5,
+                                "platforms": ["youtube", "bilibili", "rss"],
+                                "claim_kinds": ["recommendation"],
+                                "source_urls": ["https://example.com/retry-policy"],
+                                "latest_run_job_id": MOCK_RSS_JOB_ID,
+                                "evidence_cards": [
+                                    {
+                                        "card_id": "card-briefing-1",
+                                        "job_id": MOCK_JOB_ID,
+                                        "video_id": MOCK_VIDEO_ID,
+                                        "platform": "youtube",
+                                        "video_title": "AI Weekly",
+                                        "source_url": "https://example.com/retry-policy",
+                                        "created_at": "2026-04-01T10:00:00Z",
+                                        "card_type": "claim",
+                                        "card_title": "Retry baseline became explicit",
+                                        "card_body": "Operators should treat retries as the default safe path.",
+                                        "source_section": "digest",
+                                        "topic_key": "retry-policy",
+                                        "topic_label": "Retry policy",
+                                        "claim_kind": "recommendation",
+                                    }
+                                ],
+                                "routes": {
+                                    "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&via=briefing-story",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&question=Retries+moved+from+optional+advice+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
+                                    "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                                    "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                                },
+                            }
+                        ],
+                        "featured_runs": [
+                            {
+                                "job_id": MOCK_RSS_JOB_ID,
+                                "video_id": MOCK_VIDEO_ID,
+                                "platform": "rss",
+                                "title": "RSS Digest",
+                                "source_url": "https://example.com/retry-policy",
+                                "created_at": "2026-04-01T11:00:00Z",
+                                "matched_card_count": 2,
+                                "routes": {
+                                    "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&via=briefing-run",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&via=briefing-run",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-run",
+                                    "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                                    "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                                },
+                            }
+                        ],
+                    },
+                    "selection": {
+                        "selected_story_id": "story-1",
+                        "selection_basis": "suggested_story_id",
+                        "story": None,
+                    },
+                },
+                "selected_story": {
+                    "story_id": "story-1",
+                    "story_key": "topic:retry-policy",
+                    "headline": "Retries moved from optional advice to default posture",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry policy",
+                    "source_count": 3,
+                    "run_count": 3,
+                    "matched_card_count": 5,
+                    "platforms": ["youtube", "bilibili", "rss"],
+                    "claim_kinds": ["recommendation"],
+                    "source_urls": ["https://example.com/retry-policy"],
+                    "latest_run_job_id": MOCK_RSS_JOB_ID,
+                    "evidence_cards": [
+                        {
+                            "card_id": "card-briefing-1",
+                            "job_id": MOCK_JOB_ID,
+                            "video_id": MOCK_VIDEO_ID,
+                            "platform": "youtube",
+                            "video_title": "AI Weekly",
+                            "source_url": "https://example.com/retry-policy",
+                            "created_at": "2026-04-01T10:00:00Z",
+                            "card_type": "claim",
+                            "card_title": "Retry baseline became explicit",
+                            "card_body": "Operators should treat retries as the default safe path.",
+                            "source_section": "digest",
+                            "topic_key": "retry-policy",
+                            "topic_label": "Retry policy",
+                            "claim_kind": "recommendation",
+                        }
+                    ],
+                    "routes": {
+                        "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
+                        "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&via=briefing-story",
+                        "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&question=Retries+moved+from+optional+advice+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+                        "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
+                        "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
+                        "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
+                    },
+                },
+                "ask_route": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&question=Retries+moved+from+optional+advice+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+                "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
+            }
+
         def do_OPTIONS(self) -> None:
             parsed = urlparse(self.path)
             self._record_http(
@@ -314,8 +492,11 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                 self._send_json(HTTPStatus.OK, payload)
                 return
 
-            if path == f"/api/v1/watchlists/{MOCK_WATCHLIST_ID}/briefing":
-                payload = {
+            if path in {
+                f"/api/v1/watchlists/{MOCK_WATCHLIST_ID}/briefing",
+                f"/api/v1/watchlists/{MOCK_WATCHLIST_ID}/briefing/page",
+            }:
+                briefing_payload = {
                     "watchlist": {
                         "id": MOCK_WATCHLIST_ID,
                         "name": "Retry policy",
@@ -363,7 +544,7 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                             "added_lines": 7,
                             "removed_lines": 2,
                             "diff_excerpt": "Retry handling moved into the default guidance instead of a footnote.",
-                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
                         },
                     },
                     "evidence": {
@@ -402,7 +583,9 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                                 ],
                                 "routes": {
                                     "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
-                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&via=briefing-story",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
                                     "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
                                     "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
                                 },
@@ -419,14 +602,28 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                                 "matched_card_count": 2,
                                 "routes": {
                                     "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
-                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&via=briefing-run",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&via=briefing-run",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-run",
                                     "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
                                     "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
                                 },
                             }
                         ],
                     },
+                    "selection": {
+                        "selected_story_id": "story-1",
+                        "selection_basis": "suggested_story_id",
+                        "story": None,
+                    },
                 }
+                if path == f"/api/v1/watchlists/{MOCK_WATCHLIST_ID}/briefing/page":
+                    payload = self._briefing_page_payload()
+                    if parse_qs(parsed.query).get("story_id", [""])[0].strip():
+                        payload["context"]["story_id"] = "story-1"
+                        payload["context"]["selection_basis"] = "requested_story_id"
+                else:
+                    payload = briefing_payload
                 self._record_http(
                     method="GET",
                     path=path,
@@ -870,7 +1067,7 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                             "added_lines": 7,
                             "removed_lines": 2,
                             "diff_excerpt": "Retry handling moved into the default guidance instead of a footnote.",
-                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                            "compare_route": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
                         },
                     },
                     "evidence": {
@@ -909,9 +1106,9 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                                 ],
                                 "routes": {
                                     "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
-                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
-                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&topic_key=retry-policy",
-                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&via=briefing-story",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
                                     "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
                                     "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
                                 },
@@ -928,14 +1125,19 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                                 "matched_card_count": 2,
                                 "routes": {
                                     "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
-                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}",
-                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}",
-                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                    "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&via=briefing-run",
+                                    "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&via=briefing-run",
+                                    "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-run",
                                     "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
                                     "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
                                 },
                             }
                         ],
+                    },
+                    "selection": {
+                        "selected_story_id": "story-1",
+                        "selection_basis": "suggested_story_id",
+                        "story": None,
                     },
                 }
                 self._record_http(
@@ -981,9 +1183,16 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                             '"Retries moved from optional advice to default posture" remains the selected '
                             "story focus, and the latest compare still shows movement around it."
                         ),
-                        "briefing": briefing_payload,
-                        "story_focus": briefing_payload["evidence"]["stories"][0],
-                        "selected_story": briefing_payload["evidence"]["stories"][0],
+                        "story_page": {
+                            **self._briefing_page_payload(),
+                            "context": {
+                                **self._briefing_page_payload()["context"],
+                                "story_id": payload.get("story_id") or "story-1",
+                                "selection_basis": "requested_story_id"
+                                if payload.get("story_id")
+                                else "suggested_story_id",
+                            },
+                        },
                         "retrieval": {
                             "query": query_text,
                             "top_k": payload.get("top_k", 6),
@@ -997,7 +1206,7 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                                 "snippet": "Supported across 3 source families, 3 runs, and 5 matched cards.",
                                 "source_url": None,
                                 "job_id": MOCK_RSS_JOB_ID,
-                                "route": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
+                                "route": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&via=briefing-story",
                                 "route_label": "Open briefing story",
                             },
                             {
@@ -1090,9 +1299,9 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                             "latest_run_job_id": MOCK_RSS_JOB_ID,
                             "routes": {
                                 "watchlist_trend": f"/trends?watchlist_id={MOCK_WATCHLIST_ID}",
-                                "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
-                                "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&topic_key=retry-policy",
-                                "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}",
+                                "briefing": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&via=briefing-story",
+                                "ask": f"/ask?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+                                "job_compare": f"/jobs?job_id={MOCK_RSS_JOB_ID}&via=briefing-compare",
                                 "job_bundle": f"/api/v1/jobs/{MOCK_RSS_JOB_ID}/bundle",
                                 "job_knowledge_cards": f"/knowledge?job_id={MOCK_RSS_JOB_ID}",
                             },
@@ -1137,7 +1346,7 @@ def _mock_handler(state: MockApiState) -> type[BaseHTTPRequestHandler]:
                                 "snippet": "Supported across 3 source families, 3 runs, and 5 matched cards.",
                                 "source_url": None,
                                 "job_id": MOCK_RSS_JOB_ID,
-                                "route": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1",
+                                "route": f"/briefings?watchlist_id={MOCK_WATCHLIST_ID}&story_id=story-1&via=briefing-story",
                                 "route_label": "Open briefing story",
                             },
                             {

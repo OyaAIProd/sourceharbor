@@ -619,11 +619,18 @@ export type WatchlistBriefingEvidence = {
 	featured_runs: WatchlistBriefingRunEvidence[];
 };
 
+export type WatchlistBriefingSelection = {
+	selected_story_id: string | null;
+	selection_basis: AskStorySelectionBasis;
+	story: WatchlistBriefingStoryEvidence | null;
+};
+
 export type WatchlistBriefing = {
 	watchlist: Watchlist;
 	summary: WatchlistBriefingSummary;
 	differences: WatchlistBriefingDifferences;
 	evidence: WatchlistBriefingEvidence;
+	selection?: WatchlistBriefingSelection | null;
 };
 
 export type AskAnswerConfidence = "grounded" | "limited";
@@ -634,6 +641,32 @@ export type AskStorySelectionBasis =
 	| "suggested_story_id"
 	| "first_story"
 	| "none";
+
+export type WatchlistBriefingPageContext = {
+	watchlist_id: string;
+	watchlist_name: string | null;
+	story_id: string | null;
+	selected_story_id: string | null;
+	story_headline: string | null;
+	topic_key: string | null;
+	topic_label: string | null;
+	selection_basis: AskStorySelectionBasis;
+	question_seed: string | null;
+};
+
+export type WatchlistBriefingPage = {
+	context: WatchlistBriefingPageContext;
+	briefing: WatchlistBriefing;
+	selected_story: WatchlistBriefingStoryEvidence | null;
+	story_change_summary: string | null;
+	citations: AskAnswerContractCitation[];
+	routes: WatchlistBriefingRoutes;
+	ask_route: string | null;
+	compare_route: string | null;
+	fallback_reason: string | null;
+	fallback_next_step: string | null;
+	fallback_actions: AskAnswerFallbackAction[];
+};
 
 export type AskAnswerContractContext = {
 	watchlist_id: string | null;
@@ -792,9 +825,7 @@ export type AskAnswerResponse = {
 	answer_reason: string | null;
 	answer_confidence: AskAnswerConfidence;
 	story_change_summary: string | null;
-	briefing: WatchlistBriefing | null;
-	story_focus: AskAnswerSelectedStory | null;
-	selected_story: WatchlistBriefingStoryEvidence | null;
+	story_page: WatchlistBriefingPage | null;
 	retrieval: RetrievalSearchResponse | null;
 	citations: AskAnswerContractCitation[];
 	fallback_reason: string | null;

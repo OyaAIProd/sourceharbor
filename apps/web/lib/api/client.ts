@@ -30,6 +30,7 @@ import type {
 	VideoProcessResponse,
 	Watchlist,
 	WatchlistBriefing,
+	WatchlistBriefingPage,
 	WatchlistTrendResponse,
 	WatchlistUpsertRequest,
 } from "@/lib/api/types";
@@ -779,6 +780,31 @@ export const apiClient = {
 			`/api/v1/watchlists/${safeId}/briefing`,
 			{},
 			params,
+		);
+	},
+
+	getWatchlistBriefingPage(
+		watchlistId: string,
+		params?: {
+			story_id?: string;
+			query?: string;
+			limit_runs?: number;
+			limit_cards?: number;
+			limit_stories?: number;
+			limit_evidence_per_story?: number;
+		},
+	) {
+		const safeId = encodeURIComponent(assertSafeIdentifier(watchlistId));
+		const safeStoryId = params?.story_id?.trim() ?? "";
+		const safeQuery = params?.query?.trim() ?? "";
+		return requestJson<WatchlistBriefingPage>(
+			`/api/v1/watchlists/${safeId}/briefing/page`,
+			{},
+			{
+				...params,
+				story_id: safeStoryId || undefined,
+				query: safeQuery || undefined,
+			},
 		);
 	},
 

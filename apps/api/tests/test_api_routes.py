@@ -1058,6 +1058,7 @@ def test_retrieval_answer_returns_structured_contract(api_client: TestClient, mo
                 "claim_kinds": ["recommendation"],
                 "source_urls": ["https://example.com/retry"],
                 "latest_run_job_id": "job-2",
+                "evidence_cards": [],
                 "routes": {
                     "watchlist_trend": "/trends?watchlist_id=wl-1",
                     "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
@@ -1209,6 +1210,142 @@ def test_retrieval_answer_page_returns_server_owned_payload(
             "answer_reason": '"Retry Policy" is newly surfaced in the latest briefing and is already backed by 2 source families.',
             "answer_confidence": "grounded",
             "story_change_summary": '"Retry Policy" is newly surfaced in the latest briefing and is already backed by 2 source families.',
+            "story_page": {
+                "context": {
+                    "watchlist_id": watchlist_id,
+                    "watchlist_name": "Retry policy",
+                    "story_id": "story-1",
+                    "selected_story_id": "story-1",
+                    "story_headline": "Retry Policy",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "selection_basis": "requested_story_id",
+                    "question_seed": "retry policy",
+                },
+                "briefing": {
+                    "watchlist": {
+                        "id": "wl-1",
+                        "name": "Retry policy",
+                        "matcher_type": "topic_key",
+                        "matcher_value": "retry-policy",
+                        "delivery_channel": "dashboard",
+                        "enabled": True,
+                        "created_at": "2026-03-31T10:00:00Z",
+                        "updated_at": "2026-03-31T10:00:00Z",
+                    },
+                    "summary": {
+                        "overview": "Retry policy currently converges across recent sources.",
+                        "source_count": 2,
+                        "run_count": 2,
+                        "story_count": 1,
+                        "matched_cards": 2,
+                        "primary_story_headline": "Retry Policy",
+                        "signals": [],
+                    },
+                    "differences": {
+                        "latest_job_id": "job-2",
+                        "previous_job_id": "job-1",
+                        "added_topics": ["retry-policy"],
+                        "removed_topics": [],
+                        "added_claim_kinds": ["recommendation"],
+                        "removed_claim_kinds": [],
+                        "new_story_keys": ["topic:retry-policy"],
+                        "removed_story_keys": [],
+                        "compare": {
+                            "job_id": "job-2",
+                            "has_previous": True,
+                            "previous_job_id": "job-1",
+                            "changed": True,
+                            "added_lines": 2,
+                            "removed_lines": 1,
+                            "diff_excerpt": "@@ latest diff @@",
+                            "compare_route": "/jobs?job_id=job-2",
+                        },
+                    },
+                    "evidence": {
+                        "suggested_story_id": "story-1",
+                        "stories": [
+                            {
+                                "story_id": "story-1",
+                                "story_key": "topic:retry-policy",
+                                "headline": "Retry Policy",
+                                "topic_key": "retry-policy",
+                                "topic_label": "Retry Policy",
+                                "source_count": 2,
+                                "run_count": 2,
+                                "matched_card_count": 1,
+                                "platforms": ["youtube"],
+                                "claim_kinds": ["recommendation"],
+                                "source_urls": ["https://example.com/retry"],
+                                "latest_run_job_id": "job-2",
+                                "evidence_cards": [],
+                                "routes": {
+                                    "watchlist_trend": "/trends?watchlist_id=wl-1",
+                                    "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                                    "ask": "/ask?watchlist_id=wl-1&question=retry+policy&story_id=story-1&topic_key=retry-policy",
+                                    "job_compare": "/jobs?job_id=job-2",
+                                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                                },
+                            }
+                        ],
+                        "featured_runs": [],
+                    },
+                    "selection": {
+                        "selected_story_id": "story-1",
+                        "selection_basis": "requested_story_id",
+                        "story": None,
+                    },
+                },
+                "selected_story": {
+                    "story_id": "story-1",
+                    "story_key": "topic:retry-policy",
+                    "headline": "Retry Policy",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "source_count": 2,
+                    "run_count": 2,
+                    "matched_card_count": 1,
+                    "platforms": ["youtube"],
+                    "claim_kinds": ["recommendation"],
+                    "source_urls": ["https://example.com/retry"],
+                    "latest_run_job_id": "job-2",
+                    "evidence_cards": [],
+                    "routes": {
+                        "watchlist_trend": "/trends?watchlist_id=wl-1",
+                        "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                        "ask": "/ask?watchlist_id=wl-1&question=retry+policy&story_id=story-1&topic_key=retry-policy",
+                        "job_compare": "/jobs?job_id=job-2",
+                        "job_bundle": "/api/v1/jobs/job-2/bundle",
+                        "job_knowledge_cards": "/knowledge?job_id=job-2",
+                    },
+                },
+                "story_change_summary": '"Retry Policy" is newly surfaced in the latest briefing and is already backed by 2 source families.',
+                "citations": [
+                    {
+                        "kind": "briefing_story",
+                        "label": "Retry Policy",
+                        "snippet": "Supported across 2 source families.",
+                        "source_url": None,
+                        "job_id": "job-2",
+                        "route": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                        "route_label": "Open briefing story",
+                    }
+                ],
+                "routes": {
+                    "watchlist_trend": "/trends?watchlist_id=wl-1",
+                    "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "ask": "/ask?watchlist_id=wl-1&question=retry+policy&story_id=story-1&topic_key=retry-policy",
+                    "job_compare": "/jobs?job_id=job-2",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+                "ask_route": "/ask?watchlist_id=wl-1&question=retry+policy&story_id=story-1&topic_key=retry-policy",
+                "compare_route": "/jobs?job_id=job-2",
+                "fallback_reason": None,
+                "fallback_next_step": None,
+                "fallback_actions": [],
+            },
             "briefing": {
                 "watchlist": {
                     "id": "wl-1",
@@ -1278,20 +1415,40 @@ def test_retrieval_answer_page_returns_server_owned_payload(
                     ],
                     "featured_runs": [],
                 },
-            },
-            "story_focus": {
-                "story_id": "story-1",
-                "story_key": "topic:retry-policy",
-                "headline": "Retry Policy",
-                "topic_key": "retry-policy",
-                "topic_label": "Retry Policy",
-                "source_count": 2,
-                "run_count": 2,
-                "matched_card_count": 1,
-                "platforms": ["youtube"],
-                "claim_kinds": ["recommendation"],
-                "source_urls": ["https://example.com/retry"],
-                "latest_run_job_id": "job-2",
+                "context": {
+                    "watchlist_id": "wl-1",
+                    "watchlist_name": "Retry policy",
+                    "story_id": "story-1",
+                    "selected_story_id": "story-1",
+                    "story_headline": "Retry Policy",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "selection_basis": "requested_story_id",
+                    "question_seed": "retry policy",
+                },
+                "selected_story": {
+                    "story_id": "story-1",
+                    "story_key": "topic:retry-policy",
+                    "headline": "Retry Policy",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "source_count": 2,
+                    "run_count": 2,
+                    "matched_card_count": 1,
+                    "platforms": ["youtube"],
+                    "claim_kinds": ["recommendation"],
+                    "source_urls": ["https://example.com/retry"],
+                    "latest_run_job_id": "job-2",
+                    "evidence_cards": [],
+                    "routes": {
+                        "watchlist_trend": "/trends?watchlist_id=wl-1",
+                        "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                        "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+                        "job_compare": "/jobs?job_id=job-2",
+                        "job_bundle": "/api/v1/jobs/job-2/bundle",
+                        "job_knowledge_cards": "/knowledge?job_id=job-2",
+                    },
+                },
                 "routes": {
                     "watchlist_trend": "/trends?watchlist_id=wl-1",
                     "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
@@ -1364,7 +1521,7 @@ def test_retrieval_answer_page_returns_server_owned_payload(
     assert response.status_code == 200
     assert payload["context"]["selection_basis"] == "requested_story_id"
     assert (
-        payload["story_focus"]["routes"]["briefing"]
+        payload["story_page"]["selected_story"]["routes"]["briefing"]
         == "/briefings?watchlist_id=wl-1&story_id=story-1"
     )
     assert payload["answer_state"] == "briefing_grounded"
@@ -1426,6 +1583,179 @@ def test_retrieval_answer_service_error_is_observable(api_client: TestClient, mo
         "error_code": "ASK_BRIEFING_UNAVAILABLE",
         "error_kind": "dependency_error",
     }
+
+
+def test_watchlist_briefing_page_returns_server_owned_story_payload(
+    api_client: TestClient, monkeypatch
+) -> None:
+    def fake_get_watchlist_briefing_page(
+        self,
+        *,
+        watchlist_id,
+        story_id,
+        query,
+        limit_runs,
+        limit_cards,
+        limit_stories,
+        limit_evidence_per_story,
+    ):
+        del self, query, limit_runs, limit_cards, limit_stories, limit_evidence_per_story
+        assert watchlist_id == "wl-1"
+        assert story_id == "story-1"
+        return {
+            "context": {
+                "watchlist_id": "wl-1",
+                "watchlist_name": "Retry policy",
+                "story_id": "story-1",
+                "selected_story_id": "story-1",
+                "story_headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry policy",
+                "selection_basis": "requested_story_id",
+                "question_seed": "Retry Policy",
+            },
+            "briefing": {
+                "watchlist": {
+                    "id": "wl-1",
+                    "name": "Retry policy",
+                    "matcher_type": "topic_key",
+                    "matcher_value": "retry-policy",
+                    "delivery_channel": "dashboard",
+                    "enabled": True,
+                    "created_at": "2026-03-31T10:00:00Z",
+                    "updated_at": "2026-03-31T10:00:00Z",
+                },
+                "summary": {
+                    "overview": "Retry policy currently converges across recent sources.",
+                    "source_count": 2,
+                    "run_count": 2,
+                    "story_count": 1,
+                    "matched_cards": 2,
+                    "primary_story_headline": "Retry Policy",
+                    "signals": [],
+                },
+                "differences": {
+                    "latest_job_id": "job-2",
+                    "previous_job_id": "job-1",
+                    "added_topics": ["retry-policy"],
+                    "removed_topics": [],
+                    "added_claim_kinds": ["recommendation"],
+                    "removed_claim_kinds": [],
+                    "new_story_keys": ["topic:retry-policy"],
+                    "removed_story_keys": [],
+                    "compare": {
+                        "job_id": "job-2",
+                        "has_previous": True,
+                        "previous_job_id": "job-1",
+                        "changed": True,
+                        "added_lines": 2,
+                        "removed_lines": 1,
+                        "diff_excerpt": "@@ latest diff @@",
+                        "compare_route": "/jobs?job_id=job-2",
+                    },
+                },
+                "evidence": {
+                    "suggested_story_id": "story-1",
+                    "stories": [
+                        {
+                            "story_id": "story-1",
+                            "story_key": "topic:retry-policy",
+                            "headline": "Retry Policy",
+                            "topic_key": "retry-policy",
+                            "topic_label": "Retry policy",
+                            "source_count": 2,
+                            "run_count": 2,
+                            "matched_card_count": 1,
+                            "platforms": ["youtube"],
+                            "claim_kinds": ["recommendation"],
+                            "source_urls": ["https://example.com/retry"],
+                            "latest_run_job_id": "job-2",
+                            "evidence_cards": [],
+                            "routes": {
+                                "watchlist_trend": "/trends?watchlist_id=wl-1",
+                                "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                                "ask": "/ask?watchlist_id=wl-1&question=Retry+Policy&story_id=story-1&topic_key=retry-policy",
+                                "job_compare": "/jobs?job_id=job-2",
+                                "job_bundle": "/api/v1/jobs/job-2/bundle",
+                                "job_knowledge_cards": "/knowledge?job_id=job-2",
+                            },
+                        }
+                    ],
+                    "featured_runs": [],
+                },
+                "selection": {
+                    "selected_story_id": "story-1",
+                    "selection_basis": "requested_story_id",
+                    "story": None,
+                },
+            },
+            "selected_story": {
+                "story_id": "story-1",
+                "story_key": "topic:retry-policy",
+                "headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry policy",
+                "source_count": 2,
+                "run_count": 2,
+                "matched_card_count": 1,
+                "platforms": ["youtube"],
+                "claim_kinds": ["recommendation"],
+                "source_urls": ["https://example.com/retry"],
+                "latest_run_job_id": "job-2",
+                "evidence_cards": [],
+                "routes": {
+                    "watchlist_trend": "/trends?watchlist_id=wl-1",
+                    "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "ask": "/ask?watchlist_id=wl-1&question=Retry+Policy&story_id=story-1&topic_key=retry-policy",
+                    "job_compare": "/jobs?job_id=job-2",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+            },
+            "story_change_summary": '"Retry Policy" is newly surfaced in the latest briefing.',
+            "citations": [
+                {
+                    "kind": "briefing_story",
+                    "label": "Retry Policy",
+                    "snippet": "Supported across 2 source families.",
+                    "source_url": None,
+                    "job_id": "job-2",
+                    "route": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "route_label": "Open briefing story",
+                }
+            ],
+            "routes": {
+                "watchlist_trend": "/trends?watchlist_id=wl-1",
+                "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                "ask": "/ask?watchlist_id=wl-1&question=Retry+Policy&story_id=story-1&topic_key=retry-policy",
+                "job_compare": "/jobs?job_id=job-2",
+                "job_bundle": "/api/v1/jobs/job-2/bundle",
+                "job_knowledge_cards": "/knowledge?job_id=job-2",
+            },
+            "ask_route": "/ask?watchlist_id=wl-1&question=Retry+Policy&story_id=story-1&topic_key=retry-policy",
+            "compare_route": "/jobs?job_id=job-2",
+            "fallback_reason": None,
+            "fallback_next_step": None,
+            "fallback_actions": [],
+        }
+
+    monkeypatch.setattr(
+        "apps.api.app.services.watchlists.WatchlistsService.get_watchlist_briefing_page",
+        fake_get_watchlist_briefing_page,
+    )
+
+    response = api_client.get(
+        "/api/v1/watchlists/wl-1/briefing/page",
+        params={"story_id": "story-1"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["context"]["selected_story_id"] == "story-1"
+    assert payload["context"]["selection_basis"] == "requested_story_id"
+    assert payload["selected_story"]["story_id"] == "story-1"
+    assert payload["routes"]["ask"].endswith("story_id=story-1&topic_key=retry-policy")
+    assert payload["ask_route"].endswith("story_id=story-1&topic_key=retry-policy")
 
 
 def test_feed_digests_returns_items(api_client: TestClient, monkeypatch) -> None:

@@ -121,10 +121,13 @@ describe("search and MCP front doors", () => {
 				watchlist_id: "wl-1",
 				watchlist_name: "Retry policy",
 				story_id: "story-1",
+				selected_story_id: "story-1",
 				story_headline: "Retries moved from optional advice to default posture",
 				topic_key: "retry-policy",
 				topic_label: "Retry policy",
 				selection_basis: "query_match",
+				filters: {},
+				briefing_available: true,
 			},
 			answer_state: "briefing_grounded",
 			answer_headline: "Retries moved from optional advice to default posture",
@@ -135,6 +138,222 @@ describe("search and MCP front doors", () => {
 			answer_confidence: "grounded",
 			story_change_summary:
 				"Retries moved from optional advice to default posture is the selected story focus across 4 runs and 6 matched evidence cards.",
+			story_page: {
+				context: {
+					watchlist_id: "wl-1",
+					watchlist_name: "Retry policy",
+					story_id: "story-1",
+					selected_story_id: "story-1",
+					story_headline:
+						"Retries moved from optional advice to default posture",
+					topic_key: "retry-policy",
+					topic_label: "Retry policy",
+					selection_basis: "query_match",
+					question_seed: "retry policy",
+				},
+				briefing: {
+					watchlist: {
+						id: "wl-1",
+						name: "Retry policy",
+						matcher_type: "topic_key",
+						matcher_value: "retry-policy",
+						delivery_channel: "dashboard",
+						enabled: true,
+						created_at: "2026-03-31T10:00:00Z",
+						updated_at: "2026-03-31T10:00:00Z",
+					},
+					summary: {
+						overview:
+							"Retry policy keeps surfacing across YouTube, Bilibili, and RSS sources.",
+						source_count: 3,
+						run_count: 4,
+						story_count: 2,
+						matched_cards: 6,
+						primary_story_headline:
+							"Retries moved from optional advice to default posture",
+						signals: [
+							{
+								story_key: "topic:retry-policy",
+								headline: "Retry policy is becoming a stable default",
+								matched_card_count: 6,
+								latest_run_job_id: "job-3",
+								reason:
+									"Recent runs now describe retry handling as the baseline safe path.",
+							},
+						],
+					},
+					differences: {
+						latest_job_id: "job-3",
+						previous_job_id: "job-2",
+						added_topics: ["retry-policy"],
+						removed_topics: [],
+						added_claim_kinds: ["recommendation"],
+						removed_claim_kinds: [],
+						new_story_keys: ["topic:retry-policy"],
+						removed_story_keys: [],
+						compare: {
+							job_id: "job-3",
+							has_previous: true,
+							previous_job_id: "job-2",
+							changed: true,
+							added_lines: 12,
+							removed_lines: 4,
+							diff_excerpt:
+								"Retry guidance moved from optional to default posture.",
+							compare_route: "/jobs?job_id=job-3&via=briefing-compare",
+						},
+					},
+					evidence: {
+						suggested_story_id: "story-1",
+						stories: [
+							{
+								story_id: "story-1",
+								story_key: "topic:retry-policy",
+								headline:
+									"Retries moved from optional advice to default posture",
+								topic_key: "retry-policy",
+								topic_label: "Retry policy",
+								source_count: 3,
+								run_count: 4,
+								matched_card_count: 6,
+								platforms: ["youtube", "rss"],
+								claim_kinds: ["recommendation"],
+								source_urls: ["https://example.com/retry-policy"],
+								latest_run_job_id: "job-1",
+								evidence_cards: [],
+								routes: {
+									watchlist_trend: "/trends?watchlist_id=wl-1",
+									briefing:
+										"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+									ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+									job_compare: "/jobs?job_id=job-1&via=briefing-compare",
+									job_bundle: "/api/v1/jobs/job-1/bundle",
+									job_knowledge_cards: "/knowledge?job_id=job-1",
+								},
+							},
+							{
+								story_id: "story-2",
+								story_key: "topic:failure-budget",
+								headline: "Failure budgets became the comparison lens",
+								topic_key: "failure-budget",
+								topic_label: "Failure budget",
+								source_count: 2,
+								run_count: 3,
+								matched_card_count: 3,
+								platforms: ["rss"],
+								claim_kinds: ["analysis"],
+								source_urls: ["https://example.com/failure-budget"],
+								latest_run_job_id: "job-3",
+								evidence_cards: [],
+								routes: {
+									watchlist_trend: "/trends?watchlist_id=wl-1",
+									briefing:
+										"/briefings?watchlist_id=wl-1&story_id=story-2&via=secondary-story",
+									ask: "/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story",
+									job_compare: "/jobs?job_id=job-3&via=secondary-story",
+									job_bundle: "/api/v1/jobs/job-3/bundle",
+									job_knowledge_cards: "/knowledge?job_id=job-3",
+								},
+							},
+						],
+						featured_runs: [
+							{
+								job_id: "job-3",
+								video_id: "video-3",
+								platform: "rss",
+								title: "RSS Digest",
+								source_url: "https://example.com/feed.xml",
+								created_at: "2026-03-31T12:00:00Z",
+								matched_card_count: 1,
+								routes: {
+									watchlist_trend: "/trends?watchlist_id=wl-1",
+									briefing: "/briefings?watchlist_id=wl-1&via=briefing-run",
+									ask: "/ask?watchlist_id=wl-1&via=briefing-run",
+									job_compare: "/jobs?job_id=job-3&via=briefing-run",
+									job_bundle: "/api/v1/jobs/job-3/bundle",
+									job_knowledge_cards: "/knowledge?job_id=job-3",
+								},
+							},
+						],
+					},
+					selection: {
+						selected_story_id: "story-1",
+						selection_basis: "suggested_story_id",
+						story: null,
+					},
+				},
+				selected_story: {
+					story_id: "story-1",
+					story_key: "topic:retry-policy",
+					headline: "Retries moved from optional advice to default posture",
+					topic_key: "retry-policy",
+					topic_label: "Retry policy",
+					source_count: 3,
+					run_count: 4,
+					matched_card_count: 6,
+					platforms: ["youtube", "rss"],
+					claim_kinds: ["recommendation"],
+					source_urls: ["https://example.com/retry-policy"],
+					latest_run_job_id: "job-1",
+					evidence_cards: [
+						{
+							card_id: "card-1",
+							job_id: "job-1",
+							video_id: "video-1",
+							platform: "youtube",
+							video_title: "AI Weekly",
+							source_url: "https://example.com/retry-policy",
+							created_at: "2026-03-31T10:00:00Z",
+							card_type: "claim",
+							card_title: "Retry policy became explicit",
+							card_body:
+								"The workflow now treats retries as first-line safety.",
+							source_section: "Digest",
+							topic_key: "retry-policy",
+							topic_label: "Retry policy",
+							claim_kind: "recommendation",
+						},
+					],
+					routes: {
+						watchlist_trend: "/trends?watchlist_id=wl-1",
+						briefing:
+							"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+						ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+						job_compare: "/jobs?job_id=job-1&via=briefing-compare",
+						job_bundle: "/api/v1/jobs/job-1/bundle",
+						job_knowledge_cards: "/knowledge?job_id=job-1",
+					},
+				},
+				story_change_summary:
+					"Retries moved from optional advice to default posture is the selected story focus across 4 runs and 6 matched evidence cards.",
+				citations: [
+					{
+						kind: "briefing_story",
+						label: "Retry Policy",
+						snippet: "Supported across 3 source families and 4 recent runs.",
+						source_url: null,
+						job_id: "job-3",
+						route:
+							"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+						route_label: "Open briefing story",
+					},
+				],
+				routes: {
+					watchlist_trend: "/trends?watchlist_id=wl-1",
+					briefing:
+						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+					job_compare: "/jobs?job_id=job-1&via=briefing-compare",
+					job_bundle: "/api/v1/jobs/job-1/bundle",
+					job_knowledge_cards: "/knowledge?job_id=job-1",
+				},
+				ask_route:
+					"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+				compare_route: "/jobs?job_id=job-1&via=briefing-compare",
+				fallback_reason: null,
+				fallback_next_step: null,
+				fallback_actions: [],
+			},
 			briefing: {
 				watchlist: {
 					id: "wl-1",
@@ -184,7 +403,7 @@ describe("search and MCP front doors", () => {
 						removed_lines: 4,
 						diff_excerpt:
 							"Retry guidance moved from optional to default posture.",
-						compare_route: "/jobs?job_id=job-3",
+						compare_route: "/jobs?job_id=job-3&via=briefing-compare",
 					},
 				},
 				evidence: {
@@ -206,9 +425,10 @@ describe("search and MCP front doors", () => {
 							evidence_cards: [],
 							routes: {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
-								briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
-								ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
-								job_compare: "/jobs?job_id=job-1",
+								briefing:
+									"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+								ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+								job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 								job_bundle: "/api/v1/jobs/job-1/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-1",
 							},
@@ -229,9 +449,10 @@ describe("search and MCP front doors", () => {
 							evidence_cards: [],
 							routes: {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
-								briefing: "/briefings?watchlist_id=wl-1&story_id=story-2",
-								ask: "/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget",
-								job_compare: "/jobs?job_id=job-3",
+								briefing:
+									"/briefings?watchlist_id=wl-1&story_id=story-2&via=secondary-story",
+								ask: "/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story",
+								job_compare: "/jobs?job_id=job-3&via=secondary-story",
 								job_bundle: "/api/v1/jobs/job-3/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-3",
 							},
@@ -248,14 +469,19 @@ describe("search and MCP front doors", () => {
 							matched_card_count: 1,
 							routes: {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
-								briefing: "/briefings?watchlist_id=wl-1",
-								ask: "/ask?watchlist_id=wl-1",
-								job_compare: "/jobs?job_id=job-3",
+								briefing: "/briefings?watchlist_id=wl-1&via=briefing-run",
+								ask: "/ask?watchlist_id=wl-1&via=briefing-run",
+								job_compare: "/jobs?job_id=job-3&via=briefing-run",
 								job_bundle: "/api/v1/jobs/job-3/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-3",
 							},
 						},
 					],
+				},
+				selection: {
+					selected_story_id: "story-1",
+					selection_basis: "suggested_story_id",
+					story: null,
 				},
 			},
 			selected_story: {
@@ -291,31 +517,10 @@ describe("search and MCP front doors", () => {
 				],
 				routes: {
 					watchlist_trend: "/trends?watchlist_id=wl-1",
-					briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
-					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
-					job_compare: "/jobs?job_id=job-1",
-					job_bundle: "/api/v1/jobs/job-1/bundle",
-					job_knowledge_cards: "/knowledge?job_id=job-1",
-				},
-			},
-			story_focus: {
-				story_id: "story-1",
-				story_key: "topic:retry-policy",
-				headline: "Retries moved from optional advice to default posture",
-				topic_key: "retry-policy",
-				topic_label: "Retry policy",
-				source_count: 3,
-				run_count: 4,
-				matched_card_count: 6,
-				platforms: ["youtube", "rss"],
-				claim_kinds: ["recommendation"],
-				source_urls: ["https://example.com/retry-policy"],
-				latest_run_job_id: "job-1",
-				routes: {
-					watchlist_trend: "/trends?watchlist_id=wl-1",
-					briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
-					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
-					job_compare: "/jobs?job_id=job-1",
+					briefing:
+						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+					job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 					job_bundle: "/api/v1/jobs/job-1/bundle",
 					job_knowledge_cards: "/knowledge?job_id=job-1",
 				},
@@ -347,7 +552,8 @@ describe("search and MCP front doors", () => {
 					snippet: "Supported across 3 source families and 4 recent runs.",
 					source_url: null,
 					job_id: "job-3",
-					route: "/briefings?watchlist_id=wl-1&story_id=story-1",
+					route:
+						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
 					route_label: "Open briefing story",
 				},
 			],
@@ -405,13 +611,26 @@ describe("search and MCP front doors", () => {
 			screen
 				.getAllByRole("link", { name: "Open selected briefing" })
 				.map((element) => element.getAttribute("href")),
-		).toContain("/briefings?watchlist_id=wl-1&story_id=story-1");
+		).toContain(
+			"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+		);
 		expect(
 			screen.getByRole("heading", { name: "Citations behind this answer" }),
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole("link", { name: "Open briefing story" }),
-		).toHaveAttribute("href", "/briefings?watchlist_id=wl-1&story_id=story-1");
+		).toHaveAttribute(
+			"href",
+			"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+		);
+		expect(
+			screen.getByRole("link", {
+				name: "Failure budgets became the comparison lens",
+			}),
+		).toHaveAttribute(
+			"href",
+			"/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story&question=retry+policy&mode=keyword&top_k=6",
+		);
 		expect(
 			screen.getByRole("heading", { name: "Evidence for this question" }),
 		).toBeInTheDocument();
@@ -427,18 +646,20 @@ describe("search and MCP front doors", () => {
 				watchlist_id: null,
 				watchlist_name: null,
 				story_id: null,
+				selected_story_id: null,
 				story_headline: null,
 				topic_key: null,
 				topic_label: null,
 				selection_basis: "none",
+				filters: {},
+				briefing_available: false,
 			},
 			answer_state: "missing_context",
 			answer_headline: null,
 			answer_summary: null,
 			answer_reason: null,
 			answer_confidence: "limited",
-			briefing: null,
-			selected_story: null,
+			story_page: null,
 			retrieval: {
 				query: "What changed this week?",
 				top_k: 6,
