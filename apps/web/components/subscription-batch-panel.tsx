@@ -346,6 +346,7 @@ export function SubscriptionBatchPanel({ subscriptions, sessionToken }: Props) {
 			setApplyResult(
 				`Category change undone. Restored ${undoContext.ids.length} subscriptions to their previous categories.`,
 			);
+			router.refresh();
 		} catch (err) {
 			setUndoHistory({
 				message: "Undo failed. Please try again.",
