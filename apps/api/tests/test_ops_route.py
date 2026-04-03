@@ -13,6 +13,13 @@ os.environ.setdefault("SQLITE_STATE_PATH", "/tmp/sourceharbor-ops-route-state.db
 from apps.api.app.main import app
 
 
+def _patch_ops_service(monkeypatch, replacement) -> None:  # noqa: ANN001
+    from apps.api.app.routers import ops as ops_router
+
+    monkeypatch.setattr(ops_router, "OpsService", replacement)
+    monkeypatch.setitem(ops_router.get_ops_inbox.__globals__, "OpsService", replacement)
+
+
 def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
     from apps.api.app.routers import ops as ops_router
 
@@ -96,7 +103,7 @@ def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
             "inbox_items": [],
         },
     )
-    monkeypatch.setattr(ops_router, "OpsService", StubOpsService)
+    _patch_ops_service(monkeypatch, StubOpsService)
 
     client = TestClient(app)
     response = client.get("/api/v1/ops/inbox?limit=4&window_hours=12")
@@ -108,8 +115,6 @@ def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
 
 
 def test_ops_inbox_route_sanitizes_internal_errors(monkeypatch) -> None:
-    from apps.api.app.routers import ops as ops_router
-
     class ExplodingOpsService:
         def __init__(self, db) -> None:  # noqa: ANN001
             self.db = db
@@ -120,7 +125,7 @@ def test_ops_inbox_route_sanitizes_internal_errors(monkeypatch) -> None:
                 "db password=postgresql://ops:super-secret@127.0.0.1:5432/sourceharbor"
             )
 
-    monkeypatch.setattr(ops_router, "OpsService", ExplodingOpsService)
+    _patch_ops_service(monkeypatch, ExplodingOpsService)
 
     client = TestClient(app)
     response = client.get("/api/v1/ops/inbox")
@@ -132,8 +137,6 @@ def test_ops_inbox_route_sanitizes_internal_errors(monkeypatch) -> None:
 
 
 def test_ops_inbox_route_uses_generic_bad_request_detail(monkeypatch) -> None:
-    from apps.api.app.routers import ops as ops_router
-
     class InvalidOpsService:
         def __init__(self, db) -> None:  # noqa: ANN001
             self.db = db
@@ -142,7 +145,7 @@ def test_ops_inbox_route_uses_generic_bad_request_detail(monkeypatch) -> None:
             del limit, window_hours
             raise ValueError("window_hours invalid for ops@example.com?token=secret-value")
 
-    monkeypatch.setattr(ops_router, "OpsService", InvalidOpsService)
+    _patch_ops_service(monkeypatch, InvalidOpsService)
 
     client = TestClient(app)
     response = client.get("/api/v1/ops/inbox")
