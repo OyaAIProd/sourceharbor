@@ -121,6 +121,12 @@ const MESSAGES = {
 			heroSubtitle:
 				"Run intake, grounded retrieval, job orchestration, and agent reuse from one operator-facing command center.",
 			frontDoors: {
+				subscriptionsTitle: "Source-universe intake",
+				subscriptionsDescription:
+					"Start from strong-supported YouTube and Bilibili templates, then widen to RSSHub routes and generic RSS without pretending every route is already proven.",
+				subscriptionsCta: "Open Subscriptions",
+				subscriptionsHint:
+					"One shared template catalog now drives Web, API, and MCP intake.",
 				searchTitle: "Search front door",
 				searchDescription:
 					"Search digests, knowledge cards, transcripts, and related evidence from one operator-facing route.",
@@ -128,12 +134,14 @@ const MESSAGES = {
 				knowledgeCta: "Open Knowledge",
 				askTitle: "Ask your sources",
 				askDescription:
-					"Truthful MVP: ask a question, get grounded evidence, then jump to job trace, feed, knowledge, or the original source.",
+					"Carry briefing-backed story context into answer, changes, and evidence instead of stopping at raw retrieval hits.",
 				askCta: "Open Ask",
-				askHint: "No hidden answer layer yet. Grounded citations first.",
+				briefingsCta: "Open Briefings",
+				askHint:
+					"Ask now reuses the server-owned story payload shared with Briefings instead of a second browser-side view model.",
 				mcpTitle: "MCP front door",
 				mcpDescription:
-					"SourceHarbor already exposes an agent-facing MCP surface on top of the same API and pipeline state.",
+					"Reuse the same intake, story, job, and retrieval truth through MCP instead of rebuilding a second agent surface.",
 				mcpCta: "Open MCP quickstart",
 				jobCta: "Inspect job evidence",
 			},
@@ -144,20 +152,28 @@ const MESSAGES = {
 				keyMetrics: "Command center metrics",
 			},
 			compounders: {
-				watchlistsTitle: "Watchlists and trends",
+				watchlistsTitle: "Watchlists are tracking objects",
 				watchlistsDescription:
-					"Save a topic, claim kind, or source watchlist, then come back to a real cross-run trend instead of redoing the same search by hand.",
+					"Save the watchlist here, then move into Trends for the unified information surface instead of treating both pages like the same thing.",
 				watchlistsCta: "Open Watchlists",
+				trendsTitle: "Trends are the compounder front door",
+				trendsDescription:
+					"Start here when you want the repeated story across runs: merged stories up top, recent evidence runs below, and the next jump into Briefings or Jobs.",
 				trendsCta: "Open Trends",
+				briefingsTitle: "Briefings are the shared story surface",
+				briefingsDescription:
+					"Briefings lower cognitive load: current story first, then the delta, then evidence drill-down, with Ask reusing the same selected-story truth.",
+				briefingsCta: "Open Briefings",
 				bundleTitle: "Evidence bundle",
 				bundleDescription:
 					"Carry a run forward as an internal bundle with digest, trace summary, knowledge cards, and artifact manifest instead of pasting screenshots into chat.",
 				bundleCta: "Open Job Trace",
 				bundleHint: "Download the bundle from any job detail page.",
-				playgroundTitle: "Sample playground",
+				playgroundTitle: "Playground stays sample-proof",
 				playgroundDescription:
-					"Explore a clearly labeled demo corpus and use-case pages without pretending they are live operator results.",
+					"Explore a clearly labeled sample-proof lane and then jump back to live front doors when you need current operator truth.",
 				playgroundCta: "Open Playground",
+				proofCta: "Open Proof",
 				useCasesCta: "Open use case pages",
 			},
 			loadErrorTitle: "Unable to load the command center",
@@ -1278,6 +1294,12 @@ const MESSAGES = {
 			heroSubtitle:
 				"从一个面向运营者的 command center 里运行采集、grounded retrieval、任务编排和 agent reuse。",
 			frontDoors: {
+				subscriptionsTitle: "Source-universe intake",
+				subscriptionsDescription:
+					"先从 YouTube / Bilibili 的强支持模板起步，再扩到 RSSHub route 和通用 RSS，但不要把所有 route 都说成已经证明稳定。",
+				subscriptionsCta: "打开 Subscriptions",
+				subscriptionsHint:
+					"同一份 template catalog 现在同时驱动 Web、API 和 MCP intake。",
 				searchTitle: "搜索入口",
 				searchDescription:
 					"从一个面向运营者的入口里检索 digest、知识卡片、转写和相关证据。",
@@ -1285,12 +1307,14 @@ const MESSAGES = {
 				knowledgeCta: "打开 Knowledge",
 				askTitle: "向来源提问",
 				askDescription:
-					"诚实的 MVP：先拿 grounded evidence，再跳回 job trace、feed、knowledge 或原始来源。",
+					"带着 briefing-backed story 上下文进入 answer、changes 和 evidence，而不是停在原始 retrieval 命中上。",
 				askCta: "打开 Ask",
-				askHint: "当前还没有隐藏的 answer layer。先以 citation 为主。",
+				briefingsCta: "打开 Briefings",
+				askHint:
+					"Ask 现在会复用与 Briefings 共用的 server-owned story payload，而不是再拼一套浏览器侧 view model。",
 				mcpTitle: "MCP 入口",
 				mcpDescription:
-					"SourceHarbor 已经在同一套 API 和 pipeline state 之上暴露了 agent-facing MCP surface。",
+					"通过 MCP 复用同一套 intake、story、job 与 retrieval 真相，而不是再造第二层 agent surface。",
 				mcpCta: "打开 MCP quickstart",
 				jobCta: "查看 job 证据",
 			},
@@ -1301,20 +1325,28 @@ const MESSAGES = {
 				keyMetrics: "Command center metrics",
 			},
 			compounders: {
-				watchlistsTitle: "Watchlists 与趋势",
+				watchlistsTitle: "Watchlists 是 tracking object",
 				watchlistsDescription:
-					"保存 topic、claim kind 或 source watchlist，然后回到真实的跨运行趋势，而不是每次手工重做同一轮搜索。",
+					"先在这里保存 watchlist，再去 Trends 看统一信息面，不要把两个页面当成同一种角色。",
 				watchlistsCta: "打开 Watchlists",
+				trendsTitle: "Trends 是 compounder 前门",
+				trendsDescription:
+					"当你想先看“多次运行里反复出现的主线”时，先来这里：上面是 merged stories，下面是 recent evidence runs，再继续跳到 Briefings 或 Jobs。",
 				trendsCta: "打开 Trends",
+				briefingsTitle: "Briefings 是 shared story surface",
+				briefingsDescription:
+					"Briefings 先降认知负担：先看当前 story，再看 delta，最后 drill-down 到证据；Ask 会复用同一条 selected-story truth。",
+				briefingsCta: "打开 Briefings",
 				bundleTitle: "证据包",
 				bundleDescription:
 					"把一次运行继续带走，作为内部 bundle 复用 digest、trace summary、knowledge cards 和 artifact manifest，而不是在聊天里贴截图。",
 				bundleCta: "打开 Job Trace",
 				bundleHint: "可从任意 job 详情页下载 bundle。",
-				playgroundTitle: "样例 Playground",
+				playgroundTitle: "Playground 保持 sample-proof",
 				playgroundDescription:
-					"查看清楚标注的 demo corpus 和 use-case 页面，但不要把它误读成 live operator 结果。",
+					"查看清楚标注的 sample-proof lane；真要看当前 operator truth，就跳回 live 前门。",
 				playgroundCta: "打开 Playground",
+				proofCta: "打开 Proof",
 				useCasesCta: "打开 use case 页面",
 			},
 			loadErrorTitle: "当前无法加载 command center",

@@ -22,14 +22,25 @@ Most repositories stop after "generate a summary."
 
 SourceHarbor continues:
 
-1. **Capture** sources repeatedly
+1. **Capture** sources repeatedly through a source-universe intake front door
 2. **Run** a job-backed pipeline
 3. **Write** artifacts you can inspect later
 4. **Search** those artifacts
-5. **Merge** repeated themes into watchlists and merged stories
-6. **Brief** one watchlist as a summary-first story with deltas and evidence drill-down, then carry that same selected-story truth into Ask
+5. **Track** repeated themes as watchlists instead of ad-hoc tabs
+6. **Merge** repeated runs into trends, briefings, and a shared Ask story payload
 7. **Deliver** them through notifications
 8. **Reuse** the same system through MCP
+
+## Front-Door Line
+
+The product line is stronger when you read the doors in order:
+
+1. **Subscriptions** widens source intake honestly
+2. **Watchlists** saves the tracking object
+3. **Trends** becomes the compounder front door
+4. **Briefings** lowers cognitive load with one current story
+5. **Ask** carries that story context into answer, changes, and evidence
+6. **MCP** reuses the same truth for Codex, Claude Code, and other agent clients
 
 ## Trade-Offs
 

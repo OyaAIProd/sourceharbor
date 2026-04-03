@@ -8,6 +8,14 @@ In plain language:
 - API is the shared service contract
 - MCP is the agent-facing doorway into that same system
 
+That same system truth now stretches across the product line:
+
+- `/subscriptions` defines source intake through one shared template catalog
+- `/watchlists` stores the tracking object
+- `/trends` and `/briefings` turn repeated runs into reusable story surfaces
+- `/ask` consumes that story context instead of pretending every answer starts from nowhere
+- MCP reuses those same contracts for agents
+
 This is the strongest ecosystem binding for SourceHarbor today:
 
 - **Codex** and **Claude Code** are a real fit because they can talk through MCP or HTTP while staying source-first and local-proof-first

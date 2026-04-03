@@ -241,6 +241,15 @@ describe("dashboard/settings/subscriptions pages", () => {
 				screen.getByText("Build with Codex, Claude Code, and MCP clients"),
 			).toBeInTheDocument();
 			expect(
+				screen.getByRole("heading", { name: "Source-universe intake" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("link", { name: "Open Subscriptions" }),
+			).toHaveAttribute("href", "/subscriptions");
+			expect(
+				screen.getByRole("link", { name: "Open Briefings" }),
+			).toHaveAttribute("href", "/briefings");
+			expect(
 				screen.getByRole("link", { name: "Inspect proof ladder" }),
 			).toHaveAttribute("href", "/proof");
 			expect(
