@@ -26,6 +26,10 @@ paths:
           schema:
             $ref: '#/components/schemas/Platform'
         - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
           name: enabled_only
           schema:
             type: boolean
@@ -1071,8 +1075,25 @@ components:
           $ref: '#/components/schemas/SourceType'
         source_value:
           type: string
+        adapter_type:
+          type: string
+          enum: [rsshub_route, rss_generic]
+        source_url:
+          type: string
+          nullable: true
         rsshub_route:
           type: string
+          nullable: true
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
         enabled:
           type: boolean
 
