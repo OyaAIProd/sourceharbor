@@ -52,6 +52,9 @@ type DerivedMergedStory = {
 	runCount: number;
 	latestCreatedAt: string | null;
 	platforms: string[];
+	claimKinds: string[];
+	topicKey: string | null;
+	latestJobId: string | null;
 	evidence: DerivedMergedStoryEvidence[];
 };
 
@@ -96,6 +99,10 @@ function deriveMergedStories(
 				runCount: story.run_ids.length,
 				latestCreatedAt: story.latest_created_at,
 				platforms: story.platforms,
+				claimKinds: story.claim_kinds,
+				topicKey: story.topic_key,
+				latestJobId:
+					story.cards[0]?.job_id?.trim() || story.run_ids[0]?.trim() || null,
 				evidence: story.cards.slice(0, 3).map((item) => ({
 					jobId: item.job_id,
 					platform: item.platform,
@@ -150,6 +157,9 @@ function deriveMergedStories(
 				sourceKeys: new Set<string>(),
 				runIds: new Set<string>(),
 				platforms: new Set<string>(),
+				claimKinds: new Set<string>(),
+				topicKey: null as string | null,
+				latestJobId: null as string | null,
 				latestCreatedAt: null as string | null,
 				evidence: new Map<string, DerivedMergedStoryEvidence>(),
 			};
@@ -157,6 +167,9 @@ function deriveMergedStories(
 			existing.sourceKeys.add(sourceKey);
 			existing.runIds.add(run.job_id);
 			existing.platforms.add(run.platform);
+			if (!existing.latestJobId) {
+				existing.latestJobId = run.job_id;
+			}
 			if (
 				!existing.latestCreatedAt ||
 				new Date(run.created_at).getTime() >
@@ -184,6 +197,10 @@ function deriveMergedStories(
 				const rawTopic = card.topic_key ?? card.topic_label ?? "topic";
 				const label = card.topic_label ?? card.topic_key ?? "Topic";
 				register(`topic:${rawTopic}`, label, card.card_body);
+				const group = groups.get(`topic:${rawTopic}`);
+				if (group && card.topic_key) {
+					group.topicKey = card.topic_key;
+				}
 			}
 			if (card.claim_kind) {
 				matchedStructuredCard = true;
@@ -192,6 +209,10 @@ function deriveMergedStories(
 					`${humanizeClaimKind(card.claim_kind)} claims`,
 					card.card_body,
 				);
+				const claimGroup = groups.get(`claim:${card.claim_kind}`);
+				if (claimGroup) {
+					claimGroup.claimKinds.add(card.claim_kind);
+				}
 			}
 		}
 
@@ -218,6 +239,9 @@ function deriveMergedStories(
 			runCount: group.runIds.size,
 			latestCreatedAt: group.latestCreatedAt,
 			platforms: [...group.platforms],
+			claimKinds: [...group.claimKinds],
+			topicKey: group.topicKey,
+			latestJobId: group.latestJobId,
 			evidence: [...group.evidence.values()]
 				.sort(
 					(left, right) =>
@@ -240,9 +264,44 @@ function deriveMergedStories(
 		});
 }
 
+function buildStorySummary(story: DerivedMergedStory): string {
+	const claims =
+		story.claimKinds.length > 0
+			? story.claimKinds.map(humanizeClaimKind).join(", ")
+			: "mixed evidence";
+	return `Consensus is strongest across ${story.sourceCount} source families and ${story.runCount} runs. Claim shape: ${claims}.`;
+}
+
+function buildAskRoute({
+	watchlistId,
+	storyId,
+	topicKey,
+	label,
+}: {
+	watchlistId: string;
+	storyId: string;
+	topicKey: string | null;
+	label: string;
+}): string {
+	const params = new URLSearchParams({ watchlist_id: watchlistId, story_id: storyId });
+	if (topicKey) {
+		params.set("topic_key", topicKey);
+	}
+	params.set("question", label);
+	return `/ask?${params.toString()}`;
+}
+
 function deriveSourceCoverage(
 	trend: WatchlistTrendResponse,
 ): DerivedSourceCoverage[] {
+	const sourceCoverage = (
+		trend as WatchlistTrendResponse & {
+			source_coverage?: DerivedSourceCoverage[];
+		}
+	).source_coverage;
+	if (Array.isArray(sourceCoverage) && sourceCoverage.length > 0) {
+		return sourceCoverage;
+	}
 	const coverage = new Map<
 		string,
 		{
@@ -298,16 +357,39 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 		watchlists.find((item) => item.id === watchlistId.trim()) ??
 		watchlists[0] ??
 		null;
-	const trend = selectedWatchlist
-		? await apiClient
-				.getWatchlistTrend(selectedWatchlist.id, {
-					limit_runs: 4,
-					limit_cards: 16,
-				})
-				.catch(() => null)
-		: null;
+	const [trend, briefing] = selectedWatchlist
+		? await Promise.all([
+				apiClient
+					.getWatchlistTrend(selectedWatchlist.id, {
+						limit_runs: 4,
+						limit_cards: 16,
+					})
+					.catch(() => null),
+				apiClient
+					.getWatchlistBriefing(selectedWatchlist.id, {
+						limit_runs: 4,
+						limit_cards: 16,
+						limit_stories: 4,
+						limit_evidence_per_story: 2,
+					})
+					.catch(() => null),
+			])
+		: [null, null];
 	const mergedStories = trend ? deriveMergedStories(trend) : [];
 	const sourceCoverage = trend ? deriveSourceCoverage(trend) : [];
+	const leadStory =
+		briefing?.evidence.stories.find(
+			(item) => item.story_id === briefing.evidence.suggested_story_id,
+		) ??
+		briefing?.evidence.stories[0] ??
+		null;
+	const leadBundle = leadStory?.latest_run_job_id
+		? await apiClient.getJobEvidenceBundle(leadStory.latest_run_job_id).catch(() => null)
+		: null;
+	const leadBundleStepCount =
+		leadBundle && typeof leadBundle.trace_summary["step_count"] === "number"
+			? leadBundle.trace_summary["step_count"]
+			: "unknown";
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
@@ -348,6 +430,177 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 
 			{selectedWatchlist && trend ? (
 				<>
+					<section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+						<Card className="folo-surface border-border/70">
+							<CardHeader>
+								<CardTitle>Compounder front door</CardTitle>
+								<CardDescription>
+									Start with the strongest repeated story, then branch into
+									differences, evidence, and clearly labeled sample proof.
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-4">
+								{leadStory ? (
+									<>
+										<div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-4">
+											<p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+												Current cross-source focus
+											</p>
+											<h2 className="text-xl font-semibold">
+												{leadStory.headline}
+											</h2>
+											<p className="text-sm text-muted-foreground">
+												Supported across {leadStory.source_count} source
+												families, {leadStory.run_count} runs, and{" "}
+												{leadStory.matched_card_count} matched cards.
+											</p>
+											<div className="flex flex-wrap gap-2">
+												{leadStory.platforms.map((platform) => (
+													<Badge key={platform} variant="outline">
+														{platformLabel(platform)}
+													</Badge>
+												))}
+												{leadStory.claim_kinds.map((claimKind) => (
+													<Badge key={claimKind} variant="outline">
+														{humanizeClaimKind(claimKind)}
+													</Badge>
+												))}
+											</div>
+										</div>
+
+										<div className="grid gap-3 md:grid-cols-2">
+											<div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+												<p className="font-medium text-foreground">
+													Consensus now
+												</p>
+												<p className="mt-2">
+													{briefing?.summary.overview ??
+														"Use the selected watchlist to see where repeated themes converge."}
+												</p>
+											</div>
+											<div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+												<p className="font-medium text-foreground">
+													What moved recently
+												</p>
+												<p className="mt-2">
+													{briefing?.differences.compare?.diff_excerpt ??
+														"No compare excerpt yet. Use the trend timeline below to inspect recent movement."}
+												</p>
+											</div>
+										</div>
+
+										<div className="flex flex-wrap gap-3">
+											<Button asChild variant="hero" size="sm">
+												<Link
+													href={`/briefings?watchlist_id=${encodeURIComponent(selectedWatchlist.id)}&story_id=${encodeURIComponent(leadStory.story_id)}`}
+												>
+													Open unified briefing
+												</Link>
+											</Button>
+											<Button asChild variant="outline" size="sm">
+												<Link
+													href={buildAskRoute({
+														watchlistId: selectedWatchlist.id,
+														storyId: leadStory.story_id,
+														topicKey: leadStory.topic_key,
+														label: leadStory.headline,
+													})}
+												>
+													Ask about this story
+												</Link>
+											</Button>
+											{leadStory.latest_run_job_id ? (
+												<Button asChild variant="outline" size="sm">
+													<Link
+														href={`/api/v1/jobs/${encodeURIComponent(leadStory.latest_run_job_id)}/bundle`}
+													>
+														Open evidence bundle
+													</Link>
+												</Button>
+											) : null}
+											{leadStory.latest_run_job_id ? (
+												<Button asChild variant="outline" size="sm">
+													<Link
+														href={`/knowledge?job_id=${encodeURIComponent(leadStory.latest_run_job_id)}`}
+													>
+														Open knowledge cards
+													</Link>
+												</Button>
+											) : null}
+										</div>
+									</>
+								) : (
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+										This watchlist does not expose a selected story yet. Start
+										with the recent evidence timeline below, then move into a
+										briefing once repeated evidence accumulates.
+									</div>
+								)}
+							</CardContent>
+						</Card>
+
+						<Card className="folo-surface border-border/70">
+							<CardHeader>
+								<CardTitle>Evidence and sample boundary</CardTitle>
+								<CardDescription>
+									Keep live watchlist evidence and sample/demo proof in the
+									same map without mixing their truth layers.
+								</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-3 text-sm text-muted-foreground">
+								{leadBundle ? (
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+										<p className="font-medium text-foreground">
+											Latest lead-story bundle
+										</p>
+										<p className="mt-2">
+											Sharing scope: <code>{leadBundle.sharing_scope}</code> ·
+											Sample: <code>{String(leadBundle.sample)}</code>
+										</p>
+										<p className="mt-2">{leadBundle.proof_boundary}</p>
+										<p className="mt-2">
+											Trace steps: {leadBundleStepCount} ·
+											Knowledge cards: {leadBundle.knowledge_cards.length}
+										</p>
+									</div>
+								) : (
+									<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+										<p className="font-medium text-foreground">
+											Live evidence stays here
+										</p>
+										<p className="mt-2">
+											Use watchlists, trends, briefings, and job bundles for
+											current local/runtime proof.
+										</p>
+									</div>
+								)}
+								<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+									<p className="font-medium text-foreground">
+										Sample proof stays separate
+									</p>
+									<p className="mt-2">
+										`/playground` is read-only sample/demo proof. It helps you
+										understand the product shape, but it is not live operator
+										state.
+									</p>
+								</div>
+								<div className="flex flex-wrap gap-3">
+									<Button asChild variant="outline" size="sm">
+										<Link href="/playground">Open sample playground</Link>
+									</Button>
+									<Button asChild variant="outline" size="sm">
+										<Link href="/watchlists">Open watchlists</Link>
+									</Button>
+									<Button asChild variant="outline" size="sm">
+										<Link href="/use-cases/research-pipeline">
+											Open research use case
+										</Link>
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+					</section>
+
 					<section className="grid gap-4 xl:grid-cols-[0.95fr_1.35fr]">
 						<Card className="folo-surface border-border/70">
 							<CardHeader>
@@ -497,7 +750,59 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 												<p className="mt-4 text-sm text-muted-foreground">
 													{story.summary}
 												</p>
-											) : null}
+											) : (
+												<p className="mt-4 text-sm text-muted-foreground">
+													{buildStorySummary(story)}
+												</p>
+											)}
+											<div className="mt-4 flex flex-wrap gap-2">
+												{story.claimKinds.map((claimKind) => (
+													<Badge key={claimKind} variant="outline">
+														{humanizeClaimKind(claimKind)}
+													</Badge>
+												))}
+											</div>
+											<div className="mt-4 flex flex-wrap gap-3">
+												<Button asChild variant="outline" size="sm">
+													<Link
+														href={`/briefings?watchlist_id=${encodeURIComponent(selectedWatchlist.id)}&story_id=${encodeURIComponent(story.id)}`}
+													>
+														Open briefing story
+													</Link>
+												</Button>
+												{story.topicKey ? (
+													<Button asChild variant="outline" size="sm">
+														<Link
+															href={buildAskRoute({
+																watchlistId: selectedWatchlist.id,
+																storyId: story.id,
+																topicKey: story.topicKey,
+																label: story.label,
+															})}
+														>
+															Ask this story
+														</Link>
+													</Button>
+												) : null}
+												{story.latestJobId ? (
+													<Button asChild variant="outline" size="sm">
+														<Link
+															href={`/api/v1/jobs/${encodeURIComponent(story.latestJobId)}/bundle`}
+														>
+															Open bundle
+														</Link>
+													</Button>
+												) : null}
+												{story.latestJobId ? (
+													<Button asChild variant="outline" size="sm">
+														<Link
+															href={`/knowledge?job_id=${encodeURIComponent(story.latestJobId)}`}
+														>
+															Open knowledge
+														</Link>
+													</Button>
+												) : null}
+											</div>
 											<div className="mt-4 space-y-3">
 												{story.evidence.map((item) => (
 													<div

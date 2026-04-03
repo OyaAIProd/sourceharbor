@@ -111,6 +111,39 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
 
 			<Card className="folo-surface border-border/70">
 				<CardHeader>
+					<CardTitle>Current action path</CardTitle>
+					<CardDescription>
+						Start from the live compounder front door, then use sample surfaces
+						only when you want a clearly labeled demo path.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
+					<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+						<p className="font-medium text-foreground">1. Live tracking</p>
+						<p className="mt-2">
+							Use <code>/watchlists</code> when you want a durable object for
+							what to track.
+						</p>
+					</div>
+					<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+						<p className="font-medium text-foreground">2. Unified view</p>
+						<p className="mt-2">
+							Use <code>/trends</code> to see the current repeated story,
+							recent movement, and drill-down evidence.
+						</p>
+					</div>
+					<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+						<p className="font-medium text-foreground">3. Sample proof</p>
+						<p className="mt-2">
+							Use <code>/playground</code> only for sample/demo proof, not for
+							live operator state.
+						</p>
+					</div>
+				</CardContent>
+			</Card>
+
+			<Card className="folo-surface border-border/70">
+				<CardHeader>
 					<CardTitle>{copy.builderTitle}</CardTitle>
 					<CardDescription>{copy.builderDescription}</CardDescription>
 				</CardHeader>
