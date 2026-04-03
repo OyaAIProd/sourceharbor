@@ -107,11 +107,22 @@ export default async function PlaygroundPage() {
 				<CardContent className="space-y-2 text-sm text-muted-foreground">
 					<p>{copy.boundaryDescription}</p>
 					<div className="flex flex-wrap gap-3">
+						<Button asChild variant="hero" size="sm">
+							<Link href="/trends">Open compounder front door</Link>
+						</Button>
+						<Button asChild variant="outline" size="sm">
+							<Link href="/watchlists">Open live watchlists</Link>
+						</Button>
 						<Button asChild variant="outline" size="sm">
 							<Link href="/search">{copy.openSearchButton}</Link>
 						</Button>
 						<Button asChild variant="outline" size="sm">
 							<Link href="/proof">{copy.openProofButton}</Link>
+						</Button>
+						<Button asChild variant="outline" size="sm">
+							<Link href="/use-cases/research-pipeline">
+								Open research use case
+							</Link>
 						</Button>
 					</div>
 				</CardContent>
@@ -214,7 +225,15 @@ export default async function PlaygroundPage() {
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm text-muted-foreground">
 					<p>{sample.example_bundle.bundle_kind}</p>
+					<p>
+						Sharing scope: <code>{sample.example_bundle.sharing_scope}</code>
+					</p>
 					<p>{sample.example_bundle.proof_boundary}</p>
+					<p>
+						This sample bundle explains the product shape. For current local
+						evidence, go back to <code>/watchlists</code>, <code>/trends</code>,
+						or a real job bundle route.
+					</p>
 					<ul className="list-disc pl-5">
 						{sample.example_bundle.contains.map((item) => (
 							<li key={item}>{item}</li>
