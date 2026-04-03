@@ -230,7 +230,8 @@ describe("apiClient core behavior", () => {
 							updated_at: "2026-03-31T10:00:00Z",
 						},
 						summary: {
-							overview: "Retry policy currently converges across recent sources.",
+							overview:
+								"Retry policy currently converges across recent sources.",
 							source_count: 3,
 							run_count: 4,
 							story_count: 1,
@@ -288,7 +289,9 @@ describe("apiClient core behavior", () => {
 		});
 
 		expect(payload.context.selected_story_id).toBe("story-1");
-		expect(payload.ask_route).toContain("question=Retries+moved+from+optional+advice+to+default+posture");
+		expect(payload.ask_route).toContain(
+			"question=Retries+moved+from+optional+advice+to+default+posture",
+		);
 		const [url] = fetchSpy.mock.calls[0] ?? [];
 		expect(String(url)).toContain("/api/v1/watchlists/wl-1/briefing/page");
 		expect(String(url)).toContain("story_id=story-1");

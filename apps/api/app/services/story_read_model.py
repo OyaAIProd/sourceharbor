@@ -33,16 +33,24 @@ def build_briefing_page_payload(
         explicit_question=ask_question,
     )
     selected_story_id = (
-        str(selected_story.get("story_id") or "").strip() if isinstance(selected_story, dict) else ""
+        str(selected_story.get("story_id") or "").strip()
+        if isinstance(selected_story, dict)
+        else ""
     )
     story_headline = (
-        str(selected_story.get("headline") or "").strip() if isinstance(selected_story, dict) else ""
+        str(selected_story.get("headline") or "").strip()
+        if isinstance(selected_story, dict)
+        else ""
     )
     topic_key = (
-        str(selected_story.get("topic_key") or "").strip() if isinstance(selected_story, dict) else ""
+        str(selected_story.get("topic_key") or "").strip()
+        if isinstance(selected_story, dict)
+        else ""
     )
     topic_label = (
-        str(selected_story.get("topic_label") or "").strip() if isinstance(selected_story, dict) else ""
+        str(selected_story.get("topic_label") or "").strip()
+        if isinstance(selected_story, dict)
+        else ""
     )
     return {
         "selection": {
@@ -185,8 +193,16 @@ def _build_page_routes(
         if isinstance(selected_story, dict) and isinstance(selected_story.get("routes"), dict)
         else {}
     )
-    story_id = str(selected_story.get("story_id") or "").strip() if isinstance(selected_story, dict) else ""
-    topic_key = str(selected_story.get("topic_key") or "").strip() if isinstance(selected_story, dict) else ""
+    story_id = (
+        str(selected_story.get("story_id") or "").strip()
+        if isinstance(selected_story, dict)
+        else ""
+    )
+    topic_key = (
+        str(selected_story.get("topic_key") or "").strip()
+        if isinstance(selected_story, dict)
+        else ""
+    )
     compare = briefing.get("differences", {}).get("compare") if isinstance(briefing, dict) else None
     compare_dict = compare if isinstance(compare, dict) else {}
     watchlist_trend = (
@@ -237,4 +253,6 @@ def _with_query_param(route: str | None, *, key: str, value: str | None) -> str 
     query_items = parse_qsl(split.query, keep_blank_values=True)
     if not any(existing_key == key for existing_key, _ in query_items):
         query_items.append((key, safe_value))
-    return urlunsplit((split.scheme, split.netloc, split.path, urlencode(query_items), split.fragment))
+    return urlunsplit(
+        (split.scheme, split.netloc, split.path, urlencode(query_items), split.fragment)
+    )

@@ -98,7 +98,9 @@ class RetrievalService:
             query=normalized_query,
         )
         selection_basis = (
-            str(briefing_context.get("selection_basis") or derived_selection_basis or "none").strip()
+            str(
+                briefing_context.get("selection_basis") or derived_selection_basis or "none"
+            ).strip()
             or "none"
         )
         selected_story_dict = selected_story if isinstance(selected_story, dict) else {}
@@ -163,9 +165,7 @@ class RetrievalService:
                 if selected_story_dict or briefing_context
                 else None,
                 "topic_key": str(
-                    briefing_context.get("topic_key")
-                    or selected_story_dict.get("topic_key")
-                    or ""
+                    briefing_context.get("topic_key") or selected_story_dict.get("topic_key") or ""
                 ).strip()
                 or None
                 if selected_story_dict or briefing_context
@@ -250,9 +250,12 @@ class RetrievalService:
             story_id=normalized_story_id,
             query=normalized_query or normalized_topic_key or "",
         )
-        selection_basis = str(
-            briefing_page_context.get("selection_basis") or derived_selection_basis or "none"
-        ).strip() or "none"
+        selection_basis = (
+            str(
+                briefing_page_context.get("selection_basis") or derived_selection_basis or "none"
+            ).strip()
+            or "none"
+        )
         answer_contract = (
             self.answer(
                 query=normalized_query,
@@ -512,9 +515,7 @@ class RetrievalService:
                 list(answer_contract.get("citations") or [])
                 if isinstance(answer_contract, dict)
                 else (
-                    list(story_page.get("citations") or [])
-                    if isinstance(story_page, dict)
-                    else []
+                    list(story_page.get("citations") or []) if isinstance(story_page, dict) else []
                 )
             ),
             "fallback_reason": (

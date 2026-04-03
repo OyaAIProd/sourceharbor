@@ -144,7 +144,8 @@ describe("search and MCP front doors", () => {
 					watchlist_name: "Retry policy",
 					story_id: "story-1",
 					selected_story_id: "story-1",
-					story_headline: "Retries moved from optional advice to default posture",
+					story_headline:
+						"Retries moved from optional advice to default posture",
 					topic_key: "retry-policy",
 					topic_label: "Retry policy",
 					selection_basis: "query_match",
@@ -208,7 +209,8 @@ describe("search and MCP front doors", () => {
 							{
 								story_id: "story-1",
 								story_key: "topic:retry-policy",
-								headline: "Retries moved from optional advice to default posture",
+								headline:
+									"Retries moved from optional advice to default posture",
 								topic_key: "retry-policy",
 								topic_label: "Retry policy",
 								source_count: 3,
@@ -223,8 +225,7 @@ describe("search and MCP front doors", () => {
 									watchlist_trend: "/trends?watchlist_id=wl-1",
 									briefing:
 										"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
-									ask:
-										"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+									ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 									job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 									job_bundle: "/api/v1/jobs/job-1/bundle",
 									job_knowledge_cards: "/knowledge?job_id=job-1",
@@ -248,8 +249,7 @@ describe("search and MCP front doors", () => {
 									watchlist_trend: "/trends?watchlist_id=wl-1",
 									briefing:
 										"/briefings?watchlist_id=wl-1&story_id=story-2&via=secondary-story",
-									ask:
-										"/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story",
+									ask: "/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story",
 									job_compare: "/jobs?job_id=job-3&via=secondary-story",
 									job_bundle: "/api/v1/jobs/job-3/bundle",
 									job_knowledge_cards: "/knowledge?job_id=job-3",
@@ -306,7 +306,8 @@ describe("search and MCP front doors", () => {
 							created_at: "2026-03-31T10:00:00Z",
 							card_type: "claim",
 							card_title: "Retry policy became explicit",
-							card_body: "The workflow now treats retries as first-line safety.",
+							card_body:
+								"The workflow now treats retries as first-line safety.",
 							source_section: "Digest",
 							topic_key: "retry-policy",
 							topic_label: "Retry policy",
@@ -317,8 +318,7 @@ describe("search and MCP front doors", () => {
 						watchlist_trend: "/trends?watchlist_id=wl-1",
 						briefing:
 							"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
-						ask:
-							"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+						ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 						job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 						job_bundle: "/api/v1/jobs/job-1/bundle",
 						job_knowledge_cards: "/knowledge?job_id=job-1",
@@ -333,7 +333,8 @@ describe("search and MCP front doors", () => {
 						snippet: "Supported across 3 source families and 4 recent runs.",
 						source_url: null,
 						job_id: "job-3",
-						route: "/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+						route:
+							"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
 						route_label: "Open briefing story",
 					},
 				],
@@ -341,8 +342,7 @@ describe("search and MCP front doors", () => {
 					watchlist_trend: "/trends?watchlist_id=wl-1",
 					briefing:
 						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
-					ask:
-						"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 					job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 					job_bundle: "/api/v1/jobs/job-1/bundle",
 					job_knowledge_cards: "/knowledge?job_id=job-1",
@@ -427,8 +427,7 @@ describe("search and MCP front doors", () => {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
 								briefing:
 									"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
-								ask:
-									"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+								ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 								job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 								job_bundle: "/api/v1/jobs/job-1/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-1",
@@ -452,8 +451,7 @@ describe("search and MCP front doors", () => {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
 								briefing:
 									"/briefings?watchlist_id=wl-1&story_id=story-2&via=secondary-story",
-								ask:
-									"/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story",
+								ask: "/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story",
 								job_compare: "/jobs?job_id=job-3&via=secondary-story",
 								job_bundle: "/api/v1/jobs/job-3/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-3",
@@ -521,8 +519,7 @@ describe("search and MCP front doors", () => {
 					watchlist_trend: "/trends?watchlist_id=wl-1",
 					briefing:
 						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
-					ask:
-						"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 					job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 					job_bundle: "/api/v1/jobs/job-1/bundle",
 					job_knowledge_cards: "/knowledge?job_id=job-1",
@@ -555,7 +552,8 @@ describe("search and MCP front doors", () => {
 					snippet: "Supported across 3 source families and 4 recent runs.",
 					source_url: null,
 					job_id: "job-3",
-					route: "/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+					route:
+						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
 					route_label: "Open briefing story",
 				},
 			],
@@ -613,7 +611,9 @@ describe("search and MCP front doors", () => {
 			screen
 				.getAllByRole("link", { name: "Open selected briefing" })
 				.map((element) => element.getAttribute("href")),
-		).toContain("/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story");
+		).toContain(
+			"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+		);
 		expect(
 			screen.getByRole("heading", { name: "Citations behind this answer" }),
 		).toBeInTheDocument();

@@ -279,10 +279,8 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 		askPayload.context.story_id ??
 		"";
 	const briefingHref =
-		preferRoute(
-			selectedStory?.routes.briefing ?? null,
-			genericBriefingHref,
-		) ?? "/briefings";
+		preferRoute(selectedStory?.routes.briefing ?? null, genericBriefingHref) ??
+		"/briefings";
 	const trendHref =
 		preferRoute(
 			selectedStory?.routes.watchlist_trend ?? null,
@@ -484,16 +482,16 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 												asChild
 												size="sm"
 												variant={
-													story.story_id === activeStoryId
-														? "hero"
-														: "outline"
+													story.story_id === activeStoryId ? "hero" : "outline"
 												}
 											>
 												<Link
 													href={
 														decorateAskRoute(story.routes.ask, {
 															question:
-																safeQuestion || story.topic_label || story.headline,
+																safeQuestion ||
+																story.topic_label ||
+																story.headline,
 															mode: safeMode,
 															top_k: String(safeTopK),
 														}) ??

@@ -416,9 +416,9 @@ export default async function BriefingsPage({
 														story.latest_run_job_id,
 													);
 													return (
-												<article
-													key={story.story_id}
-													className={
+														<article
+															key={story.story_id}
+															className={
 																story.story_id === selectedStory?.story_id
 																	? "rounded-xl border border-primary/40 bg-primary/5 p-4"
 																	: "rounded-xl border border-border/60 bg-muted/20 p-4"

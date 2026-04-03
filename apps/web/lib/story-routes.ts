@@ -40,8 +40,7 @@ function normalizeSelectionResult(
 ): BriefingSelectionResult {
 	return {
 		selectedStory: story,
-		selectedStoryId:
-			selectedStoryId?.trim() || story?.story_id?.trim() || null,
+		selectedStoryId: selectedStoryId?.trim() || story?.story_id?.trim() || null,
 		selectionBasis,
 	};
 }
@@ -124,7 +123,11 @@ export function resolveBriefingSelection(
 
 	const firstStory = stories[0] ?? null;
 	if (firstStory) {
-		return normalizeSelectionResult(firstStory, firstStory.story_id, "first_story");
+		return normalizeSelectionResult(
+			firstStory,
+			firstStory.story_id,
+			"first_story",
+		);
 	}
 
 	return normalizeSelectionResult(null, null, "none");

@@ -215,8 +215,7 @@ describe("compounder pages", () => {
 							watchlist_trend: "/trends?watchlist_id=wl-1",
 							briefing:
 								"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
-							ask:
-								"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+							ask: "/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 							job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 							job_bundle: "/api/v1/jobs/job-1/bundle",
 							job_knowledge_cards: "/knowledge?job_id=job-1",
@@ -270,7 +269,8 @@ describe("compounder pages", () => {
 							created_at: "2026-03-31T10:00:00Z",
 							card_type: "claim",
 							card_title: "Retry policy became explicit",
-							card_body: "The workflow now treats retries as first-line safety.",
+							card_body:
+								"The workflow now treats retries as first-line safety.",
 							source_section: "Digest",
 							topic_key: "retry-policy",
 							topic_label: "Retry policy",
@@ -281,8 +281,7 @@ describe("compounder pages", () => {
 						watchlist_trend: "/trends?watchlist_id=wl-1",
 						briefing:
 							"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
-						ask:
-							"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+						ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 						job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 						job_bundle: "/api/v1/jobs/job-1/bundle",
 						job_knowledge_cards: "/knowledge?job_id=job-1",
@@ -408,15 +407,11 @@ describe("compounder pages", () => {
 			"href",
 			"/ask?watchlist_id=wl-1&question=Retries+moved+from+recommendation+to+default+posture&story_id=story-1&topic_key=retry-policy&via=briefing-story",
 		);
-		expect(
-			screen.getByRole("link", { name: "Open briefing" }),
-		).toHaveAttribute(
+		expect(screen.getByRole("link", { name: "Open briefing" })).toHaveAttribute(
 			"href",
 			"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
 		);
-		expect(
-			screen.getByRole("link", { name: "Open compare" }),
-		).toHaveAttribute(
+		expect(screen.getByRole("link", { name: "Open compare" })).toHaveAttribute(
 			"href",
 			"/jobs?job_id=job-3&via=briefing-compare",
 		);
