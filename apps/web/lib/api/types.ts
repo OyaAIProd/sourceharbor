@@ -657,7 +657,6 @@ export type WatchlistBriefingPageContext = {
 export type WatchlistBriefingPage = {
 	context: WatchlistBriefingPageContext;
 	briefing: WatchlistBriefing;
-	story_focus: WatchlistBriefingStoryEvidence | null;
 	selected_story: WatchlistBriefingStoryEvidence | null;
 	story_change_summary: string | null;
 	citations: AskAnswerContractCitation[];

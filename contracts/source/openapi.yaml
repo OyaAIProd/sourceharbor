@@ -1684,10 +1684,6 @@ components:
           $ref: '#/components/schemas/WatchlistBriefingPageContext'
         briefing:
           $ref: '#/components/schemas/WatchlistBriefingResponse'
-        story_focus:
-          allOf:
-            - $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'
-          nullable: true
         selected_story:
           allOf:
             - $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'

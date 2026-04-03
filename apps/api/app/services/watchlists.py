@@ -386,11 +386,10 @@ class WatchlistsService:
                     if isinstance(selected_story, dict)
                     else None,
                     "selection_basis": selection_basis,
-                    "story": selected_story,
+                    "story": None,
                 },
             },
             "selected_story": selected_story,
-            "story_focus": selected_story,
             "story_change_summary": story_change_summary,
             "citations": self._build_briefing_page_citations(
                 selected_story=selected_story,

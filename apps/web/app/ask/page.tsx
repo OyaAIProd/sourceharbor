@@ -268,34 +268,29 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 	const retrievalHits = askPayload.retrieval?.items ?? [];
 	const storyPage = askPayload.story_page;
 	const briefing = storyPage?.briefing ?? null;
-	const storyFocus = storyPage?.story_focus ?? null;
-	const selectedStory = storyPage?.selected_story ?? briefing?.selection?.story ?? null;
+	const selectedStory = storyPage?.selected_story ?? null;
 	const storyChoices = briefing?.evidence.stories ?? [];
 	const featuredRuns = briefing?.evidence.featured_runs ?? [];
 	const citations = askPayload.citations ?? [];
 	const fallbackActions = askPayload.fallback_actions ?? [];
 	const activeStoryId =
-		storyFocus?.story_id ??
-		askPayload.context.selected_story_id ??
 		selectedStory?.story_id ??
+		askPayload.context.selected_story_id ??
 		askPayload.context.story_id ??
 		"";
 	const briefingHref =
 		preferRoute(
-			storyFocus?.routes.briefing ?? null,
-			preferRoute(selectedStory?.routes.briefing ?? null, genericBriefingHref),
+			selectedStory?.routes.briefing ?? null,
+			genericBriefingHref,
 		) ?? "/briefings";
 	const trendHref =
 		preferRoute(
-			storyFocus?.routes.watchlist_trend ?? null,
-			preferRoute(selectedStory?.routes.watchlist_trend ?? null, genericTrendHref),
+			selectedStory?.routes.watchlist_trend ?? null,
+			genericTrendHref,
 		) ?? "/trends";
 	const compareHref = preferRoute(
-		storyFocus?.routes.job_compare ?? null,
-		preferRoute(
-			selectedStory?.routes.job_compare ?? null,
-			briefing?.differences.compare?.compare_route ?? null,
-		),
+		selectedStory?.routes.job_compare ?? null,
+		briefing?.differences.compare?.compare_route ?? null,
 	);
 
 	return (
@@ -586,7 +581,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 							</p>
 						) : null}
 
-						{storyFocus ? (
+						{selectedStory ? (
 							<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
 								<div className="flex flex-wrap items-center gap-2">
 									<h3 className="text-lg font-semibold">
@@ -596,8 +591,8 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										{askCopy.askSelectionBasisLabel}:{" "}
 										{selectionBasisLabel(askPayload.context.selection_basis)}
 									</Badge>
-									{storyFocus.topic_label ? (
-										<Badge variant="outline">{storyFocus.topic_label}</Badge>
+									{selectedStory.topic_label ? (
+										<Badge variant="outline">{selectedStory.topic_label}</Badge>
 									) : null}
 								</div>
 								<p className="mt-2 text-sm text-muted-foreground">
@@ -605,49 +600,49 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 								</p>
 								<div className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
 									<Badge variant="outline">
-										{briefingsCopy.sourcesLabel}: {storyFocus.source_count}
+										{briefingsCopy.sourcesLabel}: {selectedStory.source_count}
 									</Badge>
 									<Badge variant="outline">
-										{briefingsCopy.runsLabel}: {storyFocus.run_count}
+										{briefingsCopy.runsLabel}: {selectedStory.run_count}
 									</Badge>
 									<Badge variant="outline">
 										{briefingsCopy.matchedCardsLabel}:{" "}
-										{storyFocus.matched_card_count}
+										{selectedStory.matched_card_count}
 									</Badge>
 								</div>
 								<div className="mt-3 flex flex-wrap gap-3">
-									{storyFocus.routes.briefing ? (
+									{selectedStory.routes.briefing ? (
 										<Button asChild variant="outline" size="sm">
-											<Link href={storyFocus.routes.briefing}>
+											<Link href={selectedStory.routes.briefing}>
 												{askCopy.askOpenBriefingButton}
 											</Link>
 										</Button>
 									) : null}
-									{storyFocus.routes.watchlist_trend ? (
+									{selectedStory.routes.watchlist_trend ? (
 										<Button asChild variant="outline" size="sm">
-											<Link href={storyFocus.routes.watchlist_trend}>
+											<Link href={selectedStory.routes.watchlist_trend}>
 												{briefingsCopy.openTrendButton}
 											</Link>
 										</Button>
 									) : null}
-									{storyFocus.routes.job_compare ? (
+									{selectedStory.routes.job_compare ? (
 										<Button asChild variant="outline" size="sm">
-											<Link href={storyFocus.routes.job_compare}>
+											<Link href={selectedStory.routes.job_compare}>
 												{briefingsCopy.openCompareButton}
 											</Link>
 										</Button>
 									) : null}
-									{storyFocus.routes.job_knowledge_cards ? (
+									{selectedStory.routes.job_knowledge_cards ? (
 										<Button asChild variant="outline" size="sm">
-											<Link href={storyFocus.routes.job_knowledge_cards}>
+											<Link href={selectedStory.routes.job_knowledge_cards}>
 												{briefingsCopy.openKnowledgeButton}
 											</Link>
 										</Button>
 									) : null}
-									{storyFocus.source_urls[0] ? (
+									{selectedStory.source_urls[0] ? (
 										<Button asChild variant="ghost" size="sm">
 											<a
-												href={storyFocus.source_urls[0]}
+												href={selectedStory.source_urls[0]}
 												target="_blank"
 												rel="noreferrer"
 											>

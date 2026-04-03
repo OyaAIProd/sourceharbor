@@ -261,7 +261,6 @@ describe("apiClient core behavior", () => {
 							story: null,
 						},
 					},
-					story_focus: null,
 					selected_story: null,
 					story_change_summary: null,
 					citations: [],

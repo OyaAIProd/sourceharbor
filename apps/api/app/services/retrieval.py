@@ -276,7 +276,7 @@ class RetrievalService:
             else None
         )
 
-        story_focus = (
+        selected_story_payload = (
             answer_contract.get("selected_story")
             if isinstance(answer_contract, dict)
             and isinstance(answer_contract.get("selected_story"), dict)
@@ -333,7 +333,9 @@ class RetrievalService:
             and isinstance(answer_contract.get("context"), dict)
             else {}
         )
-        story_focus_dict = story_focus if isinstance(story_focus, dict) else {}
+        selected_story_page_dict = (
+            selected_story_payload if isinstance(selected_story_payload, dict) else {}
+        )
         selected_story_dict = selected_story if isinstance(selected_story, dict) else {}
         briefing_summary = (
             briefing.get("summary")
@@ -354,7 +356,7 @@ class RetrievalService:
                 ).strip()
                 or None,
                 "story_id": str(
-                    story_focus_dict.get("story_id")
+                    selected_story_page_dict.get("story_id")
                     or selected_story_dict.get("story_id")
                     or briefing_page_context.get("selected_story_id")
                     or normalized_story_id
@@ -363,7 +365,7 @@ class RetrievalService:
                 or None,
                 "selected_story_id": str(
                     context.get("selected_story_id")
-                    or story_focus_dict.get("story_id")
+                    or selected_story_page_dict.get("story_id")
                     or selected_story_dict.get("story_id")
                     or briefing_page_context.get("selected_story_id")
                     or ""
@@ -371,7 +373,7 @@ class RetrievalService:
                 or None,
                 "story_headline": str(
                     context.get("story_headline")
-                    or story_focus_dict.get("headline")
+                    or selected_story_page_dict.get("headline")
                     or selected_story_dict.get("headline")
                     or briefing_page_context.get("story_headline")
                     or ""
@@ -379,7 +381,7 @@ class RetrievalService:
                 or None,
                 "topic_key": str(
                     context.get("topic_key")
-                    or story_focus_dict.get("topic_key")
+                    or selected_story_page_dict.get("topic_key")
                     or selected_story_dict.get("topic_key")
                     or briefing_page_context.get("topic_key")
                     or normalized_topic_key
@@ -388,7 +390,7 @@ class RetrievalService:
                 or None,
                 "topic_label": str(
                     context.get("topic_label")
-                    or story_focus_dict.get("topic_label")
+                    or selected_story_page_dict.get("topic_label")
                     or selected_story_dict.get("topic_label")
                     or briefing_page_context.get("topic_label")
                     or ""
@@ -418,7 +420,7 @@ class RetrievalService:
                     else ""
                 ).strip()
                 or str(
-                    story_focus_dict.get("headline")
+                    selected_story_page_dict.get("headline")
                     or selected_story_dict.get("headline")
                     or briefing_summary.get("primary_story_headline")
                     or ""
@@ -672,7 +674,25 @@ class RetrievalService:
         if not isinstance(payload, dict):
             return None
         if isinstance(payload.get("briefing"), dict) and isinstance(payload.get("context"), dict):
-            return payload
+            normalized = dict(payload)
+            briefing = self._extract_briefing_payload(normalized)
+            selected_story = self._extract_selected_story(
+                normalized,
+                briefing_payload=briefing,
+                story_id=story_id,
+                query=query,
+            )
+            if isinstance(briefing, dict):
+                normalized_briefing = dict(briefing)
+                selection = normalized_briefing.get("selection")
+                if isinstance(selection, dict):
+                    normalized_selection = dict(selection)
+                    normalized_selection["story"] = None
+                    normalized_briefing["selection"] = normalized_selection
+                normalized["briefing"] = normalized_briefing
+            normalized["selected_story"] = selected_story
+            normalized.pop("story_focus", None)
+            return normalized
 
         briefing = self._extract_briefing_payload(payload)
         if not isinstance(briefing, dict):
@@ -705,10 +725,9 @@ class RetrievalService:
                 "selection": {
                     "selected_story_id": selection["selected_story_id"],
                     "selection_basis": selection["selection_basis"],
-                    "story": selected_story,
+                    "story": None,
                 },
             },
-            "story_focus": selected_story,
             "selected_story": selected_story,
             "story_change_summary": None,
             "citations": [],

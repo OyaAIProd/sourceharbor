@@ -129,7 +129,7 @@ Open these UI views:
 - `/jobs?job_id=<job-id>` for pipeline trace and artifacts
 - `/watchlists` for long-lived tracking objects
 - `/trends` for merged stories plus recent evidence runs
-- `/briefings` for the summary-first watchlist briefing: current story, then changes, then evidence drill-down, with selected-story focus and Ask handoff now owned by the server
+- `/briefings` for the summary-first watchlist briefing: current story, then changes, then evidence drill-down, with one canonical selected-story payload and Ask handoff owned by the server
 - `/mcp` for the MCP front door and quickstart
 - `/settings` for notifications and test sends
 
@@ -146,7 +146,7 @@ If you want the longer-lived workflow instead of one-off processing:
 4. Keep the returned `run_id` so you can inspect `GET /api/v1/ingest/runs/<run-id>`
 5. Read the resulting entries in `/feed`
 6. Inspect `/trends` when you want the merged-story view over repeated themes
-7. Inspect `/briefings` when you want the lower-cognitive-load unified story view for one watchlist; the selected story and Ask handoff should now stay on the same server-owned story truth
+7. Inspect `/briefings` when you want the lower-cognitive-load unified story view for one watchlist; the selected story and Ask handoff should now stay on the same server-owned story truth instead of parallel page aliases
 8. Inspect the job page for retries, degradations, and artifact links
 
 That path is what turns SourceHarbor from a one-shot processor into a knowledge intake system.

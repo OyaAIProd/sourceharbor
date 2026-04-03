@@ -478,6 +478,5 @@ def test_get_watchlist_briefing_page_adds_selected_story_and_routes(monkeypatch)
     assert payload["context"]["selection_basis"] == "suggested_story_id"
     assert payload["briefing"]["selection"]["selected_story_id"] == "story-1"
     assert payload["selected_story"]["story_id"] == "story-1"
-    assert payload["story_focus"]["story_id"] == "story-1"
     assert payload["compare_route"] == "/jobs?job_id=job-2"
     assert payload["ask_route"].endswith("story_id=story-1&topic_key=retry-policy")

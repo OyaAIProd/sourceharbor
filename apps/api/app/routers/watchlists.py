@@ -237,7 +237,6 @@ class WatchlistBriefingPageFallbackAction(BaseModel):
 class WatchlistBriefingPageResponse(BaseModel):
     context: WatchlistBriefingPageContext
     briefing: WatchlistBriefingResponse
-    story_focus: WatchlistBriefingStoryEvidence | None = None
     selected_story: WatchlistBriefingStoryEvidence | None = None
     story_change_summary: str | None = None
     citations: list[WatchlistBriefingPageCitation] = Field(default_factory=list)

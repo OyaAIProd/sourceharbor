@@ -213,10 +213,9 @@ def test_watchlists_routes(monkeypatch) -> None:
                     "selection": {
                         "selected_story_id": "story-1",
                         "selection_basis": "suggested_story_id",
-                        "story": briefing["evidence"]["stories"][0],
+                        "story": None,
                     },
                 },
-                "story_focus": briefing["evidence"]["stories"][0],
                 "selected_story": briefing["evidence"]["stories"][0],
                 "story_change_summary": '"Retry Policy" is newly surfaced in the latest briefing.',
                 "citations": [],
