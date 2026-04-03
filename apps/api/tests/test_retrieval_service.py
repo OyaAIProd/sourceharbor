@@ -1232,6 +1232,65 @@ def test_retrieval_service_prioritizes_knowledge_cards_in_keyword_mode(tmp_path:
     assert "claim_kind:takeaway" in payload["items"][0]["snippet"]
 
 
+def test_match_knowledge_cards_structured_payload_and_semantic_fallbacks(monkeypatch) -> None:
+    service = RetrievalService(_FakeDB([]))  # type: ignore[arg-type]
+    row = {
+        "job_id": "job-1",
+        "video_id": "video-1",
+        "kind": "video_digest_v1",
+        "mode": "full",
+        "platform": "youtube",
+        "video_uid": "abc123",
+        "source_url": "https://www.youtube.com/watch?v=abc123",
+        "title": "Demo",
+    }
+    content = json.dumps(
+        [
+            "skip-me",
+            {
+                "title": "Retry Policy",
+                "body": "Retry policy guidance is now explicit.",
+                "source_section": "summary",
+                "metadata": {
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "claim_kind": "recommendation",
+                    "confidence_label": "high",
+                },
+            },
+            {
+                "title": "Other topic",
+                "body": "This card does not match.",
+                "source_section": "summary",
+                "metadata": {"topic_key": "delivery"},
+            },
+        ]
+    )
+
+    hits = service._match_knowledge_cards(row=row, content=content, query="retry-policy")
+
+    assert len(hits) == 1
+    assert hits[0]["source"] == "knowledge_cards"
+    assert "Topic: Retry Policy" in hits[0]["snippet"]
+    assert "claim_kind:recommendation" in hits[0]["snippet"]
+    assert "topic_key:retry-policy" in hits[0]["snippet"]
+
+    monkeypatch.setattr(
+        service,
+        "_build_query_embedding",
+        lambda _query: (_ for _ in ()).throw(
+            ApiServiceError(
+                detail="retrieval embedding request failed",
+                error_code="RETRIEVAL_EMBEDDING_REQUEST_FAILED",
+            )
+        ),
+    )
+    assert service._search_semantic(query="retry", top_k=3, filters={}, strict=False) == []
+
+    monkeypatch.setattr(service, "_build_query_embedding", lambda _query: None)
+    assert service._search_semantic(query="retry", top_k=3, filters={}, strict=False) == []
+
+
 def test_normalize_mode_invalid_defaults_to_keyword() -> None:
     service = RetrievalService(_FakeDB([]))  # type: ignore[arg-type]
     assert service._normalize_mode("invalid") == "keyword"
@@ -1255,6 +1314,17 @@ def test_search_semantic_rolls_back_on_db_error() -> None:
     service._build_query_embedding = lambda query: [0.1, 0.2]  # type: ignore[method-assign]
 
     assert service._search_semantic(query="x", top_k=3, filters={}) == []
+    assert db.rollback_calls == 1
+
+
+def test_search_semantic_strict_mode_raises_on_db_error(monkeypatch) -> None:
+    db = _ErrorDB([])
+    service = RetrievalService(db)  # type: ignore[arg-type]
+    monkeypatch.setattr(service, "_build_query_embedding", lambda _query: [0.1, 0.2])
+
+    with pytest.raises(ApiServiceError, match="semantic query failed"):
+        service._search_semantic(query="x", top_k=3, filters={}, strict=True)
+
     assert db.rollback_calls == 1
 
 

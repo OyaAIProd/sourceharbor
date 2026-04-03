@@ -54,6 +54,21 @@ def test_watchlists_routes(monkeypatch) -> None:
                 ],
             }
 
+        def upsert_watchlist(self, **kwargs):  # noqa: ANN003
+            return {
+                "id": str(kwargs["watchlist_id"] or "wl-created"),
+                "name": kwargs["name"],
+                "matcher_type": kwargs["matcher_type"],
+                "matcher_value": kwargs["matcher_value"],
+                "delivery_channel": kwargs["delivery_channel"],
+                "enabled": kwargs["enabled"],
+                "created_at": "2026-03-31T10:00:00Z",
+                "updated_at": "2026-04-01T12:00:00Z",
+            }
+
+        def delete_watchlist(self, *, watchlist_id: str) -> bool:
+            return watchlist_id == "wl-1"
+
         def get_watchlist_briefing_page(
             self,
             *,
@@ -268,15 +283,36 @@ def test_watchlists_routes(monkeypatch) -> None:
     def _fake_db():
         return object()
 
+    def _allow_write():
+        return None
+
     app = FastAPI()
     app.include_router(watchlists_router.router)
     app.dependency_overrides[get_db] = _fake_db
+    app.dependency_overrides[watchlists_router.require_write_access] = _allow_write
     monkeypatch.setattr(watchlists_router, "WatchlistsService", StubWatchlistsService)
 
     client = TestClient(app)
     list_response = client.get("/api/v1/watchlists")
     assert list_response.status_code == 200
     assert list_response.json()[0]["id"] == "wl-1"
+
+    upsert_response = client.post(
+        "/api/v1/watchlists",
+        json={
+            "id": "wl-1",
+            "name": "Retry policy",
+            "matcher_type": "topic_key",
+            "matcher_value": "retry-policy",
+            "delivery_channel": "dashboard",
+            "enabled": True,
+        },
+    )
+    assert upsert_response.status_code == 200
+    assert upsert_response.json()["id"] == "wl-1"
+
+    delete_response = client.delete("/api/v1/watchlists/wl-1")
+    assert delete_response.status_code == 204
 
     trend_response = client.get("/api/v1/watchlists/wl-1/trend")
     assert trend_response.status_code == 200
@@ -339,6 +375,62 @@ def test_watchlists_upsert_maps_value_error_to_400(monkeypatch) -> None:
 
     assert response.status_code == 400
     assert response.json()["detail"] == "invalid matcher_type"
+
+
+def test_watchlists_upsert_and_delete_success_paths(monkeypatch) -> None:
+    from apps.api.app.db import get_db
+    from apps.api.app.routers import watchlists as watchlists_router
+
+    class StubWatchlistsService:
+        def __init__(self, db) -> None:  # noqa: ANN001
+            self.db = db
+
+        def upsert_watchlist(self, **kwargs):  # noqa: ANN003
+            return {
+                "id": kwargs["watchlist_id"] or "wl-1",
+                "name": kwargs["name"],
+                "matcher_type": kwargs["matcher_type"],
+                "matcher_value": kwargs["matcher_value"],
+                "delivery_channel": kwargs["delivery_channel"],
+                "enabled": kwargs["enabled"],
+                "created_at": "2026-03-31T10:00:00Z",
+                "updated_at": "2026-03-31T10:00:00Z",
+            }
+
+        def delete_watchlist(self, *, watchlist_id: str) -> bool:
+            return watchlist_id == "wl-1"
+
+    def _fake_db():
+        return object()
+
+    def _allow_write():
+        return None
+
+    app = FastAPI()
+    app.include_router(watchlists_router.router)
+    app.dependency_overrides[get_db] = _fake_db
+    app.dependency_overrides[watchlists_router.require_write_access] = _allow_write
+    monkeypatch.setattr(watchlists_router, "WatchlistsService", StubWatchlistsService)
+
+    client = TestClient(app)
+    upsert_response = client.post(
+        "/api/v1/watchlists",
+        json={
+            "id": "wl-1",
+            "name": "Retry policy",
+            "matcher_type": "topic_key",
+            "matcher_value": "retry-policy",
+            "delivery_channel": "dashboard",
+            "enabled": True,
+        },
+    )
+
+    assert upsert_response.status_code == 200
+    assert upsert_response.json()["id"] == "wl-1"
+
+    delete_response = client.delete("/api/v1/watchlists/wl-1")
+    assert delete_response.status_code == 204
+    assert delete_response.content == b""
 
 
 def test_watchlists_delete_trend_and_briefing_return_404_when_missing(monkeypatch) -> None:

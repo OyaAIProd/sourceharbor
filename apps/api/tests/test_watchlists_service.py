@@ -4,6 +4,9 @@ import importlib
 import os
 from types import SimpleNamespace
 
+import pytest
+from sqlalchemy.exc import DBAPIError
+
 
 def _load_watchlists_module():
     os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/sourceharbor-watchlists-test.db")
@@ -42,6 +45,48 @@ def test_upsert_and_delete_watchlist_on_notification_config(monkeypatch) -> None
     assert service.list_watchlists()[0]["matcher_value"] == "retry-policy"
     assert service.delete_watchlist(watchlist_id=created["id"]) is True
     assert service.list_watchlists() == []
+
+
+def test_upsert_watchlist_updates_existing_entry_and_missing_delete_returns_false(
+    monkeypatch,
+) -> None:
+    module = _load_watchlists_module()
+    config = SimpleNamespace(
+        category_rules={
+            "watchlists": [
+                {
+                    "id": "wl-1",
+                    "name": "Retry policy",
+                    "matcher_type": "topic_key",
+                    "matcher_value": "retry-policy",
+                    "delivery_channel": "dashboard",
+                    "enabled": True,
+                    "created_at": "2026-03-31T10:00:00Z",
+                    "updated_at": "2026-03-31T10:00:00Z",
+                }
+            ]
+        }
+    )
+    monkeypatch.setattr(module, "get_notification_config", lambda db: config)
+
+    service = module.WatchlistsService(FakeDb())
+    updated = service.upsert_watchlist(
+        watchlist_id="wl-1",
+        name="Reliability policy",
+        matcher_type="claim_kind",
+        matcher_value="recommendation",
+        delivery_channel="email",
+        enabled=False,
+    )
+
+    assert updated["id"] == "wl-1"
+    assert updated["name"] == "Reliability policy"
+    assert updated["matcher_type"] == "claim_kind"
+    assert updated["matcher_value"] == "recommendation"
+    assert updated["delivery_channel"] == "email"
+    assert updated["enabled"] is False
+    assert service.list_watchlists() == [updated]
+    assert service.delete_watchlist(watchlist_id="wl-missing") is False
 
 
 def test_list_watchlists_normalizes_root_and_skips_invalid_items(monkeypatch) -> None:
@@ -480,3 +525,455 @@ def test_get_watchlist_briefing_page_adds_selected_story_and_routes(monkeypatch)
     assert payload["selected_story"]["story_id"] == "story-1"
     assert payload["compare_route"] == "/jobs?job_id=job-2"
     assert payload["ask_route"].endswith("story_id=story-1&topic_key=retry-policy")
+
+
+def test_get_watchlist_briefing_page_returns_requested_story_fallback(monkeypatch) -> None:
+    module = _load_watchlists_module()
+    service = module.WatchlistsService(FakeDb())
+    watchlist = {
+        "id": "wl-1",
+        "name": "Retry policy",
+        "matcher_type": "topic_key",
+        "matcher_value": "retry-policy",
+        "delivery_channel": "dashboard",
+        "enabled": True,
+        "created_at": "2026-03-31T10:00:00Z",
+        "updated_at": "2026-03-31T10:00:00Z",
+    }
+    monkeypatch.setattr(
+        service,
+        "get_watchlist_briefing",
+        lambda **_: {
+            "watchlist": watchlist,
+            "summary": {
+                "overview": "Retry policy does not yet converge on a repeated story.",
+                "source_count": 0,
+                "run_count": 1,
+                "story_count": 0,
+                "matched_cards": 0,
+                "primary_story_headline": None,
+                "signals": [],
+            },
+            "differences": {
+                "latest_job_id": None,
+                "previous_job_id": None,
+                "added_topics": [],
+                "removed_topics": [],
+                "added_claim_kinds": [],
+                "removed_claim_kinds": [],
+                "new_story_keys": [],
+                "removed_story_keys": [],
+                "compare": None,
+            },
+            "evidence": {
+                "suggested_story_id": None,
+                "stories": [],
+                "featured_runs": [],
+            },
+        },
+    )
+
+    payload = service.get_watchlist_briefing_page(watchlist_id="wl-1", story_id="story-missing")
+
+    assert payload is not None
+    assert payload["selected_story"] is None
+    assert (
+        payload["fallback_reason"]
+        == "The requested story_id was not found inside the current briefing context."
+    )
+    assert (
+        payload["fallback_next_step"]
+        == "Use the selected story from the current briefing or return to the watchlist overview."
+    )
+    assert [item["kind"] for item in payload["fallback_actions"]] == [
+        "open_briefing",
+        "open_trend",
+    ]
+
+
+def test_get_watchlist_briefing_page_returns_no_story_fallback(monkeypatch) -> None:
+    module = _load_watchlists_module()
+    service = module.WatchlistsService(FakeDb())
+    watchlist = {
+        "id": "wl-1",
+        "name": "Retry policy",
+        "matcher_type": "topic_key",
+        "matcher_value": "retry-policy",
+        "delivery_channel": "dashboard",
+        "enabled": True,
+        "created_at": "2026-03-31T10:00:00Z",
+        "updated_at": "2026-03-31T10:00:00Z",
+    }
+    monkeypatch.setattr(
+        service,
+        "get_watchlist_briefing",
+        lambda **_: {
+            "watchlist": watchlist,
+            "summary": {
+                "overview": "Retry policy does not yet converge on a repeated story.",
+                "source_count": 0,
+                "run_count": 1,
+                "story_count": 0,
+                "matched_cards": 0,
+                "primary_story_headline": None,
+                "signals": [],
+            },
+            "differences": {
+                "latest_job_id": None,
+                "previous_job_id": None,
+                "added_topics": [],
+                "removed_topics": [],
+                "added_claim_kinds": [],
+                "removed_claim_kinds": [],
+                "new_story_keys": [],
+                "removed_story_keys": [],
+                "compare": None,
+            },
+            "evidence": {
+                "suggested_story_id": None,
+                "stories": [],
+                "featured_runs": [],
+            },
+        },
+    )
+
+    payload = service.get_watchlist_briefing_page(watchlist_id="wl-1")
+
+    assert payload is not None
+    assert payload["selected_story"] is None
+    assert payload["fallback_reason"] == "This watchlist does not yet expose a selected story."
+    assert (
+        payload["fallback_next_step"]
+        == "Open the trend timeline or wait for more matched evidence to accumulate."
+    )
+    assert payload["fallback_actions"] == [
+        {
+            "kind": "open_trend",
+            "label": "Open trend timeline",
+            "route": "/trends?watchlist_id=wl-1",
+        }
+    ]
+
+
+def test_story_read_model_helpers_cover_tail_branches() -> None:
+    module = importlib.import_module("apps.api.app.services.story_read_model")
+    module = importlib.reload(module)
+
+    assert module.select_story_from_briefing(None, story_id=None, query="retry") == (None, "none")
+    assert module.select_story_from_briefing(
+        {"evidence": None},
+        story_id=None,
+        query="retry",
+    ) == (None, "none")
+    assert module.select_story_from_briefing(
+        {"evidence": {"stories": "bad"}},
+        story_id=None,
+        query="retry",
+    ) == (None, "none")
+    assert module.select_story_from_briefing(
+        {"evidence": {"stories": [None, "skip-me"]}},
+        story_id="story-x",
+        query="retry",
+    ) == (None, "none")
+
+    suggested_story = {"story_id": "story-2", "headline": "Story Two"}
+    selected_story, basis = module.select_story_from_briefing(
+        {"evidence": {"suggested_story_id": "story-2", "stories": [None, suggested_story]}},
+        story_id=None,
+        query="",
+    )
+    assert selected_story == suggested_story
+    assert basis == "suggested_story_id"
+
+    score = module._score_story_match(
+        story={
+            "headline": "",
+            "topic_key": "",
+            "topic_label": "",
+            "claim_kinds": ["recommendation"],
+            "evidence_cards": [
+                None,
+                {
+                    "card_title": "Retry Policy",
+                    "card_body": "Use retries by default.",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "claim_kind": "recommendation",
+                },
+            ],
+        },
+        query="retry policy",
+    )
+    assert score >= 1
+
+    assert (
+        module.build_story_question_seed(
+            story=None,
+            briefing=None,
+            explicit_question=" What changed? ",
+        )
+        == "What changed?"
+    )
+    assert (
+        module.build_story_question_seed(
+            story=None,
+            briefing={"summary": {}},
+            watchlist=None,
+            explicit_question=None,
+        )
+        is None
+    )
+    assert module._build_route("/briefings", watchlist_id="wl-1", story_id=None) == (
+        "/briefings?watchlist_id=wl-1"
+    )
+    assert module._build_route("/trends") == "/trends"
+    assert module._build_route("") is None
+    assert (
+        module._with_query_param("/ask?watchlist_id=wl-1", key="question", value=None)
+        == "/ask?watchlist_id=wl-1"
+    )
+    assert module._with_query_param(None, key="question", value="Retry Policy") is None
+
+
+def test_watchlist_private_helpers_cover_compare_story_grouping_and_fallbacks(monkeypatch) -> None:
+    module = _load_watchlists_module()
+    jobs_module = importlib.import_module("apps.api.app.services.jobs")
+
+    class StubJobsService:
+        def __init__(self, db) -> None:  # noqa: ANN001
+            self.db = db
+
+        def compare_with_previous(self, *, job_id):  # noqa: ANN001
+            assert str(job_id) == "00000000-0000-4000-8000-000000000002"
+            return {
+                "has_previous": True,
+                "previous_job_id": "job-1",
+                "diff_markdown": "\n".join(f"line {index}" for index in range(12)),
+                "stats": {"changed": True, "added_lines": 3, "removed_lines": 1},
+            }
+
+    monkeypatch.setattr(jobs_module, "JobsService", StubJobsService)
+    service = module.WatchlistsService(FakeDb())
+
+    assert service._build_briefing_compare(latest_run=None) is None
+    assert service._build_briefing_compare(latest_run={"job_id": "bad"}) is None
+    compare = service._build_briefing_compare(
+        latest_run={"job_id": "00000000-0000-4000-8000-000000000002"}
+    )
+    assert compare == {
+        "job_id": "00000000-0000-4000-8000-000000000002",
+        "has_previous": True,
+        "previous_job_id": "job-1",
+        "changed": True,
+        "added_lines": 3,
+        "removed_lines": 1,
+        "diff_excerpt": "\n".join(f"line {index}" for index in range(8)),
+        "compare_route": "/jobs?job_id=00000000-0000-4000-8000-000000000002",
+    }
+
+    routes = service._build_briefing_routes(
+        watchlist_id="wl-1",
+        job_id="job-2",
+        story_id="story-1",
+        topic_key="retry-policy",
+        question="Retry Policy",
+    )
+    assert routes["briefing"] == "/briefings?watchlist_id=wl-1&story_id=story-1"
+    assert (
+        routes["ask"]
+        == "/ask?watchlist_id=wl-1&question=Retry+Policy&story_id=story-1&topic_key=retry-policy"
+    )
+    assert routes["job_bundle"] == "/api/v1/jobs/job-2/bundle"
+
+    stories = service._build_merged_stories(
+        rows=[
+            {
+                "source_url": "https://example.com/retry",
+                "created_at": "2026-04-01T10:00:00Z",
+                "platform": "youtube",
+                "claim_kind": "",
+                "topic_key": "",
+                "topic_label": "",
+                "job_id": "job-1",
+                "card_title": "Retry Policy",
+            },
+            {
+                "source_url": "https://example.com/retry",
+                "created_at": "2026-04-01T11:00:00Z",
+                "platform": "rss",
+                "claim_kind": "recommendation",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "job_id": "job-2",
+                "card_title": "Retry Policy",
+            },
+        ],
+        limit_cards=2,
+    )
+    assert stories[0]["latest_created_at"] == "2026-04-01T11:00:00Z"
+    assert stories[0]["topic_key"] == "retry-policy"
+    assert stories[0]["topic_label"] == "Retry Policy"
+    assert stories[0]["claim_kinds"] == ["recommendation"]
+    assert service._story_keys_for_run(merged_stories=stories, job_id=None) == set()
+    assert service._story_keys_for_run(merged_stories=stories, job_id="job-2") == {
+        "topic:retry-policy"
+    }
+    assert service._resolve_story_key({"source_url": "https://example.com/retry"}) == (
+        "source:https://example.com/retry"
+    )
+    assert service._resolve_story_key({"card_title": "Retry Policy"}) == "title:retry policy"
+    assert service._resolve_story_key({"card_id": "card-9"}) == "card:card-9"
+    assert service._resolve_story_headline({}) == "Merged story"
+
+
+def test_watchlist_private_helpers_cover_matching_cards_and_rule_validation(monkeypatch) -> None:
+    module = _load_watchlists_module()
+
+    class RowsResult:
+        def __init__(self, rows):
+            self._rows = rows
+
+        def mappings(self):
+            return self
+
+        def all(self):
+            return self._rows
+
+    class QueryDb(FakeDb):
+        def __init__(self, rows):
+            self.rows = rows
+            self.rollback_calls = 0
+
+        def execute(self, _statement, _params=None):  # noqa: ANN001
+            return RowsResult(self.rows)
+
+        def rollback(self) -> None:
+            self.rollback_calls += 1
+
+    class ErrorDb(QueryDb):
+        def execute(self, _statement, _params=None):  # noqa: ANN001
+            raise DBAPIError("SELECT", {}, Exception("boom"))
+
+    service = module.WatchlistsService(
+        QueryDb(
+            [
+                {
+                    "card_id": "card-1",
+                    "job_id": "job-1",
+                    "video_id": "video-1",
+                    "platform": "",
+                    "video_title": "",
+                    "source_url": "",
+                    "created_at": "2026-04-01T11:00:00Z",
+                    "card_type": "",
+                    "card_title": "",
+                    "card_body": "Body 1",
+                    "source_section": "",
+                    "topic_key": "",
+                    "topic_label": "",
+                    "claim_kind": "",
+                }
+            ]
+        )
+    )
+    cards = service._load_matching_cards(
+        matcher_type="source_match",
+        matcher_value="retry-policy",
+        limit_cards=2,
+    )
+    assert cards == [
+        {
+            "card_id": "card-1",
+            "job_id": "job-1",
+            "video_id": "video-1",
+            "platform": "unknown",
+            "video_title": None,
+            "source_url": None,
+            "created_at": "2026-04-01T11:00:00Z",
+            "card_type": "unknown",
+            "card_title": None,
+            "card_body": "Body 1",
+            "source_section": "",
+            "topic_key": None,
+            "topic_label": None,
+            "claim_kind": None,
+        }
+    ]
+
+    error_db = ErrorDb([])
+    service = module.WatchlistsService(error_db)
+    assert (
+        service._load_matching_cards(
+            matcher_type="platform",
+            matcher_value="youtube",
+            limit_cards=1,
+        )
+        == []
+    )
+    assert error_db.rollback_calls == 1
+
+    config = SimpleNamespace(
+        category_rules={
+            "watchlists": [
+                {
+                    "id": "wl-1",
+                    "name": "Retry policy",
+                    "matcher_type": "topic_key",
+                    "matcher_value": "retry-policy",
+                    "delivery_channel": "dashboard",
+                    "enabled": True,
+                    "created_at": "2026-03-31T10:00:00Z",
+                    "updated_at": "2026-03-31T10:00:00Z",
+                },
+                {
+                    "id": "wl-2",
+                    "name": "Broken matcher",
+                    "matcher_type": "invalid",
+                    "matcher_value": "retry-policy",
+                    "delivery_channel": "dashboard",
+                    "enabled": True,
+                    "created_at": "2026-03-31T10:00:00Z",
+                    "updated_at": "2026-03-31T10:00:00Z",
+                },
+                {
+                    "id": "wl-3",
+                    "name": "Broken delivery",
+                    "matcher_type": "topic_key",
+                    "matcher_value": "retry-policy",
+                    "delivery_channel": "sms",
+                    "enabled": True,
+                    "created_at": "2026-03-31T10:00:00Z",
+                    "updated_at": "2026-03-31T10:00:00Z",
+                },
+                "skip-me",
+            ],
+            "youtube": {"channel": "UC123"},
+            "default_rule": {"delivery_channel": "dashboard"},
+        }
+    )
+    monkeypatch.setattr(module, "get_notification_config", lambda db: config)
+    service = module.WatchlistsService(FakeDb())
+
+    assert service.list_watchlists() == [
+        {
+            "id": "wl-1",
+            "name": "Retry policy",
+            "matcher_type": "topic_key",
+            "matcher_value": "retry-policy",
+            "delivery_channel": "dashboard",
+            "enabled": True,
+            "created_at": "2026-03-31T10:00:00Z",
+            "updated_at": "2026-03-31T10:00:00Z",
+        }
+    ]
+    normalized_root = service._normalize_category_rules_root(config.category_rules)
+    assert normalized_root["category_rules"] == {
+        "youtube": {"channel": "UC123"},
+        "default_rule": {"delivery_channel": "dashboard"},
+    }
+    assert normalized_root["default_rule"] == {"delivery_channel": "dashboard"}
+    assert normalized_root["watchlists"][0]["id"] == "wl-1"
+    with pytest.raises(ValueError, match="invalid matcher_type"):
+        service._normalize_matcher_type("invalid")
+    with pytest.raises(ValueError, match="invalid delivery_channel"):
+        service._normalize_delivery_channel("sms")
