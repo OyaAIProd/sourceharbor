@@ -54,16 +54,18 @@ def test_watchlists_routes(monkeypatch) -> None:
                 ],
             }
 
-        def get_watchlist_briefing(
+        def get_watchlist_briefing_page(
             self,
             *,
             watchlist_id,
+            story_id=None,
             limit_runs=4,
             limit_cards=18,
             limit_stories=4,
             limit_evidence_per_story=3,
+            query=None,
         ):  # noqa: ANN001, ARG002
-            return {
+            briefing = {
                 "watchlist": self.list_watchlists()[0] | {"id": watchlist_id},
                 "summary": {
                     "overview": "Retry policy currently converges across recent sources.",
@@ -145,6 +147,123 @@ def test_watchlists_routes(monkeypatch) -> None:
                         }
                     ],
                 },
+                "context": {
+                    "watchlist_id": watchlist_id,
+                    "watchlist_name": "Retry policy",
+                    "story_id": story_id,
+                    "selected_story_id": "story-1",
+                    "story_headline": "Retry Policy",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "selection_basis": "suggested_story_id",
+                    "question_seed": "Retry Policy",
+                },
+                "selected_story": {
+                    "story_id": "story-1",
+                    "story_key": "topic:retry-policy",
+                    "headline": "Retry Policy",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "source_count": 3,
+                    "run_count": 2,
+                    "matched_card_count": 2,
+                    "platforms": ["youtube", "rss"],
+                    "claim_kinds": ["recommendation"],
+                    "source_urls": ["https://example.com/2"],
+                    "latest_run_job_id": "job-2",
+                    "evidence_cards": [],
+                    "routes": {
+                        "watchlist_trend": f"/trends?watchlist_id={watchlist_id}",
+                        "briefing": f"/briefings?watchlist_id={watchlist_id}&story_id=story-1",
+                        "ask": (
+                            f"/ask?watchlist_id={watchlist_id}"
+                            "&question=Retry+Policy&story_id=story-1&topic_key=retry-policy"
+                        ),
+                        "job_compare": "/jobs?job_id=job-2",
+                        "job_bundle": "/api/v1/jobs/job-2/bundle",
+                        "job_knowledge_cards": "/knowledge?job_id=job-2",
+                    },
+                },
+                "routes": {
+                    "watchlist_trend": f"/trends?watchlist_id={watchlist_id}",
+                    "briefing": f"/briefings?watchlist_id={watchlist_id}&story_id=story-1",
+                    "ask": (
+                        f"/ask?watchlist_id={watchlist_id}"
+                        "&question=Retry+Policy&story_id=story-1&topic_key=retry-policy"
+                    ),
+                    "job_compare": "/jobs?job_id=job-2",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+            }
+            return {
+                "context": {
+                    "watchlist_id": watchlist_id,
+                    "watchlist_name": "Retry policy",
+                    "story_id": story_id,
+                    "selected_story_id": "story-1",
+                    "story_headline": "Retry Policy",
+                    "topic_key": "retry-policy",
+                    "topic_label": "Retry Policy",
+                    "selection_basis": "suggested_story_id",
+                    "question_seed": "Retry Policy",
+                },
+                "briefing": {
+                    **briefing,
+                    "selection": {
+                        "selected_story_id": "story-1",
+                        "selection_basis": "suggested_story_id",
+                        "story": briefing["evidence"]["stories"][0],
+                    },
+                },
+                "story_focus": briefing["evidence"]["stories"][0],
+                "selected_story": briefing["evidence"]["stories"][0],
+                "story_change_summary": '"Retry Policy" is newly surfaced in the latest briefing.',
+                "citations": [],
+                "routes": {
+                    "watchlist_trend": f"/trends?watchlist_id={watchlist_id}",
+                    "briefing": f"/briefings?watchlist_id={watchlist_id}&story_id=story-1",
+                    "ask": (
+                        f"/ask?watchlist_id={watchlist_id}"
+                        "&question=Retry+Policy&story_id=story-1&topic_key=retry-policy"
+                    ),
+                    "job_compare": "/jobs?job_id=job-2",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+                "ask_route": (
+                    f"/ask?watchlist_id={watchlist_id}"
+                    "&question=Retry+Policy&story_id=story-1&topic_key=retry-policy"
+                ),
+                "compare_route": "/jobs?job_id=job-2",
+                "fallback_reason": None,
+                "fallback_next_step": None,
+                "fallback_actions": [],
+            }
+
+        def get_watchlist_briefing(
+            self,
+            *,
+            watchlist_id,
+            limit_runs=4,
+            limit_cards=18,
+            limit_stories=4,
+            limit_evidence_per_story=3,
+        ):  # noqa: ANN001, ARG002
+            payload = self.get_watchlist_briefing_page(
+                watchlist_id=watchlist_id,
+                story_id=None,
+                limit_runs=limit_runs,
+                limit_cards=limit_cards,
+                limit_stories=limit_stories,
+                limit_evidence_per_story=limit_evidence_per_story,
+                query=None,
+            )
+            return {
+                "watchlist": payload["briefing"]["watchlist"],
+                "summary": payload["briefing"]["summary"],
+                "differences": payload["briefing"]["differences"],
+                "evidence": payload["briefing"]["evidence"],
             }
 
     def _fake_db():
@@ -175,6 +294,13 @@ def test_watchlists_routes(monkeypatch) -> None:
         payload["evidence"]["stories"][0]["routes"]["job_knowledge_cards"]
         == "/knowledge?job_id=job-2"
     )
+
+    briefing_page_response = client.get("/api/v1/watchlists/wl-1/briefing/page")
+    assert briefing_page_response.status_code == 200
+    page_payload = briefing_page_response.json()
+    assert page_payload["context"]["selection_basis"] == "suggested_story_id"
+    assert page_payload["selected_story"]["story_id"] == "story-1"
+    assert page_payload["routes"]["ask"].endswith("story_id=story-1&topic_key=retry-policy")
 
 
 def test_watchlists_upsert_maps_value_error_to_400(monkeypatch) -> None:
@@ -230,6 +356,19 @@ def test_watchlists_delete_trend_and_briefing_return_404_when_missing(monkeypatc
         def get_watchlist_trend(self, *, watchlist_id, limit_runs=3, limit_cards=18):  # noqa: ANN001, ARG002
             return None
 
+        def get_watchlist_briefing_page(
+            self,
+            *,
+            watchlist_id,
+            story_id=None,
+            limit_runs=4,
+            limit_cards=18,
+            limit_stories=4,
+            limit_evidence_per_story=3,
+            query=None,
+        ):  # noqa: ANN001, ARG002
+            return None
+
         def get_watchlist_briefing(
             self,
             *,
@@ -263,3 +402,6 @@ def test_watchlists_delete_trend_and_briefing_return_404_when_missing(monkeypatc
 
     briefing_response = client.get("/api/v1/watchlists/wl-missing/briefing")
     assert briefing_response.status_code == 404
+
+    briefing_page_response = client.get("/api/v1/watchlists/wl-missing/briefing/page")
+    assert briefing_page_response.status_code == 404

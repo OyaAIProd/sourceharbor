@@ -203,6 +203,100 @@ describe("apiClient core behavior", () => {
 		});
 	});
 
+	it("loads briefing page from the server-owned page payload route", async () => {
+		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					context: {
+						watchlist_id: "wl-1",
+						watchlist_name: "Retry policy",
+						story_id: "story-1",
+						selected_story_id: "story-1",
+						story_headline:
+							"Retries moved from optional advice to default posture",
+						topic_key: "retry-policy",
+						topic_label: "Retry policy",
+						selection_basis: "requested_story_id",
+						question_seed:
+							"Retries moved from optional advice to default posture",
+					},
+					briefing: {
+						watchlist: {
+							id: "wl-1",
+							name: "Retry policy",
+							matcher_type: "topic_key",
+							matcher_value: "retry-policy",
+							delivery_channel: "dashboard",
+							enabled: true,
+							created_at: "2026-03-31T10:00:00Z",
+							updated_at: "2026-03-31T10:00:00Z",
+						},
+						summary: {
+							overview: "Retry policy currently converges across recent sources.",
+							source_count: 3,
+							run_count: 4,
+							story_count: 1,
+							matched_cards: 6,
+							primary_story_headline:
+								"Retries moved from optional advice to default posture",
+							signals: [],
+						},
+						differences: {
+							latest_job_id: "job-3",
+							previous_job_id: "job-2",
+							added_topics: ["retry-policy"],
+							removed_topics: [],
+							added_claim_kinds: ["recommendation"],
+							removed_claim_kinds: [],
+							new_story_keys: ["topic:retry-policy"],
+							removed_story_keys: [],
+							compare: null,
+						},
+						evidence: {
+							suggested_story_id: "story-1",
+							stories: [],
+							featured_runs: [],
+						},
+						selection: {
+							selected_story_id: "story-1",
+							selection_basis: "requested_story_id",
+							story: null,
+						},
+					},
+					story_focus: null,
+					selected_story: null,
+					story_change_summary: null,
+					citations: [],
+					routes: {
+						watchlist_trend: "/trends?watchlist_id=wl-1",
+						briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
+						ask: "/ask?watchlist_id=wl-1&question=Retries+moved+from+optional+advice+to+default+posture&story_id=story-1&topic_key=retry-policy",
+						job_compare: "/jobs?job_id=job-3",
+						job_bundle: "/api/v1/jobs/job-3/bundle",
+						job_knowledge_cards: "/knowledge?job_id=job-3",
+					},
+					ask_route:
+						"/ask?watchlist_id=wl-1&question=Retries+moved+from+optional+advice+to+default+posture&story_id=story-1&topic_key=retry-policy",
+					compare_route: "/jobs?job_id=job-3",
+					fallback_reason: null,
+					fallback_next_step: null,
+					fallback_actions: [],
+				}),
+				{ status: 200 },
+			),
+		);
+
+		const payload = await apiClient.getWatchlistBriefingPage("wl-1", {
+			story_id: "story-1",
+		});
+
+		expect(payload.context.selected_story_id).toBe("story-1");
+		expect(payload.ask_route).toContain("question=Retries+moved+from+optional+advice+to+default+posture");
+		const [url] = fetchSpy.mock.calls[0] ?? [];
+		expect(String(url)).toContain("/api/v1/watchlists/wl-1/briefing/page");
+		expect(String(url)).toContain("story_id=story-1");
+	});
+
 	it("loads one ingest run by id", async () => {
 		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
 			new Response(
@@ -1039,10 +1133,7 @@ describe("apiClient core behavior", () => {
 				),
 			);
 
-		await apiClient.getDigestFeed({ source: "youtube" }, {
-			writeAccessToken: "write-token",
-			webSessionToken: "session-token",
-		} as never);
+		await apiClient.getDigestFeed({ source: "youtube" });
 
 		const [, options] = fetchSpy.mock.calls[0];
 		const headers =

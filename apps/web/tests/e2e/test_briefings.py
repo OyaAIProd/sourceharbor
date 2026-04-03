@@ -33,7 +33,9 @@ def test_briefings_page_with_mock_api(page: Page, pytestconfig: pytest.Config) -
     ).to_be_visible()
 
     compare_link = page.get_by_role("link", name="Open compare")
-    expect(compare_link).to_have_attribute("href", re.compile(r"/jobs\?job_id="))
+    expect(compare_link).to_have_attribute(
+        "href", re.compile(r"/jobs\?job_id=.*via=briefing-compare")
+    )
 
     knowledge_links = page.get_by_role("link", name="Open knowledge").all()
     assert knowledge_links, "expected knowledge drill-down links on the briefing page"
@@ -54,12 +56,16 @@ def test_briefings_to_ask_flow_with_mock_api(
     ask_link = page.get_by_role("link", name="Ask this briefing")
     expect(ask_link).to_have_attribute(
         "href",
-        re.compile(r"/ask\?watchlist_id=wl-1.*story_id=story-1.*topic_key=retry-policy"),
+        re.compile(
+            r"/ask\?watchlist_id=wl-1.*story_id=story-1.*topic_key=retry-policy.*via=briefing-story"
+        ),
     )
     ask_link.click()
 
     expect(page).to_have_url(
-        re.compile(r"/ask\?watchlist_id=wl-1.*story_id=story-1.*topic_key=retry-policy")
+        re.compile(
+            r"/ask\?watchlist_id=wl-1.*story_id=story-1.*topic_key=retry-policy.*via=briefing-story"
+        )
     )
     expect(page.get_by_role("heading", name="Ask your sources")).to_be_visible()
     expect(page.get_by_role("heading", name="Story focus driving this answer")).to_be_visible()
@@ -67,4 +73,14 @@ def test_briefings_to_ask_flow_with_mock_api(
     expect(page.get_by_role("heading", name="What changed recently")).to_be_visible()
     expect(page.get_by_role("heading", name="Evidence drill-down")).to_be_visible()
     expect(page.get_by_role("heading", name="Citations behind this answer")).to_be_visible()
-    expect(page.get_by_text("Retry policy roundup")).to_be_visible()
+    expect(
+        page.get_by_role(
+            "heading",
+            name="Retries moved from optional advice to default posture",
+            exact=True,
+        )
+    ).to_be_visible()
+    expect(page.get_by_role("link", name="Open selected briefing").first).to_have_attribute(
+        "href",
+        re.compile(r"/briefings\?watchlist_id=wl-1.*story_id=story-1.*via=briefing-story"),
+    )

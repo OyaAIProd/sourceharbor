@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -178,11 +180,73 @@ class WatchlistBriefingEvidence(BaseModel):
     featured_runs: list[WatchlistBriefingRunEvidence]
 
 
+class WatchlistBriefingSelection(BaseModel):
+    selected_story_id: str | None = None
+    selection_basis: Literal[
+        "requested_story_id",
+        "query_match",
+        "suggested_story_id",
+        "first_story",
+        "none",
+    ] = "none"
+    story: WatchlistBriefingStoryEvidence | None = None
+
+
 class WatchlistBriefingResponse(BaseModel):
     watchlist: WatchlistResponse
     summary: WatchlistBriefingSummary
     differences: WatchlistBriefingDifferences
     evidence: WatchlistBriefingEvidence
+    selection: WatchlistBriefingSelection | None = None
+
+
+class WatchlistBriefingPageContext(BaseModel):
+    watchlist_id: str
+    watchlist_name: str | None = None
+    story_id: str | None = None
+    selected_story_id: str | None = None
+    story_headline: str | None = None
+    topic_key: str | None = None
+    topic_label: str | None = None
+    selection_basis: Literal[
+        "requested_story_id",
+        "query_match",
+        "suggested_story_id",
+        "first_story",
+        "none",
+    ] = "none"
+    question_seed: str | None = None
+
+
+class WatchlistBriefingPageCitation(BaseModel):
+    kind: Literal["briefing_story", "briefing_card", "job_compare"]
+    label: str
+    snippet: str
+    source_url: str | None = None
+    job_id: str | None = None
+    route: str | None = None
+    route_label: str | None = None
+
+
+class WatchlistBriefingPageFallbackAction(BaseModel):
+    kind: Literal["open_briefing", "open_story", "open_job", "open_knowledge", "open_trend"]
+    label: str
+    route: str | None = None
+
+
+class WatchlistBriefingPageResponse(BaseModel):
+    context: WatchlistBriefingPageContext
+    briefing: WatchlistBriefingResponse
+    story_focus: WatchlistBriefingStoryEvidence | None = None
+    selected_story: WatchlistBriefingStoryEvidence | None = None
+    story_change_summary: str | None = None
+    citations: list[WatchlistBriefingPageCitation] = Field(default_factory=list)
+    routes: WatchlistBriefingRoutes
+    ask_route: str | None = None
+    compare_route: str | None = None
+    fallback_reason: str | None = None
+    fallback_next_step: str | None = None
+    fallback_actions: list[WatchlistBriefingPageFallbackAction] = Field(default_factory=list)
 
 
 @router.get("", response_model=list[WatchlistResponse])
@@ -264,3 +328,29 @@ def get_watchlist_briefing(
     if payload is None:
         raise HTTPException(status_code=404, detail="watchlist not found")
     return WatchlistBriefingResponse(**payload)
+
+
+@router.get("/{watchlist_id}/briefing/page", response_model=WatchlistBriefingPageResponse)
+def get_watchlist_briefing_page(
+    watchlist_id: str,
+    story_id: str | None = Query(default=None, min_length=1),
+    query: str | None = Query(default=None),
+    limit_runs: int = Query(default=4, ge=1, le=10),
+    limit_cards: int = Query(default=18, ge=1, le=60),
+    limit_stories: int = Query(default=4, ge=1, le=12),
+    limit_evidence_per_story: int = Query(default=3, ge=1, le=8),
+    db: Session = Depends(get_db),
+):
+    service = WatchlistsService(db)
+    payload = service.get_watchlist_briefing_page(
+        watchlist_id=watchlist_id,
+        story_id=story_id,
+        query=query,
+        limit_runs=limit_runs,
+        limit_cards=limit_cards,
+        limit_stories=limit_stories,
+        limit_evidence_per_story=limit_evidence_per_story,
+    )
+    if payload is None:
+        raise HTTPException(status_code=404, detail="watchlist not found")
+    return WatchlistBriefingPageResponse(**payload)

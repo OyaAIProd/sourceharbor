@@ -218,7 +218,7 @@ def test_retrieval_service_answer_uses_briefing_context_and_returns_contract(mon
     service = RetrievalService(db)  # type: ignore[arg-type]
     monkeypatch.setattr(
         service,
-        "_load_watchlist_briefing",
+        "_load_watchlist_briefing_page",
         lambda **_: {
             "watchlist": {"id": "wl-1", "name": "Retry policy"},
             "summary": {
@@ -273,6 +273,43 @@ def test_retrieval_service_answer_uses_briefing_context_and_returns_contract(mon
                         },
                     }
                 ],
+            },
+            "context": {
+                "watchlist_id": "wl-1",
+                "watchlist_name": "Retry policy",
+                "story_id": None,
+                "selected_story_id": "story-1",
+                "story_headline": "Retry Policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "selection_basis": "query_match",
+                "question_seed": "retry policy",
+            },
+            "selected_story": {
+                "story_id": "story-1",
+                "headline": "Retry Policy",
+                "story_key": "topic:retry-policy",
+                "topic_key": "retry-policy",
+                "topic_label": "Retry Policy",
+                "latest_run_job_id": "job-2",
+                "source_count": 2,
+                "run_count": 2,
+                "matched_card_count": 2,
+                "claim_kinds": ["recommendation"],
+                "routes": {
+                    "watchlist_trend": "/trends?watchlist_id=wl-1",
+                    "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                    "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+                    "job_bundle": "/api/v1/jobs/job-2/bundle",
+                    "job_knowledge_cards": "/knowledge?job_id=job-2",
+                },
+            },
+            "routes": {
+                "watchlist_trend": "/trends?watchlist_id=wl-1",
+                "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+                "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+                "job_bundle": "/api/v1/jobs/job-2/bundle",
+                "job_knowledge_cards": "/knowledge?job_id=job-2",
             },
         },
     )
@@ -347,7 +384,7 @@ def test_retrieval_service_answer_returns_honest_fallback_when_briefing_is_missi
 ) -> None:
     db = _FakeDB([])
     service = RetrievalService(db)  # type: ignore[arg-type]
-    monkeypatch.setattr(service, "_load_watchlist_briefing", lambda **_: None)
+    monkeypatch.setattr(service, "_load_watchlist_briefing_page", lambda **_: None)
     monkeypatch.setattr(
         service,
         "search",
@@ -818,7 +855,28 @@ def test_retrieval_service_answer_page_returns_server_owned_payload(monkeypatch)
         },
     }
 
-    monkeypatch.setattr(service, "_load_watchlist_briefing", lambda **_: briefing_payload)
+    briefing_payload["context"] = {
+        "watchlist_id": "wl-1",
+        "watchlist_name": "Retry policy",
+        "story_id": "story-1",
+        "selected_story_id": "story-1",
+        "story_headline": "Retry Policy",
+        "topic_key": "retry-policy",
+        "topic_label": "Retry policy",
+        "selection_basis": "requested_story_id",
+        "question_seed": "retry policy",
+    }
+    briefing_payload["selected_story"] = briefing_payload["evidence"]["stories"][0]
+    briefing_payload["routes"] = {
+        "watchlist_trend": "/trends?watchlist_id=wl-1",
+        "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+        "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+        "job_compare": "/jobs?job_id=job-2",
+        "job_bundle": "/api/v1/jobs/job-2/bundle",
+        "job_knowledge_cards": "/knowledge?job_id=job-2",
+    }
+
+    monkeypatch.setattr(service, "_load_watchlist_briefing_page", lambda **_: briefing_payload)
     monkeypatch.setattr(service, "answer", lambda **_: answer_contract)
 
     payload = service.answer_page(
@@ -845,7 +903,7 @@ def test_retrieval_service_answer_page_without_context_uses_raw_retrieval(monkey
     db = _FakeDB([])
     service = RetrievalService(db)  # type: ignore[arg-type]
 
-    monkeypatch.setattr(service, "_load_watchlist_briefing", lambda **_: None)
+    monkeypatch.setattr(service, "_load_watchlist_briefing_page", lambda **_: None)
     monkeypatch.setattr(
         service,
         "search",
@@ -929,7 +987,28 @@ def test_retrieval_service_answer_page_marks_story_not_found_as_no_confident(mon
         },
     }
 
-    monkeypatch.setattr(service, "_load_watchlist_briefing", lambda **_: briefing_payload)
+    briefing_payload["context"] = {
+        "watchlist_id": "wl-1",
+        "watchlist_name": "Retry policy",
+        "story_id": "story-missing",
+        "selected_story_id": "story-1",
+        "story_headline": "Retry Policy",
+        "topic_key": "retry-policy",
+        "topic_label": "Retry policy",
+        "selection_basis": "suggested_story_id",
+        "question_seed": "retry policy",
+    }
+    briefing_payload["selected_story"] = briefing_payload["evidence"]["stories"][0]
+    briefing_payload["routes"] = {
+        "watchlist_trend": "/trends?watchlist_id=wl-1",
+        "briefing": "/briefings?watchlist_id=wl-1&story_id=story-1",
+        "ask": "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
+        "job_compare": "/jobs?job_id=job-2",
+        "job_bundle": "/api/v1/jobs/job-2/bundle",
+        "job_knowledge_cards": "/knowledge?job_id=job-2",
+    }
+
+    monkeypatch.setattr(service, "_load_watchlist_briefing_page", lambda **_: briefing_payload)
     monkeypatch.setattr(
         service,
         "answer",

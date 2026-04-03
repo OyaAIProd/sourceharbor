@@ -12,6 +12,7 @@ from ..errors import ApiServiceError
 from ..services.retrieval import RetrievalService
 from .watchlists import (
     WatchlistBriefingResponse,
+    WatchlistBriefingPageResponse,
     WatchlistBriefingRoutes,
     WatchlistBriefingStoryEvidence,
 )
@@ -222,6 +223,7 @@ class AskPageResponse(BaseModel):
     answer_reason: str | None = None
     answer_confidence: Literal["grounded", "limited"]
     story_change_summary: str | None = None
+    story_page: WatchlistBriefingPageResponse | None = None
     briefing: WatchlistBriefingResponse | None = None
     story_focus: AskAnswerSelectedStory | None = None
     selected_story: WatchlistBriefingStoryEvidence | None = None

@@ -184,7 +184,7 @@ describe("search and MCP front doors", () => {
 						removed_lines: 4,
 						diff_excerpt:
 							"Retry guidance moved from optional to default posture.",
-						compare_route: "/jobs?job_id=job-3",
+						compare_route: "/jobs?job_id=job-3&via=briefing-compare",
 					},
 				},
 				evidence: {
@@ -206,9 +206,11 @@ describe("search and MCP front doors", () => {
 							evidence_cards: [],
 							routes: {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
-								briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
-								ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
-								job_compare: "/jobs?job_id=job-1",
+								briefing:
+									"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+								ask:
+									"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+								job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 								job_bundle: "/api/v1/jobs/job-1/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-1",
 							},
@@ -229,9 +231,11 @@ describe("search and MCP front doors", () => {
 							evidence_cards: [],
 							routes: {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
-								briefing: "/briefings?watchlist_id=wl-1&story_id=story-2",
-								ask: "/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget",
-								job_compare: "/jobs?job_id=job-3",
+								briefing:
+									"/briefings?watchlist_id=wl-1&story_id=story-2&via=secondary-story",
+								ask:
+									"/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story",
+								job_compare: "/jobs?job_id=job-3&via=secondary-story",
 								job_bundle: "/api/v1/jobs/job-3/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-3",
 							},
@@ -248,14 +252,43 @@ describe("search and MCP front doors", () => {
 							matched_card_count: 1,
 							routes: {
 								watchlist_trend: "/trends?watchlist_id=wl-1",
-								briefing: "/briefings?watchlist_id=wl-1",
-								ask: "/ask?watchlist_id=wl-1",
-								job_compare: "/jobs?job_id=job-3",
+								briefing: "/briefings?watchlist_id=wl-1&via=briefing-run",
+								ask: "/ask?watchlist_id=wl-1&via=briefing-run",
+								job_compare: "/jobs?job_id=job-3&via=briefing-run",
 								job_bundle: "/api/v1/jobs/job-3/bundle",
 								job_knowledge_cards: "/knowledge?job_id=job-3",
 							},
 						},
 					],
+				},
+				selection: {
+					selected_story_id: "story-1",
+					selection_basis: "suggested_story_id",
+					story: {
+						story_id: "story-1",
+						story_key: "topic:retry-policy",
+						headline: "Retries moved from optional advice to default posture",
+						topic_key: "retry-policy",
+						topic_label: "Retry policy",
+						source_count: 3,
+						run_count: 4,
+						matched_card_count: 6,
+						platforms: ["youtube", "rss"],
+						claim_kinds: ["recommendation"],
+						source_urls: ["https://example.com/retry-policy"],
+						latest_run_job_id: "job-1",
+						evidence_cards: [],
+						routes: {
+							watchlist_trend: "/trends?watchlist_id=wl-1",
+							briefing:
+								"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+							ask:
+								"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+							job_compare: "/jobs?job_id=job-1&via=briefing-compare",
+							job_bundle: "/api/v1/jobs/job-1/bundle",
+							job_knowledge_cards: "/knowledge?job_id=job-1",
+						},
+					},
 				},
 			},
 			selected_story: {
@@ -291,9 +324,11 @@ describe("search and MCP front doors", () => {
 				],
 				routes: {
 					watchlist_trend: "/trends?watchlist_id=wl-1",
-					briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
-					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
-					job_compare: "/jobs?job_id=job-1",
+					briefing:
+						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+					ask:
+						"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+					job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 					job_bundle: "/api/v1/jobs/job-1/bundle",
 					job_knowledge_cards: "/knowledge?job_id=job-1",
 				},
@@ -313,9 +348,11 @@ describe("search and MCP front doors", () => {
 				latest_run_job_id: "job-1",
 				routes: {
 					watchlist_trend: "/trends?watchlist_id=wl-1",
-					briefing: "/briefings?watchlist_id=wl-1&story_id=story-1",
-					ask: "/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy",
-					job_compare: "/jobs?job_id=job-1",
+					briefing:
+						"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+					ask:
+						"/ask?watchlist_id=wl-1&story_id=story-1&topic_key=retry-policy&via=briefing-story",
+					job_compare: "/jobs?job_id=job-1&via=briefing-compare",
 					job_bundle: "/api/v1/jobs/job-1/bundle",
 					job_knowledge_cards: "/knowledge?job_id=job-1",
 				},
@@ -347,7 +384,7 @@ describe("search and MCP front doors", () => {
 					snippet: "Supported across 3 source families and 4 recent runs.",
 					source_url: null,
 					job_id: "job-3",
-					route: "/briefings?watchlist_id=wl-1&story_id=story-1",
+					route: "/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
 					route_label: "Open briefing story",
 				},
 			],
@@ -405,13 +442,24 @@ describe("search and MCP front doors", () => {
 			screen
 				.getAllByRole("link", { name: "Open selected briefing" })
 				.map((element) => element.getAttribute("href")),
-		).toContain("/briefings?watchlist_id=wl-1&story_id=story-1");
+		).toContain("/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story");
 		expect(
 			screen.getByRole("heading", { name: "Citations behind this answer" }),
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole("link", { name: "Open briefing story" }),
-		).toHaveAttribute("href", "/briefings?watchlist_id=wl-1&story_id=story-1");
+		).toHaveAttribute(
+			"href",
+			"/briefings?watchlist_id=wl-1&story_id=story-1&via=briefing-story",
+		);
+		expect(
+			screen.getByRole("link", {
+				name: "Failure budgets became the comparison lens",
+			}),
+		).toHaveAttribute(
+			"href",
+			"/ask?watchlist_id=wl-1&story_id=story-2&topic_key=failure-budget&via=secondary-story&question=retry+policy&mode=keyword&top_k=6",
+		);
 		expect(
 			screen.getByRole("heading", { name: "Evidence for this question" }),
 		).toBeInTheDocument();

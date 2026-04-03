@@ -23,6 +23,7 @@ import {
 	type SearchParamsInput,
 } from "@/lib/search-params";
 import { buildProductMetadata } from "@/lib/seo";
+import { decorateAskRoute, preferRoute } from "@/lib/story-routes";
 
 const askCopy = getLocaleMessages().searchPage;
 const briefingsCopy = getLocaleMessages().briefingsPage;
@@ -240,10 +241,10 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 		}),
 	]);
 
-	const briefingHref = askPayload.context.watchlist_id
+	const genericBriefingHref = askPayload.context.watchlist_id
 		? `/briefings?watchlist_id=${encodeURIComponent(askPayload.context.watchlist_id)}`
 		: "/briefings";
-	const trendHref = askPayload.context.watchlist_id
+	const genericTrendHref = askPayload.context.watchlist_id
 		? `/trends?watchlist_id=${encodeURIComponent(askPayload.context.watchlist_id)}`
 		: "/trends";
 	const clearContextHref = buildAskHref({
@@ -266,11 +267,34 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 	];
 	const retrievalHits = askPayload.retrieval?.items ?? [];
 	const storyFocus = askPayload.story_focus;
-	const selectedStory = askPayload.selected_story;
+	const selectedStory = askPayload.selected_story ?? askPayload.briefing?.selection?.story;
 	const storyChoices = askPayload.briefing?.evidence.stories ?? [];
 	const featuredRuns = askPayload.briefing?.evidence.featured_runs ?? [];
 	const citations = askPayload.citations ?? [];
 	const fallbackActions = askPayload.fallback_actions ?? [];
+	const activeStoryId =
+		storyFocus?.story_id ??
+		askPayload.context.selected_story_id ??
+		selectedStory?.story_id ??
+		askPayload.context.story_id ??
+		"";
+	const briefingHref =
+		preferRoute(
+			storyFocus?.routes.briefing ?? null,
+			preferRoute(selectedStory?.routes.briefing ?? null, genericBriefingHref),
+		) ?? "/briefings";
+	const trendHref =
+		preferRoute(
+			storyFocus?.routes.watchlist_trend ?? null,
+			preferRoute(selectedStory?.routes.watchlist_trend ?? null, genericTrendHref),
+		) ?? "/trends";
+	const compareHref = preferRoute(
+		storyFocus?.routes.job_compare ?? null,
+		preferRoute(
+			selectedStory?.routes.job_compare ?? null,
+			askPayload.briefing?.differences.compare?.compare_route ?? null,
+		),
+	);
 
 	return (
 		<div className="folo-page-shell folo-unified-shell">
@@ -463,24 +487,29 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 												asChild
 												size="sm"
 												variant={
-													story.story_id ===
-													(storyFocus?.story_id ??
-														askPayload.context.story_id ??
-														"")
+													story.story_id === activeStoryId
 														? "hero"
 														: "outline"
 												}
 											>
 												<Link
-													href={buildAskHref({
-														question: safeQuestion || undefined,
-														mode: safeMode,
-														top_k: String(safeTopK),
-														watchlist_id:
-															askPayload.context.watchlist_id ?? undefined,
-														story_id: story.story_id,
-														topic_key: story.topic_key ?? undefined,
-													})}
+													href={
+														decorateAskRoute(story.routes.ask, {
+															question:
+																safeQuestion || story.topic_label || story.headline,
+															mode: safeMode,
+															top_k: String(safeTopK),
+														}) ??
+														buildAskHref({
+															question: safeQuestion || undefined,
+															mode: safeMode,
+															top_k: String(safeTopK),
+															watchlist_id:
+																askPayload.context.watchlist_id ?? undefined,
+															story_id: story.story_id,
+															topic_key: story.topic_key ?? undefined,
+														})
+													}
 												>
 													{story.headline}
 												</Link>
@@ -809,11 +838,9 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 											{askCopy.askOpenBriefingButton}
 										</Link>
 									</Button>
-									{askPayload.briefing.differences.compare?.job_id ? (
+									{compareHref ? (
 										<Button asChild variant="outline" size="sm">
-											<Link
-												href={`/jobs?job_id=${encodeURIComponent(askPayload.briefing.differences.compare.job_id)}`}
-											>
+											<Link href={compareHref}>
 												{briefingsCopy.openCompareButton}
 											</Link>
 										</Button>

@@ -70,7 +70,7 @@ Everything else in the repository exists to make that loop reliable, inspectable
 - proof boundary
 - ops inbox / diagnostics
 - watchlists, merged stories, trends, and unified briefings
-- search plus story-aware, briefing-backed Ask front door that carries selected story context into answer, change, and evidence layers through a server-owned page payload instead of front-end stitching
+- search plus story-aware, briefing-backed Ask front door that carries selected story context into answer, change, and evidence layers through a server-owned story page payload shared with `/briefings` instead of front-end stitching
 - digest reading flow
 - ingest run ledger
 - knowledge layer
@@ -104,7 +104,7 @@ See:
 - **One truth, many surfaces:** API, MCP, and web all point at the same pipeline state
 - **Strong lanes plus general lanes:** YouTube/Bilibili stay richer than the generalized RSSHub/RSS substrate, and the contract should say so plainly
 - **Summary before diff before receipts:** unified briefings should lower operator cognitive load by leading with the current story, then the delta, then the drill-down evidence
-- **Server owns the answer page contract:** the Ask page should consume one formal page payload for story focus, answer, changes, evidence, and next steps instead of recomposing those layers in the browser
+- **Server owns the story page contracts:** `/briefings` and `/ask` should consume shared server-owned story selection, routes, and page payloads for story focus, answer, changes, evidence, and next steps instead of recomposing those layers in the browser
 - **Proof over promises:** jobs, artifacts, smoke scripts, and CI back up public claims
 - **Supervisor truth before long live smoke:** the repo-managed local path is `bootstrap -> up -> status -> doctor`; stricter provider-backed smoke is a separate lane, not the same claim
 - **Thin public docs, rich executable source:** docs should direct people; source should prove the details

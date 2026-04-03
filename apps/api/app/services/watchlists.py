@@ -13,6 +13,10 @@ from sqlalchemy.orm import Session
 
 from ..models import NotificationConfig
 from .notifications import get_notification_config
+from .story_read_model import (
+    build_briefing_page_payload,
+    build_story_question_seed,
+)
 
 WATCHLIST_MATCHER_TYPES = {"topic_key", "claim_kind", "platform", "source_match"}
 WATCHLIST_DELIVERY_CHANNELS = {"dashboard", "email"}
@@ -211,6 +215,17 @@ class WatchlistsService:
         evidence_stories = [
             self._build_briefing_evidence_story(
                 watchlist_id=watchlist_id,
+                watchlist=trend["watchlist"],
+                briefing={
+                    "watchlist": trend["watchlist"],
+                    "summary": {
+                        "primary_story_headline": (
+                            str(merged_stories[0].get("headline") or "").strip() or None
+                            if merged_stories
+                            else None
+                        )
+                    },
+                },
                 story=story,
                 latest_run=latest_run,
                 limit_evidence_per_story=limit_evidence_per_story,
@@ -289,6 +304,106 @@ class WatchlistsService:
             },
         }
 
+    def get_watchlist_briefing_page(
+        self,
+        *,
+        watchlist_id: str,
+        story_id: str | None = None,
+        limit_runs: int = 4,
+        limit_cards: int = 18,
+        limit_stories: int = 4,
+        limit_evidence_per_story: int = 3,
+        query: str | None = None,
+    ) -> dict[str, Any] | None:
+        briefing = self.get_watchlist_briefing(
+            watchlist_id=watchlist_id,
+            limit_runs=limit_runs,
+            limit_cards=limit_cards,
+            limit_stories=limit_stories,
+            limit_evidence_per_story=limit_evidence_per_story,
+        )
+        if not isinstance(briefing, dict):
+            return None
+
+        page_payload = build_briefing_page_payload(
+            briefing=briefing,
+            story_id=story_id,
+            selection_query=str(query or ""),
+        )
+        selection = page_payload["selection"]
+        selected_story = page_payload["selected_story"]
+        selection_basis = selection["selection_basis"]
+        watchlist = briefing.get("watchlist") if isinstance(briefing.get("watchlist"), dict) else {}
+        compare = (
+            briefing.get("differences", {}).get("compare")
+            if isinstance(briefing.get("differences"), dict)
+            else None
+        )
+        compare_dict = compare if isinstance(compare, dict) else {}
+        question_seed = selection["question_seed"]
+        routes = page_payload["routes"]
+        ask_route = str(routes.get("ask") or "").strip() or None
+        story_change_summary = self._build_story_focus_summary(
+            story=selected_story,
+            new_story_keys=[
+                str(item).strip()
+                for item in (briefing.get("differences", {}).get("new_story_keys") or [])
+                if str(item).strip()
+            ]
+            if isinstance(briefing.get("differences"), dict)
+            else [],
+            removed_story_keys=[
+                str(item).strip()
+                for item in (briefing.get("differences", {}).get("removed_story_keys") or [])
+                if str(item).strip()
+            ]
+            if isinstance(briefing.get("differences"), dict)
+            else [],
+            compare_excerpt=str(compare_dict.get("diff_excerpt") or "").strip() or None,
+        )
+        fallback = self._build_briefing_page_fallback(
+            watchlist_id=watchlist_id,
+            story_id=story_id,
+            selected_story=selected_story,
+        )
+
+        return {
+            "context": {
+                "watchlist_id": watchlist_id,
+                "watchlist_name": str(watchlist.get("name") or "").strip() or None,
+                "story_id": selection["requested_story_id"],
+                "selected_story_id": selection["selected_story_id"],
+                "story_headline": selection["story_headline"],
+                "topic_key": selection["topic_key"],
+                "topic_label": selection["topic_label"],
+                "selection_basis": selection_basis,
+                "question_seed": question_seed,
+            },
+            "briefing": {
+                **briefing,
+                "selection": {
+                    "selected_story_id": str(selected_story.get("story_id") or "").strip()
+                    if isinstance(selected_story, dict)
+                    else None,
+                    "selection_basis": selection_basis,
+                    "story": selected_story,
+                },
+            },
+            "selected_story": selected_story,
+            "story_focus": selected_story,
+            "story_change_summary": story_change_summary,
+            "citations": self._build_briefing_page_citations(
+                selected_story=selected_story,
+                compare=compare_dict,
+            ),
+            "routes": routes,
+            "compare_route": str(compare_dict.get("compare_route") or "").strip() or None,
+            "ask_route": ask_route,
+            "fallback_reason": str(fallback.get("reason") or "").strip() or None,
+            "fallback_next_step": str(fallback.get("suggested_next_step") or "").strip() or None,
+            "fallback_actions": list(fallback.get("actions") or []),
+        }
+
     def _build_briefing_overview(
         self,
         *,
@@ -317,6 +432,143 @@ class WatchlistsService:
             f"These storylines are supported across {source_count} source families and {run_count} recent runs."
         )
 
+    def _build_story_focus_summary(
+        self,
+        *,
+        story: dict[str, Any] | None,
+        new_story_keys: list[str],
+        removed_story_keys: list[str],
+        compare_excerpt: str | None,
+    ) -> str | None:
+        if not isinstance(story, dict):
+            return None
+        headline = str(story.get("headline") or "").strip() or "The selected story"
+        story_key = str(story.get("story_key") or "").strip()
+        source_count = int(story.get("source_count") or 0)
+        run_count = int(story.get("run_count") or 0)
+        matched_card_count = int(story.get("matched_card_count") or 0)
+        if story_key and story_key in new_story_keys:
+            return (
+                f'"{headline}" is newly surfaced in the latest briefing and is already backed by '
+                f"{source_count} source families."
+            )
+        if story_key and story_key in removed_story_keys:
+            return f'"{headline}" was removed from the latest story set, so treat this story focus as stale context.'
+        if compare_excerpt:
+            return (
+                f'"{headline}" remains the selected story focus, and the latest compare still shows movement '
+                "around it."
+            )
+        if matched_card_count > 0:
+            return (
+                f'"{headline}" is the current story focus across {run_count} runs and '
+                f"{matched_card_count} matched evidence cards."
+            )
+        if source_count > 0:
+            return f'"{headline}" remains the strongest story focus across {source_count} source families.'
+        return f'"{headline}" is the current story focus for this briefing.'
+
+    def _build_briefing_page_citations(
+        self,
+        *,
+        selected_story: dict[str, Any] | None,
+        compare: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
+        citations: list[dict[str, Any]] = []
+        if isinstance(selected_story, dict):
+            routes = (
+                selected_story.get("routes")
+                if isinstance(selected_story.get("routes"), dict)
+                else {}
+            )
+            citations.append(
+                {
+                    "kind": "briefing_story",
+                    "label": str(
+                        selected_story.get("headline") or "Selected briefing story"
+                    ).strip(),
+                    "snippet": self._story_support_snippet(selected_story),
+                    "source_url": None,
+                    "job_id": str(selected_story.get("latest_run_job_id") or "").strip() or None,
+                    "route": str(routes.get("briefing") or "").strip() or None,
+                    "route_label": "Open briefing story",
+                }
+            )
+            cards = selected_story.get("evidence_cards")
+            if isinstance(cards, list):
+                for card in cards[:2]:
+                    if not isinstance(card, dict):
+                        continue
+                    citations.append(
+                        {
+                            "kind": "briefing_card",
+                            "label": str(
+                                card.get("card_title")
+                                or card.get("topic_label")
+                                or card.get("source_section")
+                                or "Briefing evidence card"
+                            ).strip(),
+                            "snippet": str(card.get("card_body") or "").strip(),
+                            "source_url": str(card.get("source_url") or "").strip() or None,
+                            "job_id": str(card.get("job_id") or "").strip() or None,
+                            "route": str(routes.get("job_knowledge_cards") or "").strip() or None,
+                            "route_label": "Open knowledge cards",
+                        }
+                    )
+        compare_dict = compare if isinstance(compare, dict) else {}
+        compare_excerpt = str(compare_dict.get("diff_excerpt") or "").strip()
+        if compare_excerpt:
+            citations.append(
+                {
+                    "kind": "job_compare",
+                    "label": "Latest compare excerpt",
+                    "snippet": compare_excerpt,
+                    "source_url": None,
+                    "job_id": str(compare_dict.get("job_id") or "").strip() or None,
+                    "route": str(compare_dict.get("compare_route") or "").strip() or None,
+                    "route_label": "Open compare",
+                }
+            )
+        return citations[:6]
+
+    def _build_briefing_page_fallback(
+        self,
+        *,
+        watchlist_id: str,
+        story_id: str | None,
+        selected_story: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        if isinstance(story_id, str) and story_id.strip() and not isinstance(selected_story, dict):
+            return {
+                "reason": "The requested story_id was not found inside the current briefing context.",
+                "suggested_next_step": "Use the selected story from the current briefing or return to the watchlist overview.",
+                "actions": [
+                    {
+                        "kind": "open_briefing",
+                        "label": "Open watchlist briefing",
+                        "route": f"/briefings?watchlist_id={watchlist_id}",
+                    },
+                    {
+                        "kind": "open_trend",
+                        "label": "Open trend timeline",
+                        "route": f"/trends?watchlist_id={watchlist_id}",
+                    },
+                ],
+            }
+        if not isinstance(selected_story, dict):
+            return {
+                "reason": "This watchlist does not yet expose a selected story.",
+                "suggested_next_step": "Open the trend timeline or wait for more matched evidence to accumulate.",
+                "actions": [
+                    {
+                        "kind": "open_trend",
+                        "label": "Open trend timeline",
+                        "route": f"/trends?watchlist_id={watchlist_id}",
+                    }
+                ],
+            }
+        return {"reason": None, "suggested_next_step": None, "actions": []}
+
     def _build_briefing_signal(
         self,
         *,
@@ -344,6 +596,8 @@ class WatchlistsService:
         self,
         *,
         watchlist_id: str,
+        watchlist: dict[str, Any],
+        briefing: dict[str, Any],
         story: dict[str, Any],
         latest_run: dict[str, Any] | None,
         limit_evidence_per_story: int,
@@ -377,6 +631,11 @@ class WatchlistsService:
                 job_id=evidence_job_id,
                 story_id=story_id,
                 topic_key=topic_key,
+                question=build_story_question_seed(
+                    story=story,
+                    briefing=briefing,
+                    watchlist=watchlist,
+                ),
             ),
         }
 
@@ -418,6 +677,7 @@ class WatchlistsService:
         job_id: str | None,
         story_id: str | None = None,
         topic_key: str | None = None,
+        question: str | None = None,
     ) -> dict[str, Any]:
         return {
             "watchlist_trend": f"/trends?watchlist_id={watchlist_id}",
@@ -429,6 +689,7 @@ class WatchlistsService:
                 watchlist_id=watchlist_id,
                 story_id=story_id,
                 topic_key=topic_key,
+                question=question,
             ),
             "job_compare": f"/jobs?job_id={job_id}" if job_id else None,
             "job_bundle": f"/api/v1/jobs/{job_id}/bundle" if job_id else None,
@@ -452,8 +713,12 @@ class WatchlistsService:
         watchlist_id: str,
         story_id: str | None = None,
         topic_key: str | None = None,
+        question: str | None = None,
     ) -> str:
         params = {"watchlist_id": watchlist_id}
+        normalized_question = str(question or "").strip()
+        if normalized_question:
+            params["question"] = normalized_question
         if story_id:
             params["story_id"] = story_id
         if topic_key:
@@ -717,6 +982,16 @@ class WatchlistsService:
             if value:
                 return value
         return "Merged story"
+
+    @staticmethod
+    def _story_support_snippet(story: dict[str, Any]) -> str:
+        source_count = int(story.get("source_count") or 0)
+        run_count = int(story.get("run_count") or 0)
+        matched_card_count = int(story.get("matched_card_count") or 0)
+        return (
+            f"Supported across {source_count} source families, {run_count} runs, "
+            f"and {matched_card_count} matched cards."
+        )
 
     def _story_id(self, story_key: str) -> str:
         return sha256(story_key.encode("utf-8")).hexdigest()[:16]
