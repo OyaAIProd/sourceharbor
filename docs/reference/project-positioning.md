@@ -38,7 +38,17 @@ Two directions are intentionally kept in the "evaluate before promise" bucket:
 - Agent Autopilot: worth a human-in-the-loop spike, not ready for product-level claims yet
 - Hosted workspace: worth a readiness study, but still incompatible with the current source-first and local-proof-first promise if overclaimed
 
+The same principle also governs builder packaging:
+
+- the repo-local CLI discoverability surface is real now
+- packaged public CLI / SDK surfaces are still later
+- plugin-first positioning stays no-go now
+
 Relevant spike artifacts:
 
 - [2026-03-31-agent-autopilot-spike.md](../blueprints/2026-03-31-agent-autopilot-spike.md)
 - [2026-03-31-hosted-readiness-spike.md](../blueprints/2026-03-31-hosted-readiness-spike.md)
+
+If you want the durable ship-now / later / spike-only / no-go ledger for CLI,
+SDK, builder ecosystem, hosted, autopilot, and plugin-style expansion, read
+[ecosystem-and-big-bet-decisions.md](./ecosystem-and-big-bet-decisions.md).

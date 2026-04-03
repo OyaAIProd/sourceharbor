@@ -121,7 +121,13 @@ That means:
 - **Repo-local CLI facade:** shipped now as a thin discoverability surface
 - **TypeScript SDK:** later, but clearly on-path
 - **Python SDK:** later
+- **Public skills / template packs:** later, after the builder contract stabilizes
+- **Codex / Claude Code fit via MCP + HTTP API + repo-local CLI:** shipped now
+- **Plugin / marketplace positioning:** no-go for now
 - **generic multi-language platform claim:** no-go for now
+
+If you want the bucketed decision ledger instead of the packaging sequence, read
+[docs/reference/ecosystem-and-big-bet-decisions.md](./reference/ecosystem-and-big-bet-decisions.md).
 
 ## Risk Boundaries
 

@@ -1,0 +1,42 @@
+# Ecosystem And Big-Bet Decisions
+
+This page is the durable decision ledger for the parts of SourceHarbor that are
+easy to oversell.
+
+Think of it like the route board at an airport:
+
+- **ship-now** means the gate is open today
+- **later** means the route is plausible, but not a current product promise
+- **no-go** means do not position the repo around it in the current cycle
+- **spike-only** means it is worth a bounded study, not a shipped capability
+
+## Ecosystem Productization Buckets
+
+| Surface | Bucket | Current truth | Revisit when |
+| --- | --- | --- | --- |
+| Codex / Claude Code through MCP + HTTP API | **ship-now** | this is already a real fit: the repo exposes MCP, a public HTTP contract, and builder-facing docs without inventing a second business-logic stack | keep tightening only if the current MCP/API contract changes |
+| Repo-local CLI/help facade | **ship-now** | `./bin/sourceharbor` is the current honest command surface for discovery; it routes to repo-owned `bin/*` entrypoints and does not pretend to be a packaged public CLI | extend only as a thin facade over existing entrypoints |
+| Packaged public CLI | **later** | the repo now has a truthful CLI substrate, but not enough evidence that a separately packaged CLI would add value without duplicating logic | revisit when repeated external users want installable distribution beyond clone-and-run |
+| Public TypeScript SDK | **later** | the shared TypeScript client/types show the substrate path, but they are still repo-internal rather than a stable public package contract | revisit when HTTP/MCP contracts stabilize and at least one external consumer needs a thin package |
+| Python SDK | **later** | there is no public Python package surface today, and packaging it now would overclaim builder maturity | revisit after the TypeScript path hardens and real external builder demand exists |
+| Public Skills / workflow packs | **later** | the product story already fits Codex / Claude Code / MCP, but there is not yet a shipped public Skills catalog or supported template distribution surface | revisit when the repo can point to stable, maintained workflow contracts instead of internal execution history |
+| Plugin-first or marketplace-first positioning | **no-go** | SourceHarbor is strongest as a source-first control tower with API/MCP/CLI reuse, not as a plugin marketplace | reconsider only if packaged CLI/SDK surfaces are stable and there is strong third-party integrator pull |
+
+## Big-Bet Buckets
+
+| Direction | Bucket | Current truth | Revisit when |
+| --- | --- | --- | --- |
+| Thin managed evaluation slice | **later** | a narrow hosted-shaped bridge may become useful, but only after it can stay subordinate to the source-first and local-proof-first truth model | revisit after auth, isolation, approval, and remote-proof layers are stronger |
+| Full hosted / managed workspace | **no-go** | do not market this as a current capability; the repo is not ready for the larger multi-tenant promise | revisit only after identity, custody, support, and remote-proof contracts exist for real |
+| Agent Autopilot / approval-first research ops | **spike-only** | human-approved orchestration is the most honest next slice; silent autonomy is not a current product promise | revisit after approval gates, auditability, rollback, and operator trust surfaces are stronger |
+| Full autonomous agent workflow | **no-go** | silent autonomy would overrun the current approval and rollback boundaries | revisit only if the spike earns evidence that operators trust it and the guardrails are first-class |
+| Public SDK platform expansion | **later** | builder packaging should grow only after the existing API/MCP/CLI truths stop moving | revisit after SourceHarbor has repeatable external builder adoption and stable packaging boundaries |
+| Growth / discovery / moat strategy | **ship-now** | the current moat is already the source-first, proof-first, builder-facing position: one control tower, one operator truth, and multiple honest entry points | deepen this only through clearer docs, GitHub discovery, proof surfaces, and reproducible operator value rather than speculative new surfaces |
+| Switchyard integration for provider runtime | **no-go for the current cycle** | keep it out of the current build surface; it is a long-term idea, not the current execution surface | revisit only after current repo-side truth, external proof, and packaging decisions stay stable for more than one release/current-main cycle |
+
+## Guardrails
+
+- Do not treat a spike artifact as a shipped capability.
+- Do not relabel repo-local helper surfaces as public packaged products.
+- Do not let marketplace or hosted language replace the current source-first and local-proof-first contract.
+- Do not use this page to justify speculative implementation scope in the current cycle.

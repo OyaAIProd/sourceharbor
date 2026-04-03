@@ -148,10 +148,12 @@ Think of this as the label on the box, not fine print:
 - Agent Autopilot is **not** a shipped capability; it remains a bounded spike direction.
 - Hosted Team Workspace is **not** a current promise; it remains a deferred bet.
 - SourceHarbor is **not** yet shipped as a separately packaged public CLI or SDK.
+- SourceHarbor is **not** yet a standalone public Skills catalog or plugin marketplace.
 - SourceHarbor does **not** claim that every RSSHub route has already been individually validated.
 
 If you need the explicit bet boundaries, read:
 
+- [Ecosystem And Big-Bet Decisions](./docs/reference/ecosystem-and-big-bet-decisions.md)
 - [Agent Autopilot Spike](./docs/blueprints/2026-03-31-agent-autopilot-spike.md)
 - [Hosted Readiness Spike](./docs/blueprints/2026-03-31-hosted-readiness-spike.md)
 
@@ -199,7 +201,7 @@ Current non-promises:
 
 - SourceHarbor is **not** described here as a turnkey hosted team workspace.
 - Agent autopilot remains a bounded spike direction, not a shipped product capability.
-- Those future-direction boundaries live in [docs/reference/project-positioning.md](./docs/reference/project-positioning.md) and the Prompt 5 spike blueprints under [docs/blueprints/](./docs/blueprints/).
+- Those future-direction boundaries live in [docs/reference/project-positioning.md](./docs/reference/project-positioning.md), [docs/reference/ecosystem-and-big-bet-decisions.md](./docs/reference/ecosystem-and-big-bet-decisions.md), and the Prompt 5 spike blueprints under [docs/blueprints/](./docs/blueprints/).
 
 If you want the shortest honest summary of what is already real, what is still gated, and what remains future direction, read [docs/project-status.md](./docs/project-status.md).
 

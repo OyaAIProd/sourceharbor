@@ -24,7 +24,7 @@
     },
     {
       "name": "aiohttp",
-      "version": "3.13.3",
+      "version": "3.13.4",
       "license": "Apache-2.0 AND MIT",
       "license_source": "license-field",
       "classifiers": [],
@@ -578,12 +578,10 @@
     },
     {
       "name": "Pygments",
-      "version": "2.19.2",
+      "version": "2.20.0",
       "license": "BSD-2-Clause",
-      "license_source": "license-field",
-      "classifiers": [
-        "License :: OSI Approved :: BSD License"
-      ],
+      "license_source": "license-expression",
+      "classifiers": [],
       "summary": "Pygments is a syntax highlighting package written in Python.",
       "homepage": "Homepage, https://pygments.org"
     },

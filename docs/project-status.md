@@ -12,6 +12,10 @@ Use it like a status board, not like a sales page.
 If you need the exhaustive ledger instead of the short board, read
 [2026-03-31-program-closeout-matrix.md](./blueprints/2026-03-31-program-closeout-matrix.md).
 
+The current published baseline is `v0.1.2`: the latest release, the current
+remote `main`, and the latest successful protected external-lane runs all point
+at the same release-aligned snapshot.
+
 ## Current Program State
 
 SourceHarbor is already a real, source-first product-shaped repository.
@@ -30,6 +34,7 @@ What it does **not** have today:
 - a hosted workspace promise
 - autopilot product claims
 - a separately packaged public CLI or public SDK
+- public Skills or plugin-marketplace distribution as a shipped surface
 - live external notification proof without sender configuration
 - universal no-secret proof for Gemini-backed lanes
 - route-by-route verification across the full RSSHub universe
@@ -84,20 +89,45 @@ Read the spike artifacts:
 - [Program Closeout Matrix](./blueprints/2026-03-31-program-closeout-matrix.md)
 - [Agent Autopilot Spike](./blueprints/2026-03-31-agent-autopilot-spike.md)
 - [Hosted Readiness Spike](./blueprints/2026-03-31-hosted-readiness-spike.md)
+- [Ecosystem And Big-Bet Decisions](./reference/ecosystem-and-big-bet-decisions.md)
+
+## Ecosystem And Big-Bet Buckets
+
+This is the short scoreboard for the directions most likely to get overstated.
+
+| Track | Current bucket | Why now |
+| --- | --- | --- |
+| Codex / Claude Code via MCP + HTTP API | **ship-now** | the repo already has real MCP, API, search, ask, and job-trace surfaces |
+| Repo-local CLI/help facade | **ship-now** | `./bin/sourceharbor` is already a truthful discoverability layer over `bin/*` |
+| Packaged public CLI | **later** | the repo-local CLI is real, but the external package contract should stay thin until the builder contract is quieter |
+| Public TypeScript SDK | **later** | shared client/types exist, but they are still repo-internal substrate rather than a frozen external package |
+| Public Python SDK | **later** | no public package surface exists yet |
+| Public skills pack / templates | **later** | the fit story is real, but the repo does not yet ship a packaged public skills surface |
+| Plugin / extension marketplace | **no-go now** | plugin-first positioning would overstate the current repo truth |
+| Agent Autopilot (approval-first research ops) | **spike-only** | only the approval-first research-ops slice is worth reopening |
+| Full autonomous autopilot | **no-go now** | approval, rollback, identity, and provider readiness are not strong enough |
+| Thin managed evaluation slice | **later** | only a narrow managed bridge is worth reconsidering after current proof boundaries stay intact |
+| Full hosted workspace | **no-go now** | multi-tenant auth, custody, isolation, and support contracts are not ready |
+| Growth / moat thesis | **ship-now** | the current moat is the proof-first control tower story plus reusable compounder surfaces, not hosted scale or plugin sprawl |
 
 ## External Blockers
 
 These are the genuine external or human-only dependencies still left after the
 current maintainer re-audit:
 
-- `RESEND_FROM_EMAIL`
-- a verified Resend sender/domain and a real destination mailbox
-- a YouTube key/project state that no longer returns `quota_or_permission` / `403` during the strict live-smoke probe
-- a new tagged release if you need release-aligned remote distribution proof for the current `main`
+- Resend live delivery still needs a real sender identity chain: `RESEND_FROM_EMAIL`, a verified sender/domain, and a destination mailbox
+- the strict YouTube live-smoke lane still needs a key/project/quota/policy state that no longer returns `quota_or_permission` / `403`
 
 Raw non-empty values for `YOUTUBE_API_KEY`, `RESEND_API_KEY`, and
 `GEMINI_API_KEY` are no longer the main blocker story on the maintainer
-machine. The remaining blockers are more specific than \"secret missing\".
+machine. The remaining blockers are more specific than "secret missing".
+
+### Exact External Action Pack
+
+| Blocker | Freshly verified state | Why this is external/human-only | Exact action |
+| --- | --- | --- | --- |
+| Resend sender identity | maintainer-side provider canary still reports `config_error`; `RESEND_API_KEY` is present on the maintainer machine, but `RESEND_FROM_EMAIL` is still missing | repo code already exposes notifications and settings; GitHub/release truth is no longer the missing piece | set `RESEND_FROM_EMAIL`, verify the sender/domain in Resend, choose a real destination mailbox, then rerun the provider canary or strict live-smoke lane |
+| YouTube strict live-smoke | maintainer-side provider canary still reports `auth/http_error:403`; the current response says YouTube Data API v3 has not been used in or enabled for Google project `1025401548407` | this is a Google project/API/quota/policy gate, not a repo-local implementation gap | confirm YouTube Data API v3 is enabled for project `1025401548407`, confirm the current key is attached to that project, wait for propagation if it was just enabled, then rerun the strict live-smoke lane |
 
 ## Remote Truth Snapshot
 
@@ -105,10 +135,11 @@ Fresh GitHub-side verification now shows:
 
 - current `main` now includes the landed shared-story and JK front-door consolidation
 - current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
-- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs still point at an older `main` head, so those protected external lanes do not count as current external verification for the current branch tip
-- release-current truth remains a separate ledger from current-branch truth; check the latest live tag and current-head workflows together before claiming release alignment
+- the latest published release is `v0.1.2`, and that release points at the current remote `main`
+- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with that same current `main` instead of an older head
+- release-current truth is aligned for `v0.1.2`, but live provider proof still stays a separate ledger from GitHub/release proof
 - the story-aware `/ask`, `/briefings`, `/subscriptions`, `/watchlists`, and `/trends` front-door line is now part of remote `main`
-- live repo description, homepage, and topics should match `config/public/github-profile.json` for the landed `main`, not an older conservative pre-landing wording
+- live repo description, homepage, topics, and discussions now match `config/public/github-profile.json` for the current remote `main`
 
 ## Read Next
 

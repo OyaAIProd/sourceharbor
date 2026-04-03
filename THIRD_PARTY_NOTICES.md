@@ -22,7 +22,7 @@ This file is the machine-generated third-party rights ledger for the tracked pub
 | Package | Version | License | Evidence Source |
 | --- | --- | --- | --- |
 | `aiohappyeyeballs` | `2.6.1` | `PSF-2.0` | `license-field` |
-| `aiohttp` | `3.13.3` | `Apache-2.0 AND MIT` | `license-field` |
+| `aiohttp` | `3.13.4` | `Apache-2.0 AND MIT` | `license-field` |
 | `aiosignal` | `1.4.0` | `Apache 2.0` | `license-field` |
 | `annotated-doc` | `0.0.4` | `MIT` | `license-expression` |
 | `annotated-types` | `0.7.0` | `MIT License` | `classifier` |
@@ -179,7 +179,7 @@ http://www.apache.org/licenses/LICENSE-2.0` | `license-field` |
 | `pydantic` | `2.12.5` | `MIT` | `license-expression` |
 | `pydantic-settings` | `2.13.1` | `MIT` | `license-expression` |
 | `pydantic_core` | `2.41.5` | `MIT` | `license-expression` |
-| `Pygments` | `2.19.2` | `BSD-2-Clause` | `license-field` |
+| `Pygments` | `2.20.0` | `BSD-2-Clause` | `license-expression` |
 | `PyJWT` | `2.12.1` | `MIT` | `license-expression` |
 | `pytest` | `8.4.2` | `MIT` | `license-field` |
 | `pytest-cov` | `6.3.0` | `MIT` | `license-field` |

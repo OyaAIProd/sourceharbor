@@ -100,9 +100,10 @@ Fresh Dawn Closure note:
 
 - current `main` now includes the landed shared-story and JK front-door consolidation
 - current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
-- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs still point at an older `main` head, so they remain external-proof gaps rather than current-head proof for the current branch tip
-- live GitHub description, homepage, and topics should now be evaluated against `config/public/github-profile.json` for the landed `main`, not against the earlier conservative wording
-- release-side proof is still a separate ledger from current-branch proof; check the latest live tag and current-head external lanes together before claiming release alignment
+- the latest published release is `v0.1.2`, and that release points at the current remote `main`
+- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with that same current `main` instead of an older head
+- live GitHub description, homepage, topics, and discussions now match `config/public/github-profile.json` for the current remote `main`
+- release-side proof is currently aligned for `v0.1.2`, but provider-backed live proof still stays separate from GitHub/release truth
 
 ## Future-direction Truth
 
@@ -125,14 +126,26 @@ Current blocker truth is also more specific than raw key presence:
 - Gemini-backed lanes already have maintainer-local proof; other environments
   still need Gemini access if they want the same layer.
 - Resend provider auth can exist while live delivery is still blocked by missing
-  sender configuration such as `RESEND_FROM_EMAIL`.
+  sender configuration such as `RESEND_FROM_EMAIL`, a verified sender/domain,
+  and a real destination mailbox. The current maintainer canary confirms
+  `RESEND_API_KEY` exists while `RESEND_FROM_EMAIL` is still missing.
 - The strict YouTube live-smoke probe is still bounded by a provider-side
   `quota_or_permission` / `403` rejection on the current key/project, not by
-  generic key absence or old repo-local runtime drift.
+  generic key absence or old repo-local runtime drift. The current provider
+  canary points more specifically to YouTube Data API v3 not yet being enabled
+  for Google project `1025401548407`, or not yet having propagated there.
+- The remaining exact action pack now lives in
+  [project-status.md](./project-status.md), because the blocker story has been
+  narrowed to Resend sender identity and YouTube project/quota policy rather
+  than generic secret absence.
 
 If you want the shortest honest board of what is already real, what is still
 secret-gated, and what stays in the spike bucket, read
 [project-status.md](./project-status.md).
+
+If you want the stable bucket map for CLI, SDK, hosted, autopilot, and
+plugin-first positioning, read
+[ecosystem-and-big-bet-decisions.md](./reference/ecosystem-and-big-bet-decisions.md).
 
 ## What Counts As Publicly Honest
 

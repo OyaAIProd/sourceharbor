@@ -7,6 +7,11 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+### Changed
+
+- tightened the durable ecosystem decision ledger so Switchyard stays explicitly out of the current cycle, alongside the existing no-go or later buckets for packaged CLI, public SDK, public Skills, and plugin-market positioning
+- refreshed the README non-promises so the public front door stays aligned with the shipped repo-local CLI surface, current builder-facing truth, and the still-deferred ecosystem bets
+
 ## [0.1.2] - 2026-04-03
 
 ### Added
