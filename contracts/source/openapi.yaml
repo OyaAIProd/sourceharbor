@@ -2532,18 +2532,6 @@ components:
           allOf:
             - $ref: '#/components/schemas/WatchlistBriefingPageResponse'
           nullable: true
-        briefing:
-          allOf:
-            - $ref: '#/components/schemas/WatchlistBriefingResponse'
-          nullable: true
-        story_focus:
-          allOf:
-            - $ref: '#/components/schemas/AskAnswerSelectedStory'
-          nullable: true
-        selected_story:
-          allOf:
-            - $ref: '#/components/schemas/WatchlistBriefingStoryEvidence'
-          nullable: true
         retrieval:
           allOf:
             - $ref: '#/components/schemas/RetrievalSearchResponse'

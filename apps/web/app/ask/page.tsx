@@ -266,10 +266,12 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 		})),
 	];
 	const retrievalHits = askPayload.retrieval?.items ?? [];
-	const storyFocus = askPayload.story_focus;
-	const selectedStory = askPayload.selected_story ?? askPayload.briefing?.selection?.story;
-	const storyChoices = askPayload.briefing?.evidence.stories ?? [];
-	const featuredRuns = askPayload.briefing?.evidence.featured_runs ?? [];
+	const storyPage = askPayload.story_page;
+	const briefing = storyPage?.briefing ?? null;
+	const storyFocus = storyPage?.story_focus ?? null;
+	const selectedStory = storyPage?.selected_story ?? briefing?.selection?.story ?? null;
+	const storyChoices = briefing?.evidence.stories ?? [];
+	const featuredRuns = briefing?.evidence.featured_runs ?? [];
 	const citations = askPayload.citations ?? [];
 	const fallbackActions = askPayload.fallback_actions ?? [];
 	const activeStoryId =
@@ -292,7 +294,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 		storyFocus?.routes.job_compare ?? null,
 		preferRoute(
 			selectedStory?.routes.job_compare ?? null,
-			askPayload.briefing?.differences.compare?.compare_route ?? null,
+			briefing?.differences.compare?.compare_route ?? null,
 		),
 	);
 
@@ -408,7 +410,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 					<CardDescription>{askCopy.askContextDescription}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					{askPayload.context.watchlist_id && askPayload.briefing ? (
+					{askPayload.context.watchlist_id && briefing ? (
 						<>
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="outline">
@@ -739,7 +741,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
-						{askPayload.briefing ? (
+						{briefing ? (
 							<>
 								{askPayload.story_change_summary ? (
 									<div className="rounded-lg border border-border/60 bg-background/70 p-4 text-sm text-muted-foreground">
@@ -756,7 +758,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										</p>
 										<p className="mt-2">
 											{renderTokenList(
-												askPayload.briefing.differences.added_topics,
+												briefing.differences.added_topics,
 												briefingsCopy.noneValue,
 											)}
 										</p>
@@ -767,7 +769,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										</p>
 										<p className="mt-2">
 											{renderTokenList(
-												askPayload.briefing.differences.removed_topics,
+												briefing.differences.removed_topics,
 												briefingsCopy.noneValue,
 											)}
 										</p>
@@ -778,7 +780,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										</p>
 										<p className="mt-2">
 											{renderTokenList(
-												askPayload.briefing.differences.added_claim_kinds,
+												briefing.differences.added_claim_kinds,
 												briefingsCopy.noneValue,
 											)}
 										</p>
@@ -789,7 +791,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										</p>
 										<p className="mt-2">
 											{renderTokenList(
-												askPayload.briefing.differences.removed_claim_kinds,
+												briefing.differences.removed_claim_kinds,
 												briefingsCopy.noneValue,
 											)}
 										</p>
@@ -800,7 +802,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										</p>
 										<p className="mt-2">
 											{renderTokenList(
-												askPayload.briefing.differences.new_story_keys,
+												briefing.differences.new_story_keys,
 												briefingsCopy.noneValue,
 											)}
 										</p>
@@ -811,7 +813,7 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										</p>
 										<p className="mt-2">
 											{renderTokenList(
-												askPayload.briefing.differences.removed_story_keys,
+												briefing.differences.removed_story_keys,
 												briefingsCopy.noneValue,
 											)}
 										</p>
@@ -822,13 +824,13 @@ export default async function AskPage({ searchParams }: AskPageProps) {
 										{briefingsCopy.compareTitle}
 									</p>
 									<p className="mt-2">
-										{askPayload.briefing.differences.compare?.diff_excerpt ||
+										{briefing.differences.compare?.diff_excerpt ||
 											briefingsCopy.noCompareExcerpt}
 									</p>
-									{askPayload.briefing.differences.compare ? (
+									{briefing.differences.compare ? (
 										<p className="mt-2">
-											+{askPayload.briefing.differences.compare.added_lines} / -
-											{askPayload.briefing.differences.compare.removed_lines}
+											+{briefing.differences.compare.added_lines} / -
+											{briefing.differences.compare.removed_lines}
 										</p>
 									) : null}
 								</div>

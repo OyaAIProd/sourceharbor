@@ -827,9 +827,6 @@ export type AskAnswerResponse = {
 	answer_confidence: AskAnswerConfidence;
 	story_change_summary: string | null;
 	story_page: WatchlistBriefingPage | null;
-	briefing: WatchlistBriefing | null;
-	story_focus: AskAnswerSelectedStory | null;
-	selected_story: WatchlistBriefingStoryEvidence | null;
 	retrieval: RetrievalSearchResponse | null;
 	citations: AskAnswerContractCitation[];
 	fallback_reason: string | null;

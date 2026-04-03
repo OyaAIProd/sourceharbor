@@ -163,9 +163,7 @@ describe("apiClient core behavior", () => {
 					answer_confidence: "grounded",
 					story_change_summary:
 						"Retry policy keeps tightening into the default path.",
-					briefing: null,
-					story_focus: null,
-					selected_story: null,
+					story_page: null,
 					retrieval: null,
 					citations: [],
 					fallback_reason: null,

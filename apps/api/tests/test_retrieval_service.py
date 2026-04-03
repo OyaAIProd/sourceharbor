@@ -892,8 +892,8 @@ def test_retrieval_service_answer_page_returns_server_owned_payload(monkeypatch)
     assert payload["context"]["watchlist_name"] == "Retry policy"
     assert payload["context"]["selection_basis"] == "requested_story_id"
     assert payload["answer_state"] == "briefing_grounded"
-    assert payload["story_focus"]["story_id"] == "story-1"
-    assert payload["selected_story"]["story_id"] == "story-1"
+    assert payload["story_page"]["story_focus"]["story_id"] == "story-1"
+    assert payload["story_page"]["selected_story"]["story_id"] == "story-1"
     assert payload["retrieval"]["items"][0]["source"] == "knowledge_cards"
     assert payload["citations"][0]["route_label"] == "Open briefing story"
     assert payload["fallback_actions"] == []

@@ -16,7 +16,7 @@ from integrations.providers.gemini import build_gemini_client, load_gemini_sdk
 
 from ..config import Settings
 from ..errors import ApiServiceError, ApiTimeoutError
-from .story_read_model import select_story_from_briefing
+from .story_read_model import build_briefing_page_payload, select_story_from_briefing
 
 _ALLOWED_FILTERS = {
     "platform",
@@ -71,7 +71,12 @@ class RetrievalService:
         normalized_filters = self._normalize_filters(filters)
         normalized_mode = self._normalize_mode(mode)
         briefing = (
-            self._load_watchlist_briefing_page(
+            self._ensure_story_page_payload(
+                self._load_watchlist_briefing_page(
+                    watchlist_id=normalized_watchlist_id,
+                    story_id=normalized_story_id,
+                    query=normalized_query,
+                ),
                 watchlist_id=normalized_watchlist_id,
                 story_id=normalized_story_id,
                 query=normalized_query,
@@ -218,7 +223,12 @@ class RetrievalService:
         normalized_filters = self._normalize_filters(filters)
 
         briefing_page = (
-            self._load_watchlist_briefing_page(
+            self._ensure_story_page_payload(
+                self._load_watchlist_briefing_page(
+                    watchlist_id=normalized_watchlist_id,
+                    story_id=normalized_story_id,
+                    query=normalized_query or normalized_topic_key or "",
+                ),
                 watchlist_id=normalized_watchlist_id,
                 story_id=normalized_story_id,
                 query=normalized_query or normalized_topic_key or "",
@@ -495,9 +505,6 @@ class RetrievalService:
                 or None
             ),
             "story_page": story_page,
-            "briefing": briefing,
-            "story_focus": story_focus,
-            "selected_story": selected_story,
             "retrieval": retrieval,
             "citations": (
                 list(answer_contract.get("citations") or [])
@@ -653,6 +660,65 @@ class RetrievalService:
             query=query,
         )
         return selected_story
+
+    def _ensure_story_page_payload(
+        self,
+        payload: dict[str, Any] | None,
+        *,
+        watchlist_id: str | None,
+        story_id: str | None,
+        query: str,
+    ) -> dict[str, Any] | None:
+        if not isinstance(payload, dict):
+            return None
+        if isinstance(payload.get("briefing"), dict) and isinstance(payload.get("context"), dict):
+            return payload
+
+        briefing = self._extract_briefing_payload(payload)
+        if not isinstance(briefing, dict):
+            return None
+
+        page = build_briefing_page_payload(
+            briefing=briefing,
+            story_id=story_id,
+            selection_query=query,
+        )
+        selection = page["selection"]
+        selected_story = page["selected_story"]
+        routes = page["routes"]
+        watchlist = briefing.get("watchlist") if isinstance(briefing.get("watchlist"), dict) else {}
+
+        return {
+            "context": {
+                "watchlist_id": str(watchlist_id or "").strip() or None,
+                "watchlist_name": str(watchlist.get("name") or "").strip() or None,
+                "story_id": selection["requested_story_id"],
+                "selected_story_id": selection["selected_story_id"],
+                "story_headline": selection["story_headline"],
+                "topic_key": selection["topic_key"],
+                "topic_label": selection["topic_label"],
+                "selection_basis": selection["selection_basis"],
+                "question_seed": selection["question_seed"],
+            },
+            "briefing": {
+                **briefing,
+                "selection": {
+                    "selected_story_id": selection["selected_story_id"],
+                    "selection_basis": selection["selection_basis"],
+                    "story": selected_story,
+                },
+            },
+            "story_focus": selected_story,
+            "selected_story": selected_story,
+            "story_change_summary": None,
+            "citations": [],
+            "routes": routes,
+            "ask_route": str(routes.get("ask") or "").strip() or None,
+            "compare_route": str(routes.get("job_compare") or "").strip() or None,
+            "fallback_reason": None,
+            "fallback_next_step": None,
+            "fallback_actions": [],
+        }
 
     def _select_briefing_story(
         self,
