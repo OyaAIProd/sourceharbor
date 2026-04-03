@@ -105,7 +105,8 @@ export default async function WatchlistsPage({
 		: { payload: null, error: false };
 	const notificationGate = opsResult.payload?.gates.notifications ?? null;
 	const selectedStory = briefingPageResult.payload?.selected_story ?? null;
-	const selectedStoryRoutes = selectedStory?.routes ?? briefingPageResult.payload?.routes;
+	const selectedStoryRoutes =
+		selectedStory?.routes ?? briefingPageResult.payload?.routes;
 	const compounderFrontDoorHref = trendWatchlist
 		? `/trends?watchlist_id=${encodeURIComponent(trendWatchlist.id)}`
 		: "/trends";
@@ -256,10 +257,10 @@ export default async function WatchlistsPage({
 					<CardHeader>
 						<CardTitle>Continue this watchlist</CardTitle>
 						<CardDescription>
-							Watchlists are the saved tracking objects. The unified
-							compounder front door lives in Trends, where this watchlist
-							turns into one current story, one recent-delta lane, and one
-							internal evidence bundle path.
+							Watchlists are the saved tracking objects. The unified compounder
+							front door lives in Trends, where this watchlist turns into one
+							current story, one recent-delta lane, and one internal evidence
+							bundle path.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">

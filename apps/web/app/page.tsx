@@ -348,10 +348,10 @@ export default async function DashboardPage({
 			</section>
 
 			<section
-				className="grid gap-4 xl:grid-cols-3"
+				className="grid gap-4 xl:grid-cols-4"
 				aria-label="SourceHarbor compounder surfaces"
 			>
-				<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground xl:col-span-3">
+				<h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground xl:col-span-4">
 					{copy.sectionHeadings.compounderSurfaces}
 				</h2>
 				<Card className="folo-surface border-border/70">
@@ -372,18 +372,34 @@ export default async function DashboardPage({
 				</Card>
 				<Card className="folo-surface border-border/70">
 					<CardHeader>
-						<CardTitle>{copy.compounders.bundleTitle}</CardTitle>
+						<CardTitle>{copy.compounders.trendsTitle}</CardTitle>
 						<CardDescription>
-							{copy.compounders.bundleDescription}
+							{copy.compounders.trendsDescription}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
 						<Button asChild>
-							<Link href="/jobs">{copy.compounders.bundleCta}</Link>
+							<Link href="/trends">{copy.compounders.trendsCta}</Link>
 						</Button>
-						<p className="text-sm text-muted-foreground">
-							{copy.compounders.bundleHint}
-						</p>
+						<Button asChild variant="outline">
+							<Link href="/briefings">{copy.compounders.briefingsCta}</Link>
+						</Button>
+					</CardContent>
+				</Card>
+				<Card className="folo-surface border-border/70">
+					<CardHeader>
+						<CardTitle>{copy.compounders.briefingsTitle}</CardTitle>
+						<CardDescription>
+							{copy.compounders.briefingsDescription}
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-wrap items-center gap-3 pt-0">
+						<Button asChild>
+							<Link href="/briefings">{copy.compounders.briefingsCta}</Link>
+						</Button>
+						<Button asChild variant="outline">
+							<Link href="/ask">{copy.frontDoors.askCta}</Link>
+						</Button>
 					</CardContent>
 				</Card>
 				<Card className="folo-surface border-border/70">
@@ -398,9 +414,7 @@ export default async function DashboardPage({
 							<Link href="/playground">{copy.compounders.playgroundCta}</Link>
 						</Button>
 						<Button asChild variant="outline">
-							<Link href="/use-cases/research-pipeline">
-								{copy.compounders.useCasesCta}
-							</Link>
+							<Link href="/proof">{copy.compounders.proofCta}</Link>
 						</Button>
 					</CardContent>
 				</Card>

@@ -283,7 +283,10 @@ function buildAskRoute({
 	topicKey: string | null;
 	label: string;
 }): string {
-	const params = new URLSearchParams({ watchlist_id: watchlistId, story_id: storyId });
+	const params = new URLSearchParams({
+		watchlist_id: watchlistId,
+		story_id: storyId,
+	});
 	if (topicKey) {
 		params.set("topic_key", topicKey);
 	}
@@ -384,11 +387,13 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 		briefing?.evidence.stories[0] ??
 		null;
 	const leadBundle = leadStory?.latest_run_job_id
-		? await apiClient.getJobEvidenceBundle(leadStory.latest_run_job_id).catch(() => null)
+		? await apiClient
+				.getJobEvidenceBundle(leadStory.latest_run_job_id)
+				.catch(() => null)
 		: null;
 	const leadBundleStepCount =
-		leadBundle && typeof leadBundle.trace_summary["step_count"] === "number"
-			? leadBundle.trace_summary["step_count"]
+		leadBundle && typeof leadBundle.trace_summary.step_count === "number"
+			? leadBundle.trace_summary.step_count
 			: "unknown";
 
 	return (
@@ -543,8 +548,8 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 							<CardHeader>
 								<CardTitle>Evidence and sample boundary</CardTitle>
 								<CardDescription>
-									Keep live watchlist evidence and sample/demo proof in the
-									same map without mixing their truth layers.
+									Keep live watchlist evidence and sample/demo proof in the same
+									map without mixing their truth layers.
 								</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -559,8 +564,8 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
 										</p>
 										<p className="mt-2">{leadBundle.proof_boundary}</p>
 										<p className="mt-2">
-											Trace steps: {leadBundleStepCount} ·
-											Knowledge cards: {leadBundle.knowledge_cards.length}
+											Trace steps: {leadBundleStepCount} · Knowledge cards:{" "}
+											{leadBundle.knowledge_cards.length}
 										</p>
 									</div>
 								) : (

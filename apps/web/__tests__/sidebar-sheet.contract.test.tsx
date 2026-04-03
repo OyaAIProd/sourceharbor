@@ -178,10 +178,9 @@ describe("Sidebar + Sheet contract", () => {
 				"href",
 				"/trends",
 			);
-			expect(screen.getByRole("link", { name: "Subscriptions" })).toHaveAttribute(
-				"href",
-				"/subscriptions",
-			);
+			expect(
+				screen.getByRole("link", { name: "Subscriptions" }),
+			).toHaveAttribute("href", "/subscriptions");
 			expect(screen.getByRole("link", { name: "Briefings" })).toHaveAttribute(
 				"href",
 				"/briefings",

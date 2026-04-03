@@ -244,11 +244,38 @@ describe("dashboard/settings/subscriptions pages", () => {
 				screen.getByRole("heading", { name: "Source-universe intake" }),
 			).toBeInTheDocument();
 			expect(
+				screen.getByRole("heading", {
+					name: "Watchlists are tracking objects",
+				}),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("heading", {
+					name: "Trends are the compounder front door",
+				}),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("heading", {
+					name: "Briefings are the shared story surface",
+				}),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("heading", { name: "Playground stays sample-proof" }),
+			).toBeInTheDocument();
+			expect(
 				screen.getByRole("link", { name: "Open Subscriptions" }),
 			).toHaveAttribute("href", "/subscriptions");
 			expect(
-				screen.getByRole("link", { name: "Open Briefings" }),
-			).toHaveAttribute("href", "/briefings");
+				screen.getAllByRole("link", { name: "Open Briefings" }).length,
+			).toBeGreaterThanOrEqual(2);
+			for (const link of screen.getAllByRole("link", {
+				name: "Open Briefings",
+			})) {
+				expect(link).toHaveAttribute("href", "/briefings");
+			}
+			expect(screen.getByRole("link", { name: "Open Proof" })).toHaveAttribute(
+				"href",
+				"/proof",
+			);
 			expect(
 				screen.getByRole("link", { name: "Inspect proof ladder" }),
 			).toHaveAttribute("href", "/proof");

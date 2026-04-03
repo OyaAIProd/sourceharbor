@@ -128,8 +128,8 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
 					<div className="rounded-lg border border-border/60 bg-muted/20 p-4">
 						<p className="font-medium text-foreground">2. Unified view</p>
 						<p className="mt-2">
-							Use <code>/trends</code> to see the current repeated story,
-							recent movement, and drill-down evidence.
+							Use <code>/trends</code> to see the current repeated story, recent
+							movement, and drill-down evidence.
 						</p>
 					</div>
 					<div className="rounded-lg border border-border/60 bg-muted/20 p-4">

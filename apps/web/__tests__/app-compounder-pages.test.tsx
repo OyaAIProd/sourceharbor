@@ -390,7 +390,8 @@ describe("compounder pages", () => {
 			),
 		).toBeInTheDocument();
 		expect(
-			screen.getAllByRole("heading", { name: "Continue this watchlist" }).length,
+			screen.getAllByRole("heading", { name: "Continue this watchlist" })
+				.length,
 		).toBeGreaterThan(0);
 		expect(
 			screen
@@ -422,7 +423,9 @@ describe("compounder pages", () => {
 		expect(screen.getByText("Merged stories")).toBeInTheDocument();
 		expect(screen.getByText("Latest lead-story bundle")).toBeInTheDocument();
 		expect(
-			screen.getByText(/Internal evidence bundle only\. Do not treat this as hosted proof/i),
+			screen.getByText(
+				/Internal evidence bundle only\. Do not treat this as hosted proof/i,
+			),
 		).toBeInTheDocument();
 		expect(screen.getAllByText("AI Weekly").length).toBeGreaterThan(0);
 		expect(screen.getAllByText("Bili Update").length).toBeGreaterThan(0);
