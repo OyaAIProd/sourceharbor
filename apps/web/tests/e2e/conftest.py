@@ -375,13 +375,28 @@ def web_base_url(
             env["NEXT_PUBLIC_API_BASE_URL"] = real_api_base_url
         env.setdefault("SOURCE_HARBOR_API_KEY", WEB_E2E_WRITE_TOKEN)
         env.setdefault("WEB_ACTION_SESSION_TOKEN", WEB_E2E_WRITE_TOKEN)
+        env["SOURCE_HARBOR_REPO_ROOT"] = str(PROJECT_ROOT)
         env["PORT"] = str(web_port)
         env["HOSTNAME"] = "127.0.0.1"
         env["CI"] = "1"
         env["WEB_E2E_NEXT_DIST_DIR"] = next_dist_dir
 
+        next_bin = runtime_web_dir / "node_modules" / ".bin" / "next"
+        command = (
+            [
+                str(next_bin),
+                "dev",
+                "--hostname",
+                "127.0.0.1",
+                "--port",
+                str(web_port),
+            ]
+            if next_bin.exists()
+            else ["npm", "run", "dev", "--", "--hostname", "127.0.0.1", "--port", str(web_port)]
+        )
+
         local_process = subprocess.Popen(
-            ["npm", "run", "dev", "--", "--hostname", "127.0.0.1", "--port", str(web_port)],
+            command,
             cwd=runtime_web_dir,
             env=env,
             stdout=subprocess.PIPE,
