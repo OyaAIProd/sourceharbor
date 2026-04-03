@@ -376,8 +376,9 @@ const MESSAGES = {
 				"Treat this as the agent-facing control plane. Web serves operators, API serves system integrations, and MCP serves assistants and workflows, while all three point at the same pipeline.",
 			startTitle: "Start locally in one command",
 			startDescription:
-				"MCP is not a second copy of the business logic. It is the agent-facing doorway into the same API-backed system.",
-			startNote: "This starts the FastMCP server wired in apps/mcp/server.py.",
+				"MCP is not a second copy of the business logic. Use the thin repo-local CLI facade to discover the route first, then start the same API-backed system through MCP.",
+			startNote:
+				"`./bin/sourceharbor mcp` routes to the same FastMCP server wired in apps/mcp/server.py. `./bin/dev-mcp` remains the direct underlying entrypoint.",
 			toolsTitle: "Representative tools",
 			toolsDescription:
 				"These are enough to explain the surface in under three minutes.",
@@ -1149,7 +1150,7 @@ const MESSAGES = {
 		builderSurfaces: {
 			title: "Build with Codex, Claude Code, and MCP clients",
 			subtitle:
-				"Use SourceHarbor as an agent-facing control tower through MCP, the HTTP API, and the shared TypeScript client layer.",
+				"Use SourceHarbor as an agent-facing control tower through MCP, the HTTP API, the thin repo-local CLI facade, and the shared TypeScript client layer.",
 			mcpCta: "Open MCP quickstart",
 			codexCta: "Open Codex workflow",
 			claudeCodeCta: "Open Claude Code workflow",
@@ -1160,14 +1161,20 @@ const MESSAGES = {
 				"Codex-ready",
 				"Claude Code-ready",
 				"HTTP API",
+				"Thin repo CLI",
 				"Proof-first",
 			],
 			cards: {
 				reuse: {
-					title: "One control plane, three real doors",
+					title: "One control plane, four real doors",
 					description:
-						"Web, HTTP API, and MCP all point to the same jobs, artifacts, grounded search, and operator truth.",
-					bullets: ["Search + Ask", "MCP + API", "Shared TypeScript client"],
+						"Web, HTTP API, MCP, and the thin repo-local CLI facade all point to the same jobs, artifacts, grounded search, and operator truth.",
+					bullets: [
+						"Search + Ask",
+						"MCP + API",
+						"Thin repo CLI",
+						"Shared TypeScript client",
+					],
 				},
 				proof: {
 					title: "Receipts before vibes",
@@ -1547,8 +1554,9 @@ const MESSAGES = {
 				"把它理解成 agent-facing control plane。Web 服务运营者，API 服务系统集成，MCP 服务助手和工作流，而三者都指向同一套 pipeline。",
 			startTitle: "一条命令本地启动",
 			startDescription:
-				"MCP 不是第二套业务逻辑，而是同一套 API-backed system 的 agent-facing doorway。",
-			startNote: "这会启动接到 apps/mcp/server.py 的 FastMCP server。",
+				"MCP 不是第二套业务逻辑。先用薄的 repo-local CLI 门面找路，再通过 MCP 启动同一套 API-backed system。",
+			startNote:
+				"`./bin/sourceharbor mcp` 会路由到接在 apps/mcp/server.py 上的同一台 FastMCP server。`./bin/dev-mcp` 仍然是底层直达入口。",
 			toolsTitle: "代表性工具",
 			toolsDescription: "这些已经足够在三分钟内解释清楚当前 surface。",
 			relationshipTitle: "MCP 与其他产品面的关系",
@@ -2312,7 +2320,7 @@ const MESSAGES = {
 		builderSurfaces: {
 			title: "通过 Codex、Claude Code 和 MCP 客户端接入",
 			subtitle:
-				"把 SourceHarbor 当作 agent-facing control tower 使用：走 MCP、HTTP API 和共享 TypeScript client layer，而不是复制一套新的业务逻辑。",
+				"把 SourceHarbor 当作 agent-facing control tower 使用：走 MCP、HTTP API、薄的 repo-local CLI 门面和共享 TypeScript client layer，而不是复制一套新的业务逻辑。",
 			mcpCta: "打开 MCP quickstart",
 			codexCta: "打开 Codex workflow",
 			claudeCodeCta: "打开 Claude Code workflow",
@@ -2323,14 +2331,20 @@ const MESSAGES = {
 				"Codex-ready",
 				"Claude Code-ready",
 				"HTTP API",
+				"Thin repo CLI",
 				"Proof-first",
 			],
 			cards: {
 				reuse: {
-					title: "一套控制平面，三个真实入口",
+					title: "一套控制平面，四个真实入口",
 					description:
-						"Web、HTTP API 和 MCP 都指向同一套 jobs、artifacts、grounded search 与 operator truth。",
-					bullets: ["Search + Ask", "MCP + API", "共享 TypeScript client"],
+						"Web、HTTP API、MCP，以及薄的 repo-local CLI 门面都指向同一套 jobs、artifacts、grounded search 与 operator truth。",
+					bullets: [
+						"Search + Ask",
+						"MCP + API",
+						"Thin repo CLI",
+						"共享 TypeScript client",
+					],
 				},
 				proof: {
 					title: "先看证据，再谈气氛",

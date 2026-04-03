@@ -19,6 +19,7 @@ SourceHarbor is already a real, source-first product-shaped repository.
 It has:
 
 - local first-run and doctor flows
+- a thin repo-local CLI facade over the existing `bin/*` entrypoints
 - Search, story-aware briefing-backed Ask, shared-story Briefings, MCP, and Ops front doors
 - strong-supported YouTube/Bilibili intake plus generalized RSSHub/RSS source intake templates
 - watchlists, merged stories, trends, briefings, bundles, and a sample playground
@@ -28,6 +29,7 @@ What it does **not** have today:
 
 - a hosted workspace promise
 - autopilot product claims
+- a separately packaged public CLI or public SDK
 - live external notification proof without sender configuration
 - universal no-secret proof for Gemini-backed lanes
 - route-by-route verification across the full RSSHub universe
@@ -37,6 +39,7 @@ What it does **not** have today:
 These are the strongest current claims:
 
 - **First-run base path:** `./bin/bootstrap-full-stack`, `./bin/full-stack up`, `./bin/doctor`, and the runtime route snapshot under `.runtime-cache/run/full-stack/resolved.env`
+- **CLI substrate:** existing `bin/*` entrypoints are now discoverable through `./bin/sourceharbor help`, while still remaining repo-local rather than a packaged public CLI
 - **Local write-route contract:** direct write APIs can be exercised with the local dev token path instead of pretending auth is an unresolved product gap
 - **Source intake contract:** strong-supported YouTube/Bilibili templates plus generalized RSSHub/RSS substrate without overclaiming full-universe proof, with the `/subscriptions` front door now consuming the same template catalog exposed through API and MCP
 - **Front doors:** `/search`, `/ask` (story-aware, briefing-backed answer/change/evidence flow with truthful raw-retrieval fallback, selected-story drill-down, and a server-owned story page payload that now reuses one canonical selected-story object from Briefings), `/briefings` (server-owned briefing page payload for selected story, compare route, and Ask handoff), `/mcp`, `/ops`, `/subscriptions`
@@ -100,11 +103,12 @@ machine. The remaining blockers are more specific than \"secret missing\".
 
 Fresh GitHub-side verification now shows:
 
-- current `main` now includes the landed Ask payload refresh from PR `#32` plus the follow-up remote-truth wording refresh from PR `#33`
-- current `main` has fresh successful `ci`, `pre-commit`, `release-evidence-attest`, and `build-ci-standard-image` runs on the landed branch lineage
-- latest release tag `v0.1.1` is still older than current `main`, so release proof and current-branch proof remain different layers
-- the story-aware `/ask`, `/briefings`, and the shared server-owned story payload/read-model story are no longer local-only; they are now part of remote `main`
-- live repo description, homepage, and topics should be judged against the landed `main` wording rather than the earlier conservative pre-landing wording
+- current `main` now includes the landed shared-story and JK front-door consolidation
+- current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
+- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs still point at an older `main` head, so those protected external lanes do not count as current external verification for the current branch tip
+- release-current truth remains a separate ledger from current-branch truth; check the latest live tag and current-head workflows together before claiming release alignment
+- the story-aware `/ask`, `/briefings`, `/subscriptions`, `/watchlists`, and `/trends` front-door line is now part of remote `main`
+- live repo description, homepage, and topics should match `config/public/github-profile.json` for the landed `main`, not an older conservative pre-landing wording
 
 ## Read Next
 

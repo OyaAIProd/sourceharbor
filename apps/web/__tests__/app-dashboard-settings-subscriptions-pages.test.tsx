@@ -283,7 +283,7 @@ describe("dashboard/settings/subscriptions pages", () => {
 				screen.getByRole("link", { name: "Open research pipeline" }),
 			).toHaveAttribute("href", "/use-cases/research-pipeline");
 			expect(
-				screen.getByText("One control plane, three real doors"),
+				screen.getByText("One control plane, four real doors"),
 			).toBeInTheDocument();
 			expect(screen.getByText("Receipts before vibes")).toBeInTheDocument();
 			expect(screen.getByText("Worth coming back to")).toBeInTheDocument();

@@ -47,7 +47,11 @@ export default function McpPage() {
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<pre className="overflow-x-auto rounded-lg border border-border/70 bg-muted/40 p-4 text-sm">
-							<code>./bin/dev-mcp</code>
+							<code>{`./bin/sourceharbor help
+./bin/sourceharbor mcp
+
+# direct entrypoint still works
+./bin/dev-mcp`}</code>
 						</pre>
 						<p className="text-sm text-muted-foreground">{copy.startNote}</p>
 					</CardContent>

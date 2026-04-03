@@ -2,11 +2,12 @@
 
 SourceHarbor is not only a Web UI.
 
-It already exposes three real builder-facing layers:
+It already exposes four real builder-facing layers:
 
 1. **HTTP API contract** for system integrations
 2. **MCP surface** for agent clients such as Codex and Claude Code
-3. **Shared TypeScript client and types** that show the current substrate path
+3. **Repo-local CLI/help facade** for discoverable operator and builder entrypoints
+4. **Shared TypeScript client and types** that show the current substrate path
 
 Think of the product like one control tower with multiple doors:
 
@@ -33,6 +34,7 @@ doors operators already see:
 | --- | --- | --- |
 | **Codex** | Primary fit | SourceHarbor already exposes a real MCP server plus operator-safe HTTP contracts |
 | **Claude Code** | Primary fit | Same MCP surface, same API-backed state, same retrieval and job evidence |
+| **Repo-local CLI users** | Primary fit | `./bin/sourceharbor help` gives one discoverable facade over the real `bin/*` entrypoints without duplicating business logic |
 | **Custom MCP clients** | Primary fit | `./bin/dev-mcp` starts a real FastMCP server over the current pipeline |
 | **Direct HTTP builders** | Primary fit | The repo already carries a public OpenAPI contract and typed client helpers |
 | **OpenHands / OpenCode** | Secondary fit | They are ecosystem-adjacent if you integrate through MCP or HTTP, but they are not the main front door today |
@@ -70,7 +72,24 @@ Representative tools:
 - `sourceharbor.retrieval.search`
 - `sourceharbor.ingest.poll`
 
-### 3. Shared TypeScript Client Layer
+### 3. Repo-Local CLI Surface
+
+If you want one discoverable command surface before you memorize the bin
+directory:
+
+- `./bin/sourceharbor help`
+- `./bin/sourceharbor bootstrap`
+- `./bin/sourceharbor full-stack up`
+- `./bin/sourceharbor doctor`
+- `./bin/sourceharbor mcp`
+
+This is the honest current status:
+
+- it is a **thin repo-local facade**
+- it routes into the existing `bin/*` entrypoints
+- it is **not** marketed as a separately packaged public CLI
+
+### 4. Shared TypeScript Client Layer
 
 These files are not marketed as a standalone SDK yet, but they are already the
 real substrate path inside the repo:
@@ -93,11 +112,13 @@ The most truthful next packaging sequence is:
 1. keep the HTTP contract stable
 2. keep the MCP surface stable
 3. keep the shared TypeScript client and types stable
-4. extract a thin TypeScript SDK only when the builder contract stops moving
-5. treat a Python SDK as later
+4. keep the repo-local CLI facade thin and honest over `bin/*`
+5. extract a thin TypeScript SDK only when the builder contract stops moving
+6. treat a Python SDK as later
 
 That means:
 
+- **Repo-local CLI facade:** shipped now as a thin discoverability surface
 - **TypeScript SDK:** later, but clearly on-path
 - **Python SDK:** later
 - **generic multi-language platform claim:** no-go for now

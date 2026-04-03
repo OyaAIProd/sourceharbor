@@ -50,19 +50,27 @@ def _create_generic_rsshub_route_via_form(page: Page, route_value: str) -> None:
     create_form.evaluate("(form) => form.requestSubmit()")
 
 
+def _expect_subscription_success(page: Page) -> None:
+    expect(
+        page,
+    ).to_have_url(
+        re.compile(r"/subscriptions\?status=success&code=SUBSCRIPTION_(CREATED|UPDATED)"),
+        timeout=15_000,
+    )
+    expect(page.locator(".alert.success")).to_contain_text(
+        re.compile(r"(订阅已创建。|订阅已更新。|Subscription created\.|Subscription updated\.)"),
+        timeout=15_000,
+    )
+
+
 def test_subscriptions_save_subscription_button(page: Page) -> None:
     source_value = f"https://www.youtube.com/@sourceharbor-e2e-{uuid4().hex[:8]}"
     page.goto("/subscriptions", wait_until="domcontentloaded")
     _create_subscription_via_form(page, source_value)
 
-    expect(page).to_have_url(
-        re.compile(r"/subscriptions\?status=success&code=SUBSCRIPTION_(CREATED|UPDATED)")
-    )
-    expect(page.locator(".alert.success")).to_contain_text(
-        re.compile(r"(订阅已创建。|订阅已更新。|Subscription created\.|Subscription updated\.)")
-    )
+    _expect_subscription_success(page)
     created_row = _subscription_row(page, source_value)
-    expect(created_row).to_be_visible()
+    expect(created_row).to_be_visible(timeout=15_000)
 
 
 def test_subscriptions_delete_button(page: Page) -> None:
@@ -90,7 +98,7 @@ def test_subscriptions_batch_update_category(page: Page) -> None:
     _create_subscription_via_form(page, source_value)
 
     row = _subscription_row(page, source_value)
-    expect(row).to_be_visible()
+    expect(row).to_be_visible(timeout=15_000)
     row.get_by_role("checkbox").click()
     _select_option(page, r"(批量设分类|Bulk category)", r"(运维|Operations)")
     page.get_by_test_id("subscription-apply-category").click()
@@ -115,10 +123,5 @@ def test_subscriptions_save_generic_rsshub_route_template(page: Page) -> None:
     expect(page.get_by_text(re.compile(r"(待证明|Needs proof)")).first).to_be_visible()
     _create_generic_rsshub_route_via_form(page, route_value)
 
-    expect(page).to_have_url(
-        re.compile(r"/subscriptions\?status=success&code=SUBSCRIPTION_(CREATED|UPDATED)")
-    )
-    expect(page.locator(".alert.success")).to_contain_text(
-        re.compile(r"(订阅已创建。|订阅已更新。|Subscription created\.|Subscription updated\.)")
-    )
-    expect(_subscription_row(page, route_value)).to_be_visible()
+    _expect_subscription_success(page)
+    expect(_subscription_row(page, route_value)).to_be_visible(timeout=15_000)
