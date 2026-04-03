@@ -112,6 +112,7 @@ def test_subscriptions_save_generic_rsshub_route_template(page: Page) -> None:
         "/subscriptions?template=generic_rsshub_route",
         wait_until="domcontentloaded",
     )
+    expect(page.get_by_text(re.compile(r"(待证明|Needs proof)")).first).to_be_visible()
     _create_generic_rsshub_route_via_form(page, route_value)
 
     expect(page).to_have_url(

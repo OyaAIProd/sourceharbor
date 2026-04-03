@@ -141,6 +141,10 @@ function supportBadgeClass(level: string): string {
 	return "border-amber-500/40 bg-amber-500/10 text-amber-700";
 }
 
+function provingBadgeClass(): string {
+	return "border-amber-500/40 bg-amber-500/10 text-amber-700";
+}
+
 function uniqueTemplateValues(
 	templates: TemplatePresentation[],
 	pick: (template: TemplatePresentation) => string,
@@ -152,6 +156,13 @@ function uniqueTemplateValues(
 				.filter((value) => value.length > 0),
 		),
 	);
+}
+
+function templatesForSupportTier(
+	templates: TemplatePresentation[],
+	supportTier: string,
+): TemplatePresentation[] {
+	return templates.filter((template) => template.support_tier === supportTier);
 }
 
 export default async function SubscriptionsPage({
@@ -244,6 +255,11 @@ export default async function SubscriptionsPage({
 		templateCatalog.support_tiers,
 		selectedTemplate,
 	);
+	const genericTemplates = templatesForSupportTier(templates, "generic_supported");
+	const provingTemplates = genericTemplates.filter(
+		(templateOption) =>
+			Boolean(templateOption.proof_boundary) || Boolean(templateOption.evidence_note),
+	);
 	const pageErrorCode =
 		subscriptionsResult.errorCode ?? templateCatalogResult.errorCode;
 
@@ -282,23 +298,53 @@ export default async function SubscriptionsPage({
 						<h2 className="text-xl font-semibold">{copy.supportMatrixTitle}</h2>
 						<CardDescription>{copy.supportMatrixDescription}</CardDescription>
 					</CardHeader>
-					<CardContent className="grid gap-3 md:grid-cols-2">
-						{templateCatalog.support_tiers.map((tier) => (
-							<div
-								key={tier.id}
-								className="rounded-xl border border-border/60 bg-muted/20 p-4"
+						<CardContent className="grid gap-3 md:grid-cols-2">
+							{templateCatalog.support_tiers.map((tier) => (
+								<div
+									key={tier.id}
+									className="rounded-xl border border-border/60 bg-muted/20 p-4"
 							>
 								<Badge variant="outline" className={supportBadgeClass(tier.id)}>
 									{tier.label}
 								</Badge>
 								<p className="mt-3 font-medium">{tier.label}</p>
-								<p className="mt-2 text-sm text-muted-foreground">
-									{tier.description}
+									<p className="mt-2 text-sm text-muted-foreground">
+										{tier.description}
+									</p>
+									<div className="mt-3 flex flex-wrap gap-2">
+										{templatesForSupportTier(templates, tier.id).map(
+											(templateOption) => (
+												<Badge
+													key={`${tier.id}-${templateOption.id}`}
+													variant="outline"
+												>
+													{templateOption.label}
+												</Badge>
+											),
+										)}
+									</div>
+								</div>
+							))}
+							<div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+								<Badge variant="outline" className={provingBadgeClass()}>
+									{copy.supportLevels.proving.title}
+								</Badge>
+								<p className="mt-3 font-medium">
+									{copy.supportLevels.proving.title}
 								</p>
+								<p className="mt-2 text-sm text-muted-foreground">
+									{copy.supportLevels.proving.description}
+								</p>
+								<div className="mt-3 flex flex-wrap gap-2">
+									{provingTemplates.map((templateOption) => (
+										<Badge key={`proving-${templateOption.id}`} variant="outline">
+											{templateOption.label}
+										</Badge>
+									))}
+								</div>
 							</div>
-						))}
-					</CardContent>
-				</Card>
+						</CardContent>
+					</Card>
 
 				<Card className="folo-surface border-border/70">
 					<CardHeader className="gap-2">
@@ -324,9 +370,26 @@ export default async function SubscriptionsPage({
 										{selectedTemplate.description}
 									</p>
 								</div>
-								<dl className="grid gap-3 text-sm">
-									<div>
-										<dt className="font-medium">{copy.guideLabels.platform}</dt>
+									<dl className="grid gap-3 text-sm">
+										<div>
+											<dt className="font-medium">
+												{copy.guideLabels.supportLevel}
+											</dt>
+											<dd className="flex flex-wrap items-center gap-2 text-muted-foreground">
+												<span>{selectedSupportTier.label}</span>
+												{selectedTemplate.support_tier ===
+												"generic_supported" ? (
+													<Badge
+														variant="outline"
+														className={provingBadgeClass()}
+													>
+														{copy.supportLevels.proving.title}
+													</Badge>
+												) : null}
+											</dd>
+										</div>
+										<div>
+											<dt className="font-medium">{copy.guideLabels.platform}</dt>
 										<dd className="text-muted-foreground">
 											{platformLabelMap.get(selectedTemplate.platform) ??
 												humanizeToken(selectedTemplate.platform)}
@@ -406,17 +469,28 @@ export default async function SubscriptionsPage({
 											: "border-border/60 bg-muted/20"
 									}`}
 								>
-									<div className="flex items-start justify-between gap-3">
-										<h3 className="text-base font-semibold">
-											{templateOption.label}
-										</h3>
-										<Badge
-											variant="outline"
-											className={supportBadgeClass(templateOption.support_tier)}
-										>
-											{supportTier?.label ?? templateOption.support_tier}
-										</Badge>
-									</div>
+										<div className="flex items-start justify-between gap-3">
+											<h3 className="text-base font-semibold">
+												{templateOption.label}
+											</h3>
+											<div className="flex flex-wrap justify-end gap-2">
+												<Badge
+													variant="outline"
+													className={supportBadgeClass(templateOption.support_tier)}
+												>
+													{supportTier?.label ?? templateOption.support_tier}
+												</Badge>
+												{templateOption.support_tier ===
+												"generic_supported" ? (
+													<Badge
+														variant="outline"
+														className={provingBadgeClass()}
+													>
+														{copy.supportLevels.proving.title}
+													</Badge>
+												) : null}
+											</div>
+										</div>
 									<p className="mt-3 text-sm text-muted-foreground">
 										{templateOption.description}
 									</p>
