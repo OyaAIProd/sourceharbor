@@ -1,1 +1,1 @@
-export * from "../../../../packages/sourceharbor-sdk/src/types.js";
+export * from "../../../../packages/sourceharbor-sdk/src/types";

@@ -1,22 +1,14 @@
 # SourceHarbor OpenClaw Pack
 
-This is the first public OpenClaw local plugin/skill pack for SourceHarbor.
+This is the first public OpenClaw local starter pack for SourceHarbor.
 
 Use it when you want:
 
 - the quickest OpenClaw compatibility path
-- a local plugin/skill pack that points at MCP, HTTP API, CLI, and SDK
+- a local starter pack that points at MCP, HTTP API, CLI, and SDK
 - a public OpenClaw-shaped skill without relying on repo-private `.agents/skills`
 
-Install it locally:
-
-```bash
-openclaw plugins install /path/to/sourceharbor/starter-packs/openclaw
-openclaw plugins enable sourceharbor-openclaw
-openclaw plugins inspect sourceharbor-openclaw
-```
-
-Then start here:
+Start here:
 
 - `docs/compat/openclaw.md`
 - `starter-packs/openclaw/sourceharbor-mcp-template.json`
@@ -26,6 +18,6 @@ Then start here:
 
 Honest boundary:
 
-- this is a first-cut local plugin/skill pack
+- this is a first-cut local starter pack
 - it is not a registry-published OpenClaw plugin
 - it is not a plugin marketplace claim

@@ -4,7 +4,7 @@ import {
 	isSensitiveQueryKey,
 	type QueryValue,
 	sanitizeExternalUrl,
-} from "../../../../packages/sourceharbor-sdk/src/url.js";
+} from "../../../../packages/sourceharbor-sdk/src/url";
 
 type ResolveOptions = {
 	allowFallback?: boolean;

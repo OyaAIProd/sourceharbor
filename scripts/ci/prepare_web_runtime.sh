@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUNTIME_ROOT="$ROOT_DIR/.runtime-cache/tmp/web-runtime"
 WORKSPACE_WEB_DIR="$RUNTIME_ROOT/workspace/apps/web"
-WORKSPACE_SDK_SRC_DIR="$RUNTIME_ROOT/workspace/packages/sourceharbor-sdk/src"
+WORKSPACE_SDK_DIR="$RUNTIME_ROOT/workspace/packages/sourceharbor-sdk"
 STATE_DIR="$ROOT_DIR/.runtime-cache/run/web-runtime"
 HASH_FILE="$STATE_DIR/package.sha256"
 READY_FILE="$STATE_DIR/ready"
@@ -56,7 +56,7 @@ import sys
 
 root = Path(sys.argv[1])
 roots = [root / "apps" / "web"]
-sdk_source_root = root / "packages" / "sourceharbor-sdk" / "src"
+sdk_source_root = root / "packages" / "sourceharbor-sdk"
 if sdk_source_root.exists():
     roots.append(sdk_source_root)
 blocked_names = {
@@ -248,7 +248,7 @@ for child in web_dir.iterdir():
                 pass
 PY
 
-python3 - <<'PY' "$ROOT_DIR" "$WORKSPACE_WEB_DIR" "$WORKSPACE_SDK_SRC_DIR"
+python3 - <<'PY' "$ROOT_DIR" "$WORKSPACE_WEB_DIR" "$WORKSPACE_SDK_DIR"
 import errno
 from pathlib import Path
 import shutil
@@ -258,7 +258,7 @@ import time
 root = Path(sys.argv[1])
 source_dir = root / "apps" / "web"
 target_dir = Path(sys.argv[2])
-sdk_source_dir = root / "packages" / "sourceharbor-sdk" / "src"
+sdk_source_dir = root / "packages" / "sourceharbor-sdk"
 sdk_target_dir = Path(sys.argv[3])
 staging_dir = target_dir.parent / f"{target_dir.name}.staging"
 sdk_staging_dir = sdk_target_dir.parent / f"{sdk_target_dir.name}.staging"

@@ -3,7 +3,7 @@
 This is the shortest honest OpenClaw adoption path for SourceHarbor.
 
 OpenClaw is no longer limited here to a vague "generic MCP / HTTP only" story.
-SourceHarbor now ships a first-cut local OpenClaw plugin/skill pack on top of the
+SourceHarbor now ships a first-cut local OpenClaw starter pack on top of the
 same MCP and HTTP API surfaces already documented for Codex and Claude Code.
 
 ## Pick Your Door
@@ -19,15 +19,9 @@ same MCP and HTTP API surfaces already documented for Codex and Claude Code.
 ## Fastest Path
 
 1. Read [docs/mcp-quickstart.md](../mcp-quickstart.md).
-2. Install it through the normal local-plugin flow:
-
-```bash
-openclaw plugins install /path/to/sourceharbor/starter-packs/openclaw
-openclaw plugins enable sourceharbor-openclaw
-openclaw plugins inspect sourceharbor-openclaw
-```
-
-1. If you need a full SourceHarbor stack first, follow
+2. Use `starter-packs/openclaw/` as the local starter-pack directory in your
+   normal OpenClaw local-plugin or workspace-skill flow.
+3. If you need a full SourceHarbor stack first, follow
    [docs/start-here.md](../start-here.md).
 
 ## Public Starter Assets
@@ -40,8 +34,8 @@ openclaw plugins inspect sourceharbor-openclaw
 
 ## Honest Boundary
 
-- OpenClaw is now a **first-cut local plugin/skill pack fit** through MCP +
-  HTTP API plus the new public starter layer.
+- OpenClaw is now a **first-cut local starter-pack fit** through MCP + HTTP API
+  plus the new public starter layer.
 - This does **not** mean SourceHarbor ships a registry-published OpenClaw
   plugin today.
 - This does **not** mean SourceHarbor ships an OpenClaw plugin marketplace.
