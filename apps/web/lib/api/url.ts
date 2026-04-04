@@ -2,8 +2,8 @@ import {
 	buildApiUrlFromBaseUrl,
 	buildArtifactAssetUrlFromBaseUrl,
 	isSensitiveQueryKey,
-	sanitizeExternalUrl,
 	type QueryValue,
+	sanitizeExternalUrl,
 } from "../../../../packages/sourceharbor-sdk/src/url.js";
 
 type ResolveOptions = {
