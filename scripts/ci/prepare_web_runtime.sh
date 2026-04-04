@@ -55,10 +55,10 @@ from pathlib import Path
 import sys
 
 root = Path(sys.argv[1])
-roots = [
-    root / "apps" / "web",
-    root / "packages" / "sourceharbor-sdk" / "src",
-]
+roots = [root / "apps" / "web"]
+sdk_source_root = root / "packages" / "sourceharbor-sdk" / "src"
+if sdk_source_root.exists():
+    roots.append(sdk_source_root)
 blocked_names = {
     "node_modules",
     ".next",
@@ -329,13 +329,15 @@ if sdk_staging_dir.exists():
 target_dir.parent.mkdir(parents=True, exist_ok=True)
 sdk_target_dir.parent.mkdir(parents=True, exist_ok=True)
 shutil.copytree(source_dir, staging_dir, ignore=ignore, copy_function=shutil.copy)
-shutil.copytree(sdk_source_dir, sdk_staging_dir, ignore=ignore, copy_function=shutil.copy)
+if sdk_source_dir.exists():
+    shutil.copytree(sdk_source_dir, sdk_staging_dir, ignore=ignore, copy_function=shutil.copy)
 if target_dir.exists():
     robust_rmtree(target_dir)
 if sdk_target_dir.exists():
     robust_rmtree(sdk_target_dir)
 staging_dir.rename(target_dir)
-sdk_staging_dir.rename(sdk_target_dir)
+if sdk_staging_dir.exists():
+    sdk_staging_dir.rename(sdk_target_dir)
 PY
 
 CURRENT_HASH=""
