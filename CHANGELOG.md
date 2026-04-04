@@ -14,7 +14,7 @@ and this project follows semantic-ish release communication even when the reposi
 
 ### Changed
 
-- updated MCP quickstart and public examples to prefer `resolved.env` / `SOURCE_HARBOR_API_PORT` instead of hardcoding `127.0.0.1:9000`
+- updated MCP quickstart and public examples to prefer `resolved.env` / `SOURCE_HARBOR_API_BASE_URL` / `API_PORT` instead of hardcoding `127.0.0.1:9000`
 - aligned package README install examples with the current repo-truth path: install from a checkout first, then swap to a published package name only after registry publication is real
 - renamed the public starter-pack story to “first-cut public starter surface” so the entry directory, compatibility docs, template assets, and examples read like one honest layer instead of a fully hardened ecosystem product
 

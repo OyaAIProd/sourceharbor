@@ -27,12 +27,11 @@ If you want one packaged command surface first from inside a local checkout, run
 ```bash
 npm install --global ./packages/sourceharbor-cli
 source .runtime-cache/run/full-stack/resolved.env
-SOURCEHARBOR_API_BASE_URL="http://127.0.0.1:${SOURCE_HARBOR_API_PORT}"
-sourceharbor templates --base-url "$SOURCEHARBOR_API_BASE_URL"
+sourceharbor templates
 ```
 
 If your stack is not using the repo-managed runtime snapshot, pass the real API
-base URL explicitly instead of assuming port `9000`.
+base URL through `SOURCE_HARBOR_API_BASE_URL` instead of assuming port `9000`.
 
 If you are already inside the repo and only want the direct substrate, run:
 
@@ -70,6 +69,8 @@ The full manifest lives in [apps/mcp/schemas/tools.json](../apps/mcp/schemas/too
 - `@sourceharbor/cli` is a thin builder-facing wrapper over the HTTP API, and
   inside a checkout its convenience commands can delegate back into the
   repo-local substrate
+- the packaged CLI reads `SOURCE_HARBOR_API_BASE_URL` from the environment
+  today; it does not expose a standalone `--base-url` flag
 - the public TypeScript SDK lives next to this flow in `packages/sourceharbor-sdk`; Python SDK still stays later
 - advanced lanes such as UI audit and computer-use may still require extra runtime conditions or secrets
 
