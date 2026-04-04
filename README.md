@@ -137,7 +137,7 @@ The builder-facing mental map should follow the same product line:
 | **MCP surface** | agent workflows and assistant clients that need governed access to jobs, artifacts, retrieval, ingest, reports, and notifications | real surface today via [`./bin/dev-mcp`](./docs/mcp-quickstart.md) |
 | **HTTP API contract** | product builders, automation, and SDK consumers | real contract today via [`contracts/source/openapi.yaml`](./contracts/source/openapi.yaml) |
 | **Public TypeScript SDK** | TypeScript builders who want a thin client over the same HTTP contract | real today in [`packages/sourceharbor-sdk`](./packages/sourceharbor-sdk/README.md); it stays contract-first and builder-facing |
-| **Public starter packs** | builders who want reproducible Codex / Claude Code / SDK starting templates | real today in [`starter-packs/`](./starter-packs/README.md); these are public templates and compatibility notes, not raw internal `.agents/skills` exports |
+| **Public starter packs** | builders who want reproducible Codex / Claude Code / SDK starting templates | available today as a first-cut surface in [`starter-packs/`](./starter-packs/README.md); these are public templates and compatibility notes, not raw internal `.agents/skills` exports |
 
 The packaging story is intentionally thin: the packaged CLI stays repo-aware and
 delegates to `./bin/sourceharbor` inside a checkout, the TypeScript SDK stays a
@@ -150,7 +150,7 @@ These packages are the public box around the same repo-owned logic:
 
 - **CLI:** install [`packages/sourceharbor-cli`](./packages/sourceharbor-cli/README.md) when you want one thin command surface for the repo-local command substrate.
 - **TypeScript SDK:** install [`packages/sourceharbor-sdk`](./packages/sourceharbor-sdk/README.md) when you want a typed HTTP client instead of inventing a second fetch stack.
-- **Starter packs:** open [`starter-packs/README.md`](./starter-packs/README.md) when you want reproducible Codex / Claude Code / SDK starting templates rather than raw internal skill files.
+- **Starter packs:** open [`starter-packs/README.md`](./starter-packs/README.md) when you want reproducible Codex / Claude Code / SDK starting templates rather than raw internal skill files; this surface is available today, but it is still first-cut.
 
 Minimal examples:
 
