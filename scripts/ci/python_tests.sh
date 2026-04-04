@@ -75,7 +75,10 @@ if coverage_db.is_file():
                     replacement = str(candidate)
                     break
             if replacement and replacement != raw_path:
-                conn.execute("update file set path = ? where id = ?", (replacement, file_id))
+                try:
+                    conn.execute("update file set path = ? where id = ?", (replacement, file_id))
+                except sqlite3.IntegrityError:
+                    continue
                 updated += 1
         if updated:
             conn.commit()
