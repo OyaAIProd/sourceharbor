@@ -7,6 +7,16 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-04-04
+
+### Fixed
+
+- made the tracked release manifest contract honest by marking tracked release manifests as historical examples instead of current-run proof
+
+### Changed
+
+- bumped the public CLI, public TypeScript SDK, and OpenAPI contract version anchors to `0.1.8` so the latest release line can stay aligned after the release-manifest governance fix
+
 ## [0.1.7] - 2026-04-04
 
 ### Fixed

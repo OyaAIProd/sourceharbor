@@ -106,7 +106,7 @@ These are safe:
 
 These need stronger proof:
 
-- latest release and current `main` are aligned again; after `v0.1.7`, future
+- latest release and current `main` are aligned again; after `v0.1.8`, future
   docs/governance closeout commits may still move `main` ahead again before the
   next tag is cut
 - external notification delivery is validated
