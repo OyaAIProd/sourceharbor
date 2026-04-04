@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import importlib.util
 import json
 import subprocess
@@ -64,6 +65,50 @@ def test_release_prechecks_can_skip_runtime_observability_checks(tmp_path: Path)
     assert "api_red_metrics_minimum" not in check_names
     assert "api_trace_header_echo" not in check_names
     assert "slo_thresholds_documented" in check_names
+
+
+def test_observability_fallback_uses_isolated_uv_python3(
+    monkeypatch,  # noqa: ANN001
+) -> None:
+    module = _load_module(_script_path(), "generate_release_prechecks_uv_fallback_test")
+    original_import = builtins.__import__
+    recorded: dict[str, object] = {}
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: ANN001
+        if name in {"fastapi.testclient", "apps.api.app.main"}:
+            raise ModuleNotFoundError(name)
+        return original_import(name, globals, locals, fromlist, level)
+
+    def fake_run(cmd, **kwargs):  # noqa: ANN001
+        recorded["cmd"] = cmd
+        recorded["cwd"] = kwargs.get("cwd")
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "red": True,
+                    "trace": True,
+                    "metrics_status": 200,
+                    "trace_status": 200,
+                    "trace_echo": "release-trace-0001",
+                }
+            )
+            + "\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    checks = module._build_observability_checks(_repo_root())
+
+    checks_by_name = {item["name"]: item for item in checks if isinstance(item, dict)}
+    assert checks_by_name["api_red_metrics_minimum"]["status"] == "pass"
+    assert checks_by_name["api_trace_header_echo"]["status"] == "pass"
+    assert recorded["cmd"][:5] == ["uv", "run", "--isolated", "python3", "-c"]
+    assert isinstance(recorded["cmd"][5], str)
+    assert recorded["cwd"] == _repo_root()
 
 
 def test_resolve_release_tag_prefers_explicit_override() -> None:

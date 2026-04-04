@@ -263,7 +263,10 @@ def _build_observability_checks(repo_root: Path) -> list[dict[str, object]]:
                 [
                     "uv",
                     "run",
-                    "python",
+                    # Use an isolated uv environment so fallback probing does not
+                    # materialize a project-scoped `.venv` under the repo root.
+                    "--isolated",
+                    "python3",
                     "-c",
                     (
                         "import json;"
