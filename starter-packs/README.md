@@ -15,6 +15,15 @@ What lives here:
 - reusable workflow templates built on MCP, HTTP API, and repo-local CLI
 - examples that stay honest about sample vs live proof
 
+## Pick The Right Pack Fast
+
+| If you want to... | Open this first | Current truth |
+| --- | --- | --- |
+| drive SourceHarbor from Codex | `starter-packs/codex/AGENTS.md` | primary public pack today |
+| drive it from Claude Code | `starter-packs/claude-code/CLAUDE.md` | primary public pack today |
+| start from SDK code instead of an agent | `starter-packs/typescript-sdk/example.ts` | public example, not a full framework pack |
+| look for an OpenClaw pack | `docs/builders.md` | no dedicated OpenClaw pack is shipped yet; stay on the generic MCP / API path for now |
+
 What does **not** live here:
 
 - internal L1/L2 delegation rules

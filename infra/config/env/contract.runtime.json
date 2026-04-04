@@ -923,6 +923,18 @@
       "description": "Base URL for API HTTP calls."
     },
     {
+      "name": "SOURCE_HARBOR_PUBLIC_SITE_URL",
+      "scope": "web",
+      "required": false,
+      "secret": false,
+      "default": null,
+      "consumer": [
+        "apps/web/lib/seo.ts",
+        "apps/web/__tests__/route-metadata.test.ts"
+      ],
+      "description": "Optional absolute public site URL used to emit canonical and share-ready metadata for the web app."
+    },
+    {
       "name": "SOURCE_HARBOR_API_KEY",
       "scope": "shared",
       "required": false,

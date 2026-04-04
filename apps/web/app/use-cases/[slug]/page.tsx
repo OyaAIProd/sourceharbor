@@ -44,6 +44,7 @@ export async function generateMetadata({
 			title: content.title,
 			description: content.subtitle,
 			route: "useCases",
+			pathname: `/use-cases/${slug}`,
 			keywords: extraKeywords[slug as UseCaseSlug] ?? [],
 		}),
 	};

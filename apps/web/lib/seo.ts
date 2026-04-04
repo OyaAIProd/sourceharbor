@@ -37,6 +37,29 @@ const CORE_KEYWORDS = [
 	"Claude Code MCP server",
 ];
 
+const ROUTE_PATHS: Record<SeoRoute, string> = {
+	dashboard: "/",
+	ops: "/ops",
+	settings: "/settings",
+	mcp: "/mcp",
+	knowledge: "/knowledge",
+	ingestRuns: "/ingest-runs",
+	feed: "/feed",
+	subscriptions: "/subscriptions",
+	search: "/search",
+	ask: "/ask",
+	watchlists: "/watchlists",
+	trends: "/trends",
+	briefings: "/briefings",
+	proof: "/proof",
+	playground: "/playground",
+	jobs: "/jobs",
+	useCases: "/use-cases",
+};
+
+const DEFAULT_SOCIAL_PREVIEW_IMAGE =
+	"https://raw.githubusercontent.com/xiaojiou176-open/sourceharbor/main/docs/assets/sourceharbor-social-preview.png";
+
 const ROUTE_KEYWORDS: Record<SeoRoute, string[]> = {
 	dashboard: [
 		"AI operator dashboard",
@@ -132,12 +155,43 @@ function dedupeKeywords(keywords: string[]): string[] {
 	return [...new Set(keywords.map((item) => item.trim()).filter(Boolean))];
 }
 
+function resolvePublicSiteUrl(): URL | undefined {
+	const candidate = process.env.SOURCE_HARBOR_PUBLIC_SITE_URL?.trim() || "";
+	if (!candidate) {
+		return undefined;
+	}
+	try {
+		return new URL(candidate.endsWith("/") ? candidate : `${candidate}/`);
+	} catch {
+		return undefined;
+	}
+}
+
+function resolveSocialPreviewImage(_siteUrl: URL | undefined): string {
+	return DEFAULT_SOCIAL_PREVIEW_IMAGE;
+}
+
+function buildCanonical(
+	pathname: string,
+	siteUrl: URL | undefined,
+): string | undefined {
+	if (!siteUrl) {
+		return undefined;
+	}
+	return new URL(pathname, siteUrl).toString();
+}
+
 export function buildAppShellMetadata(): Metadata {
+	const siteUrl = resolvePublicSiteUrl();
+	const canonical = buildCanonical("/", siteUrl);
+	const socialPreviewImage = resolveSocialPreviewImage(siteUrl);
 	return {
 		title: {
 			default: "SourceHarbor Command Center",
 			template: "%s | SourceHarbor",
 		},
+		metadataBase: siteUrl,
+		applicationName: "SourceHarbor",
 		description:
 			"AI knowledge control tower for grounded retrieval, job trace, MCP workflows, Codex, Claude Code, and source-first operator research.",
 		keywords: dedupeKeywords([
@@ -146,6 +200,34 @@ export function buildAppShellMetadata(): Metadata {
 			"job trace",
 			"evidence bundle",
 		]),
+		alternates: canonical ? { canonical } : undefined,
+		robots: {
+			index: true,
+			follow: true,
+		},
+		openGraph: {
+			title: "SourceHarbor Command Center",
+			description:
+				"AI knowledge control tower for grounded retrieval, job trace, MCP workflows, Codex, Claude Code, and source-first operator research.",
+			type: "website",
+			siteName: "SourceHarbor",
+			url: canonical,
+			images: [
+				{
+					url: socialPreviewImage,
+					width: 1200,
+					height: 630,
+					alt: "SourceHarbor social preview",
+				},
+			],
+		},
+		twitter: {
+			card: "summary_large_image",
+			title: "SourceHarbor Command Center",
+			description:
+				"AI knowledge control tower for grounded retrieval, job trace, MCP workflows, Codex, Claude Code, and source-first operator research.",
+			images: [socialPreviewImage],
+		},
 	};
 }
 
@@ -154,32 +236,55 @@ export function buildProductMetadata({
 	description,
 	route,
 	keywords = [],
+	pathname,
 }: {
 	title: string;
 	description?: string;
 	route: SeoRoute;
 	keywords?: string[];
+	pathname?: string;
 }): Metadata {
 	const mergedKeywords = dedupeKeywords([
 		...CORE_KEYWORDS,
 		...ROUTE_KEYWORDS[route],
 		...keywords,
 	]);
+	const siteUrl = resolvePublicSiteUrl();
+	const canonical = buildCanonical(pathname ?? ROUTE_PATHS[route], siteUrl);
+	const socialPreviewImage = resolveSocialPreviewImage(siteUrl);
 
 	return {
 		title,
 		description,
+		metadataBase: siteUrl,
+		applicationName: "SourceHarbor",
 		keywords: mergedKeywords,
 		category: "software",
+		alternates: canonical ? { canonical } : undefined,
+		robots: {
+			index: true,
+			follow: true,
+		},
 		openGraph: {
 			title,
 			description,
 			type: "website",
+			siteName: "SourceHarbor",
+			url: canonical,
+			images: [
+				{
+					url: socialPreviewImage,
+					width: 1200,
+					height: 630,
+					alt: "SourceHarbor social preview",
+				},
+			],
 		},
 		twitter: {
 			card: "summary_large_image",
 			title,
 			description,
+			images: [socialPreviewImage],
 		},
 	};
 }

@@ -16,6 +16,7 @@ public starter kit:
 | --- | --- | --- |
 | `docs/compat/codex.md` | shortest Codex adoption path | public, documented, reproducible |
 | `docs/compat/claude-code.md` | shortest Claude Code adoption path | public, documented, reproducible |
+| generic MCP / HTTP path for OpenClaw | no dedicated pack yet | keep it on the shared substrate until the repo grows a proven OpenClaw-specific pack |
 | `starter-packs/**` | primary public starter-pack directory | public top-level adoption surface |
 | `templates/public-skills/**` | copyable prompt/template assets referenced by the starter packs | public starter surface, not internal skill export |
 | `examples/sdk/search.ts` | minimal SDK example | public example for `@sourceharbor/sdk` |
@@ -39,12 +40,23 @@ Use the naming like this:
 - open `starter-packs/` when you want the public entry directory
 - use `templates/public-skills/**` when you want the copyable prompt/template files inside that starter surface
 
+## Fastest Adoption Ladder
+
+| I want to... | Open this first | Current truth |
+| --- | --- | --- |
+| drive the same operator truth from Codex | [docs/compat/codex.md](./compat/codex.md) | ship-now fit through MCP + HTTP API + CLI / SDK |
+| do the same from Claude Code | [docs/compat/claude-code.md](./compat/claude-code.md) | ship-now fit through MCP + HTTP API + CLI / SDK |
+| start from typed code integration | [packages/sourceharbor-sdk/README.md](../packages/sourceharbor-sdk/README.md) | thin contract-first public SDK |
+| start from shell and commands | [packages/sourceharbor-cli/README.md](../packages/sourceharbor-cli/README.md) | thin installable CLI over the same repo-owned truth |
+| evaluate OpenClaw specifically | [docs/builders.md](./builders.md) | the generic MCP / HTTP substrate is real, but there is still no dedicated OpenClaw pack or plugin claim |
+
 ## Start Here
 
 | I am... | Use this first | Why |
 | --- | --- | --- |
 | a Codex operator | [docs/compat/codex.md](./compat/codex.md) | best path when you want MCP/API/CLI choices explained quickly |
 | a Claude Code operator | [docs/compat/claude-code.md](./compat/claude-code.md) | same story, phrased for Claude Code workflows |
+| an OpenClaw operator | [docs/builders.md](./builders.md) | the shared MCP / HTTP substrate is real, but the repo still does not ship an OpenClaw-specific public pack |
 | a builder writing code | [packages/sourceharbor-sdk/README.md](../packages/sourceharbor-sdk/README.md) | typed HTTP integration first |
 | a builder who prefers shell | [packages/sourceharbor-cli/README.md](../packages/sourceharbor-cli/README.md) | thin CLI over current HTTP contract |
 

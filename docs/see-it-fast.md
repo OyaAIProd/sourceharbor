@@ -125,8 +125,9 @@ If you want confidence without booting the full stack yet:
 1. Read [README.md](../README.md) for the public story.
 2. Read [proof.md](./proof.md) for the evidence ladder.
 3. Read [starter-packs/README.md](../starter-packs/README.md) if you want the public CLI / SDK / Codex / Claude Code starter surface.
-4. Read [samples/README.md](./samples/README.md) if you want the clearly labeled sample corpus path.
-5. Read [architecture.md](./architecture.md) if you want the system map.
+4. Read [builders.md](./builders.md) if you specifically care about where OpenClaw still stays outside the named starter-pack surface today.
+5. Read [samples/README.md](./samples/README.md) if you want the clearly labeled sample corpus path.
+6. Read [architecture.md](./architecture.md) if you want the system map.
 
 If you want a real local run after that, go to [start-here.md](./start-here.md).
 

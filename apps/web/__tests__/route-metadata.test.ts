@@ -12,7 +12,7 @@ import { metadata as subscriptionsMetadata } from "@/app/subscriptions/page";
 import { metadata as trendsMetadata } from "@/app/trends/page";
 import { generateMetadata as generateUseCaseMetadata } from "@/app/use-cases/[slug]/page";
 import { metadata as watchlistsMetadata } from "@/app/watchlists/page";
-import { buildAppShellMetadata } from "@/lib/seo";
+import { buildAppShellMetadata, buildProductMetadata } from "@/lib/seo";
 
 function toKeywordList(value: unknown): string[] {
 	if (Array.isArray(value)) {
@@ -49,6 +49,62 @@ describe("route metadata", () => {
 				"evidence bundle",
 			]),
 		);
+		expect(metadata.applicationName).toBe("SourceHarbor");
+		expect(metadata.openGraph?.siteName).toBe("SourceHarbor");
+		expect(metadata.openGraph?.images).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					url: expect.stringContaining("sourceharbor-social-preview"),
+				}),
+			]),
+		);
+		expect(metadata.twitter?.images).toEqual(
+			expect.arrayContaining([
+				expect.stringContaining("sourceharbor-social-preview"),
+			]),
+		);
+	});
+
+	it("adds canonical metadata when a public site URL is configured", () => {
+		process.env.SOURCE_HARBOR_PUBLIC_SITE_URL = "https://sourceharbor.ai";
+
+		const metadata = buildProductMetadata({
+			title: "Search",
+			description: "Grounded search for SourceHarbor artifacts.",
+			route: "search",
+		});
+
+		expect(metadata.metadataBase?.toString()).toBe("https://sourceharbor.ai/");
+		expect(metadata.alternates?.canonical).toBe(
+			"https://sourceharbor.ai/search",
+		);
+		expect(metadata.openGraph?.url).toBe("https://sourceharbor.ai/search");
+		expect(metadata.openGraph?.images).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					url: "https://raw.githubusercontent.com/xiaojiou176-open/sourceharbor/main/docs/assets/sourceharbor-social-preview.png",
+				}),
+			]),
+		);
+
+		delete process.env.SOURCE_HARBOR_PUBLIC_SITE_URL;
+	});
+
+	it("keeps dynamic use-case metadata on the slug-specific canonical path", async () => {
+		process.env.SOURCE_HARBOR_PUBLIC_SITE_URL = "https://sourceharbor.ai";
+
+		const metadata = await generateUseCaseMetadata({
+			params: Promise.resolve({ slug: "claude-code" }),
+		});
+
+		expect(metadata.alternates?.canonical).toBe(
+			"https://sourceharbor.ai/use-cases/claude-code",
+		);
+		expect(metadata.openGraph?.url).toBe(
+			"https://sourceharbor.ai/use-cases/claude-code",
+		);
+
+		delete process.env.SOURCE_HARBOR_PUBLIC_SITE_URL;
 	});
 
 	it("keeps search and ask metadata grounded, retrieval-first, and keyword-rich", () => {
