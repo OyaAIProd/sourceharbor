@@ -121,8 +121,6 @@ current maintainer re-audit:
 
 - Resend live delivery still needs a real sender identity chain: `RESEND_FROM_EMAIL`, a verified sender/domain, and a destination mailbox
 - the strict YouTube live-smoke lane now has one validated winner key, but the shared operator environment still needs that winner persisted before the full live lane is reopened
-- GHCR-style publication proof still needs a token path that can actually publish packages/images when that lane is reopened
-- protected workflow-dispatch lanes still depend on a GitHub operator that is allowed to dispatch them for this repo
 
 Raw non-empty values for `YOUTUBE_API_KEY`, `RESEND_API_KEY`, and
 `GEMINI_API_KEY` are no longer the main blocker story on the maintainer
@@ -134,8 +132,6 @@ machine. The remaining blockers are more specific than "secret missing".
 | --- | --- | --- | --- |
 | Resend sender identity | maintainer-side provider canary still reports `config_error`; `RESEND_API_KEY` is present on the maintainer machine, but `RESEND_FROM_EMAIL` is still missing | repo code already exposes notifications and settings; GitHub/release truth is no longer the missing piece | set `RESEND_FROM_EMAIL`, verify the sender/domain in Resend, choose a real destination mailbox, then rerun the provider canary or strict live-smoke lane |
 | YouTube strict live-smoke | secure rotation on 2026-04-03 found one user-supplied winner key that now passes direct probe, provider canary, and strict live-smoke preflight; the previously configured key still points at blocked Google project states | repo-side implementation is no longer the blocker; the remaining action is keeping the validated project-bound key in the operator environment and rerunning the full live lane when needed | replace the stale local YouTube key with the validated winner key in the operator secret store, then rerun the strict live-smoke lane if you want the full end-to-end receipt |
-| GHCR / package publication path | current repo-side checks can prove publication readiness locally, but the actual publish path still depends on a token with the right package scope | repo-side build/readiness logic is already in place; missing rights live outside tracked repo files | provide a token or operator identity that can publish packages/images, then rerun the publish-readiness lane |
-| Protected workflow dispatch | current repo-side docs and scripts can name the lane, but the lane still fails closed if the active GitHub operator cannot dispatch it | the repo is already explicit about the lane boundary; the missing ability is GitHub policy/account-side | use a GitHub operator that can dispatch the protected workflow, then rerun the attestation/build workflow |
 
 ## Remote Truth Reading Rules
 
@@ -144,7 +140,7 @@ whenever `main` moves again. The safe reading rules are:
 
 - treat current `main`, latest release, and workflow-dispatch evidence as separate ledgers
 - only treat GitHub checks and workflow-dispatch runs as current remote proof when their recorded `headSha` still matches the current remote head
-- workflow-dispatch lanes such as standard-image publish or release attestation can still be blocked by repo policy, account permission, or required approval even when current `main` itself is healthy
+- workflow-dispatch lanes such as standard-image publish or release attestation may require repo-scope environment approval, but they now run successfully on the current `main` when approved
 - latest-release truth must still be checked live against the current remote `main`, because post-release docs/governance closeouts can move `main` ahead again before the next tag is cut
 - live GitHub description, homepage, topics, and discussions should be checked live against `config/public/github-profile.json` before repeating the claim
 - live provider proof still stays a separate ledger from GitHub/release proof
