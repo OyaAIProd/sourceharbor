@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/sourceharbor-ops-route.db")
@@ -10,19 +11,21 @@ os.environ.setdefault("TEMPORAL_NAMESPACE", "default")
 os.environ.setdefault("TEMPORAL_TASK_QUEUE", "sourceharbor-worker")
 os.environ.setdefault("SQLITE_STATE_PATH", "/tmp/sourceharbor-ops-route-state.db")
 
-from apps.api.app.main import app
 
-
-def _patch_ops_service(monkeypatch, replacement) -> None:  # noqa: ANN001
+def _make_ops_client(monkeypatch, replacement) -> TestClient:  # noqa: ANN001
     from apps.api.app.routers import ops as ops_router
 
-    monkeypatch.setattr(ops_router, "OpsService", replacement)
-    monkeypatch.setitem(ops_router.get_ops_inbox.__globals__, "OpsService", replacement)
+    app = FastAPI()
+    app.include_router(ops_router.router)
+
+    def override():  # noqa: ANN202
+        return replacement(None)
+
+    monkeypatch.setitem(app.dependency_overrides, ops_router.get_ops_service, override)
+    return TestClient(app)
 
 
 def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
-    from apps.api.app.routers import ops as ops_router
-
     class StubOpsService:
         def __init__(self, db) -> None:  # noqa: ANN001
             self.db = db
@@ -69,43 +72,7 @@ def test_ops_inbox_route_returns_payload(monkeypatch) -> None:
                 "inbox_items": [],
             }
 
-    monkeypatch.setattr(
-        ops_router.OpsService,
-        "get_inbox",
-        lambda self, limit=5, window_hours=24: {  # noqa: ARG005
-            "generated_at": "2026-03-31T10:00:00Z",
-            "overview": {
-                "attention_items": 1,
-                "failed_jobs": 1,
-                "failed_ingest_runs": 0,
-                "notification_or_gate_issues": 1,
-            },
-            "failed_jobs": {"status": "ok", "total": 1, "error": None, "items": []},
-            "failed_ingest_runs": {"status": "ok", "total": 0, "error": None, "items": []},
-            "notification_deliveries": {"status": "ok", "total": 0, "error": None, "items": []},
-            "provider_health": {"window_hours": 24, "providers": []},
-            "gates": {
-                "retrieval": {"status": "blocked", "summary": "x", "next_step": "x", "details": {}},
-                "notifications": {
-                    "status": "warn",
-                    "summary": "x",
-                    "next_step": "x",
-                    "details": {},
-                },
-                "ui_audit": {"status": "ready", "summary": "x", "next_step": "x", "details": {}},
-                "computer_use": {
-                    "status": "blocked",
-                    "summary": "x",
-                    "next_step": "x",
-                    "details": {},
-                },
-            },
-            "inbox_items": [],
-        },
-    )
-    _patch_ops_service(monkeypatch, StubOpsService)
-
-    client = TestClient(app)
+    client = _make_ops_client(monkeypatch, StubOpsService)
     response = client.get("/api/v1/ops/inbox?limit=4&window_hours=12")
 
     assert response.status_code == 200
@@ -125,9 +92,7 @@ def test_ops_inbox_route_sanitizes_internal_errors(monkeypatch) -> None:
                 "db password=postgresql://ops:super-secret@127.0.0.1:5432/sourceharbor"
             )
 
-    _patch_ops_service(monkeypatch, ExplodingOpsService)
-
-    client = TestClient(app)
+    client = _make_ops_client(monkeypatch, ExplodingOpsService)
     response = client.get("/api/v1/ops/inbox")
 
     assert response.status_code == 503
@@ -145,9 +110,7 @@ def test_ops_inbox_route_uses_generic_bad_request_detail(monkeypatch) -> None:
             del limit, window_hours
             raise ValueError("window_hours invalid for ops@example.com?token=secret-value")
 
-    _patch_ops_service(monkeypatch, InvalidOpsService)
-
-    client = TestClient(app)
+    client = _make_ops_client(monkeypatch, InvalidOpsService)
     response = client.get("/api/v1/ops/inbox")
 
     assert response.status_code == 400

@@ -13,13 +13,16 @@ router = APIRouter(prefix="/api/v1/ops", tags=["ops"])
 logger = logging.getLogger(__name__)
 
 
+def get_ops_service(db: Session = Depends(get_db)) -> OpsService:
+    return OpsService(db)
+
+
 @router.get("/inbox")
 def get_ops_inbox(
     limit: int = Query(default=5, ge=1, le=20),
     window_hours: int = Query(default=24, ge=1, le=168),
-    db: Session = Depends(get_db),
+    service: OpsService = Depends(get_ops_service),
 ):
-    service = OpsService(db)
     try:
         return service.get_inbox(limit=limit, window_hours=window_hours)
     except ValueError as exc:
