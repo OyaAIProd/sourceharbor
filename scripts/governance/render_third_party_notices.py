@@ -84,6 +84,14 @@ def _package_name_from_lock_path(path: str) -> str:
     return path.rsplit(marker, maxsplit=1)[-1]
 
 
+def _package_display_name(lock_path: str, entry: dict[str, object]) -> str:
+    if "node_modules/" not in lock_path:
+        package_name = str(entry.get("name") or "").strip()
+        if package_name:
+            return package_name
+    return _package_name_from_lock_path(lock_path)
+
+
 def _load_web_runtime_inventory() -> list[dict[str, str]]:
     payload = json.loads((ROOT / "apps" / "web" / "package-lock.json").read_text(encoding="utf-8"))
     rows: list[dict[str, str]] = []
@@ -92,9 +100,15 @@ def _load_web_runtime_inventory() -> list[dict[str, str]]:
             continue
         if entry.get("dev") is True:
             continue
+        # npm file/link dependencies appear twice in package-lock:
+        # a shim entry under node_modules/* with {"link": true}, and
+        # the actual target package metadata at the resolved path.
+        # Only the target package should count toward notices inventory.
+        if entry.get("link") is True:
+            continue
         rows.append(
             {
-                "name": _package_name_from_lock_path(lock_path),
+                "name": _package_display_name(lock_path, entry),
                 "version": str(entry.get("version") or ""),
                 "license": str(entry.get("license") or "UNKNOWN"),
                 "license_source": "package-lock",

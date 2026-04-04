@@ -7,7 +7,7 @@
   "summary": {
     "python_runtime_packages": 95,
     "python_unknown_licenses": 0,
-    "web_runtime_packages": 286,
+    "web_runtime_packages": 287,
     "web_unknown_licenses": 0
   },
   "python_runtime": [
@@ -1831,6 +1831,14 @@
       "license_source": "package-lock",
       "resolved": "https://registry.npmjs.org/@radix-ui/rect/-/rect-1.1.1.tgz",
       "integrity": "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="
+    },
+    {
+      "name": "@sourceharbor/sdk",
+      "version": "0.1.11",
+      "license": "MIT",
+      "license_source": "package-lock",
+      "resolved": "",
+      "integrity": ""
     },
     {
       "name": "@swc/helpers",

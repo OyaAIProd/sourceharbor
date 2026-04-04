@@ -15,7 +15,7 @@ This file is the machine-generated third-party rights ledger for the tracked pub
 | Ecosystem | Packages | UNKNOWN license declarations |
 | --- | ---: | ---: |
 | Python runtime | 95 | 0 |
-| Web runtime | 286 | 0 |
+| Web runtime | 287 | 0 |
 
 ## Python Runtime Packages
 
@@ -331,6 +331,7 @@ http://www.apache.org/licenses/LICENSE-2.0` | `license-field` |
 | `@radix-ui/react-use-size` | `1.1.1` | `MIT` | `package-lock` |
 | `@radix-ui/react-visually-hidden` | `1.2.3` | `MIT` | `package-lock` |
 | `@radix-ui/rect` | `1.1.1` | `MIT` | `package-lock` |
+| `@sourceharbor/sdk` | `0.1.11` | `MIT` | `package-lock` |
 | `@swc/helpers` | `0.5.15` | `Apache-2.0` | `package-lock` |
 | `@tailwindcss/node` | `4.2.2` | `MIT` | `package-lock` |
 | `@tailwindcss/oxide` | `4.2.2` | `MIT` | `package-lock` |
