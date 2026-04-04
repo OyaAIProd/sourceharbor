@@ -74,6 +74,14 @@ export function buildApiUrl(
 	return buildApiUrlFromBaseUrl(resolveApiBaseUrl(), path, query);
 }
 
+export function buildApiUrlWithOptions(
+	path: string,
+	query?: Record<string, QueryValue>,
+	resolveOptions: ResolveOptions = {},
+): string {
+	return buildApiUrlFromBaseUrl(resolveApiBaseUrl(resolveOptions), path, query);
+}
+
 export function buildArtifactAssetUrl(jobId: string, path: string): string {
 	return buildArtifactAssetUrlFromBaseUrl(resolveApiBaseUrl(), jobId, path);
 }

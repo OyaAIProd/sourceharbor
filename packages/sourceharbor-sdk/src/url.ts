@@ -4,7 +4,7 @@ declare const process:
 	  }
 	| undefined;
 
-type QueryValue = string | number | boolean | null | undefined;
+export type QueryValue = string | number | boolean | null | undefined;
 
 type ResolveOptions = {
 	allowFallback?: boolean;
