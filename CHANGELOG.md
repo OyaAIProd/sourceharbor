@@ -7,6 +7,12 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-04-04
+
+### Fixed
+
+- tolerated duplicate coverage-path rewrites during strict python coverage normalization so the repo-side strict lane no longer fails after the test suite itself has already passed
+
 ## [0.1.9] - 2026-04-04
 
 ### Fixed
