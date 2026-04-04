@@ -167,7 +167,7 @@ function resolvePublicSiteUrl(): URL | undefined {
 	}
 }
 
-function resolveSocialPreviewImage(_siteUrl: URL | undefined): string {
+function resolveSocialPreviewImage(): string {
 	return DEFAULT_SOCIAL_PREVIEW_IMAGE;
 }
 
@@ -184,7 +184,7 @@ function buildCanonical(
 export function buildAppShellMetadata(): Metadata {
 	const siteUrl = resolvePublicSiteUrl();
 	const canonical = buildCanonical("/", siteUrl);
-	const socialPreviewImage = resolveSocialPreviewImage(siteUrl);
+	const socialPreviewImage = resolveSocialPreviewImage();
 	return {
 		title: {
 			default: "SourceHarbor Command Center",
@@ -251,7 +251,7 @@ export function buildProductMetadata({
 	]);
 	const siteUrl = resolvePublicSiteUrl();
 	const canonical = buildCanonical(pathname ?? ROUTE_PATHS[route], siteUrl);
-	const socialPreviewImage = resolveSocialPreviewImage(siteUrl);
+	const socialPreviewImage = resolveSocialPreviewImage();
 
 	return {
 		title,
