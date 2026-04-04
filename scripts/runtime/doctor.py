@@ -6,6 +6,7 @@ import json
 import os
 import socket
 import subprocess
+import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from urllib.error import URLError
@@ -13,6 +14,12 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.runtime.disk_space_common import load_policy
+from scripts.runtime.report_disk_space import build_disk_governance_operator_summary
+
 RESOLVED_ENV_PATH = ROOT / ".runtime-cache" / "run" / "full-stack" / "resolved.env"
 CANONICAL_CORE_POSTGRES_PORT = "15432"
 CANONICAL_API_HEALTH = "http://127.0.0.1:9000/healthz"
@@ -333,6 +340,32 @@ def check_write_token() -> DoctorCheck:
     )
 
 
+def check_disk_governance() -> DoctorCheck:
+    try:
+        payload = build_disk_governance_operator_summary(ROOT, load_policy(ROOT))
+    except (OSError, ValueError) as exc:
+        return DoctorCheck(
+            check_id="disk_governance",
+            title="Disk governance",
+            status="WARN",
+            summary="Disk governance data could not be loaded cleanly for this run.",
+            next_step="Run ./bin/disk-space-audit --json manually, then fix the reported policy/report-path issue before treating the disk governance gate as current truth.",
+            details={"error": str(exc)},
+        )
+    status = str(payload.get("status") or "unavailable").upper()
+    details = dict(payload.get("details") or {})
+    if status not in {"PASS", "WARN", "BLOCK"}:
+        status = "PASS" if str(payload.get("status") or "").lower() == "ready" else "WARN"
+    return DoctorCheck(
+        check_id="disk_governance",
+        title="Disk governance",
+        status=status,
+        summary=str(payload.get("summary") or "Disk governance summary unavailable."),
+        next_step=str(payload.get("next_step") or "Run ./bin/disk-space-audit --json manually."),
+        details=details,
+    )
+
+
 def make_secret_gate(name: str, env_var: str, next_step: str) -> DoctorCheck:
     present = bool((os.getenv(env_var) or "").strip())
     if present:
@@ -421,6 +454,7 @@ def main() -> int:
         check_postgres_reachability(database_url),
         check_temporal(temporal_target_host),
         check_runtime_snapshot(resolved_env),
+        check_disk_governance(),
         check_full_stack_status(),
         check_http_gate(
             url=f"{api_base.rstrip('/')}/healthz",

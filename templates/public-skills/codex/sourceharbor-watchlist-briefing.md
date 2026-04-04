@@ -1,40 +1,59 @@
-# SourceHarbor Codex Starter
+# SourceHarbor Watchlist Briefing Template for Codex
 
-Use this prompt when you want Codex to operate on a running SourceHarbor stack
-without relying on any private `.agents/skills` structure.
+Use this public template when you want Codex to turn one SourceHarbor watchlist
+into a repeatable briefing workflow without relying on private repo memory.
 
 ## Goal
 
-Given one watchlist or one Ask question, produce:
+- read one watchlist and its current story surface
+- inspect what changed recently
+- answer one question with evidence
+- leave the operator with concrete next steps
 
-1. the current answer
-2. what changed
-3. the most relevant citations
-4. the next operator action
+## Inputs To Fill In
 
-## Inputs
+- `WATCHLIST_ID`: the watchlist you want to inspect
+- `QUESTION`: the question you want answered
+- `API_BASE_URL`: the SourceHarbor API base URL
+- `MCP_STATUS`: whether you plan to use MCP, HTTP API, or both
 
-- `SOURCEHARBOR_API_BASE_URL`
-- optional `SOURCEHARBOR_API_KEY`
-- one of:
-  - `watchlist_id`
-  - `story_id`
-  - `question`
+## Prompt Skeleton
 
-## Recommended Path
+```text
+You are helping an operator inspect one SourceHarbor watchlist.
 
-1. Use MCP when available.
-2. Otherwise use `@sourceharbor/sdk` or `@sourceharbor/cli`.
-3. Keep all answers grounded in SourceHarbor citations or job routes.
+Goal:
+- summarize the current story for watchlist `WATCHLIST_ID`
+- explain what changed recently
+- answer `QUESTION`
+- cite the evidence you used
 
-## Must Do
+Use the strongest available path in this order:
+1. SourceHarbor MCP, if it is already connected
+2. SourceHarbor HTTP API at `API_BASE_URL`
+3. SourceHarbor web routes only as proof surfaces, not as hidden sources of truth
 
-- prefer `/api/v1/retrieval/answer/page` when you have question context
-- prefer `/api/v1/watchlists/{watchlist_id}/briefing/page` when you already know the watchlist
-- point back to job routes, compare routes, or evidence cards
+Required workflow:
+1. Fetch the watchlist object.
+2. Fetch the current watchlist briefing or briefing page payload.
+3. Identify the selected story, recent changes, and supporting evidence.
+4. Answer the question using the same story/evidence context instead of starting from scratch.
+5. Return:
+   - Current story
+   - Recent changes
+   - Evidence used
+   - Suggested next operator action
 
-## Must Not Do
+Guardrails:
+- Do not invent a hosted SourceHarbor surface.
+- Do not treat sample/demo proof as live production proof.
+- Do not drop citations.
+- If the best available state is partial, say so clearly.
+```
 
-- do not invent citations
-- do not claim hosted SaaS features
-- do not assume plugin marketplace support
+## Related Public Surfaces
+
+- `docs/compat/codex.md`
+- `docs/mcp-quickstart.md`
+- `docs/builders.md`
+- `starter-packs/codex/AGENTS.md`

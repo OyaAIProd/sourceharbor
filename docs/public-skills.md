@@ -6,7 +6,9 @@ Think of it like the difference between a private workshop notebook and a
 public starter kit:
 
 - `.agents/skills/**` is still the internal workshop notebook
-- this page, the public templates, and the examples below are the starter kit
+- `starter-packs/` is the public starter-kit directory a newcomer should open first
+- `templates/public-skills/**` holds the copyable prompt/template assets that those starter packs point to
+- this page and the examples below explain how those public pieces fit together
 
 ## What Is Shipped Now
 
@@ -14,7 +16,8 @@ public starter kit:
 | --- | --- | --- |
 | `docs/compat/codex.md` | shortest Codex adoption path | public, documented, reproducible |
 | `docs/compat/claude-code.md` | shortest Claude Code adoption path | public, documented, reproducible |
-| `templates/public-skills/**` | copyable starter prompts/templates | public starter surface, not internal skill export |
+| `starter-packs/**` | primary public starter-pack directory | public top-level adoption surface |
+| `templates/public-skills/**` | copyable prompt/template assets referenced by the starter packs | public starter surface, not internal skill export |
 | `examples/sdk/search.ts` | minimal SDK example | public example for `@sourceharbor/sdk` |
 | `examples/cli/search.sh` | minimal CLI example | public example for `@sourceharbor/cli` |
 
@@ -30,6 +33,11 @@ newcomer:
 2. the shortest command or prompt
 3. the honest boundary
 4. one example they can run immediately
+
+Use the naming like this:
+
+- open `starter-packs/` when you want the public entry directory
+- use `templates/public-skills/**` when you want the copyable prompt/template files inside that starter surface
 
 ## Start Here
 

@@ -35,6 +35,19 @@ Treat that root like the live warehouse shelf, not like a disposable staging box
 
 If it is present, it must be counted into the repo-external-repo-owned audit total.
 
+The canonical mainline Python environment is:
+
+- `$HOME/.cache/sourceharbor/project-venv`
+
+If sibling entries match `project-venv*` under the same cache root, treat them as duplicate repo-external envs:
+
+- list them separately from the canonical env
+- measure their size and latest modification time
+- check whether known entrypoints still reference them
+- do **not** auto-promote them into cleanup just because they are rebuildable
+
+Those duplicate envs are not mysterious machine junk, but they are also not automatically safe-clear.
+
 Legacy `video-digestor` paths are compatibility surfaces only.
 
 They may still exist locally, but they must be treated as:
@@ -95,6 +108,14 @@ Examples:
 - `local_private_ledgers` → authoritative `.runtime-cache/evidence/ai-ledgers` plus optional `.agents` compatibility bridge
 - `tracked_release_evidence` → `artifacts/releases`
 - `orphan_residue` → `apps/web/node_modules.broken.*`
+
+Repo-external duplicate envs are a separate descriptive surface.
+
+Think of them like extra warehouse keys that still open a side room:
+
+- the canonical key is expected
+- extra keys should be inventoried and provenance-checked
+- only after reference checks are clear should they move toward any verify-first retirement lane
 
 Being listed here does **not** mean the object is safe-clear.
 
@@ -255,6 +276,12 @@ manually deleting directories:
 ./bin/runtime-cache-maintenance
 ./bin/runtime-cache-maintenance --apply
 ```
+
+For operator-first review, treat Ops and disk governance as one story:
+
+- `./bin/disk-space-audit --json` explains what exists and who owns it
+- `./bin/disk-space-cleanup --wave repo-tmp --json` explains whether the repo-side duplicate runtime is currently cleanup-eligible
+- `/ops` should surface that same repo-side duplicate-runtime and duplicate-env story instead of inventing a separate wording layer
 
 Read the runtime tree with these rules:
 

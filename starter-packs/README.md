@@ -4,6 +4,11 @@ These starter packs are the first public workflow surface for SourceHarbor.
 
 They are intentionally **not** the same thing as `.agents/skills/`.
 
+Think of the naming this way:
+
+- `starter-packs/` is the public entry directory
+- `templates/public-skills/**` contains the copyable prompt/template assets that those starter packs reference
+
 What lives here:
 
 - public adoption paths for Codex and Claude Code

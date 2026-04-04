@@ -100,6 +100,14 @@ describe("ops inbox page", () => {
 					next_step: "Provide RESEND_API_KEY.",
 					details: {},
 				},
+				disk_governance: {
+					status: "warn",
+					summary:
+						"The repo-side web runtime duplicate is present, but governed cleanup is still blocked by active safety gates.",
+					next_step:
+						"Keep the duplicate runtime in place until the repo-tmp safety gates clear.",
+					details: {},
+				},
 				ui_audit: {
 					status: "ready",
 					summary: "Base UI audit is ready today.",
@@ -140,6 +148,14 @@ describe("ops inbox page", () => {
 		expect(
 			screen.getByText(
 				/Retrieval routes are alive, but the current corpus is still effectively empty/i,
+			),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Disk governance", level: 3 }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/The repo-side web runtime duplicate is present, but governed cleanup is still blocked/i,
 			),
 		).toBeInTheDocument();
 		expect(screen.getByText("Provider timeout")).toBeInTheDocument();

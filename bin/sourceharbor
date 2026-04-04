@@ -9,7 +9,8 @@ Usage: ./bin/sourceharbor <command> [args...]
 
 Thin repo-owned CLI/help facade over the existing SourceHarbor bin entrypoints.
 This is the current truthful CLI substrate for local operators and builders.
-It is not a separately packaged public CLI.
+This repo-local command is not itself the packaged public CLI.
+The installable packaged CLI lives in `packages/sourceharbor-cli`.
 
 Commands:
   help                 Show this help message.

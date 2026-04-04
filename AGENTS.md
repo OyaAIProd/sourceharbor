@@ -12,6 +12,11 @@ This repository is a public, source-first engineering project. The public surfac
 6. Root documentation MUST stay concise and public-facing. Internal audit logs, rehearsal notes, and execution ledgers MUST NOT return.
 7. AI agents MUST read before editing, prefer surgical changes, and verify meaningful behavior with real commands.
 8. Commits, branch rewrites, and force-pushes are allowed only when explicitly authorized by the human maintainer.
+9. Browser automation MUST stay repo-scoped, state-aware, and cleanup-first: do not accumulate extra Chrome/Chromium/Safari instances, cloned profiles, or large tab sets, and do not borrow browser state opened by other repos or other L1s on the same machine.
+10. Docker and runtime residue MUST stay governed: do not leave disposable containers, caches, or duplicate runtime workspaces behind after verification when they are no longer needed.
+11. External-account writes stay opt-in only: never change GitHub profile settings, browser-signed-in account state, Resend/Google account settings, or other third-party account data unless the human maintainer explicitly authorizes that exact write.
+12. Login-state probing MUST stay bounded: if the repo-scoped real browser profile is still not logged in after one or two focused checks, record a blocker and stop escalating browser churn.
+13. Browser focus and machine-wide resource contention MUST be respected: avoid stealing desktop focus when possible, and if the machine already has more than four browser instances open, wait for other repo workflows to release resources before opening another one.
 
 ## Source Of Truth
 
@@ -41,6 +46,13 @@ If docs and code drift, update the lower-priority surface to match the higher-pr
 - Treat `.agents/Plans/` as a local execution ledger compatibility bridge, not as a durable public repository surface.
 - Never treat generated runtime reports as durable documentation.
 - Never describe the repository as fully verified for external distribution unless the live remote workflows prove it for the current `main` head.
+- Before using Chrome/Chromium/Safari automation, confirm which repo owns the live browser/process/profile state and open only the repo-scoped state you need for the current task.
+- Close unnecessary browser tabs/windows and clean repo-cloned browser profiles after verification so other repos and other L1s do not inherit or collide with this repo's state.
+- Treat login-state absence as a fast blocker, not an invitation to spin up endless browser retries: one or two repo-scoped checks are enough before you stop and report it.
+- Do not open a new browser instance when the machine is already carrying more than four browser instances; wait for other repo workflows to clean up first.
+- Prefer background or non-focus-stealing browser operations whenever the tool supports them so repo work does not hijack the whole desktop.
+- Treat Docker containers, copied runtimes, and large caches as governed runtime state: measure them, keep them attributable, and clean disposable residue instead of letting it accumulate across repos.
+- Treat third-party services and signed-in web accounts as read-only by default; explicit human approval is required before any write action.
 
 ## Delivery Format
 

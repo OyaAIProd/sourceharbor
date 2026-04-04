@@ -438,6 +438,7 @@ export type OpsInboxResponse = {
 	gates: {
 		retrieval: OpsGate;
 		notifications: OpsGate;
+		disk_governance: OpsGate;
 		ui_audit: OpsGate;
 		computer_use: OpsGate;
 	};

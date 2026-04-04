@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 import tempfile
 from datetime import UTC, datetime
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select, text
@@ -17,6 +20,34 @@ from .health import HealthService
 
 logger = logging.getLogger(__name__)
 OPS_SECTION_ERROR_MESSAGE = "diagnostic data temporarily unavailable"
+REPO_ROOT = Path(__file__).resolve().parents[4]
+
+
+@lru_cache(maxsize=1)
+def _load_disk_governance_helpers() -> tuple[Any, Any]:
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    from scripts.runtime.disk_space_common import load_policy
+    from scripts.runtime.report_disk_space import (
+        build_disk_governance_operator_summary,
+    )
+
+    return load_policy, build_disk_governance_operator_summary
+
+
+def build_disk_governance_gate(payload: dict[str, Any]) -> dict[str, Any]:
+    status = str(payload.get("status") or "unavailable").lower()
+    if status not in {"ready", "warn", "blocked"}:
+        status = "warn"
+    return {
+        "status": status,
+        "summary": str(payload.get("summary") or "Disk governance summary unavailable."),
+        "next_step": str(
+            payload.get("next_step")
+            or "Run ./bin/disk-space-audit and ./bin/disk-space-cleanup --wave repo-tmp."
+        ),
+        "details": dict(payload.get("details") or {}),
+    }
 
 
 def build_retrieval_gate(
@@ -250,6 +281,18 @@ class OpsService:
         retrieval_counts = self._load_retrieval_counts()
         notification_config = self._load_notification_config()
         provider_health = HealthService(self.db).get_provider_health(window_hours=window_hours)
+        try:
+            load_policy, build_disk_governance_operator_summary = _load_disk_governance_helpers()
+            disk_governance_summary = build_disk_governance_operator_summary(
+                REPO_ROOT, load_policy(REPO_ROOT)
+            )
+        except (OSError, ValueError):
+            disk_governance_summary = {
+                "status": "warn",
+                "summary": OPS_SECTION_ERROR_MESSAGE,
+                "next_step": "Run ./bin/disk-space-audit --json manually and fix the reported disk governance policy/report issue before treating this gate as current truth.",
+                "details": {},
+            }
 
         retrieval_gate = build_retrieval_gate(**retrieval_counts)
         notifications_gate = build_notifications_gate(
@@ -268,9 +311,11 @@ class OpsService:
             gemini_api_key_present=bool((settings.gemini_api_key or "").strip()),
             model=settings.gemini_computer_use_model,
         )
+        disk_governance_gate = build_disk_governance_gate(disk_governance_summary)
         gates = {
             "retrieval": retrieval_gate,
             "notifications": notifications_gate,
+            "disk_governance": disk_governance_gate,
             "ui_audit": ui_audit_gate,
             "computer_use": computer_use_gate,
         }
@@ -667,9 +712,14 @@ class OpsService:
             "timestamp_rank": self._timestamp_rank(last_seen_at),
         }
 
-    def _timestamp_rank(self, value: str | None) -> int:
+    def _timestamp_rank(self, value: str | datetime | None) -> int:
         if not value:
             return 0
+        if isinstance(value, datetime):
+            timestamp = value
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=UTC)
+            return int(timestamp.timestamp())
         normalized = value.replace("Z", "+00:00")
         try:
             return int(datetime.fromisoformat(normalized).timestamp())

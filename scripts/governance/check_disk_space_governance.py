@@ -60,6 +60,7 @@ def main() -> int:
         "migration_report_path",
         "legacy_retirement_quiet_minutes",
         "canonical_paths",
+        "duplicate_env_policy",
         "migration_variables",
         "legacy_reference_files",
         "audit_targets",
@@ -76,6 +77,42 @@ def main() -> int:
         errors.append(
             "disk-space-governance.json must declare positive legacy_retirement_quiet_minutes"
         )
+
+    duplicate_env_policy = policy.get("duplicate_env_policy")
+    if not isinstance(duplicate_env_policy, dict):
+        errors.append("disk-space-governance.json duplicate_env_policy must be an object")
+    else:
+        canonical_mainline_path = str(
+            duplicate_env_policy.get("canonical_mainline_path") or ""
+        ).strip()
+        duplicate_glob = str(duplicate_env_policy.get("duplicate_glob") or "").strip()
+        reference_files = duplicate_env_policy.get("reference_files")
+        required_duplicate_reference_files = {
+            ".env",
+            ".env.example",
+            "scripts/lib/standard_env.sh",
+            "infra/systemd/sourceharbor-api.service",
+            "infra/systemd/sourceharbor-worker.service",
+        }
+        if canonical_mainline_path != "$HOME/.cache/sourceharbor/project-venv":
+            errors.append(
+                "duplicate_env_policy.canonical_mainline_path must be $HOME/.cache/sourceharbor/project-venv"
+            )
+        if duplicate_glob != "$HOME/.cache/sourceharbor/project-venv*":
+            errors.append(
+                "duplicate_env_policy.duplicate_glob must be $HOME/.cache/sourceharbor/project-venv*"
+            )
+        if not isinstance(reference_files, list):
+            errors.append("duplicate_env_policy.reference_files must be a list")
+        else:
+            missing_duplicate_refs = sorted(
+                required_duplicate_reference_files - {str(item) for item in reference_files}
+            )
+            if missing_duplicate_refs:
+                errors.append(
+                    "duplicate_env_policy.reference_files missing required entries: "
+                    + ", ".join(missing_duplicate_refs)
+                )
 
     migration_variables = list(policy.get("migration_variables", []))
     seen_migration_names: set[str] = set()

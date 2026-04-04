@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import subprocess
@@ -30,6 +31,18 @@ def _run_script(
         text=True,
         check=False,
     )
+
+
+def _load_runtime_module(module_name: str):
+    module_path = _repo_root() / "scripts" / "runtime" / module_name
+    spec = importlib.util.spec_from_file_location(
+        f"test_{module_name.replace('.', '_')}", module_path
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _write_policy(path: Path, payload: dict) -> Path:
@@ -140,6 +153,17 @@ def _minimal_checker_policy() -> dict:
         "migration_report_path": ".runtime-cache/reports/governance/disk-space-legacy-migration.json",
         "legacy_retirement_quiet_minutes": 1440,
         "canonical_paths": {},
+        "duplicate_env_policy": {
+            "canonical_mainline_path": "$HOME/.cache/sourceharbor/project-venv",
+            "duplicate_glob": "$HOME/.cache/sourceharbor/project-venv*",
+            "reference_files": [
+                ".env",
+                ".env.example",
+                "scripts/lib/standard_env.sh",
+                "infra/systemd/sourceharbor-api.service",
+                "infra/systemd/sourceharbor-worker.service",
+            ],
+        },
         "migration_variables": _required_migration_variables(),
         "legacy_reference_files": [],
         "audit_targets": [],
@@ -394,6 +418,149 @@ def test_report_disk_space_counts_user_state_root_without_double_counting_child_
     assert "sourceharbor-state/artifacts" in highlight_paths
     assert "sourceharbor-state/workspace" in highlight_paths
     assert "sourceharbor-state/state" in highlight_paths
+
+
+def test_report_disk_space_emits_duplicate_env_groups_without_counting_canonical_as_duplicate(
+    tmp_path: Path,
+) -> None:
+    cache_root = tmp_path / "cache-root"
+    canonical_env = cache_root / "project-venv"
+    duplicate_env = cache_root / "project-venv-codex"
+    canonical_env.mkdir(parents=True, exist_ok=True)
+    duplicate_env.mkdir(parents=True, exist_ok=True)
+    (canonical_env / "canonical.bin").write_bytes(b"c" * 8)
+    (duplicate_env / "duplicate.bin").write_bytes(b"d" * 12)
+    (tmp_path / ".env.example").write_text(
+        f'export UV_PROJECT_ENVIRONMENT="{canonical_env}"\n',
+        encoding="utf-8",
+    )
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "canonical_paths": {},
+        "legacy_reference_files": [],
+        "duplicate_env_policy": {
+            "canonical_mainline_path": "cache-root/project-venv",
+            "duplicate_glob": "cache-root/project-venv*",
+            "reference_files": [".env.example"],
+        },
+        "audit_targets": [],
+        "docker_named_volumes": [],
+        "cleanup_waves": {},
+        "excluded_paths": [],
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    result = _run_script(
+        "report_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    duplicate_envs = payload["governance"]["repo_external_duplicate_envs"]
+    assert duplicate_envs["total_duplicate_size_bytes"] == 12
+    group = duplicate_envs["groups"][0]
+    assert group["status"] == "duplicates-detected"
+    canonical_entry = next(item for item in group["entries"] if item["is_canonical"])
+    duplicate_entry = next(item for item in group["entries"] if not item["is_canonical"])
+    assert canonical_entry["reference_status"] == "canonical-mainline"
+    assert duplicate_entry["reference_status"] == "unreferenced-by-known-entrypoints"
+
+
+def test_report_disk_space_marks_duplicate_env_as_still_referenced_when_entrypoint_mentions_it(
+    tmp_path: Path,
+) -> None:
+    cache_root = tmp_path / "cache-root"
+    canonical_env = cache_root / "project-venv"
+    duplicate_env = cache_root / "project-venv-codex"
+    canonical_env.mkdir(parents=True, exist_ok=True)
+    duplicate_env.mkdir(parents=True, exist_ok=True)
+    (duplicate_env / "duplicate.bin").write_bytes(b"d" * 12)
+    (tmp_path / ".env").write_text(
+        f'export UV_PROJECT_ENVIRONMENT="{duplicate_env}"\n',
+        encoding="utf-8",
+    )
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "canonical_paths": {},
+        "legacy_reference_files": [],
+        "duplicate_env_policy": {
+            "canonical_mainline_path": "cache-root/project-venv",
+            "duplicate_glob": "cache-root/project-venv*",
+            "reference_files": [".env"],
+        },
+        "audit_targets": [],
+        "docker_named_volumes": [],
+        "cleanup_waves": {},
+        "excluded_paths": [],
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    result = _run_script(
+        "report_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    group = payload["governance"]["repo_external_duplicate_envs"]["groups"][0]
+    duplicate_entry = next(item for item in group["entries"] if not item["is_canonical"])
+    assert duplicate_entry["reference_status"] == "still-referenced"
+    assert duplicate_entry["reference_hits"] == [".env"]
+
+
+def test_operator_summary_warns_when_duplicate_envs_exist_without_repo_web_runtime(
+    tmp_path: Path,
+) -> None:
+    cache_root = tmp_path / "cache-root"
+    canonical_env = cache_root / "project-venv"
+    duplicate_env = cache_root / "project-venv-codex"
+    canonical_env.mkdir(parents=True, exist_ok=True)
+    duplicate_env.mkdir(parents=True, exist_ok=True)
+    (duplicate_env / "duplicate.bin").write_bytes(b"d" * 12)
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "canonical_paths": {},
+        "duplicate_env_policy": {
+            "canonical_mainline_path": "cache-root/project-venv",
+            "duplicate_glob": "cache-root/project-venv*",
+            "reference_files": [],
+        },
+        "legacy_reference_files": [],
+        "audit_targets": [
+            {
+                "id": "repo-web-runtime",
+                "label": "Repo web runtime workspace",
+                "path": ".runtime-cache/tmp/web-runtime",
+                "layer": "repo-internal",
+                "ownership": "repo-exclusive",
+                "category": "runtime-duplicate",
+            }
+        ],
+        "docker_named_volumes": [],
+        "cleanup_waves": {"repo-tmp": {"candidates": []}},
+        "excluded_paths": [],
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+    report_module = _load_runtime_module("report_disk_space.py")
+    policy_payload = report_module.load_policy(tmp_path, str(policy_path))
+
+    summary = report_module.build_disk_governance_operator_summary(tmp_path, policy_payload)
+
+    assert summary["status"] == "warn"
+    assert "duplicate project envs" in summary["summary"]
+    assert summary["details"]["duplicate_env_count"] == 1
 
 
 def test_report_disk_space_emits_repo_internal_residue_buckets(tmp_path: Path) -> None:

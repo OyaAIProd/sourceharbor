@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import os
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from sqlalchemy.exc import DBAPIError
@@ -194,6 +195,60 @@ def test_build_computer_use_gate_ready_with_provider_secret() -> None:
     assert payload["details"]["provider"] == "gemini"
 
 
+def test_build_disk_governance_gate_ready_when_runtime_and_duplicate_envs_are_clear() -> None:
+    module = _load_ops_module()
+    payload = module.build_disk_governance_gate(
+        {
+            "status": "ready",
+            "summary": "Repo-side duplicate runtime and known duplicate project envs are currently within the expected bounds.",
+            "next_step": "None.",
+            "details": {"repo_tmp_cleanup_ready": False, "duplicate_envs": []},
+        }
+    )
+
+    assert payload["status"] == "ready"
+    assert "within the expected bounds" in payload["summary"]
+
+
+def test_build_disk_governance_gate_warns_when_repo_tmp_is_present_but_blocked() -> None:
+    module = _load_ops_module()
+    payload = module.build_disk_governance_gate(
+        {
+            "status": "warn",
+            "summary": "Repo-side web runtime duplicate is present, but repo-tmp cleanup is still gated.",
+            "next_step": "Keep the duplicate runtime in place until the repo-tmp safety gates clear.",
+            "details": {
+                "repo_tmp_cleanup_ready": False,
+                "blocking_gates": [{"name": "quiet-window", "detail": "0.5m since latest change"}],
+                "duplicate_envs": [
+                    {
+                        "path": "/tmp/sourceharbor/project-venv-codex",
+                        "reference_status": "unreferenced-by-known-entrypoints",
+                    }
+                ],
+            },
+        }
+    )
+
+    assert payload["status"] == "warn"
+    assert "repo-tmp cleanup is still gated" in payload["summary"]
+    assert payload["details"]["blocking_gates"] == [
+        {"name": "quiet-window", "detail": "0.5m since latest change"}
+    ]
+    assert payload["details"]["duplicate_envs"][0]["reference_status"] == (
+        "unreferenced-by-known-entrypoints"
+    )
+
+
+def test_timestamp_rank_accepts_datetime_instances() -> None:
+    module = _load_ops_module()
+    service = module.OpsService(SimpleNamespace())
+
+    value = datetime(2026, 4, 4, 12, 0, tzinfo=UTC)
+
+    assert service._timestamp_rank(value) == int(value.timestamp())
+
+
 def test_get_inbox_aggregates_sections_and_orders_items(monkeypatch) -> None:
     module = _load_ops_module()
     service = module.OpsService(SimpleNamespace())
@@ -302,12 +357,26 @@ def test_get_inbox_aggregates_sections_and_orders_items(monkeypatch) -> None:
             ],
         },
     )
+    monkeypatch.setattr(
+        module,
+        "_load_disk_governance_helpers",
+        lambda: (
+            lambda *_args, **_kwargs: {"version": 1},
+            lambda *_args, **_kwargs: {
+                "status": "ready",
+                "summary": "Repo-side duplicate runtime and known duplicate project envs are currently within the expected bounds.",
+                "next_step": "None.",
+                "details": {"repo_tmp_cleanup_ready": False, "duplicate_envs": []},
+            },
+        ),
+    )
 
     payload = service.get_inbox(limit=5, window_hours=24)
 
     assert payload["overview"]["attention_items"] == 4
     assert payload["overview"]["notification_or_gate_issues"] == 2
     assert payload["gates"]["notifications"]["status"] == "ready"
+    assert payload["gates"]["disk_governance"]["status"] == "ready"
     assert payload["gates"]["computer_use"]["status"] == "ready"
     assert payload["inbox_items"][0]["kind"] == "job_failed"
     assert payload["inbox_items"][0]["action_label"] == "Open job"
@@ -378,6 +447,19 @@ def test_get_inbox_emits_gate_items_with_settings_shortcut(monkeypatch) -> None:
         "get_provider_health",
         lambda self, window_hours: {"window_hours": window_hours, "providers": []},
     )
+    monkeypatch.setattr(
+        module,
+        "_load_disk_governance_helpers",
+        lambda: (
+            lambda *_args, **_kwargs: {"version": 1},
+            lambda *_args, **_kwargs: {
+                "status": "ready",
+                "summary": "Repo-side duplicate runtime and known duplicate project envs are currently within the expected bounds.",
+                "next_step": "None.",
+                "details": {"repo_tmp_cleanup_ready": False, "duplicate_envs": []},
+            },
+        ),
+    )
 
     payload = service.get_inbox(limit=5, window_hours=24)
     gate_items = [item for item in payload["inbox_items"] if item["kind"] == "hardening_gate"]
@@ -391,6 +473,79 @@ def test_get_inbox_emits_gate_items_with_settings_shortcut(monkeypatch) -> None:
         item["href"] == "#hardening-gates" and item["action_label"] == "Open gate"
         for item in gate_items
     )
+
+
+def test_get_inbox_keeps_disk_governance_gate_warn_when_summary_loading_fails(
+    monkeypatch,
+) -> None:
+    module = _load_ops_module()
+    service = module.OpsService(SimpleNamespace())
+
+    monkeypatch.setattr(
+        module.Settings,
+        "from_env",
+        staticmethod(
+            lambda: SimpleNamespace(
+                notification_enabled=False,
+                resend_api_key="",
+                resend_from_email="",
+                gemini_api_key="",
+                gemini_computer_use_model="gemini-2.5-computer-use-preview-10-2025",
+                ui_audit_gemini_enabled=True,
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        service,
+        "_load_failed_jobs",
+        lambda limit: {"status": "ok", "total": 0, "error": None, "items": []},
+    )
+    monkeypatch.setattr(
+        service,
+        "_load_failed_ingest_runs",
+        lambda limit: {"status": "ok", "total": 0, "error": None, "items": []},
+    )
+    monkeypatch.setattr(
+        service,
+        "_load_notification_deliveries",
+        lambda limit: {"status": "ok", "total": 0, "error": None, "items": []},
+    )
+    monkeypatch.setattr(
+        service,
+        "_load_retrieval_counts",
+        lambda: {
+            "videos": 1,
+            "jobs_with_artifacts": 1,
+            "knowledge_cards": 1,
+            "video_embeddings": 1,
+        },
+    )
+    monkeypatch.setattr(
+        service,
+        "_load_notification_config",
+        lambda: {
+            "to_email": None,
+            "enabled": False,
+            "failure_alert_enabled": False,
+            "ui_audit_artifact_base_root": "/tmp/sourceharbor-artifacts",
+            "ui_audit_gemini_enabled": True,
+        },
+    )
+    monkeypatch.setattr(
+        module.HealthService,
+        "get_provider_health",
+        lambda self, window_hours: {"window_hours": window_hours, "providers": []},
+    )
+    monkeypatch.setattr(
+        module,
+        "_load_disk_governance_helpers",
+        lambda: (_ for _ in ()).throw(OSError("broken report")),
+    )
+
+    payload = service.get_inbox(limit=5, window_hours=24)
+
+    assert payload["gates"]["disk_governance"]["status"] == "warn"
+    assert payload["gates"]["disk_governance"]["summary"] == (module.OPS_SECTION_ERROR_MESSAGE)
 
 
 def test_load_failed_jobs_redacts_db_error_details() -> None:

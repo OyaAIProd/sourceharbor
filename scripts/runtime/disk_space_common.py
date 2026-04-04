@@ -107,38 +107,46 @@ def safe_stat(path: Path) -> os.stat_result | None:
         return None
 
 
-def latest_mtime(path: Path) -> float | None:
+def path_size_and_latest_mtime(path: Path) -> tuple[int, float | None]:
+    if not path.exists():
+        return 0, None
     stat = safe_stat(path)
     if stat is None:
-        return None
+        return 0, None
     latest = stat.st_mtime
-    if path.is_file():
-        return latest
+    if path.is_symlink() or path.is_file():
+        return int(stat.st_size), latest
+
+    total = 0
     for item in path.rglob("*"):
         item_stat = safe_stat(item)
         if item_stat is None:
             continue
         latest = max(latest, item_stat.st_mtime)
+        if item.is_symlink() or item.is_dir():
+            continue
+        total += int(item_stat.st_size)
+    return total, latest
+
+
+def latest_mtime(path: Path) -> float | None:
+    _, latest = path_size_and_latest_mtime(path)
     return latest
 
 
+def isoformat_mtime(timestamp: float | None) -> str | None:
+    if timestamp is None:
+        return None
+    return (
+        datetime.fromtimestamp(timestamp, UTC)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
 def size_bytes(path: Path) -> int:
-    if not path.exists():
-        return 0
-    if path.is_symlink():
-        stat = safe_stat(path)
-        return int(stat.st_size) if stat else 0
-    if path.is_file():
-        stat = safe_stat(path)
-        return int(stat.st_size) if stat else 0
-    total = 0
-    for item in path.rglob("*"):
-        if item.is_symlink() or item.is_dir():
-            continue
-        stat = safe_stat(item)
-        if stat is None:
-            continue
-        total += int(stat.st_size)
+    total, _ = path_size_and_latest_mtime(path)
     return total
 
 
@@ -436,6 +444,89 @@ def collect_reference_hits(
         if any(marker in content for marker in lowered):
             hits.append(rel_path_from(root, path))
     return hits
+
+
+def collect_duplicate_env_groups(root: Path, policy: dict[str, Any]) -> dict[str, Any]:
+    duplicate_policy = dict(policy.get("duplicate_env_policy") or {})
+    canonical_raw = str(duplicate_policy.get("canonical_mainline_path") or "").strip()
+    duplicate_glob = str(duplicate_policy.get("duplicate_glob") or "").strip()
+    reference_files = [str(item) for item in duplicate_policy.get("reference_files", [])]
+    if not canonical_raw or not duplicate_glob:
+        return {
+            "total_duplicate_size_bytes": 0,
+            "total_duplicate_size_human": human_bytes(0),
+            "groups": [],
+        }
+
+    groups: list[dict[str, Any]] = []
+    total_duplicate_size = 0
+    canonical_path = expand_policy_path(canonical_raw, root=root)
+    entries: list[dict[str, Any]] = []
+    duplicate_entries: list[dict[str, Any]] = []
+    duplicate_size = 0
+
+    for path in resolve_candidate_paths(duplicate_glob, root=root):
+        if not path.exists() or not path.is_dir():
+            continue
+        is_canonical = path.resolve() == canonical_path.resolve()
+        expanded_path = str(path)
+        reference_markers = {
+            path.name,
+            expanded_path,
+        }
+        home = str(Path.home())
+        if expanded_path.startswith(home):
+            reference_markers.add(expanded_path.replace(home, "$HOME", 1))
+            reference_markers.add(expanded_path.replace(home, "~", 1))
+        reference_hits = collect_reference_hits(root, sorted(reference_markers), reference_files)
+        reference_status = "canonical-mainline"
+        if not is_canonical:
+            reference_status = (
+                "still-referenced" if reference_hits else "unreferenced-by-known-entrypoints"
+            )
+
+        size, latest = path_size_and_latest_mtime(path)
+        payload = {
+            "path": rel_path_from(root, path),
+            "exists": True,
+            "size_bytes": size,
+            "size_human": human_bytes(size),
+            "latest_mtime": isoformat_mtime(latest),
+            "is_canonical": is_canonical,
+            "reference_status": reference_status,
+            "reference_hits": reference_hits,
+        }
+        entries.append(payload)
+        if not is_canonical:
+            duplicate_entries.append(payload)
+            duplicate_size += size
+
+    if entries:
+        total_duplicate_size += duplicate_size
+        groups.append(
+            {
+                "id": "sourceharbor-project-venvs",
+                "label": "SourceHarbor project environments",
+                "canonical_path": rel_path_from(root, canonical_path),
+                "status": "duplicates-detected" if duplicate_entries else "canonical-only",
+                "duplicate_size_bytes": duplicate_size,
+                "duplicate_size_human": human_bytes(duplicate_size),
+                "entries": sorted(
+                    entries,
+                    key=lambda item: (
+                        not bool(item["is_canonical"]),
+                        -int(item["size_bytes"]),
+                        str(item["path"]),
+                    ),
+                ),
+            }
+        )
+
+    return {
+        "total_duplicate_size_bytes": total_duplicate_size,
+        "total_duplicate_size_human": human_bytes(total_duplicate_size),
+        "groups": groups,
+    }
 
 
 def is_quiet_for_minutes(path: Path, minutes: int) -> tuple[bool, float | None]:

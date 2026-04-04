@@ -12,6 +12,17 @@
     "legacy_state_root": "$HOME/.video-digestor",
     "legacy_cache_root": "$HOME/.cache/video-digestor"
   },
+  "duplicate_env_policy": {
+    "canonical_mainline_path": "$HOME/.cache/sourceharbor/project-venv",
+    "duplicate_glob": "$HOME/.cache/sourceharbor/project-venv*",
+    "reference_files": [
+      ".env",
+      ".env.example",
+      "scripts/lib/standard_env.sh",
+      "infra/systemd/sourceharbor-api.service",
+      "infra/systemd/sourceharbor-worker.service"
+    ]
+  },
   "migration_variables": [
     {
       "name": "PIPELINE_ARTIFACT_ROOT",

@@ -183,6 +183,12 @@ function buildNextSteps(
 			actionLabel: "Open settings",
 		},
 		{
+			key: "disk_governance",
+			title: "Disk governance",
+			href: "/ops#hardening-gates",
+			actionLabel: copy.nextSteps.openAction,
+		},
+		{
 			key: "retrieval",
 			title: "Retrieval",
 			href: "/search",
@@ -375,6 +381,10 @@ export default async function OpsPage() {
 			<section id="hardening-gates" className="grid gap-4 lg:grid-cols-2">
 				<GateCard title="Retrieval" gate={payload.gates.retrieval} />
 				<GateCard title="Notifications" gate={payload.gates.notifications} />
+				<GateCard
+					title="Disk governance"
+					gate={payload.gates.disk_governance}
+				/>
 				<GateCard title="UI audit" gate={payload.gates.ui_audit} />
 				<GateCard title="Computer use" gate={payload.gates.computer_use} />
 			</section>

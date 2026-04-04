@@ -69,3 +69,57 @@ def test_make_secret_gate_reports_missing_sender_identity_separately() -> None:
     assert result.status == "WARN"
     assert result.check_id == "resend_from_email"
     assert "RESEND_FROM_EMAIL is missing" in result.summary
+
+
+def test_check_disk_governance_maps_ready_operator_summary_to_pass(monkeypatch) -> None:
+    module = _load_doctor_module()
+    monkeypatch.setattr(module, "load_policy", lambda _root: {"version": 1})
+    monkeypatch.setattr(
+        module,
+        "build_disk_governance_operator_summary",
+        lambda _root, _policy: {
+            "status": "ready",
+            "summary": "Repo-side duplicate runtime and known duplicate project envs are currently within the expected bounds.",
+            "next_step": "None.",
+            "details": {"repo_tmp_cleanup_ready": False, "duplicate_envs": []},
+        },
+    )
+
+    result = module.check_disk_governance()
+
+    assert result.status == "PASS"
+    assert "duplicate runtime" in result.summary
+    assert result.details["repo_tmp_cleanup_ready"] is False
+
+
+def test_check_disk_governance_preserves_warn_details(monkeypatch) -> None:
+    module = _load_doctor_module()
+    monkeypatch.setattr(module, "load_policy", lambda _root: {"version": 1})
+    monkeypatch.setattr(
+        module,
+        "build_disk_governance_operator_summary",
+        lambda _root, _policy: {
+            "status": "warn",
+            "summary": "Repo-side web runtime duplicate is present, but repo-tmp cleanup is still gated.",
+            "next_step": "Wait for the repo-tmp gates to clear.",
+            "details": {
+                "repo_tmp_cleanup_ready": False,
+                "blocking_gates": [{"name": "quiet-window", "detail": "0.5m since latest change"}],
+            },
+        },
+    )
+
+    result = module.check_disk_governance()
+
+    assert result.status == "WARN"
+    assert result.details["blocking_gates"][0]["name"] == "quiet-window"
+
+
+def test_check_disk_governance_warns_when_summary_loading_raises(monkeypatch) -> None:
+    module = _load_doctor_module()
+    monkeypatch.setattr(module, "load_policy", lambda _root: (_ for _ in ()).throw(OSError("boom")))
+
+    result = module.check_disk_governance()
+
+    assert result.status == "WARN"
+    assert "could not be loaded cleanly" in result.summary
