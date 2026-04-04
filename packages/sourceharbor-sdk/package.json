@@ -1,6 +1,6 @@
 {
   "name": "@sourceharbor/sdk",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Thin public TypeScript SDK for the SourceHarbor HTTP API.",
   "license": "MIT",
   "type": "module",

@@ -7,6 +7,13 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-04-03
+
+### Fixed
+
+- aligned the public SDK/web URL helper boundary so the extracted SDK keeps the same route-building contract the web shell expects
+- bumped the public CLI and TypeScript SDK package versions to `0.1.5` so the next release line matches the current patch-release head
+
 ## [0.1.4] - 2026-04-03
 
 ### Added
