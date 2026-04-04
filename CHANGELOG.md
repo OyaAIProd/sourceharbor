@@ -7,6 +7,15 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-04-04
+
+### Changed
+
+- promoted disk governance into a more resilient Ops / doctor hardening gate, including safer fallback behavior when audit policy or report data is unreadable
+- clarified the public starter surface so `starter-packs/` stays the public entry directory and `templates/public-skills/**` stays the copyable template asset layer
+- clarified the repo-local CLI wording so `./bin/sourceharbor` no longer reads like the repository has no packaged public CLI
+- bumped the public CLI, public TypeScript SDK, and OpenAPI contract version anchors to `0.1.6` so the next release line matches the current `main` head
+
 ## [0.1.5] - 2026-04-03
 
 ### Fixed
