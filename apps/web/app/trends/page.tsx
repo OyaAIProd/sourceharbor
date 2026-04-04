@@ -138,6 +138,9 @@ function deriveMergedStories(
 			sourceKeys: Set<string>;
 			runIds: Set<string>;
 			platforms: Set<string>;
+			claimKinds: Set<string>;
+			topicKey: string | null;
+			latestJobId: string | null;
 			latestCreatedAt: string | null;
 			evidence: Map<string, DerivedMergedStoryEvidence>;
 		}

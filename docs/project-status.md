@@ -25,6 +25,9 @@ It has:
 
 - local first-run and doctor flows
 - a thin repo-local CLI facade over the existing `bin/*` entrypoints
+- a packaged public CLI bridge that delegates into that repo-local substrate
+- a first public TypeScript SDK over the HTTP contract
+- public compatibility docs, starter prompts, and examples for Codex / Claude Code builders
 - Search, story-aware briefing-backed Ask, shared-story Briefings, MCP, and Ops front doors
 - strong-supported YouTube/Bilibili intake plus generalized RSSHub/RSS source intake templates
 - watchlists, merged stories, trends, briefings, bundles, and a sample playground
@@ -34,8 +37,6 @@ What it does **not** have today:
 
 - a hosted workspace promise
 - autopilot product claims
-- a separately packaged public CLI or public SDK
-- public Skills or plugin-marketplace distribution as a shipped surface
 - live external notification proof without sender configuration
 - universal no-secret proof for Gemini-backed lanes
 - route-by-route verification across the full RSSHub universe
@@ -45,7 +46,9 @@ What it does **not** have today:
 These are the strongest current claims:
 
 - **First-run base path:** `./bin/bootstrap-full-stack`, `./bin/full-stack up`, `./bin/doctor`, and the runtime route snapshot under `.runtime-cache/run/full-stack/resolved.env`
-- **CLI substrate:** existing `bin/*` entrypoints are now discoverable through `./bin/sourceharbor help`, while still remaining repo-local rather than a packaged public CLI
+- **CLI surfaces:** existing `bin/*` entrypoints remain the repo-local command truth, while `packages/sourceharbor-cli` adds a thin installable bridge for public discovery and starter flows
+- **Public TypeScript SDK:** `packages/sourceharbor-sdk` now exposes a thin contract-first SDK over the same HTTP contract and shared route semantics
+- **Public starter packs:** `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now form the first public workflow starter surface without exposing internal `.agents/skills`
 - **Local write-route contract:** direct write APIs can be exercised with the local dev token path instead of pretending auth is an unresolved product gap
 - **Source intake contract:** strong-supported YouTube/Bilibili templates plus generalized RSSHub/RSS substrate without overclaiming full-universe proof, with the `/subscriptions` front door now consuming the same template catalog exposed through API and MCP
 - **Front doors:** `/search`, `/ask` (story-aware, briefing-backed answer/change/evidence flow with truthful raw-retrieval fallback, selected-story drill-down, and a server-owned story page payload that now reuses one canonical selected-story object from Briefings), `/briefings` (server-owned briefing page payload for selected story, compare route, and Ask handoff), `/mcp`, `/ops`, `/subscriptions`
@@ -100,10 +103,10 @@ This is the short scoreboard for the directions most likely to get overstated.
 | --- | --- | --- |
 | Codex / Claude Code via MCP + HTTP API | **ship-now** | the repo already has real MCP, API, search, ask, and job-trace surfaces |
 | Repo-local CLI/help facade | **ship-now** | `./bin/sourceharbor` is already a truthful discoverability layer over `bin/*` |
-| Packaged public CLI | **later** | the repo-local CLI is real, but the external package contract should stay thin until the builder contract is quieter |
-| Public TypeScript SDK | **later** | shared client/types exist, but they are still repo-internal substrate rather than a frozen external package |
+| Packaged public CLI bridge | **ship-now** | `packages/sourceharbor-cli` is now the installable public bridge, while the fuller repo-local operator CLI remains `./bin/sourceharbor` |
+| Public TypeScript SDK | **ship-now** | `packages/sourceharbor-sdk` now exposes the contract-first builder layer over the existing HTTP contract |
 | Public Python SDK | **later** | no public package surface exists yet |
-| Public skills pack / templates | **later** | the fit story is real, but the repo does not yet ship a packaged public skills surface |
+| Public skills pack / templates | **ship-now** | `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now provide the first public starter surface |
 | Plugin / extension marketplace | **no-go now** | plugin-first positioning would overstate the current repo truth |
 | Agent Autopilot (approval-first research ops) | **spike-only** | only the approval-first research-ops slice is worth reopening |
 | Full autonomous autopilot | **no-go now** | approval, rollback, identity, and provider readiness are not strong enough |
@@ -117,7 +120,7 @@ These are the genuine external or human-only dependencies still left after the
 current maintainer re-audit:
 
 - Resend live delivery still needs a real sender identity chain: `RESEND_FROM_EMAIL`, a verified sender/domain, and a destination mailbox
-- the strict YouTube live-smoke lane still needs a key/project/quota/policy state that no longer returns `quota_or_permission` / `403`
+- the strict YouTube live-smoke lane now has one validated winner key, but the shared operator environment still needs that winner persisted before the full live lane is reopened
 
 Raw non-empty values for `YOUTUBE_API_KEY`, `RESEND_API_KEY`, and
 `GEMINI_API_KEY` are no longer the main blocker story on the maintainer
@@ -128,7 +131,7 @@ machine. The remaining blockers are more specific than "secret missing".
 | Blocker | Freshly verified state | Why this is external/human-only | Exact action |
 | --- | --- | --- | --- |
 | Resend sender identity | maintainer-side provider canary still reports `config_error`; `RESEND_API_KEY` is present on the maintainer machine, but `RESEND_FROM_EMAIL` is still missing | repo code already exposes notifications and settings; GitHub/release truth is no longer the missing piece | set `RESEND_FROM_EMAIL`, verify the sender/domain in Resend, choose a real destination mailbox, then rerun the provider canary or strict live-smoke lane |
-| YouTube strict live-smoke | maintainer-side provider canary still reports `auth/http_error:403`; the current response says YouTube Data API v3 has not been used in or enabled for Google project `1025401548407` | this is a Google project/API/quota/policy gate, not a repo-local implementation gap | confirm YouTube Data API v3 is enabled for project `1025401548407`, confirm the current key is attached to that project, wait for propagation if it was just enabled, then rerun the strict live-smoke lane |
+| YouTube strict live-smoke | secure rotation on 2026-04-03 found one user-supplied winner key that now passes direct probe, provider canary, and strict live-smoke preflight; the previously configured key still points at blocked Google project states | repo-side implementation is no longer the blocker; the remaining action is keeping the validated project-bound key in the operator environment and rerunning the full live lane when needed | replace the stale local YouTube key with the validated winner key in the operator secret store, then rerun the strict live-smoke lane if you want the full end-to-end receipt |
 
 ## Remote Truth Snapshot
 

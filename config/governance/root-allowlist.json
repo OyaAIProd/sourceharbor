@@ -177,6 +177,13 @@
       "mutable": false
     },
     {
+      "path": "examples",
+      "kind": "docs",
+      "reason": "Public runnable examples for builder-facing CLI and SDK surfaces.",
+      "owner": "platform",
+      "mutable": false
+    },
+    {
       "path": "env",
       "kind": "config",
       "reason": "Profile overlays and environment templates.",
@@ -208,6 +215,13 @@
       "path": "integrations",
       "kind": "responsibility-layer",
       "reason": "Explicit adapters for external APIs, binaries, and runtime integration surfaces.",
+      "owner": "platform",
+      "mutable": false
+    },
+    {
+      "path": "packages",
+      "kind": "responsibility-layer",
+      "reason": "Public installable builder-facing CLI and SDK packages.",
       "owner": "platform",
       "mutable": false
     },
@@ -261,9 +275,23 @@
       "mutable": false
     },
     {
+      "path": "starter-packs",
+      "kind": "docs",
+      "reason": "Public compatibility packs and reproducible starter surfaces for Codex, Claude Code, and SDK onboarding.",
+      "owner": "platform",
+      "mutable": false
+    },
+    {
       "path": "SUPPORT.md",
       "kind": "docs",
       "reason": "Public support boundary for the limited-maintenance source-first repository.",
+      "owner": "platform",
+      "mutable": false
+    },
+    {
+      "path": "templates",
+      "kind": "docs",
+      "reason": "Public prompt and workflow starter templates referenced by compatibility packs and docs.",
       "owner": "platform",
       "mutable": false
     },
@@ -325,6 +353,13 @@
       "path": ".claude",
       "kind": "local-private",
       "reason": "Local Claude workspace state is allowed at repo root but must stay untracked.",
+      "owner": "local-user",
+      "must_be_untracked": true
+    },
+    {
+      "path": ".serena",
+      "kind": "local-private",
+      "reason": "Local Serena semantic index/cache state is allowed at repo root but must stay untracked.",
       "owner": "local-user",
       "must_be_untracked": true
     },

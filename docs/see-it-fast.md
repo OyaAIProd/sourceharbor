@@ -119,8 +119,9 @@ If you want confidence without booting the full stack yet:
 
 1. Read [README.md](../README.md) for the public story.
 2. Read [proof.md](./proof.md) for the evidence ladder.
-3. Read [samples/README.md](./samples/README.md) if you want the clearly labeled sample corpus path.
-4. Read [architecture.md](./architecture.md) if you want the system map.
+3. Read [starter-packs/README.md](../starter-packs/README.md) if you want the public CLI / SDK / Codex / Claude Code starter surface.
+4. Read [samples/README.md](./samples/README.md) if you want the clearly labeled sample corpus path.
+5. Read [architecture.md](./architecture.md) if you want the system map.
 
 If you want a real local run after that, go to [start-here.md](./start-here.md).
 
@@ -139,5 +140,6 @@ The honest lure is not "AI magic." It is that SourceHarbor already gives builder
 
 - a **Codex / Claude Code-friendly** MCP and HTTP API surface
 - a **repo-local CLI substrate** through `./bin/sourceharbor help` when they want one discoverable command surface
+- a **public packaged CLI and public TypeScript SDK** when they want versionable install/use examples without copying internal code
 - a **proof-first** story that names external gates instead of hiding them
 - a **compounder layer** worth revisiting when you care about watchlists, trends, and evidence bundles

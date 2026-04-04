@@ -1,7 +1,7 @@
 {
   "version": 1,
   "max_public_top_level_files": 24,
-  "max_public_top_level_directories": 17,
+  "max_public_top_level_directories": 20,
   "max_root_docs": 11,
   "max_local_private_tolerations_present": 5,
   "root_doc_allowlist": [

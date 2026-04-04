@@ -16,10 +16,10 @@ Think of it like the route board at an airport:
 | --- | --- | --- | --- |
 | Codex / Claude Code through MCP + HTTP API | **ship-now** | this is already a real fit: the repo exposes MCP, a public HTTP contract, and builder-facing docs without inventing a second business-logic stack | keep tightening only if the current MCP/API contract changes |
 | Repo-local CLI/help facade | **ship-now** | `./bin/sourceharbor` is the current honest command surface for discovery; it routes to repo-owned `bin/*` entrypoints and does not pretend to be a packaged public CLI | extend only as a thin facade over existing entrypoints |
-| Packaged public CLI | **later** | the repo now has a truthful CLI substrate, but not enough evidence that a separately packaged CLI would add value without duplicating logic | revisit when repeated external users want installable distribution beyond clone-and-run |
-| Public TypeScript SDK | **later** | the shared TypeScript client/types show the substrate path, but they are still repo-internal rather than a stable public package contract | revisit when HTTP/MCP contracts stabilize and at least one external consumer needs a thin package |
+| Packaged public CLI bridge | **ship-now** | `packages/sourceharbor-cli` now provides the installable public bridge while still delegating into repo-local `bin/sourceharbor` when a checkout is present | keep the command set thin and docs-first |
+| Public TypeScript SDK | **ship-now** | `packages/sourceharbor-sdk` now provides the first contract-first SDK surface over the existing HTTP contract | harden package boundaries as external consumers appear |
 | Python SDK | **later** | there is no public Python package surface today, and packaging it now would overclaim builder maturity | revisit after the TypeScript path hardens and real external builder demand exists |
-| Public Skills / workflow packs | **later** | the product story already fits Codex / Claude Code / MCP, but there is not yet a shipped public Skills catalog or supported template distribution surface | revisit when the repo can point to stable, maintained workflow contracts instead of internal execution history |
+| Public Skills / workflow packs | **ship-now** | `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now form the first public starter distribution surface without exporting raw internal `.agents/skills` | deepen only if the workflow contracts stay stable across releases |
 | Plugin-first or marketplace-first positioning | **no-go** | SourceHarbor is strongest as a source-first control tower with API/MCP/CLI reuse, not as a plugin marketplace | reconsider only if packaged CLI/SDK surfaces are stable and there is strong third-party integrator pull |
 
 ## Big-Bet Buckets

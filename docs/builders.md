@@ -2,12 +2,14 @@
 
 SourceHarbor is not only a Web UI.
 
-It already exposes four real builder-facing layers:
+It already exposes six real builder-facing layers:
 
 1. **HTTP API contract** for system integrations
 2. **MCP surface** for agent clients such as Codex and Claude Code
-3. **Repo-local CLI/help facade** for discoverable operator and builder entrypoints
-4. **Shared TypeScript client and types** that show the current substrate path
+3. **Packaged public CLI** for installable command discovery
+4. **Repo-local CLI/help facade** as the underlying direct substrate
+5. **Public TypeScript SDK** for typed HTTP reuse
+6. **Public starter packs** for reproducible Codex / Claude Code / SDK setup
 
 Think of the product like one control tower with multiple doors:
 
@@ -72,10 +74,28 @@ Representative tools:
 - `sourceharbor.retrieval.search`
 - `sourceharbor.ingest.poll`
 
-### 3. Repo-Local CLI Surface
+### 3. Packaged Public CLI
 
-If you want one discoverable command surface before you memorize the bin
-directory:
+If you want one installable command surface first:
+
+```bash
+npm install --global ./packages/sourceharbor-cli
+cd /path/to/sourceharbor
+sourceharbor help
+sourceharbor mcp
+```
+
+Current truth:
+
+- package path: [`packages/sourceharbor-cli`](../packages/sourceharbor-cli/README.md)
+- it is a **thin repo-aware public wrapper**
+- inside a checkout it delegates to the repo-local `bin/sourceharbor`
+- it does not replace the repo-local runtime manager
+- outside a checkout it falls back to public docs guidance instead of inventing a second runtime stack
+
+### 4. Repo-Local CLI Substrate
+
+These remain the direct command truth:
 
 - `./bin/sourceharbor help`
 - `./bin/sourceharbor bootstrap`
@@ -83,48 +103,57 @@ directory:
 - `./bin/sourceharbor doctor`
 - `./bin/sourceharbor mcp`
 
-This is the honest current status:
+The packaged CLI above does not replace this substrate. It only makes it easier
+to discover and reuse.
 
-- it is a **thin repo-local facade**
-- it routes into the existing `bin/*` entrypoints
-- it is **not** marketed as a separately packaged public CLI
+### 5. Public TypeScript SDK
 
-### 4. Shared TypeScript Client Layer
+If you want a public, typed HTTP client first:
 
-These files are not marketed as a standalone SDK yet, but they are already the
-real substrate path inside the repo:
+```bash
+npm install ./packages/sourceharbor-sdk
+```
 
-- [`apps/web/lib/api/client.ts`](../apps/web/lib/api/client.ts)
-- [`apps/web/lib/api/types.ts`](../apps/web/lib/api/types.ts)
+Package path:
 
-This is the honest current status:
+- [`packages/sourceharbor-sdk`](../packages/sourceharbor-sdk/README.md)
 
-- there is a **shared client layer**
-- there are **shared TypeScript types**
-- there is **not yet** a separately packaged public SDK
+Current truth:
 
-## Future SDK Path
+- it is a **thin contract-first SDK**
+- it stays on top of the HTTP API contract instead of opening a second business-logic stack
+- it intentionally covers the builder-facing API layer, not every web-only operator helper
 
-SourceHarbor should not overclaim here.
+### 6. Public Starter Packs
 
-The most truthful next packaging sequence is:
+If you want public templates instead of internal raw skills:
 
-1. keep the HTTP contract stable
-2. keep the MCP surface stable
-3. keep the shared TypeScript client and types stable
-4. keep the repo-local CLI facade thin and honest over `bin/*`
-5. extract a thin TypeScript SDK only when the builder contract stops moving
-6. treat a Python SDK as later
+- [`starter-packs/README.md`](../starter-packs/README.md)
+- [`starter-packs/compatibility.md`](../starter-packs/compatibility.md)
+- [`starter-packs/codex/AGENTS.md`](../starter-packs/codex/AGENTS.md)
+- [`starter-packs/claude-code/CLAUDE.md`](../starter-packs/claude-code/CLAUDE.md)
+- [`starter-packs/typescript-sdk/example.ts`](../starter-packs/typescript-sdk/example.ts)
 
-That means:
+## Public Packaging Status
 
-- **Repo-local CLI facade:** shipped now as a thin discoverability surface
-- **TypeScript SDK:** later, but clearly on-path
+SourceHarbor should still stay honest here.
+
+What ships now:
+
+- **Packaged public CLI:** now
+- **Public TypeScript SDK:** now
+- **Public starter packs / compatibility docs:** now
+- **Codex / Claude Code fit via MCP + HTTP API + CLI + SDK:** now
+
+What stays later:
+
 - **Python SDK:** later
-- **Public skills / template packs:** later, after the builder contract stabilizes
-- **Codex / Claude Code fit via MCP + HTTP API + repo-local CLI:** shipped now
-- **Plugin / marketplace positioning:** no-go for now
-- **generic multi-language platform claim:** no-go for now
+
+What stays no-go this wave:
+
+- **Plugin / marketplace positioning**
+- **Hosted workspace claims**
+- **generic autonomous agent loops**
 
 If you want the bucketed decision ledger instead of the packaging sequence, read
 [docs/reference/ecosystem-and-big-bet-decisions.md](./reference/ecosystem-and-big-bet-decisions.md).

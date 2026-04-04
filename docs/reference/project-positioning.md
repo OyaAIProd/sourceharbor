@@ -41,7 +41,8 @@ Two directions are intentionally kept in the "evaluate before promise" bucket:
 The same principle also governs builder packaging:
 
 - the repo-local CLI discoverability surface is real now
-- packaged public CLI / SDK surfaces are still later
+- thin public CLI / SDK surfaces are now real
+- public starter packs are now real
 - plugin-first positioning stays no-go now
 
 Relevant spike artifacts:

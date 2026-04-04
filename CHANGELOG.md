@@ -7,6 +7,18 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+### Added
+
+- first public builder packages under `packages/sourceharbor-cli` and `packages/sourceharbor-sdk`
+- first public compatibility docs and starter packs for Codex / Claude Code under `docs/compat/*`, `docs/public-skills.md`, and `templates/public-skills/**`
+- first public builder examples under `examples/cli` and `examples/sdk`
+
+### Changed
+
+- upgraded the builder story from repo-local-only CLI substrate to a split model: repo-local operator CLI plus thin public CLI and TypeScript SDK
+- refreshed README, builders, project-status, proof, compare, start-here, see-it-fast, docs index, and GitHub profile intent to match the new thin public surfaces
+- narrowed the YouTube external blocker wording from a generic hard `403` claim to an exact secure-rotation result: one validated winner key plus a remaining operator secret-rotation action
+
 ## [0.1.3] - 2026-04-03
 
 ### Changed

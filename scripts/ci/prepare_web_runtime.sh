@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUNTIME_ROOT="$ROOT_DIR/.runtime-cache/tmp/web-runtime"
 WORKSPACE_WEB_DIR="$RUNTIME_ROOT/workspace/apps/web"
+WORKSPACE_SDK_SRC_DIR="$RUNTIME_ROOT/workspace/packages/sourceharbor-sdk/src"
 STATE_DIR="$ROOT_DIR/.runtime-cache/run/web-runtime"
 HASH_FILE="$STATE_DIR/package.sha256"
 READY_FILE="$STATE_DIR/ready"
@@ -54,7 +55,10 @@ from pathlib import Path
 import sys
 
 root = Path(sys.argv[1])
-source_dir = root / "apps" / "web"
+roots = [
+    root / "apps" / "web",
+    root / "packages" / "sourceharbor-sdk" / "src",
+]
 blocked_names = {
     "node_modules",
     ".next",
@@ -63,21 +67,25 @@ blocked_names = {
     "build",
     "tsconfig.tsbuildinfo",
     ".DS_Store",
+    "*.tgz",
 }
 
 digest = hashlib.sha256()
-for path in sorted(source_dir.rglob("*")):
-    rel = path.relative_to(source_dir).as_posix()
-    if any(part in blocked_names for part in path.parts):
-        continue
-    if any(part.startswith(".next-e2e-") for part in path.parts):
-        continue
-    if path.is_dir():
-        continue
-    digest.update(rel.encode("utf-8"))
-    digest.update(b"\0")
-    digest.update(path.read_bytes())
-    digest.update(b"\0")
+for source_dir in roots:
+    for path in sorted(source_dir.rglob("*")):
+        rel = path.relative_to(root).as_posix()
+        if any(part in {"node_modules", ".next", "coverage", "out", "build", "tsconfig.tsbuildinfo", ".DS_Store"} for part in path.parts):
+            continue
+        if path.name.endswith(".tgz"):
+            continue
+        if any(part.startswith(".next-e2e-") for part in path.parts):
+            continue
+        if path.is_dir():
+            continue
+        digest.update(rel.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
 print(digest.hexdigest(), end="")
 PY
 )"
@@ -240,7 +248,7 @@ for child in web_dir.iterdir():
                 pass
 PY
 
-python3 - <<'PY' "$ROOT_DIR" "$WORKSPACE_WEB_DIR"
+python3 - <<'PY' "$ROOT_DIR" "$WORKSPACE_WEB_DIR" "$WORKSPACE_SDK_SRC_DIR"
 import errno
 from pathlib import Path
 import shutil
@@ -250,7 +258,10 @@ import time
 root = Path(sys.argv[1])
 source_dir = root / "apps" / "web"
 target_dir = Path(sys.argv[2])
+sdk_source_dir = root / "packages" / "sourceharbor-sdk" / "src"
+sdk_target_dir = Path(sys.argv[3])
 staging_dir = target_dir.parent / f"{target_dir.name}.staging"
+sdk_staging_dir = sdk_target_dir.parent / f"{sdk_target_dir.name}.staging"
 
 
 def handle_remove_error(_func, _path, exc_info):
@@ -307,16 +318,24 @@ def ignore(_path: str, names: list[str]) -> set[str]:
         ".DS_Store",
     }
     ignored = {name for name in names if name in blocked}
+    ignored.update({name for name in names if name.endswith(".tgz")})
     ignored.update({name for name in names if name.startswith(".next-e2e-")})
     return ignored
 
 if staging_dir.exists():
     robust_rmtree(staging_dir)
+if sdk_staging_dir.exists():
+    robust_rmtree(sdk_staging_dir)
 target_dir.parent.mkdir(parents=True, exist_ok=True)
+sdk_target_dir.parent.mkdir(parents=True, exist_ok=True)
 shutil.copytree(source_dir, staging_dir, ignore=ignore, copy_function=shutil.copy)
+shutil.copytree(sdk_source_dir, sdk_staging_dir, ignore=ignore, copy_function=shutil.copy)
 if target_dir.exists():
     robust_rmtree(target_dir)
+if sdk_target_dir.exists():
+    robust_rmtree(sdk_target_dir)
 staging_dir.rename(target_dir)
+sdk_staging_dir.rename(sdk_target_dir)
 PY
 
 CURRENT_HASH=""

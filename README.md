@@ -33,6 +33,8 @@
   ·
   <a href="./docs/builders.md">Builders</a>
   ·
+  <a href="./starter-packs/README.md">Starter Packs</a>
+  ·
   <a href="./docs/samples/README.md">Sample Corpus</a>
   ·
   <a href="./docs/proof.md">Proof</a>
@@ -130,15 +132,35 @@ The builder-facing mental map should follow the same product line:
 | Entry point | Who it is for | Current truth |
 | --- | --- | --- |
 | **Codex / Claude Code workflows** | local operators who want an AI coding or operations agent to query and drive the same system truth | honest fit today through MCP + HTTP API, documented in [docs/builders.md](./docs/builders.md) |
-| **Repo-local CLI substrate** | newcomers who want one discoverable command surface before they memorize `bin/*` | real today via `./bin/sourceharbor help`, which routes to the existing repo entrypoints without pretending to be a packaged public CLI |
-| **Read-only MCP** | agent workflows and assistant clients that need governed access to jobs, artifacts, retrieval, ingest, reports, and notifications | real surface today via [`./bin/dev-mcp`](./docs/mcp-quickstart.md) |
-| **HTTP API contract** | product builders, automation, and future SDK consumers | real contract today via [`contracts/source/openapi.yaml`](./contracts/source/openapi.yaml) |
-| **Shared Web client/types** | the current TypeScript consumer layer inside the repo | real layer today in `apps/web/lib/api/client.ts` and `apps/web/lib/api/types.ts` |
-| **Future SDK path** | external packages that should stay thin and truthful | documented as a next step in [docs/builders.md](./docs/builders.md), not marketed as already shipped |
+| **Packaged public CLI** | builders who want an installable command surface before memorizing repo entrypoints | real today in [`packages/sourceharbor-cli`](./packages/sourceharbor-cli/README.md); it stays thinner than the repo-local runtime CLI and delegates inside a checkout |
+| **Repo-local CLI substrate** | operators already inside a checkout who want the direct runtime and governance command truth | real today via `./bin/sourceharbor help`, which remains the underlying local command truth |
+| **MCP surface** | agent workflows and assistant clients that need governed access to jobs, artifacts, retrieval, ingest, reports, and notifications | real surface today via [`./bin/dev-mcp`](./docs/mcp-quickstart.md) |
+| **HTTP API contract** | product builders, automation, and SDK consumers | real contract today via [`contracts/source/openapi.yaml`](./contracts/source/openapi.yaml) |
+| **Public TypeScript SDK** | TypeScript builders who want a thin client over the same HTTP contract | real today in [`packages/sourceharbor-sdk`](./packages/sourceharbor-sdk/README.md); it stays contract-first and builder-facing |
+| **Public starter packs** | builders who want reproducible Codex / Claude Code / SDK starting templates | real today in [`starter-packs/`](./starter-packs/README.md); these are public templates and compatibility notes, not raw internal `.agents/skills` exports |
 
-The CLI story is intentionally thin: the existing `bin/*` commands remain the
-truthful repo-local substrate, `./bin/sourceharbor` is the discoverable façade,
-and a separately packaged public CLI or SDK still stays later.
+The packaging story is intentionally thin: the packaged CLI stays repo-aware and
+delegates to `./bin/sourceharbor` inside a checkout, the TypeScript SDK stays a
+contract-first wrapper over the HTTP API, and Python SDK support still stays
+later.
+
+## Public Packages Now
+
+These packages are the public box around the same repo-owned logic:
+
+- **CLI:** install [`packages/sourceharbor-cli`](./packages/sourceharbor-cli/README.md) when you want one thin command surface for the repo-local command substrate.
+- **TypeScript SDK:** install [`packages/sourceharbor-sdk`](./packages/sourceharbor-sdk/README.md) when you want a typed HTTP client instead of inventing a second fetch stack.
+- **Starter packs:** open [`starter-packs/README.md`](./starter-packs/README.md) when you want reproducible Codex / Claude Code / SDK starting templates rather than raw internal skill files.
+
+Minimal examples:
+
+```bash
+npm install --global ./packages/sourceharbor-cli
+cd /path/to/sourceharbor
+sourceharbor help
+
+npm install ./packages/sourceharbor-sdk
+```
 
 ## What It Does Not Claim Today
 
@@ -147,8 +169,8 @@ Think of this as the label on the box, not fine print:
 - SourceHarbor is **not** presented as a hosted SaaS or online signup product.
 - Agent Autopilot is **not** a shipped capability; it remains a bounded spike direction.
 - Hosted Team Workspace is **not** a current promise; it remains a deferred bet.
-- SourceHarbor is **not** yet shipped as a separately packaged public CLI or SDK.
-- SourceHarbor is **not** yet a standalone public Skills catalog or plugin marketplace.
+- SourceHarbor does **not** yet ship a public Python SDK.
+- SourceHarbor does **not** ship a plugin marketplace or raw public `.agents/skills` export.
 - SourceHarbor does **not** claim that every RSSHub route has already been individually validated.
 
 If you need the explicit bet boundaries, read:
@@ -359,11 +381,12 @@ Open these front-door routes after the stack is up:
 - `/mcp` for the in-product MCP front door
 - `/ops` for operator diagnostics and hardening gates
 
-The truthful CLI story today is intentionally thin:
+The truthful package story today is intentionally thin:
 
-- `./bin/sourceharbor help` is the discoverable repo-local menu
-- `./bin/sourceharbor mcp` and `./bin/sourceharbor doctor` route to the same underlying entrypoints
-- packaged public CLI and public SDK surfaces are still later, not already shipped
+- `sourceharbor` from [`packages/sourceharbor-cli`](./packages/sourceharbor-cli/README.md) stays repo-aware and delegates to the repo-local command substrate instead of pretending to manage the whole local runtime itself
+- `./bin/sourceharbor mcp` and `./bin/sourceharbor doctor` remain the repo-local operator entrypoints
+- [`packages/sourceharbor-sdk`](./packages/sourceharbor-sdk/README.md) is the public TypeScript SDK surface and still stays contract-first instead of becoming a second business-logic stack
+- Python SDK, Hosted, Autopilot, and plugin-market surfaces still stay later/no-go
 
 ### 5. Run the repo smoke path
 
@@ -432,6 +455,7 @@ Start where you are:
 - **I want to see a real local result:** [docs/start-here.md](./docs/start-here.md)
 - **I want the system map:** [docs/architecture.md](./docs/architecture.md)
 - **I want the MCP quickstart:** [docs/mcp-quickstart.md](./docs/mcp-quickstart.md)
+- **I want the public builder packages:** [docs/builders.md](./docs/builders.md), [starter-packs/README.md](./starter-packs/README.md), [packages/sourceharbor-cli/README.md](./packages/sourceharbor-cli/README.md), [packages/sourceharbor-sdk/README.md](./packages/sourceharbor-sdk/README.md)
 - **I want proof and verification commands:** [docs/proof.md](./docs/proof.md)
 - **I want testing and CI details:** [docs/testing.md](./docs/testing.md)
 - **I want positioning and trade-offs:** [docs/compare.md](./docs/compare.md)

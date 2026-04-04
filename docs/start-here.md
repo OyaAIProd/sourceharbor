@@ -21,6 +21,15 @@ individual entrypoints, start here:
 That helper stays intentionally thin. The direct `bin/*` commands below remain
 the underlying truth.
 
+If you prefer to install the public wrapper first, the packaged CLI now lives in
+`packages/sourceharbor-cli` and delegates into this same repo-local substrate
+when you run it inside a checkout:
+
+```bash
+npm install --global ./packages/sourceharbor-cli
+sourceharbor help
+```
+
 ## What You Should See By The End
 
 - the web command center at the route recorded in `.runtime-cache/run/full-stack/resolved.env`
@@ -62,6 +71,13 @@ Equivalent thin-facade path:
 ```bash
 ./bin/sourceharbor bootstrap
 ./bin/sourceharbor full-stack up
+```
+
+Equivalent packaged-CLI path from inside the checkout:
+
+```bash
+sourceharbor bootstrap
+sourceharbor full-stack up
 ```
 
 Open:

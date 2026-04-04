@@ -129,11 +129,11 @@ Current blocker truth is also more specific than raw key presence:
   sender configuration such as `RESEND_FROM_EMAIL`, a verified sender/domain,
   and a real destination mailbox. The current maintainer canary confirms
   `RESEND_API_KEY` exists while `RESEND_FROM_EMAIL` is still missing.
-- The strict YouTube live-smoke probe is still bounded by a provider-side
-  `quota_or_permission` / `403` rejection on the current key/project, not by
-  generic key absence or old repo-local runtime drift. The current provider
-  canary points more specifically to YouTube Data API v3 not yet being enabled
-  for Google project `1025401548407`, or not yet having propagated there.
+- The strict YouTube live-smoke probe is no longer bounded by a generic hard
+  `403` story. A secure rotation run on 2026-04-03 found one alternate
+  user-supplied key that now passes direct probe, provider canary, and strict
+  live-smoke preflight; the remaining operator action is to keep that validated
+  key in the environment when the full live lane is reopened.
 - The remaining exact action pack now lives in
   [project-status.md](./project-status.md), because the blocker story has been
   narrowed to Resend sender identity and YouTube project/quota policy rather

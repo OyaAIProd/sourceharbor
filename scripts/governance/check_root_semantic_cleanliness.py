@@ -25,6 +25,7 @@ ALLOWED_DOTFILES = {
     ".markdownlint-cli2.jsonc",
     ".pre-commit-config.yaml",
     ".runtime-cache",
+    ".serena",
     ".secrets.baseline",
     ".stylelintignore",
     ".stylelintrc.json",

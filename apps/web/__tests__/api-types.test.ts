@@ -11,13 +11,15 @@ import type {
 
 describe("api type contracts", () => {
 	it("keeps subscription and notification request contracts", () => {
-		const subscription: Subscription = {
-			id: "sub-1",
-			platform: "youtube",
-			source_type: "youtube_channel_id",
-			source_value: "UC123",
-			source_name: "Test",
-			adapter_type: "rsshub_route",
+			const subscription: Subscription = {
+				id: "sub-1",
+				platform: "youtube",
+				source_type: "youtube_channel_id",
+				source_value: "UC123",
+				source_name: "Test",
+				support_tier: "strong_supported",
+				content_profile: "video",
+				adapter_type: "rsshub_route",
 			source_url: null,
 			rsshub_route: "",
 			category: "tech",

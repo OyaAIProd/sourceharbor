@@ -70,7 +70,9 @@ That label is easier to remember, easier to share, and easier to star than a vag
 | Ecosystem | Fit level | Why |
 | --- | --- | --- |
 | **MCP** | **Primary** | real, shipped surface today through `./bin/dev-mcp` and `apps/mcp/server.py` |
-| **Repo-local CLI** | **Primary** | `./bin/sourceharbor help` now exposes the existing `bin/*` entrypoints through one discoverable facade without pretending a packaged public CLI already exists |
+| **Packaged public CLI** | **Primary** | `packages/sourceharbor-cli` is now a thin installable wrapper that delegates into repo-local `bin/sourceharbor` when a checkout is present |
+| **Public TypeScript SDK** | **Primary** | `packages/sourceharbor-sdk` now exposes the same typed HTTP client/url/type substrate that the web app uses |
+| **Public starter packs** | **Primary** | `starter-packs/` now gives Codex / Claude Code / SDK compatibility templates without exposing raw internal `.agents/skills` |
 | **Codex** | **Primary** | strong fit for source-first local workflows that want to use MCP or HTTP against the same operator truth |
 | **Claude Code** | **Primary** | same fit pattern as Codex: local, MCP-aware, API-capable, and proof-first |
 | **OpenHands** | Secondary / comparison | adjacent as an agent-runtime ecosystem, but SourceHarbor is not a generic software-task agent |

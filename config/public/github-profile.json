@@ -1,5 +1,5 @@
 {
-  "description": "AI knowledge control tower and MCP server for YouTube, Bilibili, RSSHub, and RSS, with source-intake front doors, trends, briefings, grounded search, and builder-ready API/MCP surfaces.",
+  "description": "AI knowledge control tower and MCP server for YouTube, Bilibili, RSSHub, and RSS, with grounded search, public CLI/TypeScript SDK surfaces, and builder-ready starter packs.",
   "homepage": "https://github.com/xiaojiou176-open/sourceharbor?tab=readme-ov-file#see-it-in-30-seconds",
   "topics": [
     "sourceharbor",
@@ -8,11 +8,12 @@
     "claude-code",
     "knowledge-pipeline",
     "control-tower",
-    "knowledge-base",
     "digest",
     "retrieval",
     "mcp",
     "mcp-server",
+    "cli",
+    "typescript-sdk",
     "ai-agents",
     "research-automation",
     "youtube",

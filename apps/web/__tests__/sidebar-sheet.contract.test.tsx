@@ -72,13 +72,15 @@ function SidebarSheetHarness() {
 				</SheetDescription>
 				<Sidebar
 					subscriptions={[
-						{
-							id: "sub-tech-1",
-							platform: "youtube",
-							source_type: "url",
-							source_value: "https://youtube.com/@tech",
-							source_name: "Tech Daily",
-							adapter_type: "rss_generic",
+							{
+								id: "sub-tech-1",
+								platform: "youtube",
+								source_type: "url",
+								source_value: "https://youtube.com/@tech",
+								source_name: "Tech Daily",
+								support_tier: "generic_supported",
+								content_profile: "article",
+								adapter_type: "rss_generic",
 							source_url: "https://example.com/feed.xml",
 							rsshub_route: "",
 							category: "tech",
@@ -116,13 +118,15 @@ describe("Sidebar + Sheet contract", () => {
 			render(
 				<Sidebar
 					subscriptions={[
-						{
-							id: "sub-tech-1",
-							platform: "youtube",
-							source_type: "url",
-							source_value: "https://youtube.com/@tech",
-							source_name: "Tech Daily",
-							adapter_type: "rss_generic",
+							{
+								id: "sub-tech-1",
+								platform: "youtube",
+								source_type: "url",
+								source_value: "https://youtube.com/@tech",
+								source_name: "Tech Daily",
+								support_tier: "generic_supported",
+								content_profile: "article",
+								adapter_type: "rss_generic",
 							source_url: "https://example.com/feed.xml",
 							rsshub_route: "",
 							category: "tech",
@@ -132,13 +136,15 @@ describe("Sidebar + Sheet contract", () => {
 							created_at: "2026-03-01T00:00:00Z",
 							updated_at: "2026-03-01T00:00:00Z",
 						},
-						{
-							id: "sub-disabled",
-							platform: "bilibili",
-							source_type: "url",
-							source_value: "https://bilibili.com/disabled",
-							source_name: "Disabled Source",
-							adapter_type: "rss_generic",
+							{
+								id: "sub-disabled",
+								platform: "bilibili",
+								source_type: "url",
+								source_value: "https://bilibili.com/disabled",
+								source_name: "Disabled Source",
+								support_tier: "generic_supported",
+								content_profile: "article",
+								adapter_type: "rss_generic",
 							source_url: "https://example.com/disabled.xml",
 							rsshub_route: "",
 							category: "creator",
@@ -279,13 +285,15 @@ describe("Sidebar + Sheet contract", () => {
 			render(
 				<Sidebar
 					subscriptions={[
-						{
-							id: "sub-disabled-only",
-							platform: "rss",
-							source_type: "rss_generic",
-							source_value: "",
-							source_name: "",
-							adapter_type: "rss_generic",
+							{
+								id: "sub-disabled-only",
+								platform: "rss",
+								source_type: "rss_generic",
+								source_value: "",
+								source_name: "",
+								support_tier: "generic_supported",
+								content_profile: "article",
+								adapter_type: "rss_generic",
 							source_url: null,
 							rsshub_route: "",
 							category: "misc",
@@ -350,13 +358,15 @@ describe("Sidebar + Sheet contract", () => {
 			render(
 				<Sidebar
 					subscriptions={[
-						{
-							id: "sub-fallback",
-							platform: "youtube",
-							source_type: "url",
-							source_value: "https://example.com/source",
-							source_name: "",
-							adapter_type: "rss_generic",
+							{
+								id: "sub-fallback",
+								platform: "youtube",
+								source_type: "url",
+								source_value: "https://example.com/source",
+								source_name: "",
+								support_tier: "generic_supported",
+								content_profile: "article",
+								adapter_type: "rss_generic",
 							source_url: null,
 							rsshub_route: "",
 							category: "tech",
@@ -366,13 +376,15 @@ describe("Sidebar + Sheet contract", () => {
 							created_at: "2026-03-01T00:00:00Z",
 							updated_at: "2026-03-01T00:00:00Z",
 						},
-						{
-							id: "sub-unnamed",
-							platform: "youtube",
-							source_type: "url",
-							source_value: "",
-							source_name: "",
-							adapter_type: "rss_generic",
+							{
+								id: "sub-unnamed",
+								platform: "youtube",
+								source_type: "url",
+								source_value: "",
+								source_name: "",
+								support_tier: "generic_supported",
+								content_profile: "article",
+								adapter_type: "rss_generic",
 							source_url: null,
 							rsshub_route: "",
 							category: "tech",

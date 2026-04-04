@@ -36,7 +36,8 @@ This is the shortest honest explanation for why the repo feels more product-shap
 | **Get the fastest no-boot preview** | [see-it-fast.md](./see-it-fast.md) | The command center, digest feed, and job trace path without setup |
 | **Run the shortest truthful path** | [start-here.md](./start-here.md) | A result-first local flow ending in jobs, feed, and proof |
 | **Open the MCP front door** | [mcp-quickstart.md](./mcp-quickstart.md) | Startup, representative tools, and the relation between MCP, API, and Web |
-| **Build on top of SourceHarbor** | [builders.md](./builders.md) | How Codex, Claude Code, MCP clients, API consumers, and future SDK layers fit the current repo truth |
+| **Build on top of SourceHarbor** | [builders.md](./builders.md) | How Codex, Claude Code, MCP clients, API consumers, public packages, and starter packs fit the current repo truth |
+| **Open the public starter surface** | [public-skills.md](./public-skills.md) | Public compatibility docs, starter prompts, and runnable examples |
 | **Try the read-only sample playground** | [samples/README.md](./samples/README.md) | Clearly labeled sample corpus and demo surfaces |
 | **Open the compounder layer** | [runtime-truth.md](./runtime-truth.md) | How watchlists, trends, bundles, and sample surfaces fit the current truth |
 | **See what is done vs still a bet** | [project-status.md](./project-status.md) | The shortest truthful status board for delivered, gated, sample-only, and future-direction surfaces |

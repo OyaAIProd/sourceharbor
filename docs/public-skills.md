@@ -1,0 +1,50 @@
+# Public Skills And Starter Packs
+
+SourceHarbor now has a first public starter surface for builder workflows.
+
+Think of it like the difference between a private workshop notebook and a
+public starter kit:
+
+- `.agents/skills/**` is still the internal workshop notebook
+- this page, the public templates, and the examples below are the starter kit
+
+## What Is Shipped Now
+
+| Surface | What it is | Current boundary |
+| --- | --- | --- |
+| `docs/compat/codex.md` | shortest Codex adoption path | public, documented, reproducible |
+| `docs/compat/claude-code.md` | shortest Claude Code adoption path | public, documented, reproducible |
+| `templates/public-skills/**` | copyable starter prompts/templates | public starter surface, not internal skill export |
+| `examples/sdk/search.ts` | minimal SDK example | public example for `@sourceharbor/sdk` |
+| `examples/cli/search.sh` | minimal CLI example | public example for `@sourceharbor/cli` |
+
+## Why This Surface Exists
+
+Codex and Claude Code already fit SourceHarbor through MCP + HTTP API.
+
+The missing piece was a public first hop that does not depend on reading our
+private `.agents/skills` tree. These starter packs solve that gap by giving a
+newcomer:
+
+1. the right doorway
+2. the shortest command or prompt
+3. the honest boundary
+4. one example they can run immediately
+
+## Start Here
+
+| I am... | Use this first | Why |
+| --- | --- | --- |
+| a Codex operator | [docs/compat/codex.md](./compat/codex.md) | best path when you want MCP/API/CLI choices explained quickly |
+| a Claude Code operator | [docs/compat/claude-code.md](./compat/claude-code.md) | same story, phrased for Claude Code workflows |
+| a builder writing code | [packages/sourceharbor-sdk/README.md](../packages/sourceharbor-sdk/README.md) | typed HTTP integration first |
+| a builder who prefers shell | [packages/sourceharbor-cli/README.md](../packages/sourceharbor-cli/README.md) | thin CLI over current HTTP contract |
+
+## Guardrails
+
+- Do not treat these public starter packs as proof that SourceHarbor ships a
+  plugin marketplace.
+- Do not treat these docs as a promise that every internal agent workflow is
+  supported publicly.
+- Keep the public surface thin: starters should point at MCP, HTTP API, CLI,
+  SDK, and the existing proof surfaces instead of inventing a parallel runtime.

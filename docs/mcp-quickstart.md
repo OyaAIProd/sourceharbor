@@ -22,7 +22,14 @@ This is the strongest ecosystem binding for SourceHarbor today:
 - **OpenHands** and **OpenCode** are worth mentioning as ecosystem neighbors, but they are not the best primary product label for this repo
 - **OpenClaw** should stay out of the front door until there is a stronger repo-proven integration story
 
-If you want one discoverable repo-local command surface first, run:
+If you want one packaged command surface first, run:
+
+```bash
+npm install --global ./packages/sourceharbor-cli
+sourceharbor templates --base-url http://127.0.0.1:9000
+```
+
+If you are already inside the repo and only want the direct substrate, run:
 
 ```bash
 ./bin/sourceharbor help
@@ -55,7 +62,8 @@ The full manifest lives in [apps/mcp/schemas/tools.json](../apps/mcp/schemas/too
 
 - MCP is real and already wired
 - MCP is not a second copy of the business logic
-- the repo-local CLI facade is only a discoverability layer over `bin/*`, not a packaged public CLI
+- `@sourceharbor/cli` is only a thin builder-facing wrapper over the HTTP API
+- the public TypeScript SDK lives next to this flow in `packages/sourceharbor-sdk`; Python SDK still stays later
 - advanced lanes such as UI audit and computer-use may still require extra runtime conditions or secrets
 
 ## Why It Matters
