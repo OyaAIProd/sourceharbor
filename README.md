@@ -132,12 +132,13 @@ The builder-facing mental map should follow the same product line:
 | Entry point | Who it is for | Current truth |
 | --- | --- | --- |
 | **Codex / Claude Code workflows** | local operators who want an AI coding or operations agent to query and drive the same system truth | honest fit today through MCP + HTTP API, documented in [docs/builders.md](./docs/builders.md) |
+| **OpenClaw workflows** | builders who want a dedicated OpenClaw first hop instead of only generic MCP theory | first-cut fit today through [docs/compat/openclaw.md](./docs/compat/openclaw.md) plus [starter-packs/openclaw/README.md](./starter-packs/openclaw/README.md) |
 | **Packaged public CLI** | builders who want an installable command surface before memorizing repo entrypoints | real today in [`packages/sourceharbor-cli`](./packages/sourceharbor-cli/README.md); it stays thinner than the repo-local runtime CLI and delegates inside a checkout |
 | **Repo-local CLI substrate** | operators already inside a checkout who want the direct runtime and governance command truth | real today via `./bin/sourceharbor help`, which remains the underlying local command truth |
 | **MCP surface** | agent workflows and assistant clients that need governed access to jobs, artifacts, retrieval, ingest, reports, and notifications | real surface today via [`./bin/dev-mcp`](./docs/mcp-quickstart.md) |
 | **HTTP API contract** | product builders, automation, and SDK consumers | real contract today via [`contracts/source/openapi.yaml`](./contracts/source/openapi.yaml) |
 | **Public TypeScript SDK** | TypeScript builders who want a thin client over the same HTTP contract | real today in [`packages/sourceharbor-sdk`](./packages/sourceharbor-sdk/README.md); it stays contract-first and builder-facing |
-| **Public starter packs** | builders who want reproducible Codex / Claude Code / SDK starting templates | available today as a first-cut surface in [`starter-packs/`](./starter-packs/README.md); these are public templates and compatibility notes, not raw internal `.agents/skills` exports |
+| **Public starter packs** | builders who want reproducible Codex / Claude Code / OpenClaw / SDK starting templates | available today as a first-cut surface in [`starter-packs/`](./starter-packs/README.md); these are public templates, starter skills, and compatibility notes, not raw internal `.agents/skills` exports |
 
 The packaging story is intentionally thin: the packaged CLI stays repo-aware and
 delegates to `./bin/sourceharbor` inside a checkout, the TypeScript SDK stays a
@@ -150,7 +151,7 @@ These packages are the public box around the same repo-owned logic:
 
 - **CLI:** install [`packages/sourceharbor-cli`](./packages/sourceharbor-cli/README.md) when you want one thin command surface for the repo-local command substrate.
 - **TypeScript SDK:** install [`packages/sourceharbor-sdk`](./packages/sourceharbor-sdk/README.md) when you want a typed HTTP client instead of inventing a second fetch stack.
-- **Starter packs:** open [`starter-packs/README.md`](./starter-packs/README.md) when you want reproducible Codex / Claude Code / SDK starting templates rather than raw internal skill files; this surface is available today, but it is still first-cut.
+- **Starter packs:** open [`starter-packs/README.md`](./starter-packs/README.md) when you want reproducible Codex / Claude Code / OpenClaw / SDK starting templates rather than raw internal skill files; this surface is available today, but it is still first-cut.
 
 Minimal examples:
 
@@ -171,6 +172,7 @@ Think of this as the label on the box, not fine print:
 - Hosted Team Workspace is **not** a current promise; it remains a deferred bet.
 - SourceHarbor does **not** yet ship a public Python SDK.
 - SourceHarbor does **not** ship a plugin marketplace or raw public `.agents/skills` export.
+- SourceHarbor does **not** yet ship a registry-published OpenClaw plugin package.
 - SourceHarbor does **not** claim that every RSSHub route has already been individually validated.
 
 If you need the explicit bet boundaries, read:

@@ -20,7 +20,7 @@ This is the strongest ecosystem binding for SourceHarbor today:
 
 - **Codex** and **Claude Code** are a real fit because they can talk through MCP or HTTP while staying source-first and local-proof-first
 - **OpenHands** and **OpenCode** are worth mentioning as ecosystem neighbors, but they are not the best primary product label for this repo
-- **OpenClaw** can still sit on the same generic MCP / HTTP substrate, but it should stay out of the front door until there is a stronger repo-proven dedicated pack or workflow story
+- **OpenClaw** can now use a first-cut compatibility path in this repo through the same generic MCP / HTTP substrate plus a public starter skill, but it should still stay out of the primary front door and out of plugin-first positioning
 
 If you want one packaged command surface first from inside a local checkout, run:
 
@@ -38,6 +38,10 @@ If you are already inside the repo and only want the direct substrate, run:
 ```bash
 ./bin/sourceharbor help
 ```
+
+If you specifically want the OpenClaw-facing compatibility path, start with
+[docs/compat/openclaw.md](./compat/openclaw.md) and
+[starter-packs/openclaw/README.md](../starter-packs/openclaw/README.md).
 
 ## Start MCP Locally
 

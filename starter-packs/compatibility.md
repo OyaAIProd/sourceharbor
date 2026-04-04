@@ -9,6 +9,10 @@
 - public TypeScript SDK
 - public starter packs / compatibility docs
 
+## First-cut
+
+- OpenClaw via dedicated compatibility doc + public workspace skill + generic MCP / HTTP substrate
+
 ## Later
 
 - public Python SDK
@@ -16,6 +20,7 @@
 ## No-go now
 
 - plugin marketplace
+- registry-published OpenClaw plugin claim
 - full hosted workspace
 - full autonomous autopilot
 - Switchyard integration in the current cycle

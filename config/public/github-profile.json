@@ -6,6 +6,7 @@
     "source-first",
     "codex",
     "claude-code",
+    "openclaw",
     "knowledge-pipeline",
     "control-tower",
     "digest",
@@ -20,7 +21,6 @@
     "bilibili",
     "rss",
     "fastapi",
-    "nextjs",
     "temporal"
   ],
   "enable_discussions": true,

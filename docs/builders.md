@@ -40,7 +40,7 @@ doors operators already see:
 | **Custom MCP clients** | Primary fit | `./bin/dev-mcp` starts a real FastMCP server over the current pipeline |
 | **Direct HTTP builders** | Primary fit | The repo already carries a public OpenAPI contract and typed client helpers |
 | **OpenHands / OpenCode** | Secondary fit | They are ecosystem-adjacent if you integrate through MCP or HTTP, but they are not the main front door today |
-| **OpenClaw** | Generic MCP / HTTP only today | the shared substrate is real, but there is still no dedicated OpenClaw public pack, plugin claim, or repo-proven first-class adoption path |
+| **OpenClaw** | First-cut compatibility fit | the repo now ships a public compatibility page plus a workspace-skill starter over the generic MCP / HTTP substrate, but still no SourceHarbor-specific plugin claim or primary front-door label |
 
 ## Builder Entry Points
 
@@ -132,6 +132,7 @@ If you want public templates instead of internal raw skills:
 - [`starter-packs/compatibility.md`](../starter-packs/compatibility.md)
 - [`starter-packs/codex/AGENTS.md`](../starter-packs/codex/AGENTS.md)
 - [`starter-packs/claude-code/CLAUDE.md`](../starter-packs/claude-code/CLAUDE.md)
+- [`starter-packs/openclaw/README.md`](../starter-packs/openclaw/README.md)
 - [`starter-packs/typescript-sdk/example.ts`](../starter-packs/typescript-sdk/example.ts)
 
 ## Public Packaging Status
@@ -144,6 +145,7 @@ What ships now:
 - **Public TypeScript SDK:** now
 - **Public starter packs / compatibility docs:** available now, but still first-cut
 - **Codex / Claude Code fit via MCP + HTTP API + CLI + SDK:** now
+- **OpenClaw fit via workspace skill + MCP / HTTP substrate:** first-cut now
 
 What stays later:
 

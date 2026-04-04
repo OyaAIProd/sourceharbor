@@ -80,7 +80,7 @@ That label is easier to remember, easier to share, and easier to star than a vag
 | **Claude Code** | **Primary** | same fit pattern as Codex: local, MCP-aware, API-capable, and proof-first |
 | **OpenHands** | Secondary / comparison | adjacent as an agent-runtime ecosystem, but SourceHarbor is not a generic software-task agent |
 | **OpenCode** | Secondary / comparison | adjacent as a coding/automation workflow surface, but not a primary product identity here |
-| **OpenClaw** | Generic-adjacent, but still no dedicated pack | the shared MCP / HTTP substrate is real, but repo-side proof is still not strong enough to justify a named primary or first-cut OpenClaw binding |
+| **OpenClaw** | First-cut compatibility | the shared MCP / HTTP substrate is real and the repo now ships a starter skill plus compatibility guide, but it still should not be sold as a SourceHarbor plugin-first identity or primary front door |
 
 Here, **First-cut** means the starter layer is real and usable today, but it is
 still a public entry surface rather than a fully hardened standalone ecosystem

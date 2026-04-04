@@ -25,7 +25,7 @@ This is the shortest honest explanation for why the repo feels more product-shap
 | Builder question | Fastest truthful answer | Where to verify it |
 | :-- | :-- | :-- |
 | **Can I use this with Codex or Claude Code right now?** | Yes, through the existing MCP and HTTP API surfaces. | [mcp-quickstart.md](./mcp-quickstart.md), [builders.md](./builders.md) |
-| **What about OpenClaw?** | Keep it on the generic MCP / HTTP substrate for now; there is still no dedicated OpenClaw public pack in this repo. | [builders.md](./builders.md), [public-skills.md](./public-skills.md) |
+| **What about OpenClaw?** | There is now a first-cut compatibility path and starter skill, but still no SourceHarbor-specific OpenClaw plugin claim. | [compat/openclaw.md](./compat/openclaw.md), [builders.md](./builders.md), [public-skills.md](./public-skills.md) |
 | **Is the AI story grounded or just decorative copy?** | Search, Ask, proof, runtime truth, and project status are kept on the same story line. | [proof.md](./proof.md), [project-status.md](./project-status.md), [runtime-truth.md](./runtime-truth.md) |
 | **Is there anything worth revisiting after the first run?** | Yes: watchlists, trends, bundles, playground, and use-case pages form the compounder layer. | [runtime-truth.md](./runtime-truth.md), [samples/README.md](./samples/README.md) |
 
@@ -37,7 +37,7 @@ This is the shortest honest explanation for why the repo feels more product-shap
 | **Get the fastest no-boot preview** | [see-it-fast.md](./see-it-fast.md) | The command center, digest feed, and job trace path without setup |
 | **Run the shortest truthful path** | [start-here.md](./start-here.md) | A result-first local flow ending in jobs, feed, and proof |
 | **Open the MCP front door** | [mcp-quickstart.md](./mcp-quickstart.md) | Startup, representative tools, and the relation between MCP, API, and Web |
-| **Build on top of SourceHarbor** | [builders.md](./builders.md) | How Codex, Claude Code, generic MCP clients, API consumers, public packages, and starter packs fit the current repo truth |
+| **Build on top of SourceHarbor** | [builders.md](./builders.md) | How Codex, Claude Code, OpenClaw, generic MCP clients, API consumers, public packages, and starter packs fit the current repo truth |
 | **Open the public starter surface** | [public-skills.md](./public-skills.md) | Public compatibility docs, starter prompts, and runnable examples |
 | **Try the read-only sample playground** | [samples/README.md](./samples/README.md) | Clearly labeled sample corpus and demo surfaces |
 | **Open the compounder layer** | [runtime-truth.md](./runtime-truth.md) | How watchlists, trends, bundles, and sample surfaces fit the current truth |
@@ -67,6 +67,7 @@ This is the shortest honest explanation for why the repo feels more product-shap
 
 - [builders.md](./builders.md)
 - [mcp-quickstart.md](./mcp-quickstart.md)
+- [compat/openclaw.md](./compat/openclaw.md)
 
 ### Layer 3: System Map
 
