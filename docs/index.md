@@ -25,7 +25,7 @@ This is the shortest honest explanation for why the repo feels more product-shap
 | Builder question | Fastest truthful answer | Where to verify it |
 | :-- | :-- | :-- |
 | **Can I use this with Codex or Claude Code right now?** | Yes, through the existing MCP and HTTP API surfaces. | [mcp-quickstart.md](./mcp-quickstart.md), [builders.md](./builders.md) |
-| **What about OpenClaw?** | There is now a first-cut compatibility path and starter skill, but still no SourceHarbor-specific OpenClaw plugin claim. | [compat/openclaw.md](./compat/openclaw.md), [builders.md](./builders.md), [public-skills.md](./public-skills.md) |
+| **What about OpenClaw?** | There is now a first-cut local OpenClaw starter pack, but it still stays outside the primary front door and outside marketplace positioning. | [compat/openclaw.md](./compat/openclaw.md), [builders.md](./builders.md), [public-skills.md](./public-skills.md) |
 | **Is the AI story grounded or just decorative copy?** | Search, Ask, proof, runtime truth, and project status are kept on the same story line. | [proof.md](./proof.md), [project-status.md](./project-status.md), [runtime-truth.md](./runtime-truth.md) |
 | **Is there anything worth revisiting after the first run?** | Yes: watchlists, trends, bundles, playground, and use-case pages form the compounder layer. | [runtime-truth.md](./runtime-truth.md), [samples/README.md](./samples/README.md) |
 

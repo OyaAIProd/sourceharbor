@@ -125,7 +125,7 @@ If you want confidence without booting the full stack yet:
 1. Read [README.md](../README.md) for the public story.
 2. Read [proof.md](./proof.md) for the evidence ladder.
 3. Read [starter-packs/README.md](../starter-packs/README.md) if you want the public CLI / SDK / Codex / Claude Code starter surface.
-4. Read [docs/compat/openclaw.md](./compat/openclaw.md) if you specifically care about the new first-cut OpenClaw compatibility path and its still-honest boundary.
+4. Read [docs/compat/openclaw.md](./compat/openclaw.md) if you specifically care about the new first-cut OpenClaw starter pack and its still-honest boundary.
 5. Read [samples/README.md](./samples/README.md) if you want the clearly labeled sample corpus path.
 6. Read [architecture.md](./architecture.md) if you want the system map.
 

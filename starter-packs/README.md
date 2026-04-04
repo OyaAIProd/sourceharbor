@@ -21,7 +21,7 @@ What lives here:
 | --- | --- | --- |
 | drive SourceHarbor from Codex | `starter-packs/codex/AGENTS.md` | primary public pack today |
 | drive it from Claude Code | `starter-packs/claude-code/CLAUDE.md` | primary public pack today |
-| drive it from OpenClaw | `starter-packs/openclaw/README.md` | first-cut public pack today; workspace skill + generic MCP/API path, not a plugin claim |
+| drive it from OpenClaw | `starter-packs/openclaw/README.md` | first-cut local starter pack today over the same MCP/API path |
 | start from SDK code instead of an agent | `starter-packs/typescript-sdk/example.ts` | public example, not a full framework pack |
 
 What does **not** live here:

@@ -11,7 +11,7 @@
 
 ## First-cut
 
-- OpenClaw via dedicated compatibility doc + public workspace skill + generic MCP / HTTP substrate
+- OpenClaw via local starter pack + generic MCP / HTTP substrate
 
 ## Later
 

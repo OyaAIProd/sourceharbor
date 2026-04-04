@@ -40,7 +40,7 @@ doors operators already see:
 | **Custom MCP clients** | Primary fit | `./bin/dev-mcp` starts a real FastMCP server over the current pipeline |
 | **Direct HTTP builders** | Primary fit | The repo already carries a public OpenAPI contract and typed client helpers |
 | **OpenHands / OpenCode** | Secondary fit | They are ecosystem-adjacent if you integrate through MCP or HTTP, but they are not the main front door today |
-| **OpenClaw** | First-cut compatibility fit | the repo now ships a public compatibility page plus a workspace-skill starter over the generic MCP / HTTP substrate, but still no SourceHarbor-specific plugin claim or primary front-door label |
+| **OpenClaw** | First-cut local pack fit | the repo now ships a local OpenClaw starter pack over the generic MCP / HTTP substrate, but it still is not a primary front-door label or marketplace claim |
 
 ## Builder Entry Points
 
@@ -145,7 +145,7 @@ What ships now:
 - **Public TypeScript SDK:** now
 - **Public starter packs / compatibility docs:** available now, but still first-cut
 - **Codex / Claude Code fit via MCP + HTTP API + CLI + SDK:** now
-- **OpenClaw fit via workspace skill + MCP / HTTP substrate:** first-cut now
+- **OpenClaw fit via local starter pack + MCP / HTTP substrate:** first-cut now
 
 What stays later:
 

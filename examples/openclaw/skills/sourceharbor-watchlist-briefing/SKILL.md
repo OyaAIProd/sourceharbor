@@ -1,6 +1,7 @@
 # SourceHarbor Watchlist Briefing
 
-Use this public OpenClaw-shaped skill when you want one repeatable workflow for watchlists, briefings, Ask, and evidence.
+Use this public OpenClaw-shaped skill when you want one repeatable workflow for
+watchlists, briefings, Ask, and evidence.
 
 ## Goal
 

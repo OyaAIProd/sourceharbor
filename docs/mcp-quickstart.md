@@ -20,7 +20,7 @@ This is the strongest ecosystem binding for SourceHarbor today:
 
 - **Codex** and **Claude Code** are a real fit because they can talk through MCP or HTTP while staying source-first and local-proof-first
 - **OpenHands** and **OpenCode** are worth mentioning as ecosystem neighbors, but they are not the best primary product label for this repo
-- **OpenClaw** can now use a first-cut compatibility path in this repo through the same generic MCP / HTTP substrate plus a public starter skill, but it should still stay out of the primary front door and out of plugin-first positioning
+- **OpenClaw** can now use a first-cut local starter pack in this repo through the same generic MCP / HTTP substrate, but it should still stay out of the primary front door and out of plugin-first positioning
 
 If you want one packaged command surface first from inside a local checkout, run:
 

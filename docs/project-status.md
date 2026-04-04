@@ -105,7 +105,7 @@ This is the short scoreboard for the directions most likely to get overstated.
 | Repo-local CLI/help facade | **ship-now** | `./bin/sourceharbor` is already a truthful discoverability layer over `bin/*` |
 | Packaged public CLI bridge | **ship-now** | `packages/sourceharbor-cli` is now the installable public bridge, while the fuller repo-local operator CLI remains `./bin/sourceharbor` |
 | Public TypeScript SDK | **ship-now** | `packages/sourceharbor-sdk` now exposes the contract-first builder layer over the existing HTTP contract |
-| OpenClaw via workspace skill + MCP / HTTP substrate | **first-cut** | the repo now ships a public compatibility page plus a starter workspace skill, but it still does not ship a SourceHarbor-specific OpenClaw plugin |
+| OpenClaw via local starter pack + MCP / HTTP substrate | **first-cut** | the repo now ships a public compatibility page plus a first-cut local OpenClaw starter pack, but it still is not a marketplace or primary front-door claim |
 | Public Python SDK | **later** | no public package surface exists yet |
 | Public skills pack / templates | **first-cut** | `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now provide a usable first public starter surface, but not a fully hardened ecosystem product yet |
 | Plugin / extension marketplace | **no-go now** | plugin-first positioning would overstate the current repo truth |
