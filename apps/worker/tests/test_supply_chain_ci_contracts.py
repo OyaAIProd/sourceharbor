@@ -71,7 +71,8 @@ def test_release_evidence_attestation_workflow_exists() -> None:
     assert "actions/setup-python@" in workflow
     assert 'python-version: "3.12"' in workflow
     assert 'mkdir -p "$(dirname "$bundle_path")"' in workflow
-    assert "generate_release_prechecks.py --skip-observability-checks" in workflow
+    assert "generate_release_prechecks.py \\" in workflow
+    assert '--release-tag "${{ steps.release_tag.outputs.release_tag }}"' in workflow
     assert ".runtime-cache/reports/release-readiness/prechecks.json" in workflow
 
 
@@ -164,6 +165,7 @@ def test_release_prechecks_use_canonical_current_run_report_lane() -> None:
     )
 
     assert "db-rollback-readiness.json" in script
+    assert '"--release-tag"' in script
     assert '".runtime-cache"' in script
     assert '"release-readiness"' in script
     assert 'default=".runtime-cache/reports/release-readiness/prechecks.json"' in script

@@ -7,6 +7,8 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-04-03
+
 ### Added
 
 - first public builder packages under `packages/sourceharbor-cli` and `packages/sourceharbor-sdk`

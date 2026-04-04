@@ -35,6 +35,15 @@ def _latest_tag(repo_root: Path) -> str | None:
     return out or None
 
 
+def _resolve_release_tag(
+    explicit_release_tag: str | None, discovered_release_tag: str | None
+) -> tuple[str | None, str]:
+    normalized_explicit = (explicit_release_tag or "").strip() or None
+    if normalized_explicit:
+        return normalized_explicit, "input"
+    return discovered_release_tag, "git-describe"
+
+
 def _load_json_object(path: Path) -> dict[str, Any] | None:
     if not path.is_file():
         return None
@@ -177,9 +186,7 @@ def _pick_release_evidence_dir(repo_root: Path, latest_tag: str | None) -> Path 
     if not releases_root.is_dir():
         return None
     if latest_tag:
-        tagged = releases_root / latest_tag
-        if tagged.is_dir():
-            return tagged
+        return releases_root / latest_tag
     candidates = [p for p in releases_root.iterdir() if p.is_dir()]
     if not candidates:
         return None
@@ -417,6 +424,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate release precheck evidence checks")
     parser.add_argument("--repo-root", default=".")
     parser.add_argument(
+        "--release-tag",
+        default="",
+        help="Explicit release tag to bind current-run artifacts to instead of relying on git describe.",
+    )
+    parser.add_argument(
         "--output",
         default=".runtime-cache/reports/release-readiness/prechecks.json",
     )
@@ -438,13 +450,14 @@ def main() -> int:
     canary_script_path = repo_root / "scripts" / "deploy" / "canary_rollout.sh"
 
     latest_tag = _latest_tag(repo_root)
-    db_rollback_payload = _run_db_rollback_readiness(repo_root, latest_tag)
+    release_tag, release_tag_source = _resolve_release_tag(args.release_tag, latest_tag)
+    db_rollback_payload = _run_db_rollback_readiness(repo_root, release_tag)
     budget_ok, budget_evidence, budget_values = _validate_budget(perf_budget_path)
     rum_ok, rum_evidence, rum_values = _validate_rum_baseline(rum_baseline_path)
     rum_vs_budget_ok, rum_vs_budget_evidence = _compare_rum_against_budget(
         budget_values, rum_values
     )
-    release_dir = _pick_release_evidence_dir(repo_root, latest_tag)
+    release_dir = _pick_release_evidence_dir(repo_root, release_tag)
     manifest_path = release_dir / "manifest.json" if release_dir else None
     checksums_path = release_dir / "checksums.sha256" if release_dir else None
     release_manifest_ok = bool(
@@ -468,12 +481,15 @@ def main() -> int:
 
     checks = [
         {
-            "name": "release_tag_exists",
-            "status": "pass" if latest_tag else "fail",
+            "name": "release_tag_resolved",
+            "status": "pass" if release_tag else "fail",
             "required": True,
             "weight": 2.0,
-            "value": latest_tag,
-            "evidence": "latest_tag=" + (latest_tag or "missing"),
+            "value": release_tag,
+            "evidence": (
+                f"release_tag={release_tag or 'missing'}; source={release_tag_source}; "
+                f"git_latest_tag={latest_tag or 'missing'}"
+            ),
         },
         {
             "name": "changelog_exists",
@@ -566,7 +582,7 @@ def main() -> int:
             "value": blocked_count,
             "evidence": (
                 f"blocked_without_down={blocked_count}; release_tag="
-                f"{db_rollback_payload.get('release_tag', latest_tag or 'unknown')}"
+                f"{db_rollback_payload.get('release_tag', release_tag or 'unknown')}"
             ),
         },
         {

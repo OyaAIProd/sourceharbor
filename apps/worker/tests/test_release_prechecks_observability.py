@@ -66,6 +66,27 @@ def test_release_prechecks_can_skip_runtime_observability_checks(tmp_path: Path)
     assert "slo_thresholds_documented" in check_names
 
 
+def test_resolve_release_tag_prefers_explicit_override() -> None:
+    module = _load_module(_script_path(), "generate_release_prechecks_override_test")
+
+    resolved, source = module._resolve_release_tag("v0.1.4", "v0.1.3")
+
+    assert resolved == "v0.1.4"
+    assert source == "input"
+
+
+def test_pick_release_evidence_dir_does_not_fallback_when_explicit_tag_dir_is_missing(
+    tmp_path: Path,
+) -> None:
+    module = _load_module(_script_path(), "generate_release_prechecks_release_dir_test")
+    releases_root = tmp_path / "artifacts" / "releases"
+    (releases_root / "v0.1.3").mkdir(parents=True)
+
+    picked = module._pick_release_evidence_dir(tmp_path, "v0.1.4")
+
+    assert picked == releases_root / "v0.1.4"
+
+
 def test_validate_rum_baseline_accepts_zero_cls(tmp_path: Path) -> None:
     module = _load_module(_script_path(), "generate_release_prechecks_test")
     rum_path = tmp_path / "rum-baseline.json"
@@ -165,7 +186,7 @@ def test_release_attest_readiness_evaluator_rejects_failed_required_prechecks(
         json.dumps(
             {
                 "checks": [
-                    {"name": "release_tag_exists", "required": True, "status": "pass"},
+                    {"name": "release_tag_resolved", "required": True, "status": "pass"},
                     {
                         "name": "db_rollback_drill_evidence_present",
                         "required": True,

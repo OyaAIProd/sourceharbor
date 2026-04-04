@@ -61,7 +61,9 @@ jobs:
 
       - name: Generate release prechecks
         run: |
-          python3 scripts/release/generate_release_prechecks.py --skip-observability-checks
+          python3 scripts/release/generate_release_prechecks.py \
+            --skip-observability-checks \
+            --release-tag "${{ steps.release_tag.outputs.release_tag }}"
 
       - name: Release evidence attestation preflight
         run: |
