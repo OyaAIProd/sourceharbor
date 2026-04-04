@@ -34,13 +34,13 @@ import type {
 	WatchlistBriefingPage,
 	WatchlistTrendResponse,
 	WatchlistUpsertRequest,
-} from "./types";
+} from "./types.js";
 import {
 	buildApiUrl,
 	buildApiUrlFromBaseUrl,
 	buildArtifactAssetUrlFromBaseUrl,
 	sanitizeExternalUrl,
-} from "./url";
+} from "./url.js";
 
 type RequestOptions = Omit<RequestInit, "body"> & {
 	body?: unknown;

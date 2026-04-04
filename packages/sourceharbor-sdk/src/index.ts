@@ -1,6 +1,7 @@
-export { apiClient } from "./client";
-export { createSourceHarborClient } from "./client";
-export * from "./types";
+export { apiClient } from "./client.js";
+export { createSourceHarborClient } from "./client.js";
+export * from "./types.js";
+export type { QueryValue } from "./url.js";
 export {
 	buildApiUrl,
 	buildApiUrlWithOptions,
@@ -11,4 +12,4 @@ export {
 	isSensitiveQueryKey,
 	resolveApiBaseUrl,
 	sanitizeExternalUrl,
-} from "./url";
+} from "./url.js";
