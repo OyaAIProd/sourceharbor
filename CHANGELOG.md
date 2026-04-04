@@ -7,6 +7,18 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-04-04
+
+### Fixed
+
+- isolated the ops inbox route tests behind an explicit route dependency so full strict python verification no longer depends on global app-state patching
+- clarified the runtime-truth wording so the docs no longer claim the latest release and current `main` are the same commit when they are not
+
+### Changed
+
+- bumped the public CLI, public TypeScript SDK, and OpenAPI contract version anchors to `0.1.7` so the latest release line can catch back up with the current `main` head
+- clarified that the public starter-pack / public skills surface is available today but still first-cut, so builder docs do not overstate ecosystem maturity
+
 ## [0.1.6] - 2026-04-04
 
 ### Changed

@@ -42,7 +42,7 @@ The same principle also governs builder packaging:
 
 - the repo-local CLI discoverability surface is real now
 - thin public CLI / SDK surfaces are now real
-- public starter packs are now real
+- public starter packs are now real, but still first-cut
 - plugin-first positioning stays no-go now
 
 Relevant spike artifacts:

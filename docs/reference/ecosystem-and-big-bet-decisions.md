@@ -6,6 +6,8 @@ easy to oversell.
 Think of it like the route board at an airport:
 
 - **ship-now** means the gate is open today
+- **first-cut** means the gate is open today, but the surface is still an early
+  public starter layer rather than a fully hardened ecosystem product
 - **later** means the route is plausible, but not a current product promise
 - **no-go** means do not position the repo around it in the current cycle
 - **spike-only** means it is worth a bounded study, not a shipped capability
@@ -19,7 +21,7 @@ Think of it like the route board at an airport:
 | Packaged public CLI bridge | **ship-now** | `packages/sourceharbor-cli` now provides the installable public bridge while still delegating into repo-local `bin/sourceharbor` when a checkout is present | keep the command set thin and docs-first |
 | Public TypeScript SDK | **ship-now** | `packages/sourceharbor-sdk` now provides the first contract-first SDK surface over the existing HTTP contract | harden package boundaries as external consumers appear |
 | Python SDK | **later** | there is no public Python package surface today, and packaging it now would overclaim builder maturity | revisit after the TypeScript path hardens and real external builder demand exists |
-| Public Skills / workflow packs | **ship-now** | `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now form the first public starter distribution surface without exporting raw internal `.agents/skills` | deepen only if the workflow contracts stay stable across releases |
+| Public Skills / workflow packs | **first-cut** | `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now form the first public starter distribution surface without exporting raw internal `.agents/skills`, but they still need more hardening before they count as a fully mature ecosystem product | deepen only if the workflow contracts stay stable across releases |
 | Plugin-first or marketplace-first positioning | **no-go** | SourceHarbor is strongest as a source-first control tower with API/MCP/CLI reuse, not as a plugin marketplace | reconsider only if packaged CLI/SDK surfaces are stable and there is strong third-party integrator pull |
 
 ## Big-Bet Buckets

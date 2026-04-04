@@ -106,7 +106,7 @@ This is the short scoreboard for the directions most likely to get overstated.
 | Packaged public CLI bridge | **ship-now** | `packages/sourceharbor-cli` is now the installable public bridge, while the fuller repo-local operator CLI remains `./bin/sourceharbor` |
 | Public TypeScript SDK | **ship-now** | `packages/sourceharbor-sdk` now exposes the contract-first builder layer over the existing HTTP contract |
 | Public Python SDK | **later** | no public package surface exists yet |
-| Public skills pack / templates | **ship-now** | `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now provide the first public starter surface |
+| Public skills pack / templates | **first-cut** | `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now provide a usable first public starter surface, but not a fully hardened ecosystem product yet |
 | Plugin / extension marketplace | **no-go now** | plugin-first positioning would overstate the current repo truth |
 | Agent Autopilot (approval-first research ops) | **spike-only** | only the approval-first research-ops slice is worth reopening |
 | Full autonomous autopilot | **no-go now** | approval, rollback, identity, and provider readiness are not strong enough |

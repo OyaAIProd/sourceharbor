@@ -142,7 +142,7 @@ What ships now:
 
 - **Packaged public CLI:** now
 - **Public TypeScript SDK:** now
-- **Public starter packs / compatibility docs:** now
+- **Public starter packs / compatibility docs:** available now, but still first-cut
 - **Codex / Claude Code fit via MCP + HTTP API + CLI + SDK:** now
 
 What stays later:
