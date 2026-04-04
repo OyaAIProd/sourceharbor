@@ -7,6 +7,17 @@ and this project follows semantic-ish release communication even when the reposi
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-04-04
+
+### Fixed
+
+- restored the tracked `v0.1.7` release manifest to the historical-example contract, including `git.dirty=true`, so it no longer reads like current clean proof
+- restored the release-manifest capture script to the current-run contract so fresh release evidence generation stays aligned with the supply-chain contract tests
+
+### Changed
+
+- bumped the public CLI, public TypeScript SDK, and OpenAPI contract version anchors to `0.1.9` so the latest release line can stay aligned after the release-manifest governance fix
+
 ## [0.1.8] - 2026-04-04
 
 ### Fixed
