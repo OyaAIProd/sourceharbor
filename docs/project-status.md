@@ -64,7 +64,7 @@ These surfaces are real, but their strongest proof still depends on external con
 | Notifications / reports | implemented routes and settings exist | verified sender configuration, especially `RESEND_FROM_EMAIL`, plus a target mailbox |
 | UI audit Gemini review | base audit is real and the maintainer env has local Gemini proof | other environments still need Gemini access if they want the review layer |
 | Computer use | contract and service exist, and the maintainer env can reach the provider | valid Gemini access, supported account capability, and a real screenshot/input contract |
-| Long live smoke | repo path exists, the repo-managed `bootstrap -> up -> status -> doctor` path was re-proven again, and the short smoke path now passes under the current maintainer env | the strict live-smoke lane still hits a provider-side `quota_or_permission` / `403` response for the current YouTube key/project |
+| Long live smoke | repo path exists, the repo-managed `bootstrap -> up -> status -> doctor` path was re-proven again, the short smoke path now passes under the current maintainer env, and secure YouTube key rotation found one winner that clears direct probe plus strict preflight | the full end-to-end live receipt still depends on keeping that validated winner key in the shared operator environment and reopening the intentionally deferred Resend sender-identity lane |
 
 ## Sample And Local-Proof Boundaries
 

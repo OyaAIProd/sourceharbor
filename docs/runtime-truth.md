@@ -93,7 +93,7 @@ Wave 2 keeps five capabilities honest:
 | **Notifications / Reports** | implemented, but live send is still blocked until sender configuration is complete; `RESEND_API_KEY` alone is not enough without `RESEND_FROM_EMAIL` and a verified sender/domain |
 | **UI audit** | base audit can run with valid `job_id` or `artifact_root`; Gemini review now has maintainer-local proof, but other environments still need Gemini access if they want that extra layer |
 | **Computer use** | implemented contract exists and the current maintainer env can reach the provider, but real runs still depend on Gemini access plus a valid screenshot/input contract |
-| **Long live smoke** | the strict smoke lane is real, and the short repo-managed smoke path now passes again; the remaining failure is a provider-side YouTube `quota_or_permission` / `403` response plus sender configuration, not the old repo-local runtime drift |
+| **Long live smoke** | the strict smoke lane is real, the short repo-managed smoke path now passes again, and secure YouTube key rotation removed stale-key `403` as the main blocker; the remaining end-to-end stop is reopening the lane with the validated winner key plus complete sender configuration |
 
 ## What You Can Say Publicly
 
