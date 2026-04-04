@@ -8,9 +8,14 @@ to make the existing repo-owned command surface easier to discover and reuse.
 
 ## Install
 
+From a SourceHarbor checkout:
+
 ```bash
-npm install -g @sourceharbor/cli
+npm install -g ./packages/sourceharbor-cli
 ```
+
+If you later publish this package to a registry, replace the local path with
+the published package name.
 
 ## Examples
 

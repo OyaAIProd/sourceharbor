@@ -39,6 +39,11 @@ It is a full intake-to-digest loop:
 - operators read the result in a digest flow
 - agents reuse the same evidence through API and MCP
 
+The source story is intentionally uneven on purpose:
+
+- YouTube and Bilibili are the strongest supported intake templates today
+- RSSHub and generic RSS are real substrate paths, but they remain more generalized than the strongest video-first flows
+
 ## The Three Surfaces That Matter First
 
 ### 1. Command Center

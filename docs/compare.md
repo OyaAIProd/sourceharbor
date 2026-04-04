@@ -12,9 +12,12 @@ It is stronger when you read it as a productized knowledge pipeline.
 | Job-level trace and retries | No | No | Partial | **Yes** |
 | Digest feed for operators | No | Partial | Yes | **Yes** |
 | Retrieval over generated artifacts | No | Partial | Partial | **Yes** |
-| Notifications and digest delivery | No | Partial | Partial | **Yes** |
+| Notifications and digest delivery | No | Partial | Partial | **Gated** |
 | MCP surface for agents | No | No | No | **Yes** |
 | Public proof path | Rare | Rare | Rare | **Yes** |
+
+Notifications and digest delivery are implemented, but live send claims still
+depend on sender identity, mailbox, and provider readiness.
 
 ## The Differentiator
 
@@ -72,9 +75,13 @@ That label is easier to remember, easier to share, and easier to star than a vag
 | **MCP** | **Primary** | real, shipped surface today through `./bin/dev-mcp` and `apps/mcp/server.py` |
 | **Packaged public CLI** | **Primary** | `packages/sourceharbor-cli` is now a thin installable wrapper that delegates into repo-local `bin/sourceharbor` when a checkout is present |
 | **Public TypeScript SDK** | **Primary** | `packages/sourceharbor-sdk` now exposes the same typed HTTP client/url/type substrate that the web app uses |
-| **Public starter packs** | **Primary** | `starter-packs/` now gives Codex / Claude Code / SDK compatibility templates without exposing raw internal `.agents/skills` |
+| **Public starter surface** | **First-cut** | `starter-packs/` is the public entry directory, with `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` acting as companion starter assets |
 | **Codex** | **Primary** | strong fit for source-first local workflows that want to use MCP or HTTP against the same operator truth |
 | **Claude Code** | **Primary** | same fit pattern as Codex: local, MCP-aware, API-capable, and proof-first |
 | **OpenHands** | Secondary / comparison | adjacent as an agent-runtime ecosystem, but SourceHarbor is not a generic software-task agent |
 | **OpenCode** | Secondary / comparison | adjacent as a coding/automation workflow surface, but not a primary product identity here |
 | **OpenClaw** | Not front-door material today | repo-side proof is not strong enough to justify a primary binding |
+
+Here, **First-cut** means the starter layer is real and usable today, but it is
+still a public entry surface rather than a fully hardened standalone ecosystem
+product.

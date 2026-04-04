@@ -226,7 +226,7 @@ doctor` is already healthy.
 - Local proof is different from remote release proof.
 - Public screenshots and diagrams are presentation assets, not a substitute for live verification.
 - For the shortest delivered-vs-bet summary, read [project-status.md](./project-status.md).
-- For the exhaustive Prompt 1-5 closeout ledger, read [2026-03-31-program-closeout-matrix.md](./blueprints/2026-03-31-program-closeout-matrix.md).
+- For the exhaustive program closeout matrix, read [2026-03-31-program-closeout-matrix.md](./blueprints/2026-03-31-program-closeout-matrix.md).
 - Agent autopilot and hosted workspace directions remain spike artifacts, not current operator promises. See [reference/project-positioning.md](./reference/project-positioning.md) and the related files in [blueprints/](./blueprints/).
 
 ## Public Trust Links

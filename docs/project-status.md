@@ -48,7 +48,7 @@ These are the strongest current claims:
 - **First-run base path:** `./bin/bootstrap-full-stack`, `./bin/full-stack up`, `./bin/doctor`, and the runtime route snapshot under `.runtime-cache/run/full-stack/resolved.env`
 - **CLI surfaces:** existing `bin/*` entrypoints remain the repo-local command truth, while `packages/sourceharbor-cli` adds a thin installable bridge for public discovery and starter flows
 - **Public TypeScript SDK:** `packages/sourceharbor-sdk` now exposes a thin contract-first SDK over the same HTTP contract and shared route semantics
-- **Public starter packs:** `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` now form the first public workflow starter surface without exposing internal `.agents/skills`
+- **Public starter surface:** `starter-packs/` is the public entry directory, while `docs/public-skills.md`, `docs/compat/*`, `templates/public-skills/*`, and `examples/*` act as companion first-cut starter assets without exposing internal `.agents/skills`
 - **Local write-route contract:** direct write APIs can be exercised with the local dev token path instead of pretending auth is an unresolved product gap
 - **Source intake contract:** strong-supported YouTube/Bilibili templates plus generalized RSSHub/RSS substrate without overclaiming full-universe proof, with the `/subscriptions` front door now consuming the same template catalog exposed through API and MCP
 - **Front doors:** `/search`, `/ask` (story-aware, briefing-backed answer/change/evidence flow with truthful raw-retrieval fallback, selected-story drill-down, and a server-owned story page payload that now reuses one canonical selected-story object from Briefings), `/briefings` (server-owned briefing page payload for selected story, compare route, and Ask handoff), `/mcp`, `/ops`, `/subscriptions`
@@ -72,7 +72,7 @@ These are intentionally **not** live hosted proof:
 
 - [samples/README.md](./samples/README.md)
 - `/playground`
-- seeded local watchlist / trend / bundle proofs used for Wave 3 validation
+- seeded local watchlist / trend / bundle proofs used for seeded local validation
 
 Safe interpretation:
 
@@ -121,6 +121,8 @@ current maintainer re-audit:
 
 - Resend live delivery still needs a real sender identity chain: `RESEND_FROM_EMAIL`, a verified sender/domain, and a destination mailbox
 - the strict YouTube live-smoke lane now has one validated winner key, but the shared operator environment still needs that winner persisted before the full live lane is reopened
+- GHCR-style publication proof still needs a token path that can actually publish packages/images when that lane is reopened
+- protected workflow-dispatch lanes still depend on a GitHub operator that is allowed to dispatch them for this repo
 
 Raw non-empty values for `YOUTUBE_API_KEY`, `RESEND_API_KEY`, and
 `GEMINI_API_KEY` are no longer the main blocker story on the maintainer
@@ -132,18 +134,20 @@ machine. The remaining blockers are more specific than "secret missing".
 | --- | --- | --- | --- |
 | Resend sender identity | maintainer-side provider canary still reports `config_error`; `RESEND_API_KEY` is present on the maintainer machine, but `RESEND_FROM_EMAIL` is still missing | repo code already exposes notifications and settings; GitHub/release truth is no longer the missing piece | set `RESEND_FROM_EMAIL`, verify the sender/domain in Resend, choose a real destination mailbox, then rerun the provider canary or strict live-smoke lane |
 | YouTube strict live-smoke | secure rotation on 2026-04-03 found one user-supplied winner key that now passes direct probe, provider canary, and strict live-smoke preflight; the previously configured key still points at blocked Google project states | repo-side implementation is no longer the blocker; the remaining action is keeping the validated project-bound key in the operator environment and rerunning the full live lane when needed | replace the stale local YouTube key with the validated winner key in the operator secret store, then rerun the strict live-smoke lane if you want the full end-to-end receipt |
+| GHCR / package publication path | current repo-side checks can prove publication readiness locally, but the actual publish path still depends on a token with the right package scope | repo-side build/readiness logic is already in place; missing rights live outside tracked repo files | provide a token or operator identity that can publish packages/images, then rerun the publish-readiness lane |
+| Protected workflow dispatch | current repo-side docs and scripts can name the lane, but the lane still fails closed if the active GitHub operator cannot dispatch it | the repo is already explicit about the lane boundary; the missing ability is GitHub policy/account-side | use a GitHub operator that can dispatch the protected workflow, then rerun the attestation/build workflow |
 
-## Remote Truth Snapshot
+## Remote Truth Reading Rules
 
-Fresh GitHub-side verification now shows:
+Fresh GitHub-side verification must be rerun against the current remote head
+whenever `main` moves again. The safe reading rules are:
 
-- current `main` now includes the landed shared-story and JK front-door consolidation
-- current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
-- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with the current remote `main` instead of an older head
+- treat current `main`, latest release, and workflow-dispatch evidence as separate ledgers
+- only treat GitHub checks and workflow-dispatch runs as current remote proof when their recorded `headSha` still matches the current remote head
+- workflow-dispatch lanes such as standard-image publish or release attestation can still be blocked by repo policy, account permission, or required approval even when current `main` itself is healthy
 - latest-release truth must still be checked live against the current remote `main`, because post-release docs/governance closeouts can move `main` ahead again before the next tag is cut
+- live GitHub description, homepage, topics, and discussions should be checked live against `config/public/github-profile.json` before repeating the claim
 - live provider proof still stays a separate ledger from GitHub/release proof
-- the story-aware `/ask`, `/briefings`, `/subscriptions`, `/watchlists`, and `/trends` front-door line is now part of remote `main`
-- live repo description, homepage, topics, and discussions now match `config/public/github-profile.json` for the current remote `main`
 
 ## Read Next
 

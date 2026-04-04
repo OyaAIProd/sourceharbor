@@ -96,12 +96,12 @@ What this layer answers:
 - Is the release surface active and legible?
 - Do the live GitHub profile settings still match the tracked repo intent?
 
-Fresh Dawn Closure note:
+Current remote-proof reading rule:
 
-- current `main` now includes the landed shared-story and JK front-door consolidation
-- current `main` has fresh successful `ci`, `pre-commit`, `codeql`, and `CodeQL` runs
-- the latest successful `build-ci-standard-image` and `release-evidence-attest` workflow_dispatch runs now align with the current remote `main` instead of an older head
-- live GitHub description, homepage, topics, and discussions now match `config/public/github-profile.json` for the current remote `main`
+- treat current `main`, latest release, and workflow-dispatch evidence as separate ledgers
+- only treat GitHub checks and workflow-dispatch runs as current remote proof when their recorded `headSha` still matches the current remote head
+- live GitHub description, homepage, topics, and discussions should be checked live against `config/public/github-profile.json` before repeating the claim
+- workflow-dispatch lanes such as standard-image publish or release attestation can still be blocked by repo policy, account permission, or required approval even when current `main` itself is healthy
 - release-side proof must still be checked against the latest live tag, because current `main` can move ahead again after docs/governance closeout merges
 - provider-backed live proof still stays separate from GitHub/release truth
 
