@@ -106,7 +106,8 @@ These are safe:
 
 These need stronger proof:
 
-- latest release matches current `main`
+- latest release and current `main` are aligned again; right now `main` is ahead of
+  `v0.1.6` because `#55` only tightened route/test truth after the release cut
 - external notification delivery is validated
 - computer use is live-ready
 - semantic retrieval quality is proven
