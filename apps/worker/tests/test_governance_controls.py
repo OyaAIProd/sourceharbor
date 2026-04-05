@@ -420,9 +420,14 @@ def test_disk_space_governance_defaults_and_docs_are_wired() -> None:
         in env_example
     )
     assert "export TEMPORAL_TASK_QUEUE=sourceharbor-worker" in env_example
-    assert "$HOME/.cache/sourceharbor/project-venv" in env_example
-    assert "$HOME/.sourceharbor/artifacts" in env_example
-    assert "$HOME/.sourceharbor/workspace" in env_example
+    assert (
+        'export SOURCE_HARBOR_CACHE_ROOT="${SOURCE_HARBOR_CACHE_ROOT:-$HOME/.cache/sourceharbor}"'
+        in env_example
+    )
+    assert "${UV_PROJECT_ENVIRONMENT:-$SOURCE_HARBOR_CACHE_ROOT/project-venv}" in env_example
+    assert "${PIPELINE_ARTIFACT_ROOT:-$SOURCE_HARBOR_CACHE_ROOT/artifacts}" in env_example
+    assert "${PIPELINE_WORKSPACE_DIR:-$SOURCE_HARBOR_CACHE_ROOT/workspace}" in env_example
+    assert "$HOME/.sourceharbor" not in env_example
     assert "video-digestor" not in env_example
     assert "disk-space-governance.md" in runbook
     assert "[disk-space-governance]" in checker

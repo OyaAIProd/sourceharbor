@@ -16,6 +16,7 @@ output_dir=".runtime-cache/evidence/tests/external-playwright-smoke"
 retries="2"
 diagnostics_json=".runtime-cache/reports/tests/external-playwright-smoke-result.json"
 heartbeat_seconds="30"
+use_real_profile="0"
 
 log() {
   sourceharbor_log info external_playwright_smoke "$*"
@@ -39,6 +40,7 @@ Options:
   --diagnostics-json <path> Structured diagnostics JSON output path
   --retries <n>             Number of attempts (default: 2)
   --heartbeat-seconds <n>   Heartbeat interval in seconds (default: 30)
+  --real-profile            Use the configured real local Chrome profile (local-only, Chromium only)
   -h, --help                Show this help
 
 Defaults are internal constants in this script. Use CLI options to override.
@@ -79,6 +81,10 @@ while [[ $# -gt 0 ]]; do
       heartbeat_seconds="${2:-}"
       shift 2
       ;;
+    --real-profile)
+      use_real_profile="1"
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -100,6 +106,12 @@ done
 (( retries > 0 )) || fail "--retries must be > 0"
 (( retries <= 2 )) || fail "--retries must be <= 2 for live smoke policy"
 (( heartbeat_seconds > 0 )) || fail "--heartbeat-seconds must be > 0"
+
+if [[ "$use_real_profile" == "1" ]]; then
+  [[ -z "${CI:-}" && -z "${GITHUB_ACTIONS:-}" ]] || fail "--real-profile is local-only and must not run under CI/GitHub Actions"
+  [[ "$browser" == "chromium" ]] || fail "--real-profile currently requires --browser chromium"
+  eval "$(python3 "$ROOT_DIR/scripts/runtime/resolve_chrome_profile.py" --shell-exports)" || fail "unable to resolve configured real Chrome profile"
+fi
 
 command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 
@@ -125,6 +137,7 @@ fi
 export EXTERNAL_SMOKE_PYTHON_SOURCE="$python_source"
 export EXTERNAL_SMOKE_REPO_ROOT="$ROOT_DIR"
 export EXTERNAL_SMOKE_RUN_ID="${sourceharbor_log_run_id:-external-playwright-smoke}"
+export EXTERNAL_SMOKE_USE_REAL_PROFILE="$use_real_profile"
 
 log "Running external Playwright smoke: browser=$browser url=$url timeout_ms=$timeout_ms retries=$retries heartbeat_seconds=$heartbeat_seconds"
 log "Python runner source: $python_source"
@@ -170,6 +183,9 @@ class SmokeConfig:
     retries: int
     diagnostics_json: Path
     heartbeat_seconds: int
+    use_real_profile: bool
+    chrome_user_data_dir: str
+    chrome_profile_dir: str
 
 def _build_config() -> SmokeConfig:
     if len(sys.argv) != 9:
@@ -183,6 +199,9 @@ def _build_config() -> SmokeConfig:
         retries=int(sys.argv[6]),
         diagnostics_json=Path(sys.argv[7]),
         heartbeat_seconds=int(sys.argv[8]),
+        use_real_profile=os.environ.get("EXTERNAL_SMOKE_USE_REAL_PROFILE", "0").strip() == "1",
+        chrome_user_data_dir=os.environ.get("SOURCE_HARBOR_CHROME_USER_DATA_DIR", "").strip(),
+        chrome_profile_dir=os.environ.get("SOURCE_HARBOR_CHROME_PROFILE_DIR", "").strip(),
     )
 
 
@@ -212,11 +231,25 @@ def _attempt(config: SmokeConfig, attempt: int) -> dict[str, Any]:
     heartbeat_thread.start()
 
     with sync_playwright() as p:
-        browser_launcher = getattr(p, config.browser)
-        browser = browser_launcher.launch(headless=True)
+        browser = None
+        context = None
         page = None
         try:
-            context = browser.new_context(ignore_https_errors=False)
+            if config.use_real_profile:
+                if not config.chrome_user_data_dir or not config.chrome_profile_dir:
+                    raise AssertionError("real-profile mode requires resolved Chrome profile env")
+                context = p.chromium.launch_persistent_context(
+                    config.chrome_user_data_dir,
+                    channel="chrome",
+                    headless=False,
+                    ignore_https_errors=False,
+                    args=[f"--profile-directory={config.chrome_profile_dir}"],
+                )
+            else:
+                browser_launcher = getattr(p, config.browser)
+                browser = browser_launcher.launch(headless=True)
+                context = browser.new_context(ignore_https_errors=False)
+
             page = context.new_page()
 
             console_errors: list[str] = []
@@ -246,6 +279,7 @@ def _attempt(config: SmokeConfig, attempt: int) -> dict[str, Any]:
 
             diagnostics.update(
                 {
+                    "browser_mode": "real-profile" if config.use_real_profile else "ephemeral",
                     "http_status": status,
                     "response_ok": response_ok,
                     "title": title,
@@ -291,9 +325,12 @@ def _attempt(config: SmokeConfig, attempt: int) -> dict[str, Any]:
                     diagnostics["html_error"] = "failed to write html snapshot"
             return diagnostics
         finally:
-            browser.close()
             stop_heartbeat.set()
             heartbeat_thread.join(timeout=1.0)
+            if context is not None:
+                context.close()
+            elif browser is not None:
+                browser.close()
 
 
 def main() -> int:

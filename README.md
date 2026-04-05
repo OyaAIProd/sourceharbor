@@ -303,7 +303,8 @@ By the end of this path, you should have:
 ```bash
 ./bin/sourceharbor help
 cp .env.example .env
-UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/project-venv}" \
+SOURCE_HARBOR_CACHE_ROOT="${SOURCE_HARBOR_CACHE_ROOT:-$HOME/.cache/sourceharbor}"
+UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$SOURCE_HARBOR_CACHE_ROOT/project-venv}" \
   uv sync --frozen --extra dev --extra e2e
 bash scripts/ci/prepare_web_runtime.sh >/dev/null
 ./bin/bootstrap-full-stack

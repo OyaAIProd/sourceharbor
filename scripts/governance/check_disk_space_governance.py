@@ -60,12 +60,15 @@ def main() -> int:
         "migration_report_path",
         "legacy_retirement_quiet_minutes",
         "canonical_paths",
+        "legacy_extra_roots",
         "duplicate_env_policy",
         "migration_variables",
         "legacy_reference_files",
         "audit_targets",
         "docker_named_volumes",
+        "docker_hygiene",
         "cleanup_waves",
+        "external_cache_maintenance",
         "excluded_paths",
     }
     missing = sorted(required_top_level - set(policy))
@@ -147,16 +150,79 @@ def main() -> int:
             + ", ".join(missing_migration_names)
         )
 
+    external_cache_maintenance = policy.get("external_cache_maintenance")
+    if not isinstance(external_cache_maintenance, dict):
+        errors.append("disk-space-governance.json external_cache_maintenance must be an object")
+    else:
+        if not str(external_cache_maintenance.get("report_path") or "").strip():
+            errors.append("external_cache_maintenance.report_path is required")
+        if not str(external_cache_maintenance.get("stamp_path") or "").strip():
+            errors.append("external_cache_maintenance.stamp_path is required")
+        auto_interval_minutes = external_cache_maintenance.get("auto_interval_minutes")
+        if not isinstance(auto_interval_minutes, int) or auto_interval_minutes <= 0:
+            errors.append(
+                "external_cache_maintenance.auto_interval_minutes must be a positive integer"
+            )
+        groups = external_cache_maintenance.get("groups")
+        required_groups = {
+            "project-venv",
+            "state",
+            "duplicate-envs",
+            "workspace",
+            "artifacts",
+            "browser",
+            "tmp",
+        }
+        if not isinstance(groups, dict):
+            errors.append("external_cache_maintenance.groups must be an object")
+        else:
+            missing_groups = sorted(required_groups - set(groups))
+            if missing_groups:
+                errors.append(
+                    "external_cache_maintenance.groups missing required entries: "
+                    + ", ".join(missing_groups)
+                )
+
+    docker_hygiene = policy.get("docker_hygiene")
+    if not isinstance(docker_hygiene, dict):
+        errors.append("disk-space-governance.json docker_hygiene must be an object")
+    else:
+        if not str(docker_hygiene.get("report_path") or "").strip():
+            errors.append("docker_hygiene.report_path is required")
+        for field in (
+            "repo_container_prefixes",
+            "repo_network_prefixes",
+            "repo_named_volumes",
+            "repo_local_debug_images",
+        ):
+            value = docker_hygiene.get(field)
+            if not isinstance(value, list):
+                errors.append(f"docker_hygiene.{field} must be a list")
+        quiet_hours = docker_hygiene.get("local_debug_image_quiet_hours")
+        if not isinstance(quiet_hours, int) or quiet_hours <= 0:
+            errors.append("docker_hygiene.local_debug_image_quiet_hours must be a positive integer")
+
     env_example = _read(root / ".env.example")
+    if (
+        'SOURCE_HARBOR_CACHE_ROOT="${SOURCE_HARBOR_CACHE_ROOT:-$HOME/.cache/sourceharbor}"'
+        not in env_example
+    ):
+        errors.append(
+            ".env.example must declare SOURCE_HARBOR_CACHE_ROOT with the canonical ~/.cache/sourceharbor fallback"
+        )
     for expected in (
-        "$HOME/.sourceharbor/artifacts",
-        "$HOME/.sourceharbor/workspace",
-        "$HOME/.sourceharbor/state/worker_state.db",
-        "$HOME/.sourceharbor/state/api_state.db",
-        "$HOME/.cache/sourceharbor/project-venv",
+        "${PIPELINE_ARTIFACT_ROOT:-$SOURCE_HARBOR_CACHE_ROOT/artifacts}",
+        "${PIPELINE_WORKSPACE_DIR:-$SOURCE_HARBOR_CACHE_ROOT/workspace}",
+        "${SQLITE_PATH:-$SOURCE_HARBOR_CACHE_ROOT/state/worker_state.db}",
+        "${SQLITE_STATE_PATH:-$SOURCE_HARBOR_CACHE_ROOT/state/api_state.db}",
+        "${UV_PROJECT_ENVIRONMENT:-$SOURCE_HARBOR_CACHE_ROOT/project-venv}",
     ):
         if expected not in env_example:
-            errors.append(f".env.example missing canonical disk path default `{expected}`")
+            errors.append(
+                f".env.example missing SOURCE_HARBOR_CACHE_ROOT-derived default `{expected}`"
+            )
+    if "$HOME/.sourceharbor" in env_example or "~/.sourceharbor" in env_example:
+        errors.append(".env.example must not default to legacy `.sourceharbor` paths")
     if "video-digestor" in env_example:
         errors.append(".env.example must not default to legacy `video-digestor` paths")
     if ".runtime/artifacts" in env_example or ".runtime/workspace" in env_example:
@@ -206,6 +272,7 @@ def main() -> int:
     }
     canonical_paths = dict(policy.get("canonical_paths", {}))
     user_state_root = str(canonical_paths.get("user_state_root") or "").strip()
+    user_cache_root = str(canonical_paths.get("user_cache_root") or "").strip()
     if user_state_root:
         user_state_root_counted = any(
             str(item.get("path") or "").strip() == user_state_root
@@ -217,9 +284,21 @@ def main() -> int:
             errors.append(
                 "disk-space-governance.json must count canonical user_state_root in audit_targets repo-external-repo-owned totals"
             )
+    if user_state_root != "$HOME/.cache/sourceharbor":
+        errors.append("canonical_paths.user_state_root must be $HOME/.cache/sourceharbor")
+    if user_cache_root != "$HOME/.cache/sourceharbor":
+        errors.append("canonical_paths.user_cache_root must be $HOME/.cache/sourceharbor")
+    legacy_extra_roots = policy.get("legacy_extra_roots")
+    if not isinstance(legacy_extra_roots, list) or "$HOME/.sourceharbor" not in {
+        str(item) for item in legacy_extra_roots or []
+    }:
+        errors.append(
+            "disk-space-governance.json must keep $HOME/.sourceharbor in legacy_extra_roots as a migration input root"
+        )
     legacy_roots = {
         str(canonical_paths.get("legacy_state_root") or "").strip().lower(),
         str(canonical_paths.get("legacy_cache_root") or "").strip().lower(),
+        *{str(item).strip().lower() for item in (legacy_extra_roots or [])},
         "video-digestor",
     }
     excluded_paths = {str(item) for item in policy.get("excluded_paths", [])}

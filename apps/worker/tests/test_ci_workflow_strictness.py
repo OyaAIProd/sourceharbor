@@ -168,6 +168,45 @@ def test_current_repo_ci_workflow_strictness_contract_passes() -> None:
     assert failures == []
 
 
+def test_public_hosted_ci_rejects_local_real_chrome_profile_env() -> None:
+    module = _load_module()
+    workflow = """name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_HARBOR_CHROME_PROFILE_NAME: sourceharbor
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@1234567890abcdef1234567890abcdef12345678
+      - run: python3 scripts/governance/check_env_contract.py --strict
+      - run: python3 scripts/governance/check_test_assertions.py
+      - run: bash scripts/ci/python_tests.sh
+  web-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@1234567890abcdef1234567890abcdef12345678
+      - run: bash scripts/ci/prepare_web_runtime.sh
+      - run: npm --prefix "$WEB_RUNTIME_WEB_DIR" run lint
+"""
+    failures: list[str] = []
+
+    module._check_global_rules(
+        Path("ci.yml"), workflow, dict(module._job_blocks(workflow)), failures
+    )
+
+    assert (
+        "ci.yml: hosted PR path must not reference local-only real Chrome profile env `SOURCE_HARBOR_CHROME_PROFILE_NAME`"
+        in failures
+    )
+
+
 def test_build_standard_image_requires_manual_only_protected_environment() -> None:
     module = _load_module()
     workflow = """name: build-ci-standard-image

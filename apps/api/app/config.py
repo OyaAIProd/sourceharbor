@@ -39,6 +39,15 @@ def _read_positive_float_env(name: str, *, default: float) -> float:
     return value
 
 
+def _sourceharbor_cache_root() -> str:
+    raw = os.getenv("SOURCE_HARBOR_CACHE_ROOT")
+    return (
+        os.path.expanduser(raw.strip())
+        if raw and raw.strip()
+        else os.path.expanduser("~/.cache/sourceharbor")
+    )
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str
@@ -92,7 +101,7 @@ class Settings:
             sqlite_state_path=_read_required_env("SQLITE_STATE_PATH"),
             pipeline_artifact_root=os.getenv(
                 "PIPELINE_ARTIFACT_ROOT",
-                os.path.expanduser("~/.sourceharbor/artifacts"),
+                os.path.join(_sourceharbor_cache_root(), "artifacts"),
             ),
             notification_enabled=_parse_bool(
                 os.getenv("NOTIFICATION_ENABLED"),

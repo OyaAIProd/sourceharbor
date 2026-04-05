@@ -18,6 +18,7 @@ from disk_space_common import (
     expand_policy_path,
     human_bytes,
     load_policy,
+    lsof_hits,
     parse_env_assignments,
     repo_root,
     size_bytes,
@@ -26,6 +27,8 @@ from disk_space_common import (
 )
 from report_disk_space import build_report
 
+SQLITE_SIDECAR_SUFFIXES = ("-wal", "-shm")
+
 
 def _canonical_entry_map(policy: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {
@@ -33,6 +36,79 @@ def _canonical_entry_map(policy: dict[str, Any]) -> dict[str, dict[str, Any]]:
         for entry in policy.get("migration_variables", [])
         if str(entry.get("name") or "").strip()
     }
+
+
+def _legacy_roots_for_target(target: Path, *, root: Path, policy: dict[str, Any]) -> list[Path]:
+    canonical_paths = dict(policy.get("canonical_paths", {}))
+    candidate_roots: list[Path] = []
+    for canonical_key, legacy_keys in (
+        ("user_state_root", ("legacy_state_root",)),
+        ("user_cache_root", ("legacy_cache_root",)),
+    ):
+        canonical_root_raw = str(canonical_paths.get(canonical_key) or "").strip()
+        if not canonical_root_raw:
+            continue
+        canonical_root = expand_policy_path(canonical_root_raw, root=root)
+        try:
+            target.relative_to(canonical_root)
+        except ValueError:
+            continue
+        for legacy_key in legacy_keys:
+            legacy_raw = str(canonical_paths.get(legacy_key) or "").strip()
+            if not legacy_raw:
+                continue
+            legacy_root = expand_policy_path(legacy_raw, root=root)
+            if legacy_root not in candidate_roots:
+                candidate_roots.append(legacy_root)
+        for legacy_raw in policy.get("legacy_extra_roots", []):
+            text = str(legacy_raw or "").strip()
+            if not text:
+                continue
+            legacy_root = expand_policy_path(text, root=root)
+            if legacy_root not in candidate_roots:
+                candidate_roots.append(legacy_root)
+    return candidate_roots
+
+
+def _orphan_sidecar_paths(
+    *,
+    target: Path,
+    root: Path,
+    policy: dict[str, Any],
+) -> list[dict[str, str | int]]:
+    candidates: list[dict[str, str | int]] = []
+    candidate_roots = _legacy_roots_for_target(target, root=root, policy=policy)
+    for legacy_root in candidate_roots:
+        try:
+            relative_target = target.relative_to(
+                expand_policy_path(str(policy["canonical_paths"]["user_state_root"]), root=root)
+            )
+        except ValueError:
+            try:
+                relative_target = target.relative_to(
+                    expand_policy_path(str(policy["canonical_paths"]["user_cache_root"]), root=root)
+                )
+            except ValueError:
+                continue
+        legacy_target = legacy_root / relative_target
+        if legacy_target.exists():
+            continue
+        for legacy_sidecar, target_sidecar in zip(
+            _sidecar_paths(legacy_target),
+            _sidecar_paths(target),
+            strict=False,
+        ):
+            if not legacy_sidecar.exists():
+                continue
+            candidates.append(
+                {
+                    "kind": legacy_sidecar.name.removeprefix(legacy_target.name),
+                    "source": str(legacy_sidecar),
+                    "target": str(target_sidecar),
+                    "size_bytes": size_bytes(legacy_sidecar),
+                }
+            )
+    return candidates
 
 
 def _build_plan(root: Path, policy: dict[str, Any]) -> dict[str, Any]:
@@ -66,6 +142,7 @@ def _build_plan(root: Path, policy: dict[str, Any]) -> dict[str, Any]:
                 ),
                 "retire_source_on_migrate": bool(entry.get("retire_source_on_migrate", True)),
                 "ownership": str(entry.get("ownership") or ""),
+                "orphan_sidecars": [],
             }
         )
 
@@ -73,11 +150,20 @@ def _build_plan(root: Path, policy: dict[str, Any]) -> dict[str, Any]:
         reasons: list[str] = []
         source_path = item["source_path"]
         target_path = item["target_path"]
+        target = Path(target_path)
+        orphan_sidecars = (
+            _orphan_sidecar_paths(target=target, root=root, policy=policy)
+            if item["path_kind"] == "file" and target.exists()
+            else []
+        )
+        item["orphan_sidecars"] = orphan_sidecars
         if not item["current_value"]:
             reasons.append("missing-local-env-value")
             recommended_action = "missing-local-env-value"
         elif source_path == target_path:
-            recommended_action = "already-canonical"
+            recommended_action = (
+                "retire-legacy-sidecars" if orphan_sidecars else "already-canonical"
+            )
         elif item["target_exists"] and not item["allow_existing_target"]:
             reasons.append("target-already-exists")
             recommended_action = "blocked-target-exists"
@@ -150,6 +236,27 @@ def _parse_mapping_specs(raw_values: list[str], root: Path) -> dict[str, tuple[P
     return parsed
 
 
+def _default_mappings_from_plan(
+    plan: dict[str, Any],
+    *,
+    root: Path,
+) -> dict[str, tuple[Path, Path]]:
+    mappings: dict[str, tuple[Path, Path]] = {}
+    for item in plan["variables"]:
+        current_value = str(item.get("current_value") or "").strip()
+        source_path = str(item.get("source_path") or "").strip()
+        target_path = str(item.get("target_path") or "").strip()
+        if not current_value or not source_path or not target_path:
+            continue
+        if source_path == target_path and not item.get("orphan_sidecars"):
+            continue
+        mappings[str(item["name"])] = (
+            expand_policy_path(current_value, root=root),
+            expand_policy_path(target_path, root=root),
+        )
+    return mappings
+
+
 def _copy_file(source: Path, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, target)
@@ -184,33 +291,151 @@ def _stage_path(target: Path) -> Path:
     return target.parent / f".{target.name}.migration-stage-{uuid4().hex}"
 
 
+def _sidecar_paths(path: Path) -> list[Path]:
+    return [Path(f"{path}{suffix}") for suffix in SQLITE_SIDECAR_SUFFIXES]
+
+
 def _rollback_migration(
     *,
     promoted_ops: list[dict[str, Any]],
     staged_ops: list[dict[str, Any]],
 ) -> None:
     for operation in reversed(promoted_ops):
-        target = Path(operation["target"])
-        source = Path(operation["source"])
-        if target.exists():
-            if source.exists():
-                if target.is_dir():
-                    shutil.rmtree(target)
+        for item in reversed(list(operation.get("paths") or [])):
+            target = Path(item["target"])
+            source = Path(item["source"])
+            if target.exists():
+                if source.exists():
+                    if target.is_dir():
+                        shutil.rmtree(target)
+                    else:
+                        target.unlink(missing_ok=True)
                 else:
-                    target.unlink(missing_ok=True)
-            else:
-                target.replace(source)
+                    target.replace(source)
     for operation in reversed(staged_ops):
-        staging = Path(operation["staging"])
-        source = Path(operation["source"])
-        if staging.exists():
-            if source.exists():
-                if staging.is_dir():
-                    shutil.rmtree(staging)
+        for item in reversed(list(operation.get("paths") or [])):
+            staging = Path(item["staging"])
+            source = Path(item["source"])
+            if staging.exists():
+                if source.exists():
+                    if staging.is_dir():
+                        shutil.rmtree(staging)
+                    else:
+                        staging.unlink(missing_ok=True)
                 else:
-                    staging.unlink(missing_ok=True)
-            else:
-                staging.replace(source)
+                    staging.replace(source)
+
+
+def _prune_empty_dir(path: Path, *, stop_before: Path) -> None:
+    current = path
+    while current != stop_before and current.exists():
+        try:
+            current.rmdir()
+        except OSError:
+            break
+        current = current.parent
+
+
+def _prune_empty_tree(root_path: Path) -> None:
+    if not root_path.exists() or not root_path.is_dir():
+        return
+    for child in sorted(root_path.rglob("*"), reverse=True):
+        if not child.is_dir():
+            continue
+        try:
+            child.rmdir()
+        except OSError:
+            continue
+    try:
+        root_path.rmdir()
+    except OSError:
+        return
+
+
+def _cleanup_orphan_sqlite_sidecars(
+    *,
+    root: Path,
+    policy: dict[str, Any],
+    plan: dict[str, Any],
+) -> list[dict[str, Any]]:
+    canonical_sqlite_targets: dict[str, tuple[str, Path]] = {}
+    for item in plan["variables"]:
+        if str(item.get("path_kind")) != "file":
+            continue
+        target_path = Path(str(item.get("target_path") or ""))
+        if not target_path.name.endswith(".db"):
+            continue
+        canonical_sqlite_targets[target_path.name] = (str(item["name"]), target_path)
+
+    if not canonical_sqlite_targets:
+        return []
+
+    legacy_roots: list[Path] = []
+    canonical_paths = dict(policy.get("canonical_paths") or {})
+    for key in ("legacy_state_root", "legacy_cache_root"):
+        value = str(canonical_paths.get(key) or "").strip()
+        if not value:
+            continue
+        path = expand_policy_path(value, root=root)
+        if path not in legacy_roots:
+            legacy_roots.append(path)
+    for raw in policy.get("legacy_extra_roots", []):
+        value = str(raw or "").strip()
+        if not value:
+            continue
+        path = expand_policy_path(value, root=root)
+        if path not in legacy_roots:
+            legacy_roots.append(path)
+
+    actions: list[dict[str, Any]] = []
+    for legacy_root in legacy_roots:
+        if not legacy_root.exists():
+            continue
+        for suffix in SQLITE_SIDECAR_SUFFIXES:
+            for sidecar in legacy_root.rglob(f"*{suffix}"):
+                sqlite_name = sidecar.name.removesuffix(suffix)
+                target_entry = canonical_sqlite_targets.get(sqlite_name)
+                if target_entry is None:
+                    continue
+                variable, canonical_target = target_entry
+                if not canonical_target.exists():
+                    actions.append(
+                        {
+                            "variable": variable,
+                            "status": "kept-orphan-sidecar-missing-canonical-target",
+                            "path": str(sidecar),
+                            "canonical_target": str(canonical_target),
+                        }
+                    )
+                    continue
+
+                lsof_state, lsof_lines = lsof_hits(sidecar.parent)
+                if lsof_state != "clear":
+                    actions.append(
+                        {
+                            "variable": variable,
+                            "status": "kept-orphan-sidecar-busy",
+                            "path": str(sidecar),
+                            "canonical_target": str(canonical_target),
+                            "lsof_state": lsof_state,
+                            "lsof_detail": "; ".join(lsof_lines),
+                        }
+                    )
+                    continue
+
+                sidecar.unlink(missing_ok=True)
+                actions.append(
+                    {
+                        "variable": variable,
+                        "status": "deleted-orphan-sidecar",
+                        "path": str(sidecar),
+                        "canonical_target": str(canonical_target),
+                        "kind": suffix.removeprefix("-"),
+                    }
+                )
+                _prune_empty_dir(sidecar.parent, stop_before=legacy_root.parent)
+        _prune_empty_tree(legacy_root)
+    return actions
 
 
 def _build_apply_operations(
@@ -248,15 +473,46 @@ def _build_apply_operations(
             raise RuntimeError(f"{name}: missing local .env value")
 
         if str(source) == str(target):
-            operations.append(
-                {
-                    "variable": name,
-                    "mode": "already-canonical",
-                    "source": str(source),
-                    "target": str(target),
-                    "canonical_value": str(item["canonical_value"]),
-                }
-            )
+            orphan_sidecars = list(item.get("orphan_sidecars") or [])
+            if orphan_sidecars:
+                operation_paths = []
+                for orphan in orphan_sidecars:
+                    target_sidecar = Path(str(orphan["target"]))
+                    if target_sidecar.exists():
+                        raise RuntimeError(
+                            f"{name}: target sidecar already exists: {target_sidecar}"
+                        )
+                    operation_paths.append(
+                        {
+                            "kind": str(orphan["kind"]),
+                            "source": str(orphan["source"]),
+                            "target": str(orphan["target"]),
+                            "staging": str(_stage_path(target_sidecar)),
+                            "size_bytes": int(orphan["size_bytes"]),
+                        }
+                    )
+                operations.append(
+                    {
+                        "variable": name,
+                        "mode": "retire-legacy-sidecars",
+                        "source": str(source),
+                        "target": str(target),
+                        "canonical_value": str(item["canonical_value"]),
+                        "source_size_bytes": 0,
+                        "path_kind": str(item["path_kind"]),
+                        "paths": operation_paths,
+                    }
+                )
+            else:
+                operations.append(
+                    {
+                        "variable": name,
+                        "mode": "already-canonical",
+                        "source": str(source),
+                        "target": str(target),
+                        "canonical_value": str(item["canonical_value"]),
+                    }
+                )
             continue
 
         if not source.exists():
@@ -297,11 +553,38 @@ def _build_apply_operations(
                 "source": str(source),
                 "target": str(target),
                 "canonical_value": str(item["canonical_value"]),
-                "staging": str(_stage_path(target)),
                 "source_size_bytes": size_bytes(source),
                 "path_kind": str(item["path_kind"]),
+                "paths": [
+                    {
+                        "kind": "primary",
+                        "source": str(source),
+                        "target": str(target),
+                        "staging": str(_stage_path(target)),
+                        "size_bytes": size_bytes(source),
+                    }
+                ],
             }
         )
+        if str(item["path_kind"]) == "file":
+            for source_sidecar, target_sidecar in zip(
+                _sidecar_paths(source),
+                _sidecar_paths(target),
+                strict=False,
+            ):
+                if not source_sidecar.exists():
+                    continue
+                if target_sidecar.exists():
+                    raise RuntimeError(f"{name}: target sidecar already exists: {target_sidecar}")
+                operations[-1]["paths"].append(
+                    {
+                        "kind": source_sidecar.name.removeprefix(source.name),
+                        "source": str(source_sidecar),
+                        "target": str(target_sidecar),
+                        "staging": str(_stage_path(target_sidecar)),
+                        "size_bytes": size_bytes(source_sidecar),
+                    }
+                )
     return operations
 
 
@@ -343,37 +626,53 @@ def _apply_plan(
                 )
                 continue
 
-            source = Path(operation["source"])
-            staging = Path(operation["staging"])
-            if staging.exists():
-                raise RuntimeError(
-                    f"{operation['variable']}: staging path already exists: {staging}"
-                )
-            staging.parent.mkdir(parents=True, exist_ok=True)
-            source.replace(staging)
+            for path_op in operation.get("paths") or []:
+                staging = Path(path_op["staging"])
+                source_path = Path(path_op["source"])
+                if staging.exists():
+                    raise RuntimeError(
+                        f"{operation['variable']}: staging path already exists: {staging}"
+                    )
+                staging.parent.mkdir(parents=True, exist_ok=True)
+                source_path.replace(staging)
             staged_ops.append(operation)
 
         for operation in staged_ops:
-            staging = Path(operation["staging"])
-            target = Path(operation["target"])
-            if target.exists():
-                raise RuntimeError(
-                    f"{operation['variable']}: target already exists during promote: {target}"
-                )
-            target.parent.mkdir(parents=True, exist_ok=True)
-            staging.replace(target)
+            for path_op in operation.get("paths") or []:
+                staging = Path(path_op["staging"])
+                target = Path(path_op["target"])
+                if target.exists():
+                    raise RuntimeError(
+                        f"{operation['variable']}: target already exists during promote: {target}"
+                    )
+                target.parent.mkdir(parents=True, exist_ok=True)
+                staging.replace(target)
             promoted_ops.append(operation)
             actions.append(
                 {
                     "variable": operation["variable"],
-                    "status": "moved",
+                    "status": (
+                        "retired-legacy-sidecars"
+                        if operation["mode"] == "retire-legacy-sidecars"
+                        else "moved"
+                    ),
                     "source": operation["source"],
                     "target": operation["target"],
                     "size_human": human_bytes(int(operation["source_size_bytes"])),
+                    "moved_companions": [
+                        {
+                            "kind": str(path_op["kind"]),
+                            "target": str(path_op["target"]),
+                            "size_human": human_bytes(int(path_op["size_bytes"])),
+                        }
+                        for path_op in (operation.get("paths") or [])
+                        if str(path_op["kind"]) != "primary"
+                    ],
                 }
             )
 
         update_env_assignments(root / ".env", env_updates)
+        actions.extend(_cleanup_orphan_sqlite_sidecars(root=root, policy=policy, plan=plan))
     except Exception:
         _rollback_migration(promoted_ops=promoted_ops, staged_ops=staged_ops)
         raise
@@ -415,6 +714,11 @@ def main() -> int:
     parser.add_argument("--repo-root", default=str(repo_root()))
     parser.add_argument("--policy", default="")
     parser.add_argument("--mapping", action="append", default=[])
+    parser.add_argument(
+        "--auto-mappings",
+        action="store_true",
+        help="Use the current .env values as migration sources and canonical targets from policy.",
+    )
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--yes", action="store_true")
     parser.add_argument("--json", action="store_true")
@@ -429,7 +733,12 @@ def main() -> int:
         if not args.yes:
             parser.error("--apply requires --yes")
         try:
-            mappings = _parse_mapping_specs(list(args.mapping), root)
+            if args.mapping:
+                mappings = _parse_mapping_specs(list(args.mapping), root)
+            elif args.auto_mappings:
+                mappings = _default_mappings_from_plan(report, root=root)
+            else:
+                raise ValueError("apply mode requires --mapping ... or --auto-mappings")
         except ValueError as exc:
             print(f"[disk-space-legacy-migration] FAIL: {exc}", file=sys.stderr)
             return 1

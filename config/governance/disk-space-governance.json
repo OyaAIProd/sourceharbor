@@ -6,12 +6,15 @@
   "legacy_retirement_quiet_minutes": 1440,
   "canonical_paths": {
     "repo_runtime_root": ".runtime-cache",
-    "user_state_root": "$HOME/.sourceharbor",
+    "user_state_root": "$HOME/.cache/sourceharbor",
     "user_cache_root": "$HOME/.cache/sourceharbor",
     "user_project_venv": "$HOME/.cache/sourceharbor/project-venv",
     "legacy_state_root": "$HOME/.video-digestor",
     "legacy_cache_root": "$HOME/.cache/video-digestor"
   },
+  "legacy_extra_roots": [
+    "$HOME/.sourceharbor"
+  ],
   "duplicate_env_policy": {
     "canonical_mainline_path": "$HOME/.cache/sourceharbor/project-venv",
     "duplicate_glob": "$HOME/.cache/sourceharbor/project-venv*",
@@ -26,7 +29,7 @@
   "migration_variables": [
     {
       "name": "PIPELINE_ARTIFACT_ROOT",
-      "canonical_path": "$HOME/.sourceharbor/artifacts",
+      "canonical_path": "$HOME/.cache/sourceharbor/artifacts",
       "path_kind": "directory",
       "ownership": "repo-primary",
       "allow_existing_target": false,
@@ -34,7 +37,7 @@
     },
     {
       "name": "PIPELINE_WORKSPACE_DIR",
-      "canonical_path": "$HOME/.sourceharbor/workspace",
+      "canonical_path": "$HOME/.cache/sourceharbor/workspace",
       "path_kind": "directory",
       "ownership": "repo-primary",
       "allow_existing_target": false,
@@ -42,7 +45,7 @@
     },
     {
       "name": "SQLITE_PATH",
-      "canonical_path": "$HOME/.sourceharbor/state/worker_state.db",
+      "canonical_path": "$HOME/.cache/sourceharbor/state/worker_state.db",
       "path_kind": "file",
       "ownership": "repo-primary",
       "allow_existing_target": false,
@@ -50,7 +53,7 @@
     },
     {
       "name": "SQLITE_STATE_PATH",
-      "canonical_path": "$HOME/.sourceharbor/state/api_state.db",
+      "canonical_path": "$HOME/.cache/sourceharbor/state/api_state.db",
       "path_kind": "file",
       "ownership": "repo-primary",
       "allow_existing_target": false,
@@ -73,7 +76,6 @@
   "legacy_reference_files": [
     ".env",
     ".env.example",
-    "scripts/lib/standard_env.sh",
     "infra/systemd/sourceharbor-api.service",
     "infra/systemd/sourceharbor-worker.service"
   ],
@@ -194,7 +196,7 @@
     {
       "id": "external-sourceharbor-state-root",
       "label": "SourceHarbor external state root",
-      "path": "$HOME/.sourceharbor",
+      "path": "$HOME/.cache/sourceharbor",
       "layer": "repo-external-repo-owned",
       "ownership": "repo-primary",
       "category": "external-state",
@@ -204,7 +206,7 @@
     {
       "id": "external-sourceharbor-artifacts",
       "label": "SourceHarbor artifacts root",
-      "path": "$HOME/.sourceharbor/artifacts",
+      "path": "$HOME/.cache/sourceharbor/artifacts",
       "layer": "repo-external-repo-owned",
       "ownership": "repo-primary",
       "category": "protected-state",
@@ -213,7 +215,7 @@
     {
       "id": "external-sourceharbor-workspace",
       "label": "SourceHarbor workspace root",
-      "path": "$HOME/.sourceharbor/workspace",
+      "path": "$HOME/.cache/sourceharbor/workspace",
       "layer": "repo-external-repo-owned",
       "ownership": "repo-primary",
       "category": "protected-state",
@@ -222,10 +224,38 @@
     {
       "id": "external-sourceharbor-sqlite-state",
       "label": "SourceHarbor sqlite state root",
-      "path": "$HOME/.sourceharbor/state",
+      "path": "$HOME/.cache/sourceharbor/state",
       "layer": "repo-external-repo-owned",
       "ownership": "repo-primary",
       "category": "protected-state",
+      "highlight": true
+    },
+    {
+      "id": "external-sourceharbor-browser-root",
+      "label": "SourceHarbor browser root",
+      "path": "$HOME/.cache/sourceharbor/browser",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "external-owned",
+      "highlight": true
+    },
+    {
+      "id": "external-sourceharbor-tmp-root",
+      "label": "SourceHarbor external tmp root",
+      "path": "$HOME/.cache/sourceharbor/tmp",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "external-owned",
+      "highlight": true
+    },
+    {
+      "id": "legacy-sourceharbor-root",
+      "label": "Legacy SourceHarbor state root",
+      "path": "$HOME/.sourceharbor",
+      "layer": "repo-external-repo-owned",
+      "ownership": "repo-primary",
+      "category": "legacy-compatible",
+      "count_in_layer_total": true,
       "highlight": true
     },
     {
@@ -481,6 +511,25 @@
           "classification": "verify-first"
         },
         {
+          "id": "external-sourceharbor-duplicate-project-venvs",
+          "path_glob": "$HOME/.cache/sourceharbor/project-venv-*",
+          "quiet_minutes": 10080,
+          "reference_markers": [
+            "project-venv-"
+          ],
+          "equivalent_paths": [
+            "$HOME/.cache/sourceharbor/project-venv"
+          ],
+          "verify_command": [
+            "bash",
+            "-lc",
+            "test -d \"$HOME/.cache/sourceharbor/project-venv\""
+          ],
+          "layer": "repo-external-repo-owned",
+          "ownership": "repo-primary",
+          "classification": "verify-first"
+        },
+        {
           "id": "external-sourceharbor-ws6-test-venv",
           "path": "$HOME/.cache/sourceharbor/ws6-test-venv",
           "quiet_minutes": 1440,
@@ -499,10 +548,10 @@
           "ownership": "repo-primary",
           "classification": "verify-first"
         },
-        {
-          "id": "external-video-digestor-closure-fix-venv",
-          "path": "$HOME/.cache/video-digestor/closure-fix-venv",
-          "quiet_minutes": 1440,
+      {
+        "id": "external-video-digestor-closure-fix-venv",
+        "path": "$HOME/.cache/video-digestor/closure-fix-venv",
+        "quiet_minutes": 1440,
           "reference_markers": [
             "closure-fix-venv"
           ],
@@ -514,6 +563,68 @@
             "-lc",
             "test -d \"$HOME/.cache/sourceharbor/project-venv\""
           ],
+        "layer": "repo-external-repo-owned",
+        "ownership": "repo-primary",
+        "classification": "verify-first"
+      },
+      {
+        "id": "external-video-digestor-cache-root",
+        "path": "$HOME/.cache/video-digestor",
+        "quiet_minutes": 1440,
+        "requires_lsof_clear": true,
+        "reference_markers": [
+          "video-digestor/project-venv",
+          "$HOME/.cache/video-digestor"
+        ],
+        "equivalent_paths": [
+          "$HOME/.cache/sourceharbor/project-venv"
+        ],
+        "verify_command": [
+          "bash",
+          "-lc",
+          "test -d \"$HOME/.cache/sourceharbor/project-venv\""
+        ],
+        "layer": "repo-external-repo-owned",
+        "ownership": "repo-primary",
+        "classification": "verify-first"
+      }
+    ]
+  },
+    "external-cache-auto": {
+      "label": "external-cache-auto",
+      "description": "Repo-owned external cache/state directories that may be auto-maintained after TTL, quiet-window, and lock checks pass.",
+      "candidates": [
+        {
+          "id": "external-sourceharbor-workspace-items",
+          "path_glob": "$HOME/.cache/sourceharbor/workspace/*",
+          "quiet_minutes": 10080,
+          "requires_lsof_clear": true,
+          "layer": "repo-external-repo-owned",
+          "ownership": "repo-primary",
+          "classification": "verify-first"
+        },
+        {
+          "id": "external-sourceharbor-artifact-items",
+          "path_glob": "$HOME/.cache/sourceharbor/artifacts/*",
+          "quiet_minutes": 43200,
+          "layer": "repo-external-repo-owned",
+          "ownership": "repo-primary",
+          "classification": "verify-first"
+        },
+        {
+          "id": "external-sourceharbor-browser-items",
+          "path_glob": "$HOME/.cache/sourceharbor/browser/*",
+          "quiet_minutes": 4320,
+          "requires_lsof_clear": true,
+          "layer": "repo-external-repo-owned",
+          "ownership": "repo-primary",
+          "classification": "verify-first"
+        },
+        {
+          "id": "external-sourceharbor-tmp-items",
+          "path_glob": "$HOME/.cache/sourceharbor/tmp/*",
+          "quiet_minutes": 2880,
+          "requires_lsof_clear": true,
           "layer": "repo-external-repo-owned",
           "ownership": "repo-primary",
           "classification": "verify-first"
@@ -521,14 +632,83 @@
       ]
     }
   },
+  "external_cache_maintenance": {
+    "report_path": ".runtime-cache/reports/governance/external-cache-maintenance.json",
+    "stamp_path": "$HOME/.cache/sourceharbor/maintenance/external-cache-maintenance-stamp.json",
+    "auto_interval_minutes": 60,
+    "groups": {
+      "project-venv": {
+        "path": "$HOME/.cache/sourceharbor/project-venv",
+        "kind": "protected-mainline",
+        "max_total_size_mb": 1024
+      },
+      "state": {
+        "path": "$HOME/.cache/sourceharbor/state",
+        "kind": "protected-state",
+        "max_total_size_mb": 512
+      },
+      "duplicate-envs": {
+        "path_glob": "$HOME/.cache/sourceharbor/project-venv-*",
+        "kind": "duplicate-env",
+        "ttl_days": 7,
+        "quiet_minutes": 10080,
+        "max_total_size_mb": 1024
+      },
+      "workspace": {
+        "path_glob": "$HOME/.cache/sourceharbor/workspace/*",
+        "kind": "workspace",
+        "ttl_days": 7,
+        "quiet_minutes": 10080,
+        "requires_lsof_clear": true,
+        "max_total_size_mb": 1024
+      },
+      "artifacts": {
+        "path_glob": "$HOME/.cache/sourceharbor/artifacts/*",
+        "kind": "artifacts",
+        "ttl_days": 30,
+        "quiet_minutes": 43200,
+        "max_total_size_mb": 2048
+      },
+      "browser": {
+        "path_glob": "$HOME/.cache/sourceharbor/browser/*",
+        "kind": "browser",
+        "ttl_days": 3,
+        "quiet_minutes": 4320,
+        "requires_lsof_clear": true,
+        "max_total_size_mb": 1024
+      },
+      "tmp": {
+        "path_glob": "$HOME/.cache/sourceharbor/tmp/*",
+        "kind": "tmp",
+        "ttl_days": 2,
+        "quiet_minutes": 2880,
+        "requires_lsof_clear": true,
+        "max_total_size_mb": 512
+      }
+    }
+  },
+  "docker_hygiene": {
+    "report_path": ".runtime-cache/reports/governance/docker-hygiene.json",
+    "repo_container_prefixes": [
+      "sourceharbor-"
+    ],
+    "repo_network_prefixes": [
+      "sourceharbor"
+    ],
+    "repo_named_volumes": [
+      "sourceharbor_core_postgres_data",
+      "miniflux_db_data"
+    ],
+    "local_debug_image_quiet_hours": 24,
+    "repo_local_debug_images": [
+      "ghcr.io/xiaojiou176-open/sourceharbor-ci-standard:local-debug"
+    ]
+  },
   "excluded_paths": [
     "apps/web/node_modules",
     ".venv",
-    "$HOME/.sourceharbor",
     "$HOME/.cache/sourceharbor/project-venv",
-    "$HOME/.cache/video-digestor/project-venv",
-    "$HOME/.video-digestor/state/worker_state.db",
-    "$HOME/.video-digestor/artifacts",
+    "$HOME/.cache/sourceharbor/state",
     "$HOME/Library/Caches/ms-playwright",
     "$HOME/.cache/uv",
     "$HOME/.local/share/uv/python"

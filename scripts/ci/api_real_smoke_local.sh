@@ -276,13 +276,16 @@ ensure_cleanup_worker_online() {
   fi
 
 log "no active temporal worker pollers detected on ${TEMPORAL_TASK_QUEUE}; starting temporary worker for cleanup workflow probe"
+  local worker_workspace_dir worker_artifact_root
+  worker_workspace_dir="${PIPELINE_WORKSPACE_DIR:-$ROOT_DIR/.runtime-cache/tmp/api-real-smoke-worker-workspace}"
+  worker_artifact_root="${PIPELINE_ARTIFACT_ROOT:-$ROOT_DIR/.runtime-cache/evidence/tests/api-real-smoke-worker-artifacts}"
   (
     cd "$ROOT_DIR"
     export DATABASE_URL TEMPORAL_TARGET_HOST TEMPORAL_NAMESPACE TEMPORAL_TASK_QUEUE
     export SQLITE_PATH UI_AUDIT_GEMINI_ENABLED NOTIFICATION_ENABLED PYTHONPATH
-    export PIPELINE_WORKSPACE_DIR="${PIPELINE_WORKSPACE_DIR:-$ROOT_DIR/.runtime-cache/tmp/api-real-smoke-worker-workspace}"
-    export PIPELINE_ARTIFACT_ROOT="${PIPELINE_ARTIFACT_ROOT:-$ROOT_DIR/.runtime-cache/evidence/tests/api-real-smoke-worker-artifacts}"
-    ./scripts/dev_worker.sh --no-show-hints >"$WORKER_LOG" 2>&1
+    PIPELINE_WORKSPACE_DIR="$worker_workspace_dir" \
+    PIPELINE_ARTIFACT_ROOT="$worker_artifact_root" \
+      ./scripts/dev_worker.sh --no-show-hints >"$WORKER_LOG" 2>&1
   ) &
   WORKER_PID="$!"
   for _ in $(seq 1 "$WORKER_READINESS_TIMEOUT_SECONDS"); do

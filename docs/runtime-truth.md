@@ -37,6 +37,13 @@ That file tells you:
 
 Use it like a boarding pass, not like a comment in old code. If your terminal, docs, and running services disagree, the resolved runtime snapshot wins for local route truth.
 
+Current cache/state contract:
+
+- repo-side runtime state belongs under `.runtime-cache/`
+- repo-owned external cache and persistent state belong under `~/.cache/sourceharbor/`
+- `~/.sourceharbor/` is now a legacy migration input root, not the canonical runtime target
+- shared tool caches such as `~/.cache/uv` and `~/Library/Caches/ms-playwright` are separate shared-layer objects, not repo-exclusive state
+
 ## Local Proof vs Remote Proof
 
 | Layer | Safe claim |
@@ -82,6 +89,17 @@ What `./bin/doctor` is **not** for:
 - proving external release health
 - replacing full smoke
 - pretending missing secrets are implementation bugs
+
+What local browser login state is for:
+
+- local-only browser proof when a flow genuinely depends on a real signed-in Chrome session
+- DOM / network / console inspection that must reuse the maintainer's real Chrome profile
+
+What it is **not** for:
+
+- GitHub-hosted CI
+- default Playwright E2E
+- silently falling back to Playwright's bundled Chromium when login state is required
 
 ## Live Hardening Truth
 

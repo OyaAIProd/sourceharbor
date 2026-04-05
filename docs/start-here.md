@@ -45,7 +45,8 @@ sourceharbor help
 ```bash
 ./bin/sourceharbor help
 cp .env.example .env
-UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$HOME/.cache/sourceharbor/project-venv}" \
+SOURCE_HARBOR_CACHE_ROOT="${SOURCE_HARBOR_CACHE_ROOT:-$HOME/.cache/sourceharbor}"
+UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$SOURCE_HARBOR_CACHE_ROOT/project-venv}" \
   uv sync --frozen --extra dev --extra e2e
 bash scripts/ci/prepare_web_runtime.sh >/dev/null
 ```
@@ -190,6 +191,28 @@ If you want the longer-lived workflow instead of one-off processing:
 8. Inspect the job page for retries, degradations, and artifact links
 
 That path is what turns SourceHarbor from a one-shot processor into a knowledge intake system.
+
+## Local-Only Real Chrome Profile
+
+When a local browser flow genuinely depends on login state, do not fall back to
+Playwright's bundled Chromium.
+
+Use the real local Chrome profile instead:
+
+```bash
+export SOURCE_HARBOR_CHROME_USER_DATA_DIR="$HOME/Library/Application Support/Google/Chrome"
+export SOURCE_HARBOR_CHROME_PROFILE_NAME="${SOURCE_HARBOR_CHROME_PROFILE_NAME:-sourceharbor}"
+# Optional fast-path when you already know the directory:
+# export SOURCE_HARBOR_CHROME_PROFILE_DIR="Profile 27"
+python3 scripts/runtime/resolve_chrome_profile.py --json
+```
+
+Hosted CI stays login-free on purpose:
+
+- GitHub-hosted workflows must not consume `SOURCE_HARBOR_CHROME_*`
+- login-dependent browser proof is local-only
+- if a browser lane needs real login state, classify it as local proof instead of
+  forcing it into hosted CI
 
 ## Minimum Verification
 

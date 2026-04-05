@@ -21,6 +21,7 @@ python3 scripts/governance/check_local_private_ledger_migration.py
 python3 scripts/governance/check_external_lane_contract.py
 eval "$(bash scripts/ci/prepare_web_runtime.sh --shell-exports)"
 ( cd "$WEB_RUNTIME_WEB_DIR" && npm run lint )
+python3 scripts/runtime/maintain_external_cache.py --json
 ```
 
 ## First-Run Doctor
@@ -100,6 +101,25 @@ Important boundary:
 - passing the long live-smoke lane requires additional provider and sender conditions
 - failing the long live-smoke lane does **not** automatically mean the local bootstrap/up/status path is broken
 
+## Local-Only Login Browser Lane
+
+GitHub-hosted CI stays login-free.
+
+If a browser flow genuinely depends on a real signed-in Chrome session, treat it
+as a **local-only** proof lane instead of a hosted CI lane.
+
+Use the real local Chrome profile contract:
+
+```bash
+export SOURCE_HARBOR_CHROME_USER_DATA_DIR="$HOME/Library/Application Support/Google/Chrome"
+export SOURCE_HARBOR_CHROME_PROFILE_NAME="${SOURCE_HARBOR_CHROME_PROFILE_NAME:-sourceharbor}"
+python3 scripts/runtime/resolve_chrome_profile.py --json
+bash scripts/ci/external_playwright_smoke.sh --browser chromium --real-profile --url https://example.com
+```
+
+Hosted workflows must not reference `SOURCE_HARBOR_CHROME_*` or try to reuse a
+local persistent browser profile.
+
 ## Git Hooks
 
 Install hooks with:
@@ -122,6 +142,8 @@ These are repo-visible checks that help with supply-chain and long-tail risk, bu
 - `codeql.yml` runs code scanning on the tracked languages
 - `build-ci-standard-image.yml` and `release-evidence-attest.yml` stay in the external-proof lane, not the default pull-request gate
 - those external lanes are `workflow_dispatch` only and run behind protected environments so ordinary pull requests never touch their secrets or publication paths
+- all active GitHub workflows run on `ubuntu-latest`; local `repo-side-strict-ci`
+  remains a repo-side proof command, not a self-hosted CI runner
 
 Think of them like specialist inspectors after the core exam:
 

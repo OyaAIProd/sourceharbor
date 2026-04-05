@@ -20,8 +20,8 @@ SourceHarbor uses three path classes:
 | Class | Canonical root | What belongs there |
 | :-- | :-- | :-- |
 | Repo-side runtime | `.runtime-cache/` | short-lived repo-local runtime state |
-| User-side persistent state | `$HOME/.sourceharbor/` | worker state, pipeline workspace, pipeline artifacts |
-| User-side Python cache | `$HOME/.cache/sourceharbor/` | managed project venvs and repo-owned Python cache roots |
+| User-side repo-owned cache/state | `$HOME/.cache/sourceharbor/` | worker state, pipeline workspace, pipeline artifacts, browser clones, tmp scratch, and managed project envs |
+| Shared tool cache | shared system paths such as `~/Library/Caches/ms-playwright` or `~/.cache/uv` | toolchain/browser caches that may be used by multiple repos |
 
 The canonical repo-side web runtime workspace is:
 
@@ -29,7 +29,7 @@ The canonical repo-side web runtime workspace is:
 
 The canonical current-state root is:
 
-- `$HOME/.sourceharbor/`
+- `$HOME/.cache/sourceharbor/`
 
 Treat that root like the live warehouse shelf, not like a disposable staging box.
 
@@ -48,7 +48,7 @@ If sibling entries match `project-venv*` under the same cache root, treat them a
 
 Those duplicate envs are not mysterious machine junk, but they are also not automatically safe-clear.
 
-Legacy `video-digestor` paths are compatibility surfaces only.
+Legacy `~/.sourceharbor/` and `video-digestor` paths are migration/compatibility surfaces only.
 
 They may still exist locally, but they must be treated as:
 
@@ -79,7 +79,7 @@ Every disk report must classify findings into exactly one of these layers:
 Examples:
 
 - `.runtime-cache/tmp` → `repo-internal`
-- `$HOME/.video-digestor` → `repo-external-repo-owned`
+- `$HOME/.sourceharbor` → `repo-external-repo-owned` legacy-compatible migration input
 - `$HOME/Library/Caches/ms-playwright` → `shared-layer`
 - Docker named volumes when the daemon is unavailable → `unverified-layer`
 
@@ -182,8 +182,10 @@ These are repo-owned external history candidates such as:
 
 - `$HOME/.cache/sourceharbor/root-venv-backup`
 - `$HOME/.cache/sourceharbor/codex-ghcr-*`
+- `$HOME/.cache/sourceharbor/project-venv-*`
 - `$HOME/.cache/sourceharbor/ws6-test-venv`
 - `$HOME/.cache/video-digestor/closure-fix-venv`
+- `$HOME/.cache/video-digestor`
 
 They are **verify-first**, not safe-by-name.
 
@@ -238,11 +240,8 @@ These are intentionally excluded from automatic cleanup planning:
 
 - `apps/web/node_modules`
 - `.venv`
-- `$HOME/.sourceharbor`
 - `$HOME/.cache/sourceharbor/project-venv`
-- `$HOME/.cache/video-digestor/project-venv`
-- `$HOME/.video-digestor/state/worker_state.db`
-- `$HOME/.video-digestor/artifacts`
+- `$HOME/.cache/sourceharbor/state`
 - `$HOME/Library/Caches/ms-playwright`
 - `$HOME/.cache/uv`
 - `$HOME/.local/share/uv/python`
@@ -250,8 +249,17 @@ These are intentionally excluded from automatic cleanup planning:
 Reason:
 
 - some are active mainline dependencies
-- some are legacy compatibility roots still in use
+- some are protected current-state roots
 - some are shared caches that can hurt other projects
+
+Legacy `~/.sourceharbor/` is also not an automatic cleanup target.
+It is a migration input root and drift signal until local environments have been
+fully moved under `~/.cache/sourceharbor/`.
+
+Legacy `video-digestor` roots are different:
+once current SourceHarbor state is canonical under `~/.cache/sourceharbor/` and
+legacy retirement is clear, they move into the `external-history` verify-first
+lane instead of staying permanently excluded.
 
 ## Operator Commands
 
@@ -276,6 +284,35 @@ manually deleting directories:
 ./bin/runtime-cache-maintenance
 ./bin/runtime-cache-maintenance --apply
 ```
+
+Repo-owned external cache/state maintenance is a sibling lane:
+
+```bash
+python3 scripts/runtime/maintain_external_cache.py --json
+python3 scripts/runtime/maintain_external_cache.py --apply
+```
+
+Repo-scoped Docker hygiene is another sibling lane:
+
+```bash
+python3 scripts/runtime/docker_hygiene.py --json
+python3 scripts/runtime/docker_hygiene.py --apply
+```
+
+This lane is intentionally narrow:
+
+- it inventories only repo-owned container/image/network patterns
+- it inventories repo-owned named volumes but keeps them report-only by default
+- it does not prune global Docker cache
+- named volumes remain verify-first
+- local debug images must clear a quiet window and have no attached containers before cleanup
+
+Local entrypoints may also trigger throttled external cache maintenance under
+`~/.cache/sourceharbor/`. That lane is conservative by design:
+
+- protected objects such as `project-venv/` and `state/*.db` are budget-only, not auto-delete
+- duplicate envs, `workspace/*`, `artifacts/*`, `browser/*`, and `tmp/*` are verify-first auto-maintenance candidates
+- shared caches like `~/.cache/uv` and `~/Library/Caches/ms-playwright` stay out of repo-owned cleanup
 
 For operator-first review, treat Ops and disk governance as one story:
 
@@ -341,7 +378,14 @@ Authorized migration requires explicit source and target mappings:
 ```bash
 ./bin/disk-space-legacy-migration \
   --apply --yes \
-  --mapping 'PIPELINE_ARTIFACT_ROOT=$HOME/.video-digestor/artifacts::$HOME/.sourceharbor/artifacts'
+  --mapping 'PIPELINE_ARTIFACT_ROOT=$HOME/.video-digestor/artifacts::$HOME/.cache/sourceharbor/artifacts'
+```
+
+For the common "migrate whatever `.env` currently points at into the canonical
+targets" case, use:
+
+```bash
+./bin/disk-space-legacy-migration --apply --yes --auto-mappings
 ```
 
 ## Important Boundary

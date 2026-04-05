@@ -42,6 +42,11 @@ TOOL_CACHE_ENV_VARS = (
     "XDG_CACHE_HOME",
     "npm_config_cache",
 )
+LOCAL_REAL_CHROME_PROFILE_ENV_VARS = (
+    "SOURCE_HARBOR_CHROME_USER_DATA_DIR",
+    "SOURCE_HARBOR_CHROME_PROFILE_NAME",
+    "SOURCE_HARBOR_CHROME_PROFILE_DIR",
+)
 MIN_MUTATION_SCORE = 0.64
 MIN_MUTATION_EFFECTIVE_RATIO = 0.27
 MAX_MUTATION_NO_TESTS_RATIO = 0.72
@@ -551,6 +556,11 @@ def _check_public_hosted_first_ci_specific_rules(
         failures.append("ci.yml: push trigger must be limited to main")
     if "self-hosted" in text or "shared-pool" in text:
         failures.append("ci.yml: current PR path must not reference self-hosted or shared-pool")
+    for token in LOCAL_REAL_CHROME_PROFILE_ENV_VARS:
+        if token in text:
+            failures.append(
+                f"ci.yml: hosted PR path must not reference local-only real Chrome profile env `{token}`"
+            )
 
     python_tests = blocks.get("python-tests", "")
     if "python3 scripts/governance/check_env_contract.py --strict" not in python_tests:
@@ -855,6 +865,11 @@ def _check_build_standard_image_specific_rules(text: str, failures: list[str]) -
         failures.append(
             "build-ci-standard-image.yml: permissions.contents must stay read-only; image publish must not mutate the repository"
         )
+    for token in LOCAL_REAL_CHROME_PROFILE_ENV_VARS:
+        if token in text:
+            failures.append(
+                f"build-ci-standard-image.yml: hosted external lane must not reference local-only real Chrome profile env `{token}`"
+            )
     forbidden_markers = (
         "git push",
         "git commit",
@@ -892,6 +907,11 @@ def _check_release_evidence_specific_rules(text: str, failures: list[str]) -> No
         )
     if "runs-on: ubuntu-latest" not in release_evidence:
         failures.append("release-evidence-attest.yml: release-evidence: must run on ubuntu-latest")
+    for token in LOCAL_REAL_CHROME_PROFILE_ENV_VARS:
+        if token in text:
+            failures.append(
+                f"release-evidence-attest.yml: hosted external lane must not reference local-only real Chrome profile env `{token}`"
+            )
     if not re.search(
         r"workflow_dispatch:\n(?:\s{4}.+\n)*\s{6}release_tag:\n(?:\s{8}.+\n)*\s{8}required:\s+true",
         text,

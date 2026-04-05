@@ -31,6 +31,108 @@ load_env_files() {
   done
 }
 
+sourceharbor_default_cache_root() {
+  printf '%s\n' "${SOURCE_HARBOR_CACHE_ROOT:-$HOME/.cache/sourceharbor}"
+}
+
+sourceharbor_legacy_state_root() {
+  printf '%s\n' "$HOME/.sourceharbor"
+}
+
+_normalize_sourceharbor_repo_owned_path() {
+  local current_value="${1:-}"
+  local canonical_value="${2:-}"
+  local legacy_value="${3:-}"
+
+  if [[ -z "$current_value" ]]; then
+    printf '%s\n' "$canonical_value"
+    return 0
+  fi
+
+  if [[ "$current_value" == "$legacy_value" ]]; then
+    printf '%s\n' "$canonical_value"
+    return 0
+  fi
+
+  printf '%s\n' "$current_value"
+}
+
+ensure_sourceharbor_cache_contract() {
+  local root_dir="${1:-}"
+  local cache_root
+  cache_root="$(sourceharbor_default_cache_root)"
+  export SOURCE_HARBOR_CACHE_ROOT="$cache_root"
+
+  local legacy_root
+  legacy_root="$(sourceharbor_legacy_state_root)"
+
+  local normalized_pipeline_artifact_root
+  normalized_pipeline_artifact_root="$(
+    _normalize_sourceharbor_repo_owned_path \
+      "${PIPELINE_ARTIFACT_ROOT:-}" \
+      "$cache_root/artifacts" \
+      "$legacy_root/artifacts"
+  )"
+  export PIPELINE_ARTIFACT_ROOT="$normalized_pipeline_artifact_root"
+
+  local normalized_pipeline_workspace_dir
+  normalized_pipeline_workspace_dir="$(
+    _normalize_sourceharbor_repo_owned_path \
+      "${PIPELINE_WORKSPACE_DIR:-}" \
+      "$cache_root/workspace" \
+      "$legacy_root/workspace"
+  )"
+  export PIPELINE_WORKSPACE_DIR="$normalized_pipeline_workspace_dir"
+
+  local normalized_sqlite_path
+  normalized_sqlite_path="$(
+    _normalize_sourceharbor_repo_owned_path \
+      "${SQLITE_PATH:-}" \
+      "$cache_root/state/worker_state.db" \
+      "$legacy_root/state/worker_state.db"
+  )"
+  export SQLITE_PATH="$normalized_sqlite_path"
+
+  local normalized_sqlite_state_path
+  normalized_sqlite_state_path="$(
+    _normalize_sourceharbor_repo_owned_path \
+      "${SQLITE_STATE_PATH:-}" \
+      "$cache_root/state/api_state.db" \
+      "$legacy_root/state/api_state.db"
+  )"
+  export SQLITE_STATE_PATH="$normalized_sqlite_state_path"
+
+  local normalized_uv_project_environment
+  normalized_uv_project_environment="$(
+    _normalize_sourceharbor_repo_owned_path \
+      "${UV_PROJECT_ENVIRONMENT:-}" \
+      "$cache_root/project-venv" \
+      "$legacy_root/project-venv"
+  )"
+  export UV_PROJECT_ENVIRONMENT="$normalized_uv_project_environment"
+
+  if [[ -n "$root_dir" ]]; then
+    export SOURCE_HARBOR_REPO_ROOT="${SOURCE_HARBOR_REPO_ROOT:-$root_dir}"
+  fi
+}
+
+run_sourceharbor_external_cache_maintenance_if_due() {
+  local root_dir="${1:-}"
+  [[ -n "$root_dir" ]] || return 0
+  command -v python3 >/dev/null 2>&1 || return 0
+
+  if [[ -n "${CI:-}" || -n "${GITHUB_ACTIONS:-}" ]]; then
+    return 0
+  fi
+  if [[ "${SOURCE_HARBOR_AUTO_MAINTAIN_EXTERNAL_CACHE:-1}" == "0" ]]; then
+    return 0
+  fi
+  local script_path="$root_dir/scripts/runtime/maintain_external_cache.py"
+  [[ -f "$script_path" ]] || return 0
+
+  python3 "$script_path" --auto --apply >/dev/null 2>&1 || true
+}
+
 snapshot_process_env() {
   local snapshot_path="${1:-}"
   [[ -n "$snapshot_path" ]] || return 1
@@ -79,12 +181,33 @@ read_env_value_from_file() {
   fi
 
   python3 - "$env_path" "$key" <<'PY'
+import os
+import re
 from pathlib import Path
 import shlex
 import sys
 
 env_path = Path(sys.argv[1])
 target_key = sys.argv[2]
+env_ref_re = re.compile(r"\$(\w+)|\$\{([^}]+)\}")
+resolved = {}
+
+def expand_value(raw: str) -> str:
+    merged = dict(os.environ)
+    merged.update(resolved)
+
+    def repl(match):
+        name = match.group(1) or match.group(2) or ""
+        return merged.get(name, match.group(0))
+
+    value = raw
+    for _ in range(5):
+        expanded = env_ref_re.sub(repl, value)
+        expanded = os.path.expanduser(expanded)
+        if expanded == value:
+            return expanded
+        value = expanded
+    return value
 
 for raw_line in env_path.read_text(encoding="utf-8").splitlines():
     line = raw_line.strip()
@@ -100,13 +223,14 @@ for raw_line in env_path.read_text(encoding="utf-8").splitlines():
     token = value.strip()
     try:
         parts = shlex.split(token, posix=True)
-        if len(parts) == 1:
-            print(parts[0])
-            raise SystemExit(0)
+        normalized = parts[0] if len(parts) == 1 else token
     except ValueError:
-        pass
-    print(token.strip("'\""))
-    raise SystemExit(0)
+        normalized = token.strip("'\"")
+    expanded = expand_value(normalized)
+    resolved[key.strip()] = expanded
+    if key.strip() == target_key:
+        print(expanded)
+        raise SystemExit(0)
 PY
 }
 
@@ -286,4 +410,6 @@ load_repo_env() {
   restore_process_env "$shell_snapshot"
 
   export ENV_PROFILE="$profile"
+  ensure_sourceharbor_cache_contract "$root_dir"
+  run_sourceharbor_external_cache_maintenance_if_due "$root_dir"
 }

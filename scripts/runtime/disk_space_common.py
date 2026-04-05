@@ -37,10 +37,29 @@ SCAN_REFERENCE_SUFFIXES = {
 }
 
 ENV_ASSIGN_RE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$")
+ENV_REF_RE = re.compile(r"\$(\w+)|\$\{([^}]+)\}")
 
 
 def repo_root() -> Path:
     return ROOT
+
+
+def _expand_env_value(raw_value: str, resolved: dict[str, str]) -> str:
+    merged = dict(os.environ)
+    merged.update(resolved)
+
+    def _replace(match: re.Match[str]) -> str:
+        key = match.group(1) or match.group(2) or ""
+        return merged.get(key, match.group(0))
+
+    value = raw_value
+    for _ in range(5):
+        expanded = ENV_REF_RE.sub(_replace, value)
+        expanded = os.path.expanduser(expanded)
+        if expanded == value:
+            return expanded
+        value = expanded
+    return value
 
 
 def expand_policy_path(raw_path: str, *, root: Path) -> Path:
@@ -186,9 +205,10 @@ def parse_env_assignments(path: Path) -> dict[str, str]:
         try:
             parts = shlex.split(value, posix=True)
         except ValueError:
-            assignments[key] = value
+            assignments[key] = _expand_env_value(value, assignments)
             continue
-        assignments[key] = parts[0] if len(parts) == 1 else value
+        normalized = parts[0] if len(parts) == 1 else value
+        assignments[key] = _expand_env_value(normalized, assignments)
     return assignments
 
 
@@ -250,6 +270,10 @@ def _legacy_markers(policy: dict[str, Any]) -> list[str]:
         value = str(canonical_paths.get(key) or "").strip()
         if value:
             markers.append(value)
+    for value in policy.get("legacy_extra_roots", []):
+        text = str(value or "").strip()
+        if text:
+            markers.append(text)
     return markers
 
 
@@ -259,6 +283,13 @@ def collect_legacy_compatibility(root: Path, policy: dict[str, Any]) -> dict[str
     legacy_roots: list[Path] = []
     for key in ("legacy_state_root", "legacy_cache_root"):
         value = str(canonical_paths.get(key) or "").strip()
+        if not value:
+            continue
+        path = expand_policy_path(value, root=root)
+        if path not in legacy_roots:
+            legacy_roots.append(path)
+    for raw_path in policy.get("legacy_extra_roots", []):
+        value = str(raw_path or "").strip()
         if not value:
             continue
         path = expand_policy_path(value, root=root)

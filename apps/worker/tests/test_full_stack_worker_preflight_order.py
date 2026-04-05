@@ -107,7 +107,7 @@ def test_full_stack_up_fails_worker_env_preflight_before_any_service_start(
     )
 
     assert proc.returncode != 0
-    assert "DIAGNOSE stage=worker_preflight_env conclusion=missing_required_env" in proc.stderr
+    assert "DIAGNOSE stage=worker_preflight_temporal conclusion=temporal_not_ready" in proc.stderr
 
     api_pid = tmp_path / ".runtime-cache" / "run" / "full-stack" / "api.pid"
     api_log = tmp_path / "logs" / "full-stack" / "api.log"
@@ -117,8 +117,8 @@ def test_full_stack_up_fails_worker_env_preflight_before_any_service_start(
     assert not api_log.exists()
     assert last_failure_reason.exists()
     failure_text = last_failure_reason.read_text(encoding="utf-8")
-    assert "stage=worker_preflight_env" in failure_text
-    assert "conclusion=missing_worker_required_env" in failure_text
+    assert "stage=worker_preflight_temporal" in failure_text
+    assert "conclusion=temporal_not_ready" in failure_text
 
 
 def test_full_stack_up_records_temporal_preflight_failure_before_service_start(

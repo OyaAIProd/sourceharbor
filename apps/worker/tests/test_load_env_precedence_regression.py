@@ -59,3 +59,54 @@ printf '%s\n' "${{{key}:-}}"
     proc = _run_bash(probe, env={key: "from_parent"})
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.strip() == "from_parent"
+
+
+def test_load_repo_env_legacy_sourceharbor_paths_normalize_to_cache_root(
+    tmp_path: Path,
+) -> None:
+    root = _repo_root()
+    home = tmp_path / "home"
+    legacy_root = home / ".sourceharbor"
+    (legacy_root / "state").mkdir(parents=True, exist_ok=True)
+    (legacy_root / "artifacts").mkdir(parents=True, exist_ok=True)
+    (legacy_root / "workspace").mkdir(parents=True, exist_ok=True)
+    (legacy_root / "project-venv").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".env").write_text(
+        (
+            'export PIPELINE_ARTIFACT_ROOT="$HOME/.sourceharbor/artifacts"\n'
+            'export PIPELINE_WORKSPACE_DIR="$HOME/.sourceharbor/workspace"\n'
+            'export SQLITE_PATH="$HOME/.sourceharbor/state/worker_state.db"\n'
+            'export SQLITE_STATE_PATH="$HOME/.sourceharbor/state/api_state.db"\n'
+            'export UV_PROJECT_ENVIRONMENT="$HOME/.sourceharbor/project-venv"\n'
+        ),
+        encoding="utf-8",
+    )
+
+    probe = f"""
+source "{root}/scripts/lib/load_env.sh"
+load_repo_env "{tmp_path}" "legacy_path_normalization" "local"
+printf 'ART=%s\\n' "${{PIPELINE_ARTIFACT_ROOT:-}}"
+printf 'WS=%s\\n' "${{PIPELINE_WORKSPACE_DIR:-}}"
+printf 'SQLITE=%s\\n' "${{SQLITE_PATH:-}}"
+printf 'SQLITE_STATE=%s\\n' "${{SQLITE_STATE_PATH:-}}"
+printf 'UV=%s\\n' "${{UV_PROJECT_ENVIRONMENT:-}}"
+"""
+
+    proc = _run_bash(
+        probe,
+        env={
+            "HOME": str(home),
+            "PIPELINE_ARTIFACT_ROOT": "",
+            "PIPELINE_WORKSPACE_DIR": "",
+            "SQLITE_PATH": "",
+            "SQLITE_STATE_PATH": "",
+            "UV_PROJECT_ENVIRONMENT": "",
+        },
+    )
+    assert proc.returncode == 0, proc.stderr
+    lines = dict(line.split("=", 1) for line in proc.stdout.strip().splitlines())
+    assert lines["ART"] == str(home / ".cache" / "sourceharbor" / "artifacts")
+    assert lines["WS"] == str(home / ".cache" / "sourceharbor" / "workspace")
+    assert lines["SQLITE"] == str(home / ".cache" / "sourceharbor" / "state" / "worker_state.db")
+    assert lines["SQLITE_STATE"] == str(home / ".cache" / "sourceharbor" / "state" / "api_state.db")
+    assert lines["UV"] == str(home / ".cache" / "sourceharbor" / "project-venv")

@@ -1421,7 +1421,420 @@ def test_legacy_disk_migration_apply_updates_env_and_refreshes_audit(tmp_path: P
     assert state_db.exists() is False
     assert api_state_db.exists() is False
     assert payload["legacy_compatibility"]["legacy_paths_referenced_by_local_env"] == []
-    assert payload["legacy_compatibility"]["legacy_retirement_blocked"] is True
+    assert payload["legacy_compatibility"]["legacy_retirement_blocked"] is False
+
+
+def test_legacy_disk_migration_apply_supports_auto_mappings(tmp_path: Path) -> None:
+    legacy_state = tmp_path / "legacy-state"
+    legacy_cache = tmp_path / "legacy-cache"
+    canonical_state = tmp_path / "canonical-cache-root"
+    canonical_cache = tmp_path / "canonical-cache"
+    artifacts = legacy_state / "artifacts"
+    workspace = legacy_state / "workspace"
+    state_db = legacy_state / "worker-state.db"
+    api_state_db = legacy_state / "api-state.db"
+    project_venv = legacy_cache / "project-venv"
+    artifacts.mkdir(parents=True, exist_ok=True)
+    workspace.mkdir(parents=True, exist_ok=True)
+    project_venv.mkdir(parents=True, exist_ok=True)
+    (artifacts / "artifact.bin").write_bytes(b"a" * 16)
+    (workspace / "job.txt").write_text("job", encoding="utf-8")
+    state_db.write_bytes(b"sqlite")
+    api_state_db.write_bytes(b"sqlite-api")
+    healthy_target = canonical_cache / "project-venv"
+    (healthy_target / "bin").mkdir(parents=True, exist_ok=True)
+    python_stub = healthy_target / "bin" / "python"
+    python_stub.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    python_stub.chmod(0o755)
+    (tmp_path / ".env").write_text(
+        "\n".join(
+            [
+                f'export PIPELINE_ARTIFACT_ROOT="{artifacts}"',
+                f'export PIPELINE_WORKSPACE_DIR="{workspace}"',
+                f'export SQLITE_PATH="{state_db}"',
+                f'export SQLITE_STATE_PATH="{api_state_db}"',
+                f'export UV_PROJECT_ENVIRONMENT="{project_venv}"',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "migration_report_path": ".runtime-cache/reports/governance/disk-space-legacy-migration.json",
+        "legacy_retirement_quiet_minutes": 1440,
+        "canonical_paths": {
+            "user_state_root": str(canonical_state),
+            "user_cache_root": str(canonical_cache),
+            "legacy_state_root": str(legacy_state),
+            "legacy_cache_root": str(legacy_cache),
+        },
+        "migration_variables": [
+            {
+                "name": "PIPELINE_ARTIFACT_ROOT",
+                "canonical_path": str(canonical_state / "artifacts"),
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "PIPELINE_WORKSPACE_DIR",
+                "canonical_path": str(canonical_state / "workspace"),
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "SQLITE_PATH",
+                "canonical_path": str(canonical_state / "worker_state.db"),
+                "path_kind": "file",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "SQLITE_STATE_PATH",
+                "canonical_path": str(canonical_state / "api_state.db"),
+                "path_kind": "file",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "UV_PROJECT_ENVIRONMENT",
+                "canonical_path": str(canonical_cache / "project-venv"),
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": True,
+                "existing_target_verify_command": [
+                    "bash",
+                    "-lc",
+                    'test -x "$TARGET_PATH/bin/python" && "$TARGET_PATH/bin/python" -V >/dev/null',
+                ],
+                "retire_source_on_migrate": False,
+            },
+        ],
+        "legacy_reference_files": [".env"],
+        "audit_targets": [],
+        "docker_named_volumes": [],
+        "excluded_paths": [],
+        "cleanup_waves": {},
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    audit = _run_script(
+        "report_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+    )
+    assert audit.returncode == 0, audit.stderr
+
+    result = _run_script(
+        "legacy_disk_migration.py",
+        cwd=tmp_path,
+        args=[
+            "--repo-root",
+            str(tmp_path),
+            "--policy",
+            str(policy_path),
+            "--apply",
+            "--yes",
+            "--auto-mappings",
+            "--json",
+        ],
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert (canonical_state / "artifacts" / "artifact.bin").is_file()
+    assert (canonical_state / "workspace" / "job.txt").is_file()
+    assert (canonical_state / "worker_state.db").is_file()
+    assert (canonical_state / "api_state.db").is_file()
+    assert payload["actions"]
+
+
+def test_legacy_disk_migration_apply_moves_sqlite_sidecars(tmp_path: Path) -> None:
+    legacy_state = tmp_path / "legacy-state"
+    legacy_cache = tmp_path / "legacy-cache"
+    canonical_state = tmp_path / "canonical-cache-root"
+    canonical_cache = tmp_path / "canonical-cache"
+    state_db = legacy_state / "worker-state.db"
+    api_state_db = legacy_state / "api-state.db"
+    artifacts = legacy_state / "artifacts"
+    workspace = legacy_state / "workspace"
+    project_venv = legacy_cache / "project-venv"
+    state_db.parent.mkdir(parents=True, exist_ok=True)
+    legacy_cache.mkdir(parents=True, exist_ok=True)
+    artifacts.mkdir(parents=True, exist_ok=True)
+    workspace.mkdir(parents=True, exist_ok=True)
+    project_venv.mkdir(parents=True, exist_ok=True)
+    state_db.write_bytes(b"sqlite")
+    Path(f"{state_db}-wal").write_bytes(b"worker-wal")
+    Path(f"{state_db}-shm").write_bytes(b"worker-shm")
+    api_state_db.write_bytes(b"sqlite-api")
+    Path(f"{api_state_db}-wal").write_bytes(b"api-wal")
+    Path(f"{api_state_db}-shm").write_bytes(b"api-shm")
+
+    healthy_target = canonical_cache / "project-venv"
+    (healthy_target / "bin").mkdir(parents=True, exist_ok=True)
+    python_stub = healthy_target / "bin" / "python"
+    python_stub.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    python_stub.chmod(0o755)
+
+    (tmp_path / ".env").write_text(
+        "\n".join(
+            [
+                f'export PIPELINE_ARTIFACT_ROOT="{legacy_state / "artifacts"}"',
+                f'export PIPELINE_WORKSPACE_DIR="{workspace}"',
+                f'export SQLITE_PATH="{state_db}"',
+                f'export SQLITE_STATE_PATH="{api_state_db}"',
+                f'export UV_PROJECT_ENVIRONMENT="{project_venv}"',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "migration_report_path": ".runtime-cache/reports/governance/disk-space-legacy-migration.json",
+        "legacy_retirement_quiet_minutes": 1440,
+        "canonical_paths": {
+            "user_state_root": str(canonical_state),
+            "user_cache_root": str(canonical_cache),
+            "legacy_state_root": str(legacy_state),
+            "legacy_cache_root": str(legacy_cache),
+        },
+        "migration_variables": [
+            {
+                "name": "PIPELINE_ARTIFACT_ROOT",
+                "canonical_path": str(canonical_state / "artifacts"),
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "PIPELINE_WORKSPACE_DIR",
+                "canonical_path": str(canonical_state / "workspace"),
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "SQLITE_PATH",
+                "canonical_path": str(canonical_state / "worker_state.db"),
+                "path_kind": "file",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "SQLITE_STATE_PATH",
+                "canonical_path": str(canonical_state / "api_state.db"),
+                "path_kind": "file",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "UV_PROJECT_ENVIRONMENT",
+                "canonical_path": str(canonical_cache / "project-venv"),
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": True,
+                "existing_target_verify_command": [
+                    "bash",
+                    "-lc",
+                    'test -x "$TARGET_PATH/bin/python" && "$TARGET_PATH/bin/python" -V >/dev/null',
+                ],
+                "retire_source_on_migrate": False,
+            },
+        ],
+        "legacy_reference_files": [".env"],
+        "audit_targets": [],
+        "docker_named_volumes": [],
+        "excluded_paths": [],
+        "cleanup_waves": {},
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    audit = _run_script(
+        "report_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+    )
+    assert audit.returncode == 0, audit.stderr
+
+    result = _run_script(
+        "legacy_disk_migration.py",
+        cwd=tmp_path,
+        args=[
+            "--repo-root",
+            str(tmp_path),
+            "--policy",
+            str(policy_path),
+            "--apply",
+            "--yes",
+            "--auto-mappings",
+            "--json",
+        ],
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert (canonical_state / "worker_state.db").is_file()
+    assert (canonical_state / "worker_state.db-wal").is_file()
+    assert (canonical_state / "worker_state.db-shm").is_file()
+    assert (canonical_state / "api_state.db").is_file()
+    assert (canonical_state / "api_state.db-wal").is_file()
+    assert (canonical_state / "api_state.db-shm").is_file()
+    assert not Path(f"{state_db}-wal").exists()
+    assert not Path(f"{state_db}-shm").exists()
+    assert not Path(f"{api_state_db}-wal").exists()
+    assert not Path(f"{api_state_db}-shm").exists()
+    assert not legacy_state.exists()
+    sqlite_action = next(
+        action for action in payload["actions"] if action["variable"] == "SQLITE_PATH"
+    )
+    assert sqlite_action["moved_companions"]
+
+
+def test_legacy_disk_migration_apply_cleans_orphan_sqlite_sidecars_after_canonical_cutover(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    legacy_root = home / ".sourceharbor"
+    legacy_state = legacy_root / "state"
+    canonical_root = home / ".cache" / "sourceharbor"
+    canonical_state = canonical_root / "state"
+    canonical_state.mkdir(parents=True, exist_ok=True)
+    (canonical_state / "worker_state.db").write_bytes(b"canonical-worker")
+    (canonical_state / "api_state.db").write_bytes(b"canonical-api")
+    legacy_state.mkdir(parents=True, exist_ok=True)
+    (legacy_state / "worker_state.db-wal").write_bytes(b"legacy-worker-wal")
+    (legacy_state / "worker_state.db-shm").write_bytes(b"legacy-worker-shm")
+    (legacy_state / "api_state.db-wal").write_bytes(b"legacy-api-wal")
+    (legacy_state / "api_state.db-shm").write_bytes(b"legacy-api-shm")
+
+    (tmp_path / ".env").write_text(
+        (
+            'export SOURCE_HARBOR_CACHE_ROOT="$HOME/.cache/sourceharbor"\n'
+            'export SQLITE_PATH="$HOME/.cache/sourceharbor/state/worker_state.db"\n'
+            'export SQLITE_STATE_PATH="$HOME/.cache/sourceharbor/state/api_state.db"\n'
+            'export PIPELINE_ARTIFACT_ROOT="$HOME/.cache/sourceharbor/artifacts"\n'
+            'export PIPELINE_WORKSPACE_DIR="$HOME/.cache/sourceharbor/workspace"\n'
+            'export UV_PROJECT_ENVIRONMENT="$HOME/.cache/sourceharbor/project-venv"\n'
+        ),
+        encoding="utf-8",
+    )
+
+    policy = {
+        "version": 1,
+        "report_path": ".runtime-cache/reports/governance/disk-space-audit.json",
+        "cleanup_report_path": ".runtime-cache/reports/governance/disk-space-cleanup.json",
+        "migration_report_path": ".runtime-cache/reports/governance/disk-space-legacy-migration.json",
+        "legacy_retirement_quiet_minutes": 1440,
+        "canonical_paths": {
+            "repo_runtime_root": ".runtime-cache",
+            "user_state_root": "$HOME/.cache/sourceharbor",
+            "user_cache_root": "$HOME/.cache/sourceharbor",
+            "user_project_venv": "$HOME/.cache/sourceharbor/project-venv",
+            "legacy_state_root": "$HOME/.video-digestor",
+            "legacy_cache_root": "$HOME/.cache/video-digestor",
+        },
+        "legacy_extra_roots": ["$HOME/.sourceharbor"],
+        "migration_variables": [
+            {
+                "name": "PIPELINE_ARTIFACT_ROOT",
+                "canonical_path": "$HOME/.cache/sourceharbor/artifacts",
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "PIPELINE_WORKSPACE_DIR",
+                "canonical_path": "$HOME/.cache/sourceharbor/workspace",
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "SQLITE_PATH",
+                "canonical_path": "$HOME/.cache/sourceharbor/state/worker_state.db",
+                "path_kind": "file",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "SQLITE_STATE_PATH",
+                "canonical_path": "$HOME/.cache/sourceharbor/state/api_state.db",
+                "path_kind": "file",
+                "ownership": "repo-primary",
+                "allow_existing_target": False,
+                "retire_source_on_migrate": True,
+            },
+            {
+                "name": "UV_PROJECT_ENVIRONMENT",
+                "canonical_path": "$HOME/.cache/sourceharbor/project-venv",
+                "path_kind": "directory",
+                "ownership": "repo-primary",
+                "allow_existing_target": True,
+                "existing_target_verify_command": [
+                    "bash",
+                    "-lc",
+                    'test -x "$TARGET_PATH/bin/python" && "$TARGET_PATH/bin/python" -V >/dev/null',
+                ],
+                "retire_source_on_migrate": False,
+            },
+        ],
+        "legacy_reference_files": [".env"],
+        "audit_targets": [],
+        "docker_named_volumes": [],
+        "excluded_paths": [],
+        "cleanup_waves": {},
+    }
+    policy_path = _write_policy(tmp_path / "policy.json", policy)
+
+    audit = _run_script(
+        "report_disk_space.py",
+        cwd=tmp_path,
+        args=["--repo-root", str(tmp_path), "--policy", str(policy_path), "--json"],
+        env={"HOME": str(home)},
+    )
+    assert audit.returncode == 0, audit.stderr
+
+    result = _run_script(
+        "legacy_disk_migration.py",
+        cwd=tmp_path,
+        args=[
+            "--repo-root",
+            str(tmp_path),
+            "--policy",
+            str(policy_path),
+            "--apply",
+            "--yes",
+            "--auto-mappings",
+            "--json",
+        ],
+        env={"HOME": str(home)},
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert not legacy_state.exists()
+    statuses = {action["status"] for action in payload["actions"]}
+    assert "retired-legacy-sidecars" in statuses
 
 
 def test_legacy_disk_migration_apply_rejects_shared_sqlite_source(tmp_path: Path) -> None:

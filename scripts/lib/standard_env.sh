@@ -254,10 +254,16 @@ run_in_standard_env() {
 ensure_external_uv_project_environment() {
   local root_dir="${1:-}"
   local current_value="${UV_PROJECT_ENVIRONMENT:-}"
-  local fallback="${HOME}/.cache/sourceharbor/project-venv"
+  local cache_root="${SOURCE_HARBOR_CACHE_ROOT:-${HOME}/.cache/sourceharbor}"
+  local fallback="${cache_root}/project-venv"
+  local legacy_fallback="${HOME}/.sourceharbor/project-venv"
 
   if [[ -z "$root_dir" ]]; then
-    export UV_PROJECT_ENVIRONMENT="${current_value:-$fallback}"
+    if [[ "$current_value" == "$legacy_fallback" ]]; then
+      export UV_PROJECT_ENVIRONMENT="$fallback"
+    else
+      export UV_PROJECT_ENVIRONMENT="${current_value:-$fallback}"
+    fi
     return 0
   fi
 
@@ -267,6 +273,9 @@ ensure_external_uv_project_environment() {
   fi
 
   case "$current_value" in
+    "$legacy_fallback"|"$HOME/.sourceharbor"/project-venv)
+      export UV_PROJECT_ENVIRONMENT="$fallback"
+      ;;
     "$root_dir"/*|.venv|./.venv|.runtime-cache/*)
       export UV_PROJECT_ENVIRONMENT="$fallback"
       ;;

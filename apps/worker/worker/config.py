@@ -52,6 +52,15 @@ def _read_required_env(name: str) -> str:
     return value.strip()
 
 
+def _sourceharbor_cache_root() -> str:
+    raw = os.getenv("SOURCE_HARBOR_CACHE_ROOT")
+    return (
+        os.path.expanduser(raw.strip())
+        if raw and raw.strip()
+        else os.path.expanduser("~/.cache/sourceharbor")
+    )
+
+
 def _system_timezone_name() -> str:
     local_tz = datetime.now().astimezone().tzinfo
     tz_name = getattr(local_tz, "key", None) or getattr(local_tz, "zone", None)
@@ -73,7 +82,7 @@ class Settings:
     comments_replies_per_comment: int = 10
     comments_request_timeout_seconds: float = 10.0
 
-    sqlite_path: str = os.path.expanduser("~/.sourceharbor/state/worker_state.db")
+    sqlite_path: str = os.path.join(_sourceharbor_cache_root(), "state", "worker_state.db")
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/sourceharbor"
 
     temporal_target_host: str = "localhost:7233"
@@ -81,8 +90,8 @@ class Settings:
     temporal_task_queue: str = "sourceharbor-worker"
 
     lock_ttl_seconds: int = 90
-    pipeline_workspace_dir: str = os.path.expanduser("~/.sourceharbor/workspace")
-    pipeline_artifact_root: str = os.path.expanduser("~/.sourceharbor/artifacts")
+    pipeline_workspace_dir: str = os.path.join(_sourceharbor_cache_root(), "workspace")
+    pipeline_artifact_root: str = os.path.join(_sourceharbor_cache_root(), "artifacts")
     pipeline_retry_attempts: int = 2
     pipeline_retry_backoff_seconds: float = 1.0
     pipeline_subprocess_timeout_seconds: int = 180
