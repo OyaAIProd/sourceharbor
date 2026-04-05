@@ -1,5 +1,7 @@
 # SourceHarbor
 
+[![SafeSkill 83/100](https://img.shields.io/badge/SafeSkill-83%2F100_Passes%20with%20Notes-yellow)](https://safeskill.dev/scan/xiaojiou176-open-sourceharbor)
+
 <p align="center">
   <img
     src="./docs/assets/sourceharbor-studio-preview.svg"
